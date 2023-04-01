@@ -1,0 +1,23 @@
+# Ignore 
+*
+*/**
+**/.DS_Store
+
+# Include
+!res
+!extension
+!themes
+!package.json
+!node_modules/vscode-languageclient
+!node_modules/vscode-languageserver-protocol
+!node_modules/vscode-languageserver-types
+!node_modules/vscode-jsonrpc
+!node_modules/balanced-match
+!node_modules/brace-expansion
+!node_modules/lru-cache
+!node_modules/minimatch
+!node_modules/semver
+!node_modules/yallist
+!*.nls.json
+!README.md
+!LICENSE

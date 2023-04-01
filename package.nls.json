@@ -1,0 +1,20 @@
+{
+	"extension.displayName": "dotRush",
+	"extension.description": "Lightweight .NET development environment for Visual Studio Code.",
+
+	"command.title.build": "Build",
+	"command.id.build": "dotrush.build",
+
+	"command.title.restore": "Restore",
+	"command.id.restore": "dotrush.restore",
+
+	"command.title.clean": "Clean",
+	"command.id.clean": "dotrush.clean",
+
+	"command.title.addToSln": "Add Project to Solution",
+	"command.id.addToSln": "dotrush.addToSln",
+
+	"config.title": "dotRush Configuration",
+	"config.description.buildOnlyFramework": "Build only the selected framework",
+	"config.description.useDotnetMeteor": "Use active project form .NET Meteor status bar"
+}

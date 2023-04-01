@@ -1,0 +1,20 @@
+  {
+    "commands": [
+      {
+        "command": "%command.id.addToSln%",
+        "title": "%command.title.addToSln%"
+      },
+      {
+        "command": "%command.id.build%",
+        "title": "%command.title.build%"
+      },
+      {
+        "command": "%command.id.restore%",
+        "title": "%command.title.restore%"
+      },
+      {
+        "command": "%command.id.clean%",
+        "title": "%command.title.clean%"
+      }
+    ]
+  }

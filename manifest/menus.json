@@ -1,0 +1,22 @@
+  {
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "%command.id.addToSln%",
+          "group": "a_workspace"
+        },
+        {
+          "command": "%command.id.build%",
+          "group": "b_common"
+        },
+        {
+          "command": "%command.id.restore%",
+          "group": "b_common"
+        },
+        {
+          "command": "%command.id.clean%",
+          "group": "b_common"
+        }
+      ]
+    }
+  }
