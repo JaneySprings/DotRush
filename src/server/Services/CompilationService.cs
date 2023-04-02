@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 namespace dotRush.Server.Services {
 
     public class CompilationService {
+        private const int CompilationDelay = 500;
         public static CompilationService? Instance { get; private set; }
         private bool isActive = false;
 
@@ -20,6 +21,7 @@ namespace dotRush.Server.Services {
                 return;
 
             isActive = true;
+            await Task.Delay(CompilationDelay);
             var documentId = SolutionService.Instance!.CurrentSolution?.GetDocumentIdsWithFilePath(path).FirstOrDefault();
             var document = SolutionService.Instance.CurrentSolution?.GetDocument(documentId);
             if (documentId == null || document == null) {
@@ -32,26 +34,15 @@ namespace dotRush.Server.Services {
                 return;
             }
 
-            ClearDiagnostics(document.Project, proxy);
-
             var diagnostics = compilation.GetDiagnostics().ToServerDiagnostics();
-            var diagnosticsByFile = diagnostics.GroupBy(diagnostic => diagnostic.source);
-            foreach (var diagnosticGroup in diagnosticsByFile) {
+            foreach (var doc in document.Project.Documents) {
+                var diagnosticForDoc = diagnostics.Where(diagnostic => diagnostic.source == doc.FilePath);
                 proxy.TextDocument.PublishDiagnostics(new LanguageServer.Parameters.TextDocument.PublishDiagnosticsParams() {
-                    uri = new Uri(diagnosticGroup.Key),
-                    diagnostics = diagnosticGroup.ToArray(),
+                    uri = new Uri(doc.FilePath!),
+                    diagnostics = diagnosticForDoc.ToArray(),
                 });
             }
             isActive = false;
-        }
-
-        public void ClearDiagnostics(Project project, Proxy proxy) {
-            foreach (var document in project.Documents) {
-                proxy.TextDocument.PublishDiagnostics(new LanguageServer.Parameters.TextDocument.PublishDiagnosticsParams() {
-                    diagnostics = Array.Empty<LanguageServer.Parameters.TextDocument.Diagnostic>(),
-                    uri = new Uri(document.FilePath!)
-                });
-            }
         }
     }
 }

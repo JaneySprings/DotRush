@@ -1,15 +1,12 @@
-import { SolutionController } from '../csharp/solutionController';
-import { ClientController } from '../csharp/clientController';
-import { DotNetTaskProvider } from './dotnetTaskProvider';
-import { Configuration } from '../configuration';
-import * as res from '../resources';
+import { getSetting } from './extension';
+import * as res from './resources';
 import * as vscode from 'vscode';
 
 
 export class ContextMenuController {
     public static activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdBuild, (path: vscode.Uri) => {
-            const useFramework = Configuration.getSetting<boolean>(res.configurationIdBuildOnlyFramework);
+            const useFramework = getSetting<boolean>(res.configIdBuildOnlyFramework);
             const task = DotNetTaskProvider.getTask("build", path.fsPath, useFramework);
             if (task !== undefined) 
                 vscode.tasks.executeTask(task);
@@ -24,11 +21,14 @@ export class ContextMenuController {
             if (task !== undefined) 
                 vscode.tasks.executeTask(task);
         }));
+    }
+}
 
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdAddToSln, async(path: vscode.Uri) => {
-            const projectPath = await SolutionController.findProject(path.fsPath);
-            if (projectPath !== undefined)
-                SolutionController.addProject(ClientController.currentTargetDirectory, projectPath);
-        }));
+class DotNetTaskProvider {
+    public static getTask(target: string, directory: string, useFramework: boolean = false): vscode.Task | undefined { 
+        const command = `dotnet ${target} ${directory}`;
+        return new vscode.Task({ type: `${res.extensionId}.${res.taskDefinitionId}` }, 
+            vscode.TaskScope.Workspace, target, res.extensionId, new vscode.ShellExecution(command)
+        );
     }
 }

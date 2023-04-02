@@ -2,10 +2,6 @@
     "menus": {
       "explorer/context": [
         {
-          "command": "%command.id.addToSln%",
-          "group": "a_workspace"
-        },
-        {
           "command": "%command.id.build%",
           "group": "b_common"
         },

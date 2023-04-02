@@ -1,4 +1,3 @@
-using System.Reflection;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -8,38 +7,41 @@ namespace dotRush.Server.Services {
     public class SolutionService {
         public static SolutionService? Instance { get; private set; }
         public Solution? CurrentSolution { get; private set; }
-        public string? Target { get; private set; }
 
         private SolutionService() {}
 
-        public static async Task Initialize(string target) {
+        public static async Task Initialize(string framework, string[] targets) {
             Instance = new SolutionService();
-            Instance.Target = target;
 
+            var projects = GetAllProjects(targets);
             var queryOptions = VisualStudioInstanceQueryOptions.Default;
             var instances = MSBuildLocator.QueryVisualStudioInstances(queryOptions);
             MSBuildLocator.RegisterInstance(instances.FirstOrDefault());
 
-            var workspace = MSBuildWorkspace.Create();
-            workspace.LoadMetadataForReferencedProjects = true;
-            await workspace.OpenSolutionAsync(target);
-
-            Instance.CurrentSolution = workspace.CurrentSolution;
-
-            foreach (var project in Instance.CurrentSolution.Projects) {
-                await project.GetCompilationAsync();
+            var configuration = new Dictionary<string, string>();
+            if (!string.IsNullOrEmpty(framework) && framework != "-") {
+                configuration.Add("TargetFramework", framework);
             }
 
-            // workspace.WorkspaceChanged += (sender, args) => {
-            //     if (args.Kind == WorkspaceChangeKind.SolutionAdded) {
-            //         Instance!.CurrentSolution = args.NewSolution;
-            //     }
-            // };
+            var workspace = MSBuildWorkspace.Create(configuration);
+            workspace.LoadMetadataForReferencedProjects = true;
+            foreach (var project in projects) {
+                await workspace.OpenProjectAsync(project);
+            }
 
+            Instance.CurrentSolution = workspace.CurrentSolution;
         }
-
         public void UpdateSolution(Solution solution) {
             CurrentSolution = solution;
+        }
+
+
+        private static List<string> GetAllProjects(string[] targets) {
+            var projects = new List<string>();
+            foreach (var target in targets) {
+                projects.AddRange(Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories));
+            }
+            return projects;
         }
     }
 }

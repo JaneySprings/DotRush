@@ -24,73 +24,9 @@
   ],
   "main": "./extension/extension.js",
   "contributes": {
-    "configuration":[
-      {
-        "title": "%config.title%",
-        "properties": {
-          "dotrush.context.buildOnlyFramework": {
-            "type": "boolean",
-            "default": false,
-            "description": "%config.description.buildOnlyFramework%"
-          },
-          "dotrush.integration.useDotnetMeteor": {
-            "type": "boolean",
-            "default": false,
-            "description": "%config.description.useDotnetMeteor%"
-          }
-        }
-      }
-    ],
-    "themes": [
-      {
-        "label": "Visual Studio 2019 Dark",
-        "uiTheme": "vs-dark",
-        "path": "./themes/vs2019_dark.json"
-      },
-      {
-        "label": "Visual Studio 2019 Light",
-        "uiTheme": "vs",
-        "path": "./themes/vs2019_light.json"
-      }
-    ],
-    "commands": [
-      {
-        "command": "%command.id.addToSln%",
-        "title": "%command.title.addToSln%"
-      },
-      {
-        "command": "%command.id.build%",
-        "title": "%command.title.build%"
-      },
-      {
-        "command": "%command.id.restore%",
-        "title": "%command.title.restore%"
-      },
-      {
-        "command": "%command.id.clean%",
-        "title": "%command.title.clean%"
-      }
-    ],
-    "menus": {
-      "explorer/context": [
-        {
-          "command": "%command.id.addToSln%",
-          "group": "a_workspace"
-        },
-        {
-          "command": "%command.id.build%",
-          "group": "b_common"
-        },
-        {
-          "command": "%command.id.restore%",
-          "group": "b_common"
-        },
-        {
-          "command": "%command.id.clean%",
-          "group": "b_common"
-        }
-      ]
-    }
+    "include": "manifest/themes.json",
+    "include": "manifest/commands.json",
+    "include": "manifest/menus.json"
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

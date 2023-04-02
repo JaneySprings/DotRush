@@ -5,10 +5,10 @@ namespace dotRush.Server;
 
 public class Program {
     public static async Task Main(string[] args) {
-        await ConfigureServices(args[0]);
+        await ConfigureServices(args[1], args.Skip(2).ToArray());
 
         var server = new ServerSession(Console.OpenStandardInput(), Console.OpenStandardOutput());
-        var ideProcess = Process.GetProcessById(int.Parse(args[1]));
+        var ideProcess = Process.GetProcessById(int.Parse(args[0]));
 
         ideProcess.EnableRaisingEvents = true;
         ideProcess.Exited += (sender, e) => Environment.Exit(0);
@@ -16,8 +16,8 @@ public class Program {
         await server.Listen();
     }
 
-    private static async Task ConfigureServices(string target) {
-        await SolutionService.Initialize(target);
+    private static async Task ConfigureServices(string framework, string[] targets) {
+        await SolutionService.Initialize(framework, targets);
         await CompilationService.Initialize();
     }
 }

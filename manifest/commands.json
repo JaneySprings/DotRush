@@ -1,10 +1,6 @@
   {
     "commands": [
       {
-        "command": "%command.id.addToSln%",
-        "title": "%command.title.addToSln%"
-      },
-      {
         "command": "%command.id.build%",
         "title": "%command.title.build%"
       },

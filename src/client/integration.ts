@@ -1,10 +1,6 @@
 import * as vscode from 'vscode';
 
 
-export function checkPluginInstalled(id: string): boolean {
-	return vscode.extensions.getExtension(id) !== undefined;
-}
-
 export function assumePluginUninstalled(id: string): boolean {
 	if (vscode.extensions.getExtension(id) === undefined)
 		return true;
@@ -14,8 +10,10 @@ export function assumePluginUninstalled(id: string): boolean {
 
 export async function waitForActivation(id: string, timeout: number = 100): Promise<vscode.Extension<any> | undefined> {
     const extension = vscode.extensions.getExtension(id);
+	if (extension === undefined)
+		return undefined;
+
 	let retryCount = 0;
-	
 	while (!extension?.isActive) {
         retryCount++;
 		await new Promise(f => setTimeout(f, 100));
