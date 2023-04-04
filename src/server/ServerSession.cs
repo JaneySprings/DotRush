@@ -2,6 +2,7 @@ using dotRush.Server.Extensions;
 using dotRush.Server.Services;
 using LanguageServer;
 using LanguageServer.Parameters.TextDocument;
+using LanguageServer.Parameters.Workspace;
 using Microsoft.CodeAnalysis;
 using CodeAnalysis = Microsoft.CodeAnalysis;
 
@@ -12,31 +13,19 @@ public class ServerSession : Session {
 
 #region Event: DocumentSync 
     protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params) {
-        var documentId = SolutionService.Instance!.CurrentSolution?.GetDocumentIdsWithFilePath(@params.textDocument.uri.AbsolutePath).FirstOrDefault();
-        var document = SolutionService.Instance.CurrentSolution?.GetDocument(documentId);
-        if (documentId == null || document == null) 
-            return;
-
-        var originText = document.GetTextAsync().Result;
-        var newText = originText.WithChanges(@params.contentChanges.Select(change => {
-            var start = change.range.start.ToOffset(document);
-            var end = change.range.end.ToOffset(document);
-            return new CodeAnalysis.Text.TextChange(CodeAnalysis.Text.TextSpan.FromBounds(start, end), change.text);
-        }));
-        
-        SolutionService.Instance.UpdateSolution(document.Project.Solution.WithDocumentText(documentId, newText));
-        CompilationService.Instance?.Compile(document.FilePath!, Proxy);
+        DocumentService.Instance?.ApplyTextChanges(@params);
+        CompilationService.Instance?.Compile(@params.textDocument.uri.AbsolutePath, Proxy);
     }
-#endregion
-#region Event: DocumentOpen
     protected override void DidOpenTextDocument(DidOpenTextDocumentParams @params) {
         CompilationService.Instance?.Compile(@params.textDocument.uri.AbsolutePath, Proxy);
+    }
+    protected override void DidChangeWatchedFiles(DidChangeWatchedFilesParams @params) {
+        DocumentService.Instance?.ApplyChanges(@params);
     }
 #endregion
 #region Event: Completion
     protected override Result<CompletionResult, ResponseError> Completion(CompletionParams @params) {
-        var documentId = SolutionService.Instance!.CurrentSolution?.GetDocumentIdsWithFilePath(@params.textDocument.uri.AbsolutePath).FirstOrDefault();
-        var document = SolutionService.Instance.CurrentSolution?.GetDocument(documentId);
+        var document = DocumentService.Instance?.GetDocumentByPath(@params.textDocument.uri.AbsolutePath);
         var completitionService = Microsoft.CodeAnalysis.Completion.CompletionService.GetService(document);
         if (completitionService == null || document == null) 
             return Result<CompletionResult, ResponseError>.Error(new ResponseError() {

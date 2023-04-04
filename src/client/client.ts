@@ -1,4 +1,4 @@
-import { LanguageClient } from "vscode-languageclient/node";
+import { LanguageClient, LanguageClientOptions } from "vscode-languageclient/node";
 import { waitForActivation } from './integration';
 import { extensions } from "vscode";
 import * as vscode from 'vscode';
@@ -23,10 +23,18 @@ export class ClientController {
         if (process.platform === 'win32')
             serverExecutable += '.exe';
 
+        const clientOptions: LanguageClientOptions = { 
+            documentSelector: [{ scheme: "file", language: "csharp" }],
+            synchronize: { 
+                configurationSection: res.extensionId, 
+                fileEvents: vscode.workspace.createFileSystemWatcher("**/*.cs")
+            },
+        };
+
         ClientController.client = new LanguageClient(
             res.extensionId, res.extensionId, 
             { command: serverExecutable, args: launchArguments, }, 
-            { documentSelector: [{ scheme: "file", language: "csharp" }]}
+            clientOptions
         );
     }
 

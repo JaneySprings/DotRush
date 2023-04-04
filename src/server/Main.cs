@@ -17,7 +17,9 @@ public class Program {
     }
 
     private static async Task ConfigureServices(string framework, string[] targets) {
+        CompilationService.Initialize();
+        DocumentService.Initialize();
+
         await SolutionService.Initialize(framework, targets);
-        await CompilationService.Initialize();
     }
 }
