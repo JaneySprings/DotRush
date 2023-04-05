@@ -5,10 +5,12 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <CodeAnalysisVersion>4.6.0-1.final</CodeAnalysisVersion>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NLog" Version="5.1.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="LanguageServerProtocol" Version="7.0.1" />
     <PackageReference Include="ICSharpCode.Decompiler" Version="7.2.1.6856" />

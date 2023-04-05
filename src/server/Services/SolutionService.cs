@@ -29,10 +29,13 @@ public class SolutionService {
         workspace.LoadMetadataForReferencedProjects = true;
         workspace.SkipUnrecognizedProjects = true;
         foreach (var project in Instance.Projects) {
-           try {
+            try {
                 RestoreProject(project);
                 await workspace.OpenProjectAsync(project);
-           } catch {/*TODO: log*/}
+                LoggingService.Instance?.LogMessage("Loaded project {0}", project);
+            } catch(Exception ex) {
+                LoggingService.Instance?.LogError(ex.Message, ex);
+            }
         }
 
         Instance.Solution = workspace.CurrentSolution;
@@ -52,6 +55,8 @@ public class SolutionService {
             .Append("restore")
             .AppendQuoted(path))
             .WaitForExit();
+
+        LoggingService.Instance?.LogMessage("Restored project {0}", path);
     }
     private static List<string> GetAllProjects(string[] targets) {
         var projects = new List<string>();

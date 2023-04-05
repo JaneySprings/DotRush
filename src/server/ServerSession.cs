@@ -38,7 +38,9 @@ public class ServerSession : Session {
         CodeAnalysis.Completion.CompletionList? completions = null;
         try { 
             completions = completionService.GetCompletionsAsync(document, position).Result; 
-        } catch {}
+        } catch(Exception ex) {
+            LoggingService.Instance?.LogError(ex.Message, ex);
+        }
 
         if (completions == null) 
             return Result<CompletionResult, ResponseError>.Error(new ResponseError() {
