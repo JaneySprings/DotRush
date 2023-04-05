@@ -1,6 +1,6 @@
 {
     "$schema": "vscode://schemas/color-theme",
-    "name": "Visual Studio 2019 Dark",
+    "name": "Visual Studio 2022 Dark",
     "type": "dark",
     // https://github.com/microsoft/vscode/blob/master/extensions/theme-defaults/themes/dark_defaults.json
     "colors": {

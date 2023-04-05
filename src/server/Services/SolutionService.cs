@@ -1,6 +1,7 @@
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
+using dotRush.Server.Processes;
 
 namespace dotRush.Server.Services;
 
@@ -26,17 +27,32 @@ public class SolutionService {
 
         var workspace = MSBuildWorkspace.Create(configuration);
         workspace.LoadMetadataForReferencedProjects = true;
+        workspace.SkipUnrecognizedProjects = true;
         foreach (var project in Instance.Projects) {
-            await workspace.OpenProjectAsync(project);
+           try {
+                RestoreProject(project);
+                await workspace.OpenProjectAsync(project);
+           } catch {/*TODO: log*/}
         }
 
         Instance.Solution = workspace.CurrentSolution;
     }
+
     public void UpdateSolution(Solution solution) {
         Solution = solution;
     }
 
 
+    private static void RestoreProject(string path) {
+        var directory = Path.GetDirectoryName(path);
+        if (File.Exists(Path.Combine(directory!, "obj", "project.assets.json")))
+            return;
+
+        var result = new ProcessRunner("dotnet", new ProcessArgumentBuilder()
+            .Append("restore")
+            .AppendQuoted(path))
+            .WaitForExit();
+    }
     private static List<string> GetAllProjects(string[] targets) {
         var projects = new List<string>();
         foreach (var target in targets) {

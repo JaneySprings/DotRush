@@ -5,6 +5,7 @@ using LanguageServer.Parameters.TextDocument;
 using LanguageServer.Parameters.Workspace;
 using Microsoft.CodeAnalysis;
 using CodeAnalysis = Microsoft.CodeAnalysis;
+using CompletionService = Microsoft.CodeAnalysis.Completion.CompletionService;
 
 namespace dotRush.Server;
 
@@ -26,8 +27,8 @@ public class ServerSession : Session {
 #region Event: Completion
     protected override Result<CompletionResult, ResponseError> Completion(CompletionParams @params) {
         var document = DocumentService.Instance?.GetDocumentByPath(@params.textDocument.uri.AbsolutePath);
-        var completitionService = Microsoft.CodeAnalysis.Completion.CompletionService.GetService(document);
-        if (completitionService == null || document == null) 
+        var completionService = CompletionService.GetService(document);
+        if (completionService == null || document == null) 
             return Result<CompletionResult, ResponseError>.Error(new ResponseError() {
                 code = ErrorCodes.RequestCancelled,
                 message = "Could not get completions",
@@ -36,7 +37,7 @@ public class ServerSession : Session {
         var position = @params.position.ToOffset(document);
         CodeAnalysis.Completion.CompletionList? completions = null;
         try { 
-            completions = completitionService.GetCompletionsAsync(document, position).Result; 
+            completions = completionService.GetCompletionsAsync(document, position).Result; 
         } catch {}
 
         if (completions == null) 
