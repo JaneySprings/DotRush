@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace dotRush.Server.Services;
 
 public class DocumentService {
-    public static DocumentService? Instance { get; private set; }
+    public static DocumentService Instance { get; private set; } = null!;
 
     private DocumentService() {}
 
@@ -19,10 +19,10 @@ public class DocumentService {
     public Document? GetDocumentByPath(string? path) {
         if (string.IsNullOrEmpty(path)) 
             return null;
-        var documentId = SolutionService.Instance?.Solution?
+        var documentId = SolutionService.Instance.Solution?
             .GetDocumentIdsWithFilePath(path)
             .FirstOrDefault();
-        return SolutionService.Instance?.Solution?.GetDocument(documentId);
+        return SolutionService.Instance.Solution?.GetDocument(documentId);
     }
 
     public string? ApplyTextChanges(DidChangeTextDocumentParams parameters) {
@@ -38,7 +38,7 @@ public class DocumentService {
         }));
         
         var changes = document.Project.Solution.WithDocumentText(document.Id, newText);
-        SolutionService.Instance?.UpdateSolution(changes);
+        SolutionService.Instance.UpdateSolution(changes);
         return parameters.textDocument.uri.AbsolutePath;
     }
 
@@ -54,19 +54,19 @@ public class DocumentService {
             if (change.type == FileChangeType.Deleted) {
                 var document = GetDocumentByPath(change.uri.AbsolutePath);
                 var updates = project.RemoveDocument(document!.Id);
-                SolutionService.Instance?.UpdateSolution(updates.Solution);
+                SolutionService.Instance.UpdateSolution(updates.Solution);
             }
 
             if (change.type == FileChangeType.Created) {
                 var documentContent = File.ReadAllText(change.uri.AbsolutePath);
                 var updates = project.AddDocument(Path.GetFileName(change.uri.AbsolutePath), documentContent, null, change.uri.AbsolutePath);
-                SolutionService.Instance?.UpdateSolution(updates.Project.Solution);
+                SolutionService.Instance.UpdateSolution(updates.Project.Solution);
             }
         }
     }
 
     private Project? GetProjectByDocumentPath(string path) {
-        var relativeProjectPath = SolutionService.Instance?.Projects?
+        var relativeProjectPath = SolutionService.Instance.Projects?
             .FirstOrDefault(it => path.Contains(Path.GetDirectoryName(it)!));
         if (relativeProjectPath == null) 
             return null;
@@ -75,7 +75,7 @@ public class DocumentService {
         if (!ValidatePath(relativeFilePath)) 
             return null;
 
-        return SolutionService.Instance?.Solution?.Projects.FirstOrDefault(it => it.FilePath == relativeProjectPath);
+        return SolutionService.Instance.Solution?.Projects.FirstOrDefault(it => it.FilePath == relativeProjectPath);
     }
 
     private bool ValidatePath(string path) {

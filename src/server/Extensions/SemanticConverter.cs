@@ -7,7 +7,7 @@ namespace dotRush.Server.Extensions;
 
 public static class SemanticConverter {
     public static ISymbol? GetSymbolForPosition(Position position, string path) {
-        var document = DocumentService.Instance?.GetDocumentByPath(path);
+        var document = DocumentService.Instance.GetDocumentByPath(path);
         if (document == null) 
             return null;
         var offset = position.ToOffset(document);

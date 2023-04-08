@@ -19,7 +19,9 @@ public class Program {
     }
 
     private static async Task ConfigureServices(string framework, string[] targets) {
+        DocumentationService.Initialize();
         CompilationService.Initialize();
+        RefactoringService.Initialize();
         DocumentService.Initialize();
         LoggingService.Initialize();
 

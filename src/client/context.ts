@@ -1,4 +1,3 @@
-import { getSetting } from './extension';
 import * as res from './resources';
 import * as vscode from 'vscode';
 
@@ -6,8 +5,7 @@ import * as vscode from 'vscode';
 export class ContextMenuController {
     public static activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdBuild, (path: vscode.Uri) => {
-            const useFramework = getSetting<boolean>(res.configIdBuildOnlyFramework);
-            const task = DotNetTaskProvider.getTask("build", path.fsPath, useFramework);
+            const task = DotNetTaskProvider.getTask("build", path.fsPath);
             if (task !== undefined) 
                 vscode.tasks.executeTask(task);
         }));
@@ -25,7 +23,7 @@ export class ContextMenuController {
 }
 
 class DotNetTaskProvider {
-    public static getTask(target: string, directory: string, useFramework: boolean = false): vscode.Task | undefined { 
+    public static getTask(target: string, directory: string): vscode.Task | undefined { 
         const command = `dotnet ${target} ${directory}`;
         return new vscode.Task({ type: `${res.extensionId}.${res.taskDefinitionId}` }, 
             vscode.TaskScope.Workspace, target, res.extensionId, new vscode.ShellExecution(command)

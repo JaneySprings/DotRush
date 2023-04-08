@@ -6,7 +6,7 @@ using dotRush.Server.Processes;
 namespace dotRush.Server.Services;
 
 public class SolutionService {
-    public static SolutionService? Instance { get; private set; }
+    public static SolutionService Instance { get; private set; } = null!;
     public Solution? Solution { get; private set; }
     public List<string>? Projects { get; private set; }
 
@@ -32,9 +32,9 @@ public class SolutionService {
             try {
                 RestoreProject(project);
                 await workspace.OpenProjectAsync(project);
-                LoggingService.Instance?.LogMessage("Loaded project {0}", project);
+                LoggingService.Instance.LogMessage("Loaded project {0}", project);
             } catch(Exception ex) {
-                LoggingService.Instance?.LogError(ex.Message, ex);
+                LoggingService.Instance.LogError(ex.Message, ex);
             }
         }
 
@@ -56,7 +56,7 @@ public class SolutionService {
             .AppendQuoted(path))
             .WaitForExit();
 
-        LoggingService.Instance?.LogMessage("Restored project {0}", path);
+        LoggingService.Instance.LogMessage("Restored project {0}", path);
     }
     private static List<string> GetAllProjects(string[] targets) {
         var projects = new List<string>();

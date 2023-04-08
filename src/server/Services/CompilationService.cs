@@ -6,7 +6,7 @@ namespace dotRush.Server.Services;
 
 public class CompilationService {
     private const int CompilationDelay = 500;
-    public static CompilationService? Instance { get; private set; }
+    public static CompilationService Instance { get; private set; } = null!;
     private bool isActive = false;
 
     private CompilationService() {}
@@ -22,7 +22,7 @@ public class CompilationService {
 
         isActive = true;
         await Task.Delay(CompilationDelay);
-        var document = DocumentService.Instance!.GetDocumentByPath(path);
+        var document = DocumentService.Instance.GetDocumentByPath(path);
         if (document == null) {
             isActive = false;
             return;

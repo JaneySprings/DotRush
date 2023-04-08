@@ -1,5 +1,6 @@
 using LanguageServer;
 using LanguageServer.Parameters.General;
+using LanguageServer.Parameters.TextDocument;
 
 namespace dotRush.Server;
 
@@ -9,12 +10,14 @@ public abstract class Session : ServiceConnection {
     protected override Result<InitializeResult, ResponseError<InitializeErrorData>> Initialize(InitializeParams @params) {
         var result = new InitializeResult {
             capabilities = new ServerCapabilities {
+                //codeActionProvider = true,
                 referencesProvider = true,
                 definitionProvider = true,
                 implementationProvider = true,
                 textDocumentSync = TextDocumentSyncKind.Incremental,
                 completionProvider = new CompletionOptions {
                     triggerCharacters = new[] { ".", ":" },
+                    resolveProvider = true,
                 }
             }
         };

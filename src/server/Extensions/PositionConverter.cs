@@ -53,7 +53,7 @@ public static class PositionConverter {
 
     public static LanguageServer.Parameters.Location? ToLocation(this Location location) {
         var loc = new LanguageServer.Parameters.Location();
-        var document = DocumentService.Instance?.GetDocumentByPath(location.SourceTree?.FilePath);
+        var document = DocumentService.Instance.GetDocumentByPath(location.SourceTree?.FilePath);
         if (document == null) 
             return null;
 

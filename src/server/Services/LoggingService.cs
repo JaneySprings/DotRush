@@ -3,7 +3,7 @@ using NLog;
 namespace dotRush.Server.Services;
 
 public class LoggingService {
-    public static LoggingService? Instance { get; private set; }
+    public static LoggingService Instance { get; private set; } = null!;
     private readonly Logger logger = LogManager.GetCurrentClassLogger();
 
 
