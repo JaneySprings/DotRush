@@ -23,6 +23,7 @@
         "sideBarSectionHeader.background": "#0000",
         "sideBarSectionHeader.border": "#ccc3",
         "statusBar.background": "#3e357d",
+        "statusBar.debuggingBackground": "#7b252f",
         "focusBorder": "#3e357d"
     },
     "semanticHighlighting": true,

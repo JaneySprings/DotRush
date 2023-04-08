@@ -16,7 +16,9 @@ public class DocumentService {
         Instance = service;
     }
 
-    public Document? GetDocumentByPath(string path) {
+    public Document? GetDocumentByPath(string? path) {
+        if (string.IsNullOrEmpty(path)) 
+            return null;
         var documentId = SolutionService.Instance?.Solution?
             .GetDocumentIdsWithFilePath(path)
             .FirstOrDefault();

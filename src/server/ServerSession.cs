@@ -1,11 +1,12 @@
-using dotRush.Server.Extensions;
-using dotRush.Server.Services;
 using LanguageServer;
+using LanguageServer.Parameters;
 using LanguageServer.Parameters.TextDocument;
 using LanguageServer.Parameters.Workspace;
 using Microsoft.CodeAnalysis;
-using CodeAnalysis = Microsoft.CodeAnalysis;
-using CompletionService = Microsoft.CodeAnalysis.Completion.CompletionService;
+using Microsoft.CodeAnalysis.FindSymbols;
+using Microsoft.CodeAnalysis.Completion;
+using dotRush.Server.Extensions;
+using dotRush.Server.Services;
 
 namespace dotRush.Server;
 
@@ -35,21 +36,20 @@ public class ServerSession : Session {
             });
 
         var position = @params.position.ToOffset(document);
-        CodeAnalysis.Completion.CompletionList? completions = null;
+        Microsoft.CodeAnalysis.Completion.CompletionList? completions = null;
         try { 
             completions = completionService.GetCompletionsAsync(document, position).Result; 
         } catch(Exception ex) {
             LoggingService.Instance?.LogError(ex.Message, ex);
         }
 
-        if (completions == null) 
-            return Result<CompletionResult, ResponseError>.Error(new ResponseError() {
-                code = ErrorCodes.RequestCancelled,
-                message = "Could not get completions",
-            });
+        if (completions == null) return Result<CompletionResult, ResponseError>.Error(new ResponseError() {
+            code = ErrorCodes.RequestCancelled,
+            message = "Could not get completions",
+        });
 
         return Result<CompletionResult, ResponseError>.Success(new CompletionResult(
-            completions.ItemsList.Select(item => new CompletionItem() {
+            completions.ItemsList.Select(item => new LanguageServer.Parameters.TextDocument.CompletionItem() {
                 label = item.DisplayText,
                 kind = item.Tags.First().ToCompletionKind(),
                 sortText = item.SortText,
@@ -59,4 +59,45 @@ public class ServerSession : Session {
         ));
     }
 #endregion 
+#region Event: Definitions
+    protected override Result<LocationSingleOrArray, ResponseError> GotoDefinition(TextDocumentPositionParams @params) {
+        var symbol = SemanticConverter.GetSymbolForPosition(@params.position, @params.textDocument.uri.AbsolutePath);
+        if (symbol == null) return Result<LocationSingleOrArray, ResponseError>.Error(new ResponseError() {
+            code = ErrorCodes.RequestCancelled,
+            message = "Could not get definition",
+        });
+
+        var definitions = symbol.Locations.Select(loc => loc.ToLocation());
+        return Result<LocationSingleOrArray, ResponseError>.Success(new LocationSingleOrArray(definitions.ToArray()));
+    }
+#endregion
+#region Event: Implementations
+    protected override Result<LocationSingleOrArray, ResponseError> GotoImplementation(TextDocumentPositionParams @params) {
+        var symbol = SemanticConverter.GetSymbolForPosition(@params.position, @params.textDocument.uri.AbsolutePath);
+        var solution = SolutionService.Instance?.Solution;
+        if (symbol == null || solution == null) 
+            return Result<LocationSingleOrArray, ResponseError>.Error(new ResponseError() {
+                code = ErrorCodes.RequestCancelled,
+                message = "Could not get implementation",
+            });
+
+        var impl = SymbolFinder.FindImplementationsAsync(symbol, solution).Result;
+        var implementations = impl.SelectMany(i => i.Locations).Select(loc => loc.ToLocation());
+        return Result<LocationSingleOrArray, ResponseError>.Success(new LocationSingleOrArray(implementations.ToArray()));
+    }
+#endregion
+#region Event: FindReferences
+    protected override Result<LanguageServer.Parameters.Location[], ResponseError> FindReferences(ReferenceParams @params) {
+        var symbol = SemanticConverter.GetSymbolForPosition(@params.position, @params.textDocument.uri.AbsolutePath);
+        var solution = SolutionService.Instance?.Solution;
+        if (symbol == null || solution == null) return Result<LanguageServer.Parameters.Location[], ResponseError>.Error(new ResponseError() {
+            code = ErrorCodes.RequestCancelled,
+            message = "Could not get references",
+        });
+
+        var refs = SymbolFinder.FindReferencesAsync(symbol, solution).Result;
+        var references = refs.SelectMany(r => r.Locations).Select(loc => loc.ToLocation());
+        return Result<LanguageServer.Parameters.Location[], ResponseError>.Success(references.ToArray());
+    }
+#endregion
 }

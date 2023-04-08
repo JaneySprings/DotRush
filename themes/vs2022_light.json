@@ -22,8 +22,9 @@
         "statusBarItem.remoteBackground": "#16825D",
         "sideBarSectionHeader.background": "#0000",
         "sideBarSectionHeader.border": "#61616130",
-        "statusBar.background": "#3e357d",
-        "focusBorder": "#3e357d"
+        "statusBar.background": "#435089",
+        "statusBar.debuggingBackground": "#975044",
+        "focusBorder": "#435089"
     },
     "semanticHighlighting": true,
     // https://github.com/microsoft/vscode/blob/master/extensions/theme-defaults/themes/light_vs.json
