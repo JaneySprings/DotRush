@@ -71,7 +71,10 @@ public class ServerSession : Session {
         });
 
         var refs = SymbolFinder.FindReferencesAsync(symbol, solution).Result;
-        var references = refs.SelectMany(r => r.Locations).Select(loc => loc.ToLocation());
+        var references = refs
+            .SelectMany(r => r.Locations)
+            .Where(l => File.Exists(l.Document.FilePath))
+            .Select(loc => loc.ToLocation());
         return Result<LanguageServer.Parameters.Location[], ResponseError>.Success(references.ToArray());
     }
 #endregion
