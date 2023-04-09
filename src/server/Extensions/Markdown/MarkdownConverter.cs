@@ -24,32 +24,19 @@ public static class MarkdownConverter {
                 && taggedParts[0].Tag switch { TextTags.LineBreak => true, ContainerStart => true, _ => false };
     }
 
-    public static void TaggedTextToMarkdown(
-        ImmutableArray<TaggedText> taggedParts,
-        StringBuilder stringBuilder,
-        MarkdownFormat markdownFormat) {
-
+    public static void TaggedTextToMarkdown(ImmutableArray<TaggedText> taggedParts, StringBuilder stringBuilder) {
         FormattingOptions formattingOptions = new();
         bool isInCodeBlock = false;
         bool brokeLine = true;
         bool afterFirstLine = false;
 
-        if (markdownFormat == MarkdownFormat.Italicize) {
-            stringBuilder.Append("_");
-        }
-
         for (int i = 0; i < taggedParts.Length; i++) {
             var current = taggedParts[i];
 
-            if (brokeLine && markdownFormat != MarkdownFormat.Italicize) {
+            if (brokeLine) {
                 Debug.Assert(!isInCodeBlock);
                 brokeLine = false;
-                bool canFormatAsBlock = (afterFirstLine, markdownFormat) switch {
-                    (false, MarkdownFormat.FirstLineAsCSharp) => true,
-                    (true, MarkdownFormat.FirstLineDefaultRestCSharp) => true,
-                    (_, MarkdownFormat.AllTextAsCSharp) => true,
-                    _ => false
-                };
+                bool canFormatAsBlock = !afterFirstLine;
 
                 if (!canFormatAsBlock) {
                     // If we're on a new line and there are no text parts in the upcoming line, then we
@@ -92,16 +79,8 @@ public static class MarkdownConverter {
                             || current.Tag == ContainerEnd
                             || current.Tag == TextTags.LineBreak) {
                             stringBuilder.Append(formattingOptions.NewLine);
-
-                            if (markdownFormat != MarkdownFormat.AllTextAsCSharp
-                                && markdownFormat != MarkdownFormat.FirstLineDefaultRestCSharp) {
-                                // End the codeblock
-                                stringBuilder.Append("```");
-
-                                // We know we're at a line break of some kind, but it could be
-                                // a container start, so let the standard handling take care of it.
-                                goto standardHandling;
-                            }
+                            stringBuilder.Append("```");
+                            goto standardHandling;
                         } else {
                             stringBuilder.Append(current.Text);
                         }
@@ -167,9 +146,6 @@ public static class MarkdownConverter {
         if (isInCodeBlock)
             endBlock();
 
-        if (!brokeLine && markdownFormat == MarkdownFormat.Italicize)
-            stringBuilder.Append("_");
-
         return;
 
         void addText(string? text) {
@@ -185,16 +161,10 @@ public static class MarkdownConverter {
             if (isInCodeBlock)
                 endBlock();
 
-            if (markdownFormat == MarkdownFormat.Italicize)
-                stringBuilder.Append("_");
-
             // Markdown needs 2 linebreaks to make a new paragraph
             stringBuilder.Append(formattingOptions.NewLine);
             stringBuilder.Append(formattingOptions.NewLine);
             brokeLine = true;
-
-            if (markdownFormat == MarkdownFormat.Italicize)
-                stringBuilder.Append("_");
         }
 
         void endBlock() {
@@ -205,12 +175,4 @@ public static class MarkdownConverter {
         bool indexIsTag(int i, params string[] tags)
             => i < taggedParts.Length && tags.Contains(taggedParts[i].Tag);
     }
-}
-
-public enum MarkdownFormat {
-    Default,
-    Italicize,
-    FirstLineAsCSharp,
-    FirstLineDefaultRestCSharp,
-    AllTextAsCSharp
 }

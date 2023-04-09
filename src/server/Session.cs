@@ -16,7 +16,7 @@ public abstract class Session : ServiceConnection {
                 implementationProvider = true,
                 textDocumentSync = TextDocumentSyncKind.Incremental,
                 completionProvider = new CompletionOptions {
-                    triggerCharacters = new[] { ".", ":" },
+                    triggerCharacters = new[] { ".", ":", " " },
                     resolveProvider = true,
                 }
             }

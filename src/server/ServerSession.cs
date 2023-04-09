@@ -25,34 +25,12 @@ public class ServerSession : Session {
 #endregion
 #region Event: Completion
     protected override Result<CompletionResult, ResponseError> Completion(CompletionParams @params) {
-        var document = DocumentService.Instance.GetDocumentByPath(@params.textDocument.uri.AbsolutePath);
-        var completionService = Microsoft.CodeAnalysis.Completion.CompletionService.GetService(document);
-        if (completionService == null || document == null) 
-            return Result<CompletionResult, ResponseError>.Error(new ResponseError() {
-                code = ErrorCodes.RequestCancelled,
-                message = "Could not get completions",
-            });
-
-        var position = @params.position.ToOffset(document);
-        Microsoft.CodeAnalysis.Completion.CompletionList? completions = null;
-        completions = completionService.GetCompletionsAsync(document, position).Result;
-
-        if (completions == null) return Result<CompletionResult, ResponseError>.Error(new ResponseError() {
-            code = ErrorCodes.RequestCancelled,
-            message = "Could not get completions",
-        });
-
-        DocumentationService.Instance.AssignCacheWithDocument(document);
-        return Result<CompletionResult, ResponseError>.Success(new CompletionResult(
-            completions.ItemsList.Select(item => {
-                var completionItem = item.ToCompletionItem();
-                DocumentationService.Instance.CacheCompletionItem(completionItem, item);
-                return completionItem;
-            }).ToArray()
-        ));
+        var result = CompletionService.Instance.GetCompletionItems(@params);
+        return Result<CompletionResult, ResponseError>.Success(result);
     }
     protected override Result<CompletionItem, ResponseError> ResolveCompletionItem(CompletionItem @params) {
-        DocumentationService.Instance.ResolveCompletionItem(@params);
+        CompletionService.Instance.ResolveItemChanges(@params);
+        CompletionService.Instance.ResolveItemDocumentation(@params);
         return Result<CompletionItem, ResponseError>.Success(@params);
     }
 #endregion 

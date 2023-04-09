@@ -1,4 +1,6 @@
+using LanguageServer.Parameters;
 using LanguageServer.Parameters.TextDocument;
+using Microsoft.CodeAnalysis;
 
 namespace dotRush.Server.Extensions;
 
@@ -14,7 +16,7 @@ public static class SymbolConverter {
             case "Local": return CompletionItemKind.Variable;
             case "Parameter": return CompletionItemKind.Variable;
             case "RangeVariable": return CompletionItemKind.Variable;
-            case "Const": return CompletionItemKind.Constant;
+            case "Constant": return CompletionItemKind.Constant;
             case "Event": return CompletionItemKind.Event;
             case "Field": return CompletionItemKind.Field;
             case "Method": return CompletionItemKind.Method;
@@ -30,12 +32,34 @@ public static class SymbolConverter {
 
     public static CompletionItem ToCompletionItem(this Microsoft.CodeAnalysis.Completion.CompletionItem item) {
         return new LanguageServer.Parameters.TextDocument.CompletionItem() {
-            label = item.DisplayText,
+            label = item.DisplayTextPrefix + item.DisplayText + item.DisplayTextSuffix,
             sortText = item.SortText,
             filterText = item.FilterText,
+            detail = item.InlineDescription,
+            data = item.GetHashCode(),
             kind = item.Tags.First().ToCompletionKind(),
-            insertTextFormat = InsertTextFormat.PlainText,
             preselect = item.Rules.MatchPriority == Microsoft.CodeAnalysis.Completion.MatchPriority.Preselect
+        };
+    }
+
+    public static TextEdit ToTextEdit(this Microsoft.CodeAnalysis.Text.TextChange change, Document document) {
+        var start = change.Span.Start.ToPosition(document);
+        var end = change.Span.End.ToPosition(document);
+
+        return new TextEdit() {
+            newText = change.NewText,
+            range = new LanguageServer.Parameters.Range() {
+                start = start,
+                end = end
+            }
+        };
+    }
+
+    public static TextEdit ToEmptyTextEdit(this Microsoft.CodeAnalysis.Text.TextChange change) {
+        var empty = new Position() { line = 0, character = 0 };
+        return new TextEdit() {
+            range = new LanguageServer.Parameters.Range() { start = empty, end = empty },
+            newText = string.Empty
         };
     }
 }
