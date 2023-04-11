@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis;
 namespace dotRush.Server.Services;
 
 public class CompilationService {
-    private const int CompilationDelay = 500;
     public static CompilationService Instance { get; private set; } = null!;
     private bool isActive = false;
 
@@ -21,7 +20,7 @@ public class CompilationService {
             return;
 
         isActive = true;
-        await Task.Delay(CompilationDelay);
+        //await Task.Delay(CompilationDelay);
         var document = DocumentService.Instance.GetDocumentByPath(path);
         if (document == null) {
             isActive = false;
@@ -35,10 +34,11 @@ public class CompilationService {
 
         var diagnostics = compilation.GetDiagnostics().ToServerDiagnostics();
         foreach (var doc in document.Project.Documents) {
-            var diagnosticForDoc = diagnostics.Where(diagnostic => diagnostic.source == doc.FilePath);
+            var documentDiagnostics = new List<LanguageServer.Parameters.TextDocument.Diagnostic>();
+            documentDiagnostics.AddRange(diagnostics.Where(diagnostic => diagnostic.source == doc.FilePath));
             proxy.TextDocument.PublishDiagnostics(new LanguageServer.Parameters.TextDocument.PublishDiagnosticsParams() {
                 uri = new Uri(doc.FilePath!),
-                diagnostics = diagnosticForDoc.ToArray(),
+                diagnostics = documentDiagnostics.ToArray(),
             });
         }
         isActive = false;

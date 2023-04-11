@@ -5,6 +5,7 @@ using LanguageServer.Parameters.Workspace;
 using Microsoft.CodeAnalysis.FindSymbols;
 using dotRush.Server.Extensions;
 using dotRush.Server.Services;
+using dotRush.Server.Handlers;
 
 namespace dotRush.Server;
 
@@ -23,6 +24,20 @@ public class ServerSession : Session {
         DocumentService.Instance.ApplyChanges(@params);
     }
 #endregion
+#region Event: FrameworkChanged
+    protected override void FrameworkChanged(FrameworkChangedArgs args) {
+        SolutionService.Instance.UpdateFramework(args.@params?.framework);
+    }
+#endregion
+#region Event: WorkspaceChanged
+    protected override void DidChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams @params) {
+        var added = @params.@event.added.Select(folder => folder.uri.AbsolutePath);
+        var removed = @params.@event.removed.Select(folder => folder.uri.AbsolutePath);
+        SolutionService.Instance.RemoveTargets(removed.ToArray());
+        SolutionService.Instance.AddTargets(added.ToArray());
+    }
+#endregion
+
 #region Event: Completion
     protected override Result<CompletionResult, ResponseError> Completion(CompletionParams @params) {
         var result = CompletionService.Instance.GetCompletionItems(@params);
@@ -90,4 +105,5 @@ public class ServerSession : Session {
     //     return Result<CodeActionResult, ResponseError>.Success(new CodeActionResult(actions.ToArray()));
     // }
 #endregion
+
 }

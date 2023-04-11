@@ -13,8 +13,8 @@ export class ClientController {
     private static frameworkList: string[] | undefined;
     private static devicePlatform: string | undefined;
 
-    private static initialize(target: string | undefined) {
-        const launchArguments = [ process.pid.toString(), target ?? '-' ];
+    private static initialize() {
+        const launchArguments = [ process.pid.toString() ];
         let serverExecutable = ClientController.serverExecutable;
 
         for (const folder of vscode.workspace.workspaceFolders ?? [])
@@ -28,7 +28,7 @@ export class ClientController {
             synchronize: { 
                 configurationSection: res.extensionId, 
                 fileEvents: vscode.workspace.createFileSystemWatcher("**/*.cs")
-            },
+            }
         };
 
         ClientController.client = new LanguageClient(
@@ -39,36 +39,38 @@ export class ClientController {
     }
 
 
-    public static start(target: string | undefined = undefined) {
-        ClientController.initialize(target);
+    public static start() {
+        if (ClientController.client !== undefined && ClientController.client.isRunning())
+            return;
+        ClientController.initialize();
         ClientController.client.start();
     }
     public static stop() {
-        if (ClientController.client !== undefined)
+        if (ClientController.client !== undefined && ClientController.client.isRunning())
             ClientController.client.stop();
     }
-    public static restart(target: string | undefined = undefined) {
-        if (ClientController.client !== undefined)
-            ClientController.client.stop();
-        ClientController.start(target);
+    public static restart() {
+        ClientController.client.stop();
+        ClientController.start();
     }
 
 
     public static async activate(context: vscode.ExtensionContext) {
+        ClientController.start();
+
         const extensionContext = await waitForActivation(res.extensionMeteorId);
-        if (extensionContext === undefined) {
-            ClientController.restart();
-            return;
+        if (extensionContext !== undefined) {
+            extensionContext?.exports.deviceChangedEventHandler.add((device: any) => {
+                const framework = ClientController.frameworkList?.find(f => {
+                    return f.includes(device.platform ?? 'undefined')
+                });
+                ClientController.devicePlatform = device?.platform;
+                ClientController.client.diagnostics?.clear();
+                ClientController.client.sendNotification('frameworkChanged', { framework: framework });
+            });
+            extensionContext?.exports.projectChangedEventHandler.add((project: any) => {
+                ClientController.frameworkList = project?.frameworks;
+            });
         }
-    
-        extensionContext?.exports.deviceChangedEventHandler.add((device: any) => {
-            ClientController.devicePlatform = device?.platform;
-            ClientController.restart(ClientController.frameworkList?.find(f => {
-                return f.includes(ClientController.devicePlatform ?? 'undefined')
-            }));
-        });
-        extensionContext?.exports.projectChangedEventHandler.add((project: any) => {
-            ClientController.frameworkList = project?.frameworks;
-        });
     }
 }

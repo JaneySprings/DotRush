@@ -66,7 +66,7 @@ public class DocumentService {
     }
 
     private Project? GetProjectByDocumentPath(string path) {
-        var relativeProjectPath = SolutionService.Instance.Projects?
+        var relativeProjectPath = SolutionService.Instance.ProjectFiles?
             .FirstOrDefault(it => path.Contains(Path.GetDirectoryName(it)!));
         if (relativeProjectPath == null) 
             return null;

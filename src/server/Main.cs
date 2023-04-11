@@ -7,7 +7,7 @@ namespace dotRush.Server;
 public class Program {
     public static async Task Main(string[] args) {
         LogConfig.InitializeLog();
-        await ConfigureServices(args[1], args.Skip(2).ToArray());
+        ConfigureServices(args.Skip(1).ToArray());
 
         var server = new ServerSession(Console.OpenStandardInput(), Console.OpenStandardOutput());
         var ideProcess = Process.GetProcessById(int.Parse(args[0]));
@@ -18,13 +18,13 @@ public class Program {
         await server.Listen();
     }
 
-    private static async Task ConfigureServices(string framework, string[] targets) {
+    private static void ConfigureServices(string[] targets) {
         CompilationService.Initialize();
         RefactoringService.Initialize();
         CompletionService.Initialize();
         DocumentService.Initialize();
         LoggingService.Initialize();
 
-        await SolutionService.Initialize(framework, targets);
+        SolutionService.Initialize(targets);
     }
 }
