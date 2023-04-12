@@ -19,7 +19,7 @@ public class CompletionService {
 
     public CompletionResult GetCompletionItems(CompletionParams @params) {
         var completionItems = new List<CompletionItem>();
-        var document = DocumentService.Instance.GetDocumentByPath(@params.textDocument.uri.AbsolutePath);
+        var document = DocumentService.Instance.GetDocumentByPath(@params.textDocument.uri.LocalPath);
         var completionService = Microsoft.CodeAnalysis.Completion.CompletionService.GetService(document);
         if (completionService == null || document == null) 
             return new CompletionResult(completionItems.ToArray());

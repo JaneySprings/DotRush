@@ -26,7 +26,7 @@ public class DocumentService {
     }
 
     public string? ApplyTextChanges(DidChangeTextDocumentParams parameters) {
-        var document = GetDocumentByPath(parameters.textDocument.uri.AbsolutePath);
+        var document = GetDocumentByPath(parameters.textDocument.uri.LocalPath);
         if (document == null) 
             return null;
 
@@ -39,7 +39,7 @@ public class DocumentService {
         
         var changes = document.Project.Solution.WithDocumentText(document.Id, newText);
         SolutionService.Instance.UpdateSolution(changes);
-        return parameters.textDocument.uri.AbsolutePath;
+        return parameters.textDocument.uri.LocalPath;
     }
 
     public void ApplyChanges(DidChangeWatchedFilesParams parameters) {
@@ -47,19 +47,19 @@ public class DocumentService {
             if (change.type != FileChangeType.Created && change.type != FileChangeType.Deleted) 
                 continue;
 
-            var project = GetProjectByDocumentPath(change.uri.AbsolutePath);
+            var project = GetProjectByDocumentPath(change.uri.LocalPath);
             if (project == null) 
                 continue;
             
             if (change.type == FileChangeType.Deleted) {
-                var document = GetDocumentByPath(change.uri.AbsolutePath);
+                var document = GetDocumentByPath(change.uri.LocalPath);
                 var updates = project.RemoveDocument(document!.Id);
                 SolutionService.Instance.UpdateSolution(updates.Solution);
             }
 
             if (change.type == FileChangeType.Created) {
-                var documentContent = File.ReadAllText(change.uri.AbsolutePath);
-                var updates = project.AddDocument(Path.GetFileName(change.uri.AbsolutePath), documentContent, null, change.uri.AbsolutePath);
+                var documentContent = File.ReadAllText(change.uri.LocalPath);
+                var updates = project.AddDocument(Path.GetFileName(change.uri.LocalPath), documentContent, null, change.uri.LocalPath);
                 SolutionService.Instance.UpdateSolution(updates.Project.Solution);
             }
         }
