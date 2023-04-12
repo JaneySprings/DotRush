@@ -49,6 +49,7 @@ public class ServerSession : Session {
         return Result<CompletionItem, ResponseError>.Success(@params);
     }
 #endregion 
+
 #region Event: Definitions
     protected override Result<LocationSingleOrArray, ResponseError> GotoDefinition(TextDocumentPositionParams @params) {
         var symbol = SemanticConverter.GetSymbolForPosition(@params.position, @params.textDocument.uri.LocalPath);
@@ -91,6 +92,19 @@ public class ServerSession : Session {
             .Where(l => File.Exists(l.Document.FilePath))
             .Select(loc => loc.ToLocation());
         return Result<LanguageServer.Parameters.Location[], ResponseError>.Success(references.ToArray());
+    }
+#endregion
+
+#region Event: Rename
+    protected override Result<WorkspaceEdit, ResponseError> Rename(RenameParams @params) {
+        var document = DocumentService.Instance.GetDocumentByPath(@params.textDocument.uri.LocalPath);
+        if (document == null) return Result<WorkspaceEdit, ResponseError>.Error(new ResponseError() {
+            code = ErrorCodes.RequestCancelled,
+            message = "Could not get rename",
+        });
+
+        var edits = RefactoringService.Instance.GetWorkspaceEdit(document, @params.position, @params.newName);
+        return Result<WorkspaceEdit, ResponseError>.Success(edits);
     }
 #endregion
 #region Event: CodeActions

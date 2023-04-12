@@ -13,6 +13,7 @@ public abstract class Session : ServiceConnection {
         var result = new InitializeResult {
             capabilities = new ServerCapabilities {
                 //codeActionProvider = true,
+                renameProvider = true,
                 referencesProvider = true,
                 definitionProvider = true,
                 implementationProvider = true,
