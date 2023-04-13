@@ -1,2 +1,1 @@
-TODO
-![image](https://github.com/JaneySprings/MauiReflectionBug/raw/master/demo.gif)
+![image](https://github.com/JaneySprings/DotRush/raw/main/res/icon.png)
