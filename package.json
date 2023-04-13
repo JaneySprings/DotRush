@@ -10,7 +10,7 @@
   "preview": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/JaneySprings/dotRush"
+    "url": "https://github.com/JaneySprings/DotRush"
   },
   "categories": [
     "Other"
@@ -30,8 +30,8 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./src/client/tsconfig.json --sourceMap false",
-    "watch": "tsc -watch -p ./src/client/tsconfig.json"
+    "compile": "tsc -p ./src/VSCode.Extension/tsconfig.json --sourceMap false",
+    "watch": "tsc -watch -p ./src/VSCode.Extension/tsconfig.json"
   },
   "devDependencies": {
     "@types/node": "16.x",

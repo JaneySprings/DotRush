@@ -11,7 +11,7 @@ public string RootDirectory => MakeAbsolute(Directory(".")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
 public string ExtensionStagingDirectory => _Path.Combine(RootDirectory, "extension");
 public string ExtensionAssembliesDirectory => _Path.Combine(ExtensionStagingDirectory, "bin");
-public string ServerProjectFilePath => _Path.Combine(RootDirectory, "src", "server", "dotRush.csproj");
+public string ServerProjectFilePath => _Path.Combine(RootDirectory, "src", "DotRush.Server", "DotRush.csproj");
 
 
 Setup(context => {
@@ -54,7 +54,7 @@ Task("vsix")
       ReplaceRegexInFiles(file.ToString(), regex, $"  $1\"{version}\"$3", options);
    })
    .Does(() => VscePackage(new VscePackageSettings {
-      OutputFilePath = _Path.Combine(ArtifactsDirectory, $"dotRush.{version}-{configuration}.vsix"),
+      OutputFilePath = _Path.Combine(ArtifactsDirectory, $"DotRush.{version}-{configuration}.vsix"),
       WorkingDirectory = RootDirectory,
    }));
 
