@@ -17,6 +17,8 @@ public abstract class Session : ServiceConnection {
                 referencesProvider = true,
                 definitionProvider = true,
                 implementationProvider = true,
+                documentFormattingProvider = true,
+                documentRangeFormattingProvider = true,
                 textDocumentSync = TextDocumentSyncKind.Incremental,
                 completionProvider = new CompletionOptions {
                     triggerCharacters = new[] { ".", ":", " " },

@@ -21,7 +21,7 @@ public class CompilationService {
 
         isActive = true;
         //await Task.Delay(CompilationDelay);
-        var document = DocumentService.Instance.GetDocumentByPath(path);
+        var document = DocumentService.GetDocumentByPath(path);
         if (document == null) {
             isActive = false;
             return;

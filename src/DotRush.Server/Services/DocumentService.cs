@@ -7,16 +7,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace DotRush.Server.Services;
 
 public class DocumentService {
-    public static DocumentService Instance { get; private set; } = null!;
-
-    private DocumentService() {}
-
-    public static void Initialize() {
-        var service = new DocumentService();
-        Instance = service;
-    }
-
-    public Document? GetDocumentByPath(string? path) {
+    public static Document? GetDocumentByPath(string? path) {
         if (string.IsNullOrEmpty(path)) 
             return null;
         var documentId = SolutionService.Instance.Solution?
@@ -25,7 +16,7 @@ public class DocumentService {
         return SolutionService.Instance.Solution?.GetDocument(documentId);
     }
 
-    public string? ApplyTextChanges(DidChangeTextDocumentParams parameters) {
+    public static string? ApplyTextChanges(DidChangeTextDocumentParams parameters) {
         var document = GetDocumentByPath(parameters.textDocument.uri.LocalPath);
         if (document == null) 
             return null;
@@ -42,7 +33,7 @@ public class DocumentService {
         return parameters.textDocument.uri.LocalPath;
     }
 
-    public void ApplyChanges(DidChangeWatchedFilesParams parameters) {
+    public static void ApplyChanges(DidChangeWatchedFilesParams parameters) {
         foreach (var change in parameters.changes) {
             if (change.type != FileChangeType.Created && change.type != FileChangeType.Deleted) 
                 continue;
@@ -65,7 +56,7 @@ public class DocumentService {
         }
     }
 
-    private Project? GetProjectByDocumentPath(string path) {
+    private static Project? GetProjectByDocumentPath(string path) {
         var relativeProjectPath = SolutionService.Instance.ProjectFiles?
             .FirstOrDefault(it => path.Contains(Path.GetDirectoryName(it)!));
         if (relativeProjectPath == null) 
@@ -78,7 +69,7 @@ public class DocumentService {
         return SolutionService.Instance.Solution?.Projects.FirstOrDefault(it => it.FilePath == relativeProjectPath);
     }
 
-    private bool ValidatePath(string path) {
+    private static bool ValidatePath(string path) {
         var fileDirectoryTokens = path.Split(Path.DirectorySeparatorChar);
         if (fileDirectoryTokens.FirstOrDefault(it => it.StartsWith(".")) != null || 
             fileDirectoryTokens.Contains("bin") || fileDirectoryTokens.Contains("obj")) 

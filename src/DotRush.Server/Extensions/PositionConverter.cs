@@ -53,7 +53,7 @@ public static class PositionConverter {
 
     public static LanguageServer.Parameters.Location? ToLocation(this Location location) {
         var loc = new LanguageServer.Parameters.Location();
-        var document = DocumentService.Instance.GetDocumentByPath(location.SourceTree?.FilePath);
+        var document = DocumentService.GetDocumentByPath(location.SourceTree?.FilePath);
         if (document == null) 
             return null;
 
@@ -67,5 +67,11 @@ public static class PositionConverter {
         loc.uri = new Uri(location.Document.FilePath!);
         loc.range = location.Location.SourceSpan.ToRange(location.Document);
         return loc;
+    }
+
+    public static TextSpan ToTextSpan(this LanguageServer.Parameters.Range range, Document document) {
+        var startPosition = range.start.ToOffset(document);
+        var endPosition = range.end.ToOffset(document);
+        return TextSpan.FromBounds(startPosition, endPosition);
     }
 }

@@ -4,8 +4,9 @@
 using _Path = System.IO.Path;
 
 string version;
-var target = Argument("target", "vsix");
-var configuration = Argument("configuration", "debug");
+string runtime = Argument<string>("runtime", null);
+string target = Argument<string>("target", "vsix");
+string configuration = Argument<string>("configuration", "debug");
 
 public string RootDirectory => MakeAbsolute(Directory(".")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
@@ -29,6 +30,7 @@ Task("build-server").Does(() => DotNetBuild(ServerProjectFilePath, new DotNetBui
    MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
    OutputDirectory = ExtensionAssembliesDirectory,
    Configuration = configuration,
+   Runtime = runtime
 }));
 
 Task("manifest").Does(() => {

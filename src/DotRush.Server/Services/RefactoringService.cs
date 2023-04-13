@@ -1,22 +1,18 @@
 using DotRush.Server.Extensions;
 using LanguageServer.Parameters;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Rename;
 
 namespace DotRush.Server.Services;
 
 public class RefactoringService {
-    public static RefactoringService Instance { get; private set; } = null!;
-
-    private RefactoringService() {}
-
-    public static void Initialize() {
-        var service = new RefactoringService();
-        Instance = service;
-    }
-
-    public WorkspaceEdit GetWorkspaceEdit(Document document, Position position, string newName) {
+    public static WorkspaceEdit GetWorkspaceEdit(string filePath, Position position, string newName) {
         var textDocumentEdits = new List<TextDocumentEdit>();
+        var document = DocumentService.GetDocumentByPath(filePath);
+        if (document == null)
+            return new WorkspaceEdit();
+        
         var symbol = SemanticConverter.GetSymbolForPosition(position, document.FilePath!);
         if (symbol == null) 
             return new WorkspaceEdit();
@@ -41,5 +37,29 @@ public class RefactoringService {
         }
 
         return new WorkspaceEdit() { documentChanges = textDocumentEdits.ToArray() };
+    }
+
+    public static List<TextEdit> GetFormattingEdits(string filePath) {
+        var edits = new List<TextEdit>();
+        var document = DocumentService.GetDocumentByPath(filePath);
+        if (document == null) 
+            return edits;
+
+        var options = SolutionService.Instance.Workspace?.Options;
+        var formattedDoc = Formatter.FormatAsync(document, options).Result;
+        var textChanges = formattedDoc.GetTextChangesAsync(document).Result;
+        return textChanges.Select(x => x.ToTextEdit(document)).ToList();
+    }
+
+    public static List<TextEdit> GetFormattingEdits(string filePath, LanguageServer.Parameters.Range range) {
+        var edits = new List<TextEdit>();
+        var document = DocumentService.GetDocumentByPath(filePath);
+        if (document == null) 
+            return edits;
+
+        var options = SolutionService.Instance.Workspace?.Options;
+        var formattedDoc = Formatter.FormatAsync(document, range.ToTextSpan(document), options).Result;
+        var textChanges = formattedDoc.GetTextChangesAsync(document).Result;
+        return textChanges.Select(x => x.ToTextEdit(document)).ToList();
     }
 }

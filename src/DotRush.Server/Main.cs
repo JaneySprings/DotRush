@@ -20,9 +20,7 @@ public class Program {
 
     private static void ConfigureServices(string[] targets) {
         CompilationService.Initialize();
-        RefactoringService.Initialize();
         CompletionService.Initialize();
-        DocumentService.Initialize();
         LoggingService.Initialize();
 
         SolutionService.Initialize(targets);

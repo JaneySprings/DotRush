@@ -14,14 +14,14 @@ public class ServerSession : Session {
 
 #region Event: DocumentSync 
     protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params) {
-        DocumentService.Instance.ApplyTextChanges(@params);
+        DocumentService.ApplyTextChanges(@params);
         CompilationService.Instance.Compile(@params.textDocument.uri.LocalPath, Proxy);
     }
     protected override void DidOpenTextDocument(DidOpenTextDocumentParams @params) {
         CompilationService.Instance.Compile(@params.textDocument.uri.LocalPath, Proxy);
     }
     protected override void DidChangeWatchedFiles(DidChangeWatchedFilesParams @params) {
-        DocumentService.Instance.ApplyChanges(@params);
+        DocumentService.ApplyChanges(@params);
     }
 #endregion
 #region Event: FrameworkChanged
@@ -97,16 +97,22 @@ public class ServerSession : Session {
 
 #region Event: Rename
     protected override Result<WorkspaceEdit, ResponseError> Rename(RenameParams @params) {
-        var document = DocumentService.Instance.GetDocumentByPath(@params.textDocument.uri.LocalPath);
-        if (document == null) return Result<WorkspaceEdit, ResponseError>.Error(new ResponseError() {
-            code = ErrorCodes.RequestCancelled,
-            message = "Could not get rename",
-        });
-
-        var edits = RefactoringService.Instance.GetWorkspaceEdit(document, @params.position, @params.newName);
+        var edits = RefactoringService.GetWorkspaceEdit(@params.textDocument.uri.LocalPath, @params.position, @params.newName);
         return Result<WorkspaceEdit, ResponseError>.Success(edits);
     }
 #endregion
+#region Event: Formatting
+    protected override Result<TextEdit[], ResponseError> DocumentFormatting(DocumentFormattingParams @params) {
+        var edits = RefactoringService.GetFormattingEdits(@params.textDocument.uri.LocalPath);
+        return Result<TextEdit[], ResponseError>.Success(edits.ToArray());
+    }
+    protected override Result<TextEdit[], ResponseError> DocumentRangeFormatting(DocumentRangeFormattingParams @params) {
+        var edits = RefactoringService.GetFormattingEdits(@params.textDocument.uri.LocalPath, @params.range);
+        return Result<TextEdit[], ResponseError>.Success(edits.ToArray());
+    }
+
+#endregion
+
 #region Event: CodeActions
     // protected override Result<CodeActionResult, ResponseError> CodeAction(CodeActionParams @params) {
     //     var document = DocumentService.Instance.GetDocumentByPath(@params.textDocument.uri.LocalPath);
