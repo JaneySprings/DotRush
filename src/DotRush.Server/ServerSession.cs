@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.FindSymbols;
 using DotRush.Server.Extensions;
 using DotRush.Server.Services;
 using DotRush.Server.Handlers;
+using Microsoft.CodeAnalysis;
 
 namespace DotRush.Server;
 
@@ -72,8 +73,17 @@ public class ServerSession : Session {
                 message = "Could not get implementation",
             });
 
-        var impl = SymbolFinder.FindImplementationsAsync(symbol, solution).Result;
-        var implementations = impl.SelectMany(i => i.Locations).Select(loc => loc.ToLocation());
+        var results = new List<ISymbol>();
+        results.AddRange(SymbolFinder.FindImplementationsAsync(symbol, solution).Result);
+
+        if (symbol is IMethodSymbol methodSymbol) 
+            results.AddRange(SymbolFinder.FindOverridesAsync(methodSymbol, solution).Result);
+        if (symbol is INamedTypeSymbol namedTypeSymbol) {
+            results.AddRange(SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, solution).Result);
+            results.AddRange(SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, solution).Result);
+        }
+
+        var implementations = results.SelectMany(i => i.Locations).Select(loc => loc.ToLocation());
         return Result<LocationSingleOrArray, ResponseError>.Success(new LocationSingleOrArray(implementations.ToArray()));
     }
 #endregion
@@ -94,7 +104,6 @@ public class ServerSession : Session {
         return Result<LanguageServer.Parameters.Location[], ResponseError>.Success(references.ToArray());
     }
 #endregion
-
 #region Event: Rename
     protected override Result<WorkspaceEdit, ResponseError> Rename(RenameParams @params) {
         var edits = RefactoringService.GetWorkspaceEdit(@params.textDocument.uri.LocalPath, @params.position, @params.newName);
@@ -112,7 +121,6 @@ public class ServerSession : Session {
     }
 
 #endregion
-
 #region Event: CodeActions
     // protected override Result<CodeActionResult, ResponseError> CodeAction(CodeActionParams @params) {
     //     var document = DocumentService.Instance.GetDocumentByPath(@params.textDocument.uri.LocalPath);
