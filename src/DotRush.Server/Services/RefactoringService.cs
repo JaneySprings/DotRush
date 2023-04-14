@@ -45,8 +45,7 @@ public class RefactoringService {
         if (document == null) 
             return edits;
 
-        var options = SolutionService.Instance.Workspace?.Options;
-        var formattedDoc = Formatter.FormatAsync(document, options).Result;
+        var formattedDoc = Formatter.FormatAsync(document).Result;
         var textChanges = formattedDoc.GetTextChangesAsync(document).Result;
         return textChanges.Select(x => x.ToTextEdit(document)).ToList();
     }
@@ -57,8 +56,7 @@ public class RefactoringService {
         if (document == null) 
             return edits;
 
-        var options = SolutionService.Instance.Workspace?.Options;
-        var formattedDoc = Formatter.FormatAsync(document, range.ToTextSpan(document), options).Result;
+        var formattedDoc = Formatter.FormatAsync(document, range.ToTextSpan(document)).Result;
         var textChanges = formattedDoc.GetTextChangesAsync(document).Result;
         return textChanges.Select(x => x.ToTextEdit(document)).ToList();
     }
