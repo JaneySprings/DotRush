@@ -16,10 +16,10 @@ public class ServerSession : Session {
 #region Event: DocumentSync 
     protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params) {
         DocumentService.ApplyTextChanges(@params);
-        CompilationService.Instance.Compile(@params.textDocument.uri.LocalPath, Proxy);
+        CompilationService.Instance.Compile(@params.textDocument.uri.LocalPath, Proxy).Wait();
     }
     protected override void DidOpenTextDocument(DidOpenTextDocumentParams @params) {
-        CompilationService.Instance.Compile(@params.textDocument.uri.LocalPath, Proxy);
+        CompilationService.Instance.Compile(@params.textDocument.uri.LocalPath, Proxy).Wait();
     }
     protected override void DidChangeWatchedFiles(DidChangeWatchedFilesParams @params) {
         DocumentService.ApplyChanges(@params);
@@ -50,6 +50,16 @@ public class ServerSession : Session {
         return Result<CompletionItem, ResponseError>.Success(@params);
     }
 #endregion 
+#region Event: Symbols 
+    // protected override Result<SymbolInformation[], ResponseError> DocumentSymbol(DocumentSymbolParams @params) {
+    //     var symbols = SymbolService.GetDocumentSymbols(@params.textDocument.uri.LocalPath);
+    //     return Result<SymbolInformation[], ResponseError>.Success(symbols.ToArray());
+    // }
+    // protected override Result<SymbolInformation[], ResponseError> WorkspaceSymbol(WorkspaceSymbolParams @params) {
+    //     var symbols = SymbolService.GetWorkspaceSymbols(@params.query);
+    //     return Result<SymbolInformation[], ResponseError>.Success(symbols.ToArray());
+    // }
+#endregion
 
 #region Event: Definitions
     protected override Result<LocationSingleOrArray, ResponseError> GotoDefinition(TextDocumentPositionParams @params) {
