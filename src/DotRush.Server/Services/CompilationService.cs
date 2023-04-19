@@ -41,7 +41,7 @@ public class CompilationService {
             var documentDiagnostics = new List<LanguageServer.Parameters.TextDocument.Diagnostic>();
             documentDiagnostics.AddRange(diagnostics.Where(diagnostic => diagnostic.source == location));
             proxy.TextDocument.PublishDiagnostics(new LanguageServer.Parameters.TextDocument.PublishDiagnosticsParams() {
-                uri = new Uri(location),
+                uri = location.ToUri(),
                 diagnostics = documentDiagnostics.ToArray(),
             });
         }

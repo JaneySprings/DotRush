@@ -19,7 +19,7 @@ public class CompletionService {
 
     public CompletionResult GetCompletionItems(CompletionParams @params) {
         var completionItems = new List<CompletionItem>();
-        var document = DocumentService.GetDocumentByPath(@params.textDocument.uri.LocalPath);
+        var document = DocumentService.GetDocumentByPath(@params.textDocument.uri.ToSystemPath());
         var completionService = Microsoft.CodeAnalysis.Completion.CompletionService.GetService(document);
         if (completionService == null || document == null) 
             return new CompletionResult(completionItems.ToArray());
@@ -72,7 +72,6 @@ public class CompletionService {
                 .ToArray();
         }
     }
-
 
     private void AssignCacheWithDocument(Document document) {
         TargetDocument = document;

@@ -30,7 +30,7 @@ public class RefactoringService {
                 textDocumentEdits.Add(new TextDocumentEdit() { 
                     edits = edits,
                     textDocument = new VersionedTextDocumentIdentifier() { 
-                        uri = new Uri(newDocument.FilePath!) 
+                        uri = newDocument.FilePath?.ToUri()
                     }
                 });
             }

@@ -57,14 +57,14 @@ public static class PositionConverter {
         if (document == null) 
             return null;
 
-        loc.uri = new Uri(document.FilePath!);
+        loc.uri = document.FilePath?.ToUri();
         loc.range = location.SourceSpan.ToRange(document);
         return loc;
     }
 
     public static LanguageServer.Parameters.Location ToLocation(this ReferenceLocation location) {
         var loc = new LanguageServer.Parameters.Location();
-        loc.uri = new Uri(location.Document.FilePath!);
+        loc.uri = location.Document.FilePath?.ToUri();
         loc.range = location.Location.SourceSpan.ToRange(location.Document);
         return loc;
     }

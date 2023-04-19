@@ -16,21 +16,20 @@ public class DocumentService {
         return SolutionService.Instance.Solution?.GetDocument(documentId);
     }
 
-    public static string? ApplyTextChanges(DidChangeTextDocumentParams parameters) {
-        var document = GetDocumentByPath(parameters.textDocument.uri.LocalPath);
+    public static void ApplyTextChanges(DidChangeTextDocumentParams parameters) {
+        var document = GetDocumentByPath(parameters.textDocument.uri.ToSystemPath());
         if (document == null) 
-            return null;
+            return;
 
-        var originText = document.GetTextAsync().Result;
-        var newText = originText.WithChanges(parameters.contentChanges.Select(change => {
-            var start = change.range.start.ToOffset(document);
-            var end = change.range.end.ToOffset(document);
-            return new TextChange(TextSpan.FromBounds(start, end), change.text);
-        }));
-        
-        var changes = document.Project.Solution.WithDocumentText(document.Id, newText);
-        SolutionService.Instance.UpdateSolution(changes);
-        return parameters.textDocument.uri.LocalPath;
+        //TODO: Incremental sync (unstable)
+        // var originText = document.GetTextAsync().Result;
+        // var newText = originText.WithChanges(parameters.contentChanges.Select(change => {
+        //     var start = change.range.start.ToOffset(document);
+        //     var end = change.range.end.ToOffset(document);
+        //     return new TextChange(TextSpan.FromBounds(start, end), change.text);
+        // }));
+        var updatedDocument = document.WithText(SourceText.From(parameters.contentChanges[0].text));
+        SolutionService.Instance.UpdateSolution(updatedDocument.Project.Solution);
     }
 
     public static void ApplyChanges(DidChangeWatchedFilesParams parameters) {
@@ -38,19 +37,19 @@ public class DocumentService {
             if (change.type != FileChangeType.Created && change.type != FileChangeType.Deleted) 
                 continue;
 
-            var project = GetProjectByDocumentPath(change.uri.LocalPath);
+            var project = GetProjectByDocumentPath(change.uri.ToSystemPath());
             if (project == null) 
                 continue;
             
             if (change.type == FileChangeType.Deleted) {
-                var document = GetDocumentByPath(change.uri.LocalPath);
+                var document = GetDocumentByPath(change.uri.ToSystemPath());
                 var updates = project.RemoveDocument(document!.Id);
                 SolutionService.Instance.UpdateSolution(updates.Solution);
             }
 
             if (change.type == FileChangeType.Created) {
-                var documentContent = File.ReadAllText(change.uri.LocalPath);
-                var updates = project.AddDocument(Path.GetFileName(change.uri.LocalPath), documentContent, null, change.uri.LocalPath);
+                var documentContent = File.ReadAllText(change.uri.ToSystemPath());
+                var updates = project.AddDocument(Path.GetFileName(change.uri.ToSystemPath()), documentContent, null, change.uri.ToSystemPath());
                 SolutionService.Instance.UpdateSolution(updates.Project.Solution);
             }
         }

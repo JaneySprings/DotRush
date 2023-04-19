@@ -16,10 +16,10 @@ public class ServerSession : Session {
 #region Event: DocumentSync 
     protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params) {
         DocumentService.ApplyTextChanges(@params);
-        CompilationService.Instance.Compile(@params.textDocument.uri.LocalPath, Proxy).Wait();
+        CompilationService.Instance.Compile(@params.textDocument.uri.ToSystemPath(), Proxy).Wait();
     }
     protected override void DidOpenTextDocument(DidOpenTextDocumentParams @params) {
-        CompilationService.Instance.Compile(@params.textDocument.uri.LocalPath, Proxy).Wait();
+        CompilationService.Instance.Compile(@params.textDocument.uri.ToSystemPath(), Proxy).Wait();
     }
     protected override void DidChangeWatchedFiles(DidChangeWatchedFilesParams @params) {
         DocumentService.ApplyChanges(@params);
@@ -32,8 +32,8 @@ public class ServerSession : Session {
 #endregion
 #region Event: WorkspaceChanged
     protected override void DidChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams @params) {
-        var added = @params.@event.added.Select(folder => folder.uri.LocalPath);
-        var removed = @params.@event.removed.Select(folder => folder.uri.LocalPath);
+        var added = @params.@event.added.Select(folder => folder.uri.ToSystemPath());
+        var removed = @params.@event.removed.Select(folder => folder.uri.ToSystemPath());
         SolutionService.Instance.RemoveTargets(removed.ToArray());
         SolutionService.Instance.AddTargets(added.ToArray());
     }
@@ -50,32 +50,23 @@ public class ServerSession : Session {
         return Result<CompletionItem, ResponseError>.Success(@params);
     }
 #endregion 
-#region Event: Symbols 
-    // protected override Result<SymbolInformation[], ResponseError> DocumentSymbol(DocumentSymbolParams @params) {
-    //     var symbols = SymbolService.GetDocumentSymbols(@params.textDocument.uri.LocalPath);
-    //     return Result<SymbolInformation[], ResponseError>.Success(symbols.ToArray());
-    // }
-    // protected override Result<SymbolInformation[], ResponseError> WorkspaceSymbol(WorkspaceSymbolParams @params) {
-    //     var symbols = SymbolService.GetWorkspaceSymbols(@params.query);
-    //     return Result<SymbolInformation[], ResponseError>.Success(symbols.ToArray());
-    // }
-#endregion
 
 #region Event: Definitions
     protected override Result<LocationSingleOrArray, ResponseError> GotoDefinition(TextDocumentPositionParams @params) {
-        var symbol = SemanticConverter.GetSymbolForPosition(@params.position, @params.textDocument.uri.LocalPath);
-        if (symbol == null) return Result<LocationSingleOrArray, ResponseError>.Error(new ResponseError() {
+        var symbol = SemanticConverter.GetSymbolForPosition(@params.position, @params.textDocument.uri.ToSystemPath());
+        var defs = SymbolFinder.FindSourceDefinitionAsync(symbol, SolutionService.Instance.Solution!).Result;
+        if (symbol == null || defs == null) return Result<LocationSingleOrArray, ResponseError>.Error(new ResponseError() {
             code = ErrorCodes.RequestCancelled,
             message = "Could not get definition",
         });
 
-        var definitions = symbol.Locations.Select(loc => loc.ToLocation());
+        var definitions = defs.Locations.Select(loc => loc.ToLocation());
         return Result<LocationSingleOrArray, ResponseError>.Success(new LocationSingleOrArray(definitions.ToArray()));
     }
 #endregion
 #region Event: Implementations
     protected override Result<LocationSingleOrArray, ResponseError> GotoImplementation(TextDocumentPositionParams @params) {
-        var symbol = SemanticConverter.GetSymbolForPosition(@params.position, @params.textDocument.uri.LocalPath);
+        var symbol = SemanticConverter.GetSymbolForPosition(@params.position, @params.textDocument.uri.ToSystemPath());
         var solution = SolutionService.Instance.Solution;
         if (symbol == null || solution == null) 
             return Result<LocationSingleOrArray, ResponseError>.Error(new ResponseError() {
@@ -99,7 +90,7 @@ public class ServerSession : Session {
 #endregion
 #region Event: FindReferences
     protected override Result<LanguageServer.Parameters.Location[], ResponseError> FindReferences(ReferenceParams @params) {
-        var symbol = SemanticConverter.GetSymbolForPosition(@params.position, @params.textDocument.uri.LocalPath);
+        var symbol = SemanticConverter.GetSymbolForPosition(@params.position, @params.textDocument.uri.ToSystemPath());
         var solution = SolutionService.Instance.Solution;
         if (symbol == null || solution == null) return Result<LanguageServer.Parameters.Location[], ResponseError>.Error(new ResponseError() {
             code = ErrorCodes.RequestCancelled,
@@ -116,24 +107,24 @@ public class ServerSession : Session {
 #endregion
 #region Event: Rename
     protected override Result<WorkspaceEdit, ResponseError> Rename(RenameParams @params) {
-        var edits = RefactoringService.GetWorkspaceEdit(@params.textDocument.uri.LocalPath, @params.position, @params.newName);
+        var edits = RefactoringService.GetWorkspaceEdit(@params.textDocument.uri.ToSystemPath(), @params.position, @params.newName);
         return Result<WorkspaceEdit, ResponseError>.Success(edits);
     }
 #endregion
 #region Event: Formatting
     protected override Result<TextEdit[], ResponseError> DocumentFormatting(DocumentFormattingParams @params) {
-        var edits = RefactoringService.GetFormattingEdits(@params.textDocument.uri.LocalPath);
+        var edits = RefactoringService.GetFormattingEdits(@params.textDocument.uri.ToSystemPath());
         return Result<TextEdit[], ResponseError>.Success(edits.ToArray());
     }
     protected override Result<TextEdit[], ResponseError> DocumentRangeFormatting(DocumentRangeFormattingParams @params) {
-        var edits = RefactoringService.GetFormattingEdits(@params.textDocument.uri.LocalPath, @params.range);
+        var edits = RefactoringService.GetFormattingEdits(@params.textDocument.uri.ToSystemPath(), @params.range);
         return Result<TextEdit[], ResponseError>.Success(edits.ToArray());
     }
 
 #endregion
 #region Event: CodeActions
     // protected override Result<CodeActionResult, ResponseError> CodeAction(CodeActionParams @params) {
-    //     var document = DocumentService.Instance.GetDocumentByPath(@params.textDocument.uri.LocalPath);
+    //     var document = DocumentService.Instance.GetDocumentByPath(@params.textDocument.uri.ToSystemPath());
     //     if (document == null) return Result<CodeActionResult, ResponseError>.Error(new ResponseError() {
     //         code = ErrorCodes.RequestCancelled,
     //         message = "Could not get code actions",

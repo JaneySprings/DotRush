@@ -23,27 +23,32 @@ public class SolutionService {
         MSBuildLocator.RegisterInstance(instances.FirstOrDefault());
 
         Instance = new SolutionService();
-        Instance.Workspace = MSBuildWorkspace.Create();
-        Instance.Workspace.LoadMetadataForReferencedProjects = true;
-        Instance.Workspace.SkipUnrecognizedProjects = true;
-        Instance.AddTargets(targets);
+        foreach (var target in targets)
+            foreach (var path in Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories)) 
+                Instance.ProjectFiles.Add(path);
+        
+        Instance.ReloadTargets();
     }
 
 
-    public void UpdateSolution(Solution solution) {
+    public void UpdateSolution(Solution? solution) {
         Solution = solution;
     }
     public void UpdateFramework(string? framework) {
         if (targetFramework == framework) 
             return;
         targetFramework = framework;
-        ReloadAll();
+        ReloadTargets();
     }
+
+
     public void AddTargets(string[] targets) {
         foreach (var target in targets)
             foreach (var path in Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories)) 
                 if (ProjectFiles.Add(path)) 
                     LoadProject(path);
+
+        UpdateSolution(Workspace?.CurrentSolution);
     }
     public void RemoveTargets(string[] targets) {
         bool changed = false;
@@ -52,11 +57,9 @@ public class SolutionService {
                 changed = ProjectFiles.Remove(path);
 
         if (changed) 
-            ReloadAll();
+            ReloadTargets();
     }
-
-
-    private void ReloadAll() {
+    public void ReloadTargets() {
         var configuration = new Dictionary<string, string>();
         if (!string.IsNullOrEmpty(targetFramework))
             configuration.Add("TargetFramework", targetFramework);
@@ -67,12 +70,15 @@ public class SolutionService {
 
         foreach (var path in ProjectFiles) 
             LoadProject(path);
+
+        UpdateSolution(Workspace.CurrentSolution);
     }
+
+
     private void LoadProject(string path) {
         try {
             RestoreProject(path);
             Workspace!.OpenProjectAsync(path).Wait();
-            Solution = Workspace!.CurrentSolution;
             LoggingService.Instance.LogMessage("Loaded project {0}", path);
         } catch(Exception ex) {
             LoggingService.Instance.LogError(ex.Message, ex);

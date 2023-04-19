@@ -19,7 +19,7 @@ public abstract class Session : ServiceConnection {
                 implementationProvider = true,
                 documentFormattingProvider = true,
                 documentRangeFormattingProvider = true,
-                textDocumentSync = TextDocumentSyncKind.Incremental,
+                textDocumentSync = TextDocumentSyncKind.Full,
                 completionProvider = new CompletionOptions {
                     triggerCharacters = new[] { ".", ":", " " },
                     resolveProvider = true,
