@@ -15,6 +15,31 @@ public class DocumentService {
             .FirstOrDefault();
         return SolutionService.Instance.Solution?.GetDocument(documentId);
     }
+    public static IEnumerable<Document>? GetDocumentsByDirectoryPath(string? path) {
+        if (string.IsNullOrEmpty(path)) 
+            return null;
+
+        if (!path.EndsWith(Path.DirectorySeparatorChar))
+            path += Path.DirectorySeparatorChar;
+        
+        var project = GetProjectByDocumentPath(path);
+        if (project == null) 
+            return null;
+
+        return project.Documents.Where(it => it.FilePath!.StartsWith(path));
+    }
+    public static Project? GetProjectByDocumentPath(string path) {
+        var relativeProjectPath = SolutionService.Instance.ProjectFiles?
+            .FirstOrDefault(it => path.Contains(Path.GetDirectoryName(it)!));
+        if (relativeProjectPath == null) 
+            return null;
+
+        var relativeFilePath = path.Replace(Path.GetDirectoryName(relativeProjectPath) + Path.DirectorySeparatorChar, string.Empty);
+        if (!ValidatePath(relativeFilePath)) 
+            return null;
+
+        return SolutionService.Instance.Solution?.Projects.FirstOrDefault(it => it.FilePath == relativeProjectPath);
+    }
 
     public static void ApplyTextChanges(DidChangeTextDocumentParams parameters) {
         var document = GetDocumentByPath(parameters.textDocument.uri.ToSystemPath());
@@ -40,34 +65,47 @@ public class DocumentService {
             var project = GetProjectByDocumentPath(change.uri.ToSystemPath());
             if (project == null) 
                 continue;
-            
-            if (change.type == FileChangeType.Deleted) {
-                var document = GetDocumentByPath(change.uri.ToSystemPath());
-                var updates = project.RemoveDocument(document!.Id);
-                SolutionService.Instance.UpdateSolution(updates.Solution);
+
+            var path = change.uri.ToSystemPath();
+
+            if (Directory.Exists(path) && change.type == FileChangeType.Created) {
+                var documents = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
+                foreach (var document in documents) 
+                    project = CreateFile(document, project);
+
+                continue;
             }
 
-            if (change.type == FileChangeType.Created) {
-                var documentContent = File.ReadAllText(change.uri.ToSystemPath());
-                var updates = project.AddDocument(Path.GetFileName(change.uri.ToSystemPath()), documentContent, null, change.uri.ToSystemPath());
-                SolutionService.Instance.UpdateSolution(updates.Project.Solution);
+            if (!path.EndsWith(".cs") && change.type == FileChangeType.Deleted) {
+                var documents = GetDocumentsByDirectoryPath(path)?.Select(it => it.FilePath!);
+                if (documents == null) 
+                    continue;
+
+                foreach (var document in documents) 
+                    project = DeleteFile(document, project);
+
+                continue;
             }
+
+            if (change.type == FileChangeType.Created)
+                project = CreateFile(path, project);
+            if (change.type == FileChangeType.Deleted)
+                project = DeleteFile(path, project);
         }
     }
 
-    private static Project? GetProjectByDocumentPath(string path) {
-        var relativeProjectPath = SolutionService.Instance.ProjectFiles?
-            .FirstOrDefault(it => path.Contains(Path.GetDirectoryName(it)!));
-        if (relativeProjectPath == null) 
-            return null;
-
-        var relativeFilePath = path.Replace(Path.GetDirectoryName(relativeProjectPath) + Path.DirectorySeparatorChar, string.Empty);
-        if (!ValidatePath(relativeFilePath)) 
-            return null;
-
-        return SolutionService.Instance.Solution?.Projects.FirstOrDefault(it => it.FilePath == relativeProjectPath);
+    private static Project CreateFile(string path, Project project) {
+        var documentContent = File.ReadAllText(path);
+        var updates = project.AddDocument(Path.GetFileName(path), documentContent, null, path);
+        SolutionService.Instance.UpdateSolution(updates.Project.Solution);
+        return updates.Project;
     }
-
+    private static Project DeleteFile(string path, Project project) {
+        var document = GetDocumentByPath(path);
+        var updates = project.RemoveDocument(document!.Id);
+        SolutionService.Instance.UpdateSolution(updates.Solution);
+        return updates;
+    }
     private static bool ValidatePath(string path) {
         var fileDirectoryTokens = path.Split(Path.DirectorySeparatorChar);
         if (fileDirectoryTokens.FirstOrDefault(it => it.StartsWith(".")) != null || 

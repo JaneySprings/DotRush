@@ -16,7 +16,7 @@ public class CompilationService {
         Instance = service;
     }
 
-    public async Task Compile(string path, Proxy proxy) {
+    public async void Compile(string path, Proxy proxy) {
         if (isActive) 
             return;
 

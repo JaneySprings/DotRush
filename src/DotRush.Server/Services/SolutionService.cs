@@ -1,7 +1,6 @@
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
-using DotRush.Server.Processes;
 
 namespace DotRush.Server.Services;
 
@@ -44,9 +43,7 @@ public class SolutionService {
 
     public void AddTargets(string[] targets) {
         foreach (var target in targets)
-            foreach (var path in Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories)) 
-                if (ProjectFiles.Add(path)) 
-                    LoadProject(path);
+            LoadProjects(Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories));
 
         UpdateSolution(Workspace?.CurrentSolution);
     }
@@ -68,32 +65,32 @@ public class SolutionService {
         Workspace.LoadMetadataForReferencedProjects = true;
         Workspace.SkipUnrecognizedProjects = true;
 
-        foreach (var path in ProjectFiles) 
-            LoadProject(path);
-
+        LoadProjects(ProjectFiles);
         UpdateSolution(Workspace.CurrentSolution);
     }
 
 
-    private void LoadProject(string path) {
-        try {
-            RestoreProject(path);
-            Workspace!.OpenProjectAsync(path).Wait();
-            LoggingService.Instance.LogMessage("Loaded project {0}", path);
-        } catch(Exception ex) {
-            LoggingService.Instance.LogError(ex.Message, ex);
+    private void LoadProjects(IEnumerable<string> projectPaths) {
+        foreach (var path in projectPaths) {
+            try {
+                Workspace!.OpenProjectAsync(path).Wait();
+                LoggingService.Instance.LogMessage("Add project {0}", path);
+            } catch(Exception ex) {
+                LoggingService.Instance.LogError(ex.Message, ex);
+            }
         }
     }
-    private void RestoreProject(string path) {
-        var directory = Path.GetDirectoryName(path);
-        if (File.Exists(Path.Combine(directory!, "obj", "project.assets.json")))
-            return;
 
-        var result = new ProcessRunner("dotnet", new ProcessArgumentBuilder()
-            .Append("restore")
-            .AppendQuoted(path))
-            .WaitForExit();
+    // private void RestoreProject(string path) {
+    //     var directory = Path.GetDirectoryName(path);
+    //     if (File.Exists(Path.Combine(directory!, "obj", "project.assets.json")))
+    //         return;
 
-        LoggingService.Instance.LogMessage("Restored project {0}", path);
-    }
+    //     var result = new ProcessRunner("dotnet", new ProcessArgumentBuilder()
+    //         .Append("restore")
+    //         .AppendQuoted(path))
+    //         .WaitForExit();
+
+    //     LoggingService.Instance.LogMessage("Restored project {0}", path);
+    // }
 }

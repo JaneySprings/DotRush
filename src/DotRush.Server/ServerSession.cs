@@ -16,10 +16,10 @@ public class ServerSession : Session {
 #region Event: DocumentSync 
     protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params) {
         DocumentService.ApplyTextChanges(@params);
-        CompilationService.Instance.Compile(@params.textDocument.uri.ToSystemPath(), Proxy).Wait();
+        CompilationService.Instance.Compile(@params.textDocument.uri.ToSystemPath(), Proxy);
     }
     protected override void DidOpenTextDocument(DidOpenTextDocumentParams @params) {
-        CompilationService.Instance.Compile(@params.textDocument.uri.ToSystemPath(), Proxy).Wait();
+        CompilationService.Instance.Compile(@params.textDocument.uri.ToSystemPath(), Proxy);
     }
     protected override void DidChangeWatchedFiles(DidChangeWatchedFilesParams @params) {
         DocumentService.ApplyChanges(@params);
