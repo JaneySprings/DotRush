@@ -3,15 +3,19 @@
       "explorer/context": [
         {
           "command": "%command.id.build%",
-          "group": "b_common"
+          "group": "b_common@1"
         },
         {
           "command": "%command.id.restore%",
-          "group": "b_common"
+          "group": "b_common@2"
         },
         {
           "command": "%command.id.clean%",
-          "group": "b_common"
+          "group": "b_common@3"
+        },
+        {
+          "command": "%command.id.run%",
+          "group": "b_common@4"
         }
       ],
       "view/title": [

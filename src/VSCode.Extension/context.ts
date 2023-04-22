@@ -20,6 +20,11 @@ export class ContextMenuController {
             if (task !== undefined) 
                 vscode.tasks.executeTask(task);
         }));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRun, (path: vscode.Uri) => {
+            const task = DotNetTaskProvider.getTask("run", path.fsPath);
+            if (task !== undefined) 
+                vscode.tasks.executeTask(task);
+        }));
 
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdReload, () => {
             ClientController.sendReloadTargetsNotification();

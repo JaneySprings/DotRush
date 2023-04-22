@@ -13,6 +13,10 @@
         "title": "%command.title.clean%"
       },
       {
+        "command": "%command.id.run%",
+        "title": "%command.title.run%"
+      },
+      {
         "command": "%command.id.reload%",
         "title": "%command.title.reload%"
       }
