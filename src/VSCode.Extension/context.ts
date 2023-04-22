@@ -1,3 +1,4 @@
+import { ClientController } from './client';
 import * as res from './resources';
 import * as vscode from 'vscode';
 
@@ -18,6 +19,10 @@ export class ContextMenuController {
             const task = DotNetTaskProvider.getTask("clean", path.fsPath);
             if (task !== undefined) 
                 vscode.tasks.executeTask(task);
+        }));
+
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdReload, () => {
+            ClientController.sendReloadTargetsNotification();
         }));
     }
 }

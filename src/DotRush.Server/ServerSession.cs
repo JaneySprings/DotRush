@@ -25,9 +25,12 @@ public class ServerSession : Session {
         DocumentService.ApplyChanges(@params);
     }
 #endregion
-#region Event: FrameworkChanged
+#region Event: ClientActions
     protected override void FrameworkChanged(FrameworkChangedArgs args) {
         SolutionService.Instance.UpdateFramework(args.@params?.framework);
+    }
+    protected override void ReloadTargets(ReloadTargetsArgs args) {
+        SolutionService.Instance.ForceReload();
     }
 #endregion
 #region Event: WorkspaceChanged

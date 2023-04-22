@@ -65,12 +65,20 @@ export class ClientController {
                     return f.includes(device.platform ?? 'undefined')
                 });
                 ClientController.devicePlatform = device?.platform;
-                ClientController.client.diagnostics?.clear();
-                ClientController.client.sendNotification('frameworkChanged', { framework: framework });
+                ClientController.sendFrameworkChangedNotification(framework);
             });
             extensionContext?.exports.projectChangedEventHandler.add((project: any) => {
                 ClientController.frameworkList = project?.frameworks;
             });
         }
+    }
+
+    public static sendFrameworkChangedNotification(framework: string | undefined) {
+        ClientController.client.diagnostics?.clear();
+        ClientController.client.sendNotification('frameworkChanged', { framework: framework });
+    }
+    public static sendReloadTargetsNotification() {
+        ClientController.client.diagnostics?.clear();
+        ClientController.client.sendNotification('reloadTargets');
     }
 }

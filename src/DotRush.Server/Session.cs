@@ -7,6 +7,7 @@ namespace DotRush.Server;
 public abstract class Session : ServiceConnection {
     protected Session(Stream input, Stream output) : base(input, output) {
         NotificationHandlers.Set<FrameworkChangedArgs>("frameworkChanged", FrameworkChanged);
+        NotificationHandlers.Set<ReloadTargetsArgs>("reloadTargets", ReloadTargets);
     }
 
     protected override Result<InitializeResult, ResponseError<InitializeErrorData>> Initialize(InitializeParams @params) {
@@ -41,4 +42,5 @@ public abstract class Session : ServiceConnection {
     }
 
     protected abstract void FrameworkChanged(FrameworkChangedArgs args);
+    protected abstract void ReloadTargets(ReloadTargetsArgs args);
 }

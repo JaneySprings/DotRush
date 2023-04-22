@@ -11,6 +11,10 @@
       {
         "command": "%command.id.clean%",
         "title": "%command.title.clean%"
+      },
+      {
+        "command": "%command.id.reload%",
+        "title": "%command.title.reload%"
       }
     ]
   }

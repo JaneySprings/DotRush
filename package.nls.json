@@ -11,6 +11,9 @@
 	"command.title.clean": "Clean",
 	"command.id.clean": "dotrush.clean",
 
+	"command.title.reload": "Reload Projects",
+	"command.id.reload": "dotrush.reload",
+
 	"config.title": "DotRush Configuration",
 	"config.description.buildOnlyFramework": "Build only the selected framework",
 	"config.description.useDotnetMeteor": "Use active project form .NET Meteor status bar"
