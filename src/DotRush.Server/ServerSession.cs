@@ -13,13 +13,18 @@ namespace DotRush.Server;
 public class ServerSession : Session {
     public ServerSession(Stream input, Stream output) : base(input, output) {}
 
+    protected override void Initialized() {
+        base.Initialized();
+        CompilationService.Instance.Compile(Proxy);
+    }
+
 #region Event: DocumentSync 
     protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params) {
         DocumentService.ApplyTextChanges(@params);
-        CompilationService.Instance.Compile(@params.textDocument.uri.ToSystemPath(), Proxy);
+        CodeActionService.Instance.Diagnose(@params.textDocument.uri.ToSystemPath(), Proxy);
     }
     protected override void DidOpenTextDocument(DidOpenTextDocumentParams @params) {
-        CompilationService.Instance.Compile(@params.textDocument.uri.ToSystemPath(), Proxy);
+        CodeActionService.Instance.Diagnose(@params.textDocument.uri.ToSystemPath(), Proxy);
     }
     protected override void DidChangeWatchedFiles(DidChangeWatchedFilesParams @params) {
         DocumentService.ApplyChanges(@params);
@@ -126,16 +131,10 @@ public class ServerSession : Session {
 
 #endregion
 #region Event: CodeActions
-    // protected override Result<CodeActionResult, ResponseError> CodeAction(CodeActionParams @params) {
-    //     var document = DocumentService.Instance.GetDocumentByPath(@params.textDocument.uri.ToSystemPath());
-    //     if (document == null) return Result<CodeActionResult, ResponseError>.Error(new ResponseError() {
-    //         code = ErrorCodes.RequestCancelled,
-    //         message = "Could not get code actions",
-    //     });
-
-    //     var actions = RefactoringService.Instance.GetCodeActions(document, @params.range);
-    //     return Result<CodeActionResult, ResponseError>.Success(new CodeActionResult(actions.ToArray()));
-    // }
+    protected override Result<CodeActionResult, ResponseError> CodeAction(CodeActionParams @params) {
+        var actions = CodeActionService.Instance.GetCodeFixes(@params.textDocument.uri.ToSystemPath(), @params.context.diagnostics);
+        return Result<CodeActionResult, ResponseError>.Success(new CodeActionResult(actions.ToArray()));
+    }
 #endregion
 
 }

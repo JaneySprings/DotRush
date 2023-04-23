@@ -6,8 +6,7 @@ public static class DiagnosticsConverter {
     public static List<LanguageServer.Parameters.TextDocument.Diagnostic> ToServerDiagnostics(this IEnumerable<Diagnostic> diagnostics) {
         var result = new List<LanguageServer.Parameters.TextDocument.Diagnostic>();
         foreach (var diagnostic in diagnostics) {
-            if (diagnostic.Location.IsInMetadata || 
-                diagnostic.Severity == DiagnosticSeverity.Hidden)
+            if (diagnostic.Location.IsInMetadata || !diagnostic.Location.IsInSource)
                 continue;
 
             var lspdiag = new LanguageServer.Parameters.TextDocument.Diagnostic();
@@ -32,7 +31,7 @@ public static class DiagnosticsConverter {
             case DiagnosticSeverity.Info:
                 return LanguageServer.Parameters.TextDocument.DiagnosticSeverity.Information;
             case DiagnosticSeverity.Hidden:
-                return LanguageServer.Parameters.TextDocument.DiagnosticSeverity.Hint;
+                return LanguageServer.Parameters.TextDocument.DiagnosticSeverity.Information;
             default:
                 return LanguageServer.Parameters.TextDocument.DiagnosticSeverity.Error;
         }

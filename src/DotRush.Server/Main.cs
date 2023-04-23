@@ -19,10 +19,11 @@ public class Program {
     }
 
     private static void ConfigureServices(string[] targets) {
+        LoggingService.Initialize();
+        SolutionService.Initialize(targets);
+
         CompilationService.Initialize();
         CompletionService.Initialize();
-        LoggingService.Initialize();
-
-        SolutionService.Initialize(targets);
+        CodeActionService.Initialize();
     }
 }

@@ -1,12 +1,10 @@
 using DotRush.Server.Extensions;
 using LanguageServer.Client;
-using Microsoft.CodeAnalysis;
 
 namespace DotRush.Server.Services;
 
 public class CompilationService {
     public static CompilationService Instance { get; private set; } = null!;
-    private readonly HashSet<string> diagnosticsLocations = new HashSet<string>();
     private bool isActive = false;
 
     private CompilationService() {}
@@ -16,34 +14,30 @@ public class CompilationService {
         Instance = service;
     }
 
-    public async void Compile(string path, Proxy proxy) {
+    public async void Compile(Proxy proxy) {
         if (isActive) 
             return;
 
         isActive = true;
-        //await Task.Delay(CompilationDelay);
-        var document = DocumentService.GetDocumentByPath(path);
-        if (document == null) {
-            isActive = false;
-            return;
-        }
-        var compilation = await document.Project.GetCompilationAsync();
-        if (compilation == null) {
-            isActive = false;
-            return;
-        }
+        foreach(var projectFile in SolutionService.Instance.ProjectFiles) {
+            var project = SolutionService.Instance.GetProjectByPath(projectFile);
+            if (project == null) 
+                continue;
 
-        var diagnostics = compilation.GetDiagnostics().ToServerDiagnostics();
-        
-        foreach (var diagnostic in diagnostics) 
-            diagnosticsLocations.Add(diagnostic.source);
-        foreach (var location in diagnosticsLocations) {
-            var documentDiagnostics = new List<LanguageServer.Parameters.TextDocument.Diagnostic>();
-            documentDiagnostics.AddRange(diagnostics.Where(diagnostic => diagnostic.source == location));
-            proxy.TextDocument.PublishDiagnostics(new LanguageServer.Parameters.TextDocument.PublishDiagnosticsParams() {
-                uri = location.ToUri(),
-                diagnostics = documentDiagnostics.ToArray(),
-            });
+            var compilation = await project.GetCompilationAsync();
+            if (compilation == null) {
+                isActive = false;
+                return;
+            }
+
+            var diagnostics = compilation.GetDiagnostics().ToServerDiagnostics();
+            var diagnosticsGroups = diagnostics.GroupBy(diagnostic => diagnostic.source);
+            foreach (var diagnosticsGroup in diagnosticsGroups) {
+                proxy.TextDocument.PublishDiagnostics(new LanguageServer.Parameters.TextDocument.PublishDiagnosticsParams() {
+                    uri = diagnosticsGroup.Key.ToUri(),
+                    diagnostics = diagnosticsGroup.ToArray(),
+                });
+            }           
         }
 
         isActive = false;

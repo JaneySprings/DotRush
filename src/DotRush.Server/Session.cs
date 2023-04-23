@@ -13,10 +13,10 @@ public abstract class Session : ServiceConnection {
     protected override Result<InitializeResult, ResponseError<InitializeErrorData>> Initialize(InitializeParams @params) {
         var result = new InitializeResult {
             capabilities = new ServerCapabilities {
-                //codeActionProvider = true,
                 renameProvider = true,
                 referencesProvider = true,
                 definitionProvider = true,
+                codeActionProvider = true,
                 implementationProvider = true,
                 documentFormattingProvider = true,
                 documentRangeFormattingProvider = true,

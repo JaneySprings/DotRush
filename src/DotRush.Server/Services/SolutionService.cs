@@ -8,7 +8,7 @@ public class SolutionService {
     public static SolutionService Instance { get; private set; } = null!;
     public HashSet<string> ProjectFiles { get; private set; }
     public MSBuildWorkspace? Workspace { get; private set; }
-    public Solution? Solution => Workspace?.CurrentSolution;
+    public Solution? Solution { get; private set; }
     private string? targetFramework;
 
 
@@ -17,9 +17,7 @@ public class SolutionService {
     }
 
     public static void Initialize(string[] targets) {
-        var queryOptions = VisualStudioInstanceQueryOptions.Default;
-        var instances = MSBuildLocator.QueryVisualStudioInstances(queryOptions);
-        MSBuildLocator.RegisterInstance(instances.FirstOrDefault());
+        MSBuildLocator.RegisterDefaults();
 
         Instance = new SolutionService();
         foreach (var target in targets)
@@ -30,9 +28,7 @@ public class SolutionService {
     }
 
     public void UpdateSolution(Solution? solution) {
-        if (solution == null) 
-            return;
-        Workspace?.TryApplyChanges(solution);
+        Solution = solution;
     }
     public void UpdateFramework(string? framework) {
         if (targetFramework == framework) 
@@ -68,6 +64,9 @@ public class SolutionService {
         Workspace.SkipUnrecognizedProjects = true;
 
         LoadProjects(ProjectFiles);
+    }
+    public Project? GetProjectByPath(string path) {
+        return Solution?.Projects.FirstOrDefault(project => project.FilePath == path);
     }
 
 
