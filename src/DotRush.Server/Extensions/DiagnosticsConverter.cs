@@ -6,7 +6,7 @@ public static class DiagnosticsConverter {
     public static List<LanguageServer.Parameters.TextDocument.Diagnostic> ToServerDiagnostics(this IEnumerable<Diagnostic> diagnostics) {
         var result = new List<LanguageServer.Parameters.TextDocument.Diagnostic>();
         foreach (var diagnostic in diagnostics) {
-            if (diagnostic.Location.IsInMetadata || !diagnostic.Location.IsInSource)
+            if (diagnostic.Location.Kind != LocationKind.SourceFile)
                 continue;
 
             var lspdiag = new LanguageServer.Parameters.TextDocument.Diagnostic();
@@ -14,6 +14,13 @@ public static class DiagnosticsConverter {
             lspdiag.severity = diagnostic.Severity.ToServerSeverity();
             lspdiag.source = diagnostic.Location.SourceTree?.FilePath;
             lspdiag.code = diagnostic.Id;
+
+            // TODO: This is a temp hack, we should check relative path to the project root
+            if (lspdiag.source?.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") == true || 
+                lspdiag.source?.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") == true)
+                continue;
+            if (!Path.Exists(lspdiag.source))
+                continue;
 
             lspdiag.range = diagnostic.Location.GetLineSpan().Span.ToRange();
             result.Add(lspdiag);

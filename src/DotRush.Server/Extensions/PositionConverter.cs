@@ -74,4 +74,9 @@ public static class PositionConverter {
         var endPosition = range.end.ToOffset(document);
         return TextSpan.FromBounds(startPosition, endPosition);
     }
+
+    public static bool IsEqualTo(this LanguageServer.Parameters.Range range, LanguageServer.Parameters.Range range2) {
+        return range.start.line == range2.start.line && range.start.character == range2.start.character &&
+            range.end.line == range2.end.line && range.end.character == range2.end.character;
+    }
 }

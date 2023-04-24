@@ -1,3 +1,4 @@
+using DotRush.Server.Services;
 
 namespace DotRush.Server.Extensions;
 
@@ -9,10 +10,15 @@ public static class PathConverter {
         return Path.GetFullPath(uri.LocalPath.Substring(1));
     }
 
-    public static Uri ToUri(this string path) {
-        if (!RuntimeSystem.IsWindows)
-            return new Uri(path);
-        // Strange format only for Windows
-        return new Uri("file:///" + path.Replace('\\', '/'));
+    public static Uri? ToUri(this string path) {
+        try {
+            if (!RuntimeSystem.IsWindows)
+                return new Uri(path);
+            // Strange format only for Windows
+            return new Uri("file:///" + path.Replace('\\', '/'));
+        } catch (Exception e) {
+            LoggingService.Instance.LogError($"Error while creating uri from path: {path}", e);
+            return null;
+        }
     }
 }

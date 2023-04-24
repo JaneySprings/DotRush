@@ -90,9 +90,8 @@ public class CodeActionService {
         if (diagnostics == null || diagnostics.Length == 0 || document == null)
             return codeActions!;
 
-        var fileDiagnostics = Diagnostics.TryGetValue(documentPath, out var diags) ? diags : null;
         foreach (var diagnostic in diagnostics) {
-            var fileDiagnostic = fileDiagnostics?.FirstOrDefault(x => x.Id == diagnostic.code.Value.ToString());
+            var fileDiagnostic = GetDiagnosticByRange(diagnostic.range, document);
             var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
             if (fileDiagnostic == null || codeFixProviders == null || !codeFixProviders.Any())
                 continue;
@@ -111,5 +110,13 @@ public class CodeActionService {
             return null;
 
         return CodeFixProviders?.Where(x => x.FixableDiagnosticIds.Contains(diagnosticId));
+    }
+
+    private CodeAnalysis.Diagnostic? GetDiagnosticByRange(LanguageServer.Parameters.Range range, CodeAnalysis.Document document) {
+        var diagnostics = Diagnostics.TryGetValue(document.FilePath!, out var diags) ? diags : null;
+        if (diagnostics == null)
+            return null;
+
+        return diagnostics.FirstOrDefault(x => x.Location.SourceSpan.ToRange(document).IsEqualTo(range));
     }
 }

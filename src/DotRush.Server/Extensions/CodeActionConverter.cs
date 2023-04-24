@@ -1,13 +1,14 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using DotRush.Server.Services;
+using LanguageServer.Parameters;
 
 namespace DotRush.Server.Extensions;
 
 public static class CodeActionConverter {
     public static LanguageServer.Parameters.TextDocument.CodeAction? ToCodeAction(this CodeAction codeAction, Document document, LanguageServer.Parameters.TextDocument.Diagnostic[] diagnostics) {
         var worspaceEdit = new LanguageServer.Parameters.WorkspaceEdit();
-        var changes = new Dictionary<Uri, LanguageServer.Parameters.TextEdit[]>();
+        var textDocumentEdits = new List<TextDocumentEdit>();
         
         try {
             var operations = codeAction.GetOperationsAsync(CancellationToken.None).Result;
@@ -26,7 +27,12 @@ public static class CodeActionConverter {
                                     range = textChange.Span.ToRange(document),
                                 });
                             }
-                            changes.Add(document.FilePath!.ToUri(), textEdits.ToArray());
+                            textDocumentEdits.Add(new TextDocumentEdit() { 
+                                edits = textEdits.ToArray(),
+                                textDocument = new VersionedTextDocumentIdentifier() { 
+                                    uri = newDocument.FilePath?.ToUri()
+                                }
+                            });
                         }
                     }
                 }
@@ -37,7 +43,7 @@ public static class CodeActionConverter {
                 title = codeAction.Title,
                 diagnostics = diagnostics,
                 edit = new LanguageServer.Parameters.WorkspaceEdit() {
-                    changes = changes,
+                    documentChanges = textDocumentEdits.ToArray(),
                 },
             };
         } catch (Exception e) {
