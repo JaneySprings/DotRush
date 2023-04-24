@@ -85,10 +85,10 @@ public class CodeActionService {
         });
     }
     public IEnumerable<CodeAction> GetCodeFixes(string documentPath, Diagnostic[] diagnostics) {
-        var codeActions = new List<CodeAction>();
+        var codeActions = new List<CodeAction?>();
         var document = DocumentService.GetDocumentByPath(documentPath);
         if (diagnostics == null || diagnostics.Length == 0 || document == null)
-            return codeActions;
+            return codeActions!;
 
         var fileDiagnostics = Diagnostics.TryGetValue(documentPath, out var diags) ? diags : null;
         foreach (var diagnostic in diagnostics) {
@@ -103,7 +103,7 @@ public class CodeActionService {
             }
         }
 
-        return codeActions.OrderByDescending(x => x.title);
+        return codeActions.Where(x => x != null).OrderByDescending(x => x!.title)!;
     }
 
     private IEnumerable<CodeFixProvider>? GetProvidersForDiagnosticId(string? diagnosticId) {
