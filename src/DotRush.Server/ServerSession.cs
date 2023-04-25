@@ -20,10 +20,15 @@ public class ServerSession : Session {
 #region Event: DocumentSync 
     protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params) {
         DocumentService.ApplyTextChanges(@params);
-        CodeActionService.Instance.Diagnose(@params.textDocument.uri.ToSystemPath(), Proxy);
+        CompilationService.Instance.Diagnose(Proxy);
     }
     protected override void DidOpenTextDocument(DidOpenTextDocumentParams @params) {
-        CodeActionService.Instance.Diagnose(@params.textDocument.uri.ToSystemPath(), Proxy);
+        CompilationService.Instance.DiagnosedDocuments.Add(@params.textDocument.uri.ToSystemPath());
+        CompilationService.Instance.Diagnose(Proxy);
+    }
+    protected override void DidCloseTextDocument(DidCloseTextDocumentParams @params) {
+        CompilationService.Instance.DiagnosedDocuments.Remove(@params.textDocument.uri.ToSystemPath());
+        CompilationService.Instance.Diagnose(Proxy);
     }
     protected override void DidChangeWatchedFiles(DidChangeWatchedFilesParams @params) {
         DocumentService.ApplyChanges(@params);

@@ -22,6 +22,7 @@ public class Program {
         LoggingService.Initialize();
         SolutionService.Initialize(targets);
 
+        CompilationService.Initialize();
         CompletionService.Initialize();
         CodeActionService.Initialize();
     }

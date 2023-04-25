@@ -1,6 +1,5 @@
 using System.Reflection;
 using DotRush.Server.Extensions;
-using LanguageServer.Client;
 using Microsoft.CodeAnalysis.CodeFixes;
 using LanguageServer.Parameters.TextDocument;
 using CodeAnalysis = Microsoft.CodeAnalysis;
@@ -10,12 +9,9 @@ namespace DotRush.Server.Services;
 public class CodeActionService {
     public static CodeActionService Instance { get; private set; } = null!;
     private HashSet<CodeFixProvider> CodeFixProviders { get; set; }
-    private Dictionary<string, IEnumerable<CodeAnalysis.Diagnostic>> Diagnostics { get; }
-    private bool isActive = false;
 
     private CodeActionService() {
         CodeFixProviders = new HashSet<CodeFixProvider>();
-        Diagnostics = new Dictionary<string, IEnumerable<CodeAnalysis.Diagnostic>>();
     }
     public static void Initialize() {
         Instance = new CodeActionService();
@@ -55,35 +51,6 @@ public class CodeActionService {
         }
     }
 
-    public async void Diagnose(string documentPath, Proxy proxy) {
-        if (isActive) 
-           return;
-
-        isActive = true;
-        var document = DocumentService.GetDocumentByPath(documentPath);
-        if (document == null) {
-            isActive = false;
-            return;
-        }
-        var semanticModel = await document.GetSemanticModelAsync();
-        var diagnostics = semanticModel?.GetDiagnostics();
-        var serverDiagnostics = diagnostics?.ToServerDiagnostics();
-        if (semanticModel == null || diagnostics == null || serverDiagnostics == null) {
-            isActive = false;
-            return;
-        }
-
-        if (Diagnostics.ContainsKey(documentPath))
-            Diagnostics[documentPath] = diagnostics;
-        else
-            Diagnostics.Add(documentPath, diagnostics);
-
-        isActive = false;
-        proxy.TextDocument.PublishDiagnostics(new LanguageServer.Parameters.TextDocument.PublishDiagnosticsParams() {
-            uri = document.FilePath?.ToUri(),
-            diagnostics = serverDiagnostics.ToArray(),
-        });
-    }
     public IEnumerable<CodeAction> GetCodeFixes(string documentPath, Diagnostic[] diagnostics) {
         var codeActions = new List<CodeAction?>();
         var document = DocumentService.GetDocumentByPath(documentPath);
@@ -113,7 +80,7 @@ public class CodeActionService {
     }
 
     private CodeAnalysis.Diagnostic? GetDiagnosticByRange(LanguageServer.Parameters.Range range, CodeAnalysis.Document document) {
-        var diagnostics = Diagnostics.TryGetValue(document.FilePath!, out var diags) ? diags : null;
+        var diagnostics = CompilationService.Instance.Diagnostics.TryGetValue(document.FilePath!, out var diags) ? diags : null;
         if (diagnostics == null)
             return null;
 
