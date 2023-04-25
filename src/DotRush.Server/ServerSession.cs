@@ -14,10 +14,9 @@ public class ServerSession : Session {
     public ServerSession(Stream input, Stream output) : base(input, output) {}
 
     protected override void Initialized() {
-        base.Initialized();
-        CompilationService.Instance.Compile(Proxy);
+        SolutionService.Instance.ProjectLoaded = ProjectLoaded;
+        SolutionService.Instance.ForceReload();
     }
-
 #region Event: DocumentSync 
     protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params) {
         DocumentService.ApplyTextChanges(@params);
@@ -137,4 +136,9 @@ public class ServerSession : Session {
     }
 #endregion
 
+#region Events 
+    private void ProjectLoaded(string path) {
+        CompilationService.Compile(path, Proxy);
+    }
+#endregion
 }

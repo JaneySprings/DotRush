@@ -9,8 +9,9 @@ public class SolutionService {
     public HashSet<string> ProjectFiles { get; private set; }
     public MSBuildWorkspace? Workspace { get; private set; }
     public Solution? Solution { get; private set; }
-    private string? targetFramework;
+    public string? TargetFramework { get; private set; }
 
+    public Action<string>? ProjectLoaded;
 
     private SolutionService() {
         ProjectFiles = new HashSet<string>();
@@ -23,17 +24,15 @@ public class SolutionService {
         foreach (var target in targets)
             foreach (var path in Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories)) 
                 Instance.ProjectFiles.Add(path);
-        
-        Instance.ForceReload();
     }
 
     public void UpdateSolution(Solution? solution) {
         Solution = solution;
     }
     public void UpdateFramework(string? framework) {
-        if (targetFramework == framework) 
+        if (TargetFramework == framework) 
             return;
-        targetFramework = framework;
+        TargetFramework = framework;
         ForceReload();
     }
 
@@ -56,8 +55,8 @@ public class SolutionService {
     }
     public void ForceReload() {
         var configuration = new Dictionary<string, string>();
-        if (!string.IsNullOrEmpty(targetFramework))
-            configuration.Add("TargetFramework", targetFramework);
+        if (!string.IsNullOrEmpty(TargetFramework))
+            configuration.Add("TargetFramework", TargetFramework);
 
         Workspace = MSBuildWorkspace.Create(configuration);
         Workspace.LoadMetadataForReferencedProjects = true;
@@ -74,6 +73,7 @@ public class SolutionService {
         foreach (var path in projectPaths) {
             try {
                 Workspace?.OpenProjectAsync(path).Wait();
+                ProjectLoaded?.Invoke(path);
                 LoggingService.Instance.LogMessage("Add project {0}", path);
             } catch(Exception ex) {
                 LoggingService.Instance.LogError(ex.Message, ex);
