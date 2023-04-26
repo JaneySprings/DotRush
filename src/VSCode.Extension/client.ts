@@ -7,15 +7,13 @@ import * as path from 'path';
 
 
 export class ClientController {
-    private static extensionPath: string = extensions.getExtension(`${res.extensionPublisher}.${res.extensionId}`)?.extensionPath ?? '';
-    private static serverExecutable: string = path.join(ClientController.extensionPath, "extension", "bin", "DotRush"); 
     private static client: LanguageClient;
     private static frameworkList: string[] | undefined;
-    private static devicePlatform: string | undefined;
 
     private static initialize() {
         const launchArguments = [ process.pid.toString() ];
-        let serverExecutable = ClientController.serverExecutable;
+        const extensionPath = extensions.getExtension(`${res.extensionPublisher}.${res.extensionId}`)?.extensionPath ?? '';
+        let serverExecutable = path.join(extensionPath, "extension", "bin", "DotRush");
 
         for (const folder of vscode.workspace.workspaceFolders ?? [])
             launchArguments.push(folder.uri.fsPath);
@@ -61,15 +59,14 @@ export class ClientController {
         const extensionContext = await waitForActivation(res.extensionMeteorId);
         if (extensionContext !== undefined) {
             extensionContext?.exports.deviceChangedEventHandler.add((device: any) => {
-                const framework = ClientController.frameworkList?.find(f => {
-                    return f.includes(device.platform ?? 'undefined')
-                });
-                ClientController.devicePlatform = device?.platform;
+                const framework = ClientController.frameworkList?.find(f => f.includes(device.platform));
                 ClientController.sendFrameworkChangedNotification(framework);
             });
             extensionContext?.exports.projectChangedEventHandler.add((project: any) => {
                 ClientController.frameworkList = project?.frameworks;
             });
+        } else {
+            ClientController.sendFrameworkChangedNotification(undefined);
         }
     }
 

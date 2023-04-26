@@ -15,7 +15,6 @@ public class ServerSession : Session {
 
     protected override void Initialized() {
         SolutionService.Instance.ProjectLoaded = ProjectLoaded;
-        SolutionService.Instance.ForceReload();
     }
 #region Event: DocumentSync 
     protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params) {
@@ -35,7 +34,8 @@ public class ServerSession : Session {
 #endregion
 #region Event: ClientActions
     protected override void FrameworkChanged(FrameworkChangedArgs args) {
-        SolutionService.Instance.UpdateFramework(args.@params?.framework);
+        SolutionService.Instance.TargetFramework = args.@params?.framework;
+        SolutionService.Instance.ForceReload();
     }
     protected override void ReloadTargets(ReloadTargetsArgs args) {
         SolutionService.Instance.ForceReload();

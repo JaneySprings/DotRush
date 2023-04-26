@@ -10,7 +10,7 @@ public class SolutionService {
     public HashSet<string> ProjectFiles { get; private set; }
     public MSBuildWorkspace? Workspace { get; private set; }
     public Solution? Solution { get; private set; }
-    public string? TargetFramework { get; private set; }
+    public string? TargetFramework { get; set; }
 
     public Action<string>? ProjectLoaded;
 
@@ -30,13 +30,6 @@ public class SolutionService {
     public void UpdateSolution(Solution? solution) {
         Solution = solution;
     }
-    public void UpdateFramework(string? framework) {
-        if (TargetFramework == framework) 
-            return;
-        TargetFramework = framework;
-        ForceReload();
-    }
-
     public void AddTargets(string[] targets) {
         var added = new List<string>();
         foreach (var target in targets) 
@@ -75,14 +68,13 @@ public class SolutionService {
             try {
                 RestoreProject(path);
                 Workspace?.OpenProjectAsync(path).Wait();
+                UpdateSolution(Workspace?.CurrentSolution);
                 ProjectLoaded?.Invoke(path);
-                LoggingService.Instance.LogMessage("Add project {0}", path);
+                LoggingService.Instance.LogMessage("Loaded project {0}", path);
             } catch(Exception ex) {
                 LoggingService.Instance.LogError(ex.Message, ex);
             }
         }
-
-        UpdateSolution(Workspace?.CurrentSolution);
     }
 
     private void RestoreProject(string path) {
