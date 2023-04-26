@@ -1,3 +1,4 @@
+using DotRush.Server.Processes;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -72,6 +73,7 @@ public class SolutionService {
     private void LoadProjects(IEnumerable<string> projectPaths) {
         foreach (var path in projectPaths) {
             try {
+                RestoreProject(path);
                 Workspace?.OpenProjectAsync(path).Wait();
                 ProjectLoaded?.Invoke(path);
                 LoggingService.Instance.LogMessage("Add project {0}", path);
@@ -81,5 +83,14 @@ public class SolutionService {
         }
 
         UpdateSolution(Workspace?.CurrentSolution);
+    }
+
+    private void RestoreProject(string path) {
+        var result = new ProcessRunner("dotnet", new ProcessArgumentBuilder()
+            .Append("restore")
+            .AppendQuoted(path))
+            .WaitForExit();
+
+        LoggingService.Instance.LogMessage("Restored project {0}", path);
     }
 }

@@ -28,7 +28,6 @@ public class ServerSession : Session {
     }
     protected override void DidCloseTextDocument(DidCloseTextDocumentParams @params) {
         CompilationService.Instance.DiagnosedDocuments.Remove(@params.textDocument.uri.ToSystemPath());
-        CompilationService.Instance.Diagnose(Proxy);
     }
     protected override void DidChangeWatchedFiles(DidChangeWatchedFilesParams @params) {
         DocumentService.ApplyChanges(@params);
