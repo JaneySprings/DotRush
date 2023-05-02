@@ -29,16 +29,18 @@ public class DocumentService {
         return project.Documents.Where(it => it.FilePath!.StartsWith(path));
     }
     public static Project? GetProjectByDocumentPath(string path) {
-        var relativeProjectPath = SolutionService.Instance.ProjectFiles?
-            .FirstOrDefault(it => path.Contains(Path.GetDirectoryName(it)!));
-        if (relativeProjectPath == null) 
+        var targetProjectLocation = SolutionService.Instance.ProjectFiles
+            .Select(it => Path.GetDirectoryName(it) + Path.DirectorySeparatorChar)
+            .FirstOrDefault(it => path.StartsWith(it));
+        
+        if (targetProjectLocation == null) 
             return null;
 
-        var relativeFilePath = path.Replace(Path.GetDirectoryName(relativeProjectPath) + Path.DirectorySeparatorChar, string.Empty);
-        if (!ValidatePath(relativeFilePath)) 
-            return null;
+        // var relativeFilePath = path.Replace(Path.GetDirectoryName(targetProjectPath)!, string.Empty);
+        // if (!ValidatePath(relativeFilePath)) 
+        //     return null;
 
-        return SolutionService.Instance.Solution?.Projects.FirstOrDefault(it => it.FilePath == relativeProjectPath);
+        return SolutionService.Instance.Solution?.Projects.FirstOrDefault(it => it.FilePath!.StartsWith(targetProjectLocation));
     }
 
     public static void ApplyTextChanges(DidChangeTextDocumentParams parameters) {
@@ -96,7 +98,8 @@ public class DocumentService {
 
     private static Project CreateFile(string path, Project project) {
         var documentContent = File.ReadAllText(path);
-        var updates = project.AddDocument(Path.GetFileName(path), documentContent, null, path);
+        var folders = GetFolders(project.FilePath!, path);
+        var updates = project.AddDocument(Path.GetFileName(path), documentContent, folders, path);
         SolutionService.Instance.UpdateSolution(updates.Project.Solution);
         return updates.Project;
     }
@@ -113,5 +116,11 @@ public class DocumentService {
             return false;
 
         return true;
+    }
+    private static IEnumerable<string> GetFolders(string projectPath, string documentPath) {
+        var rootDirectory = Path.GetDirectoryName(projectPath)!;
+        var documentDirectory = Path.GetDirectoryName(documentPath)!;
+        var relativePath = documentDirectory.Replace(rootDirectory, string.Empty);
+        return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
     }
 }
