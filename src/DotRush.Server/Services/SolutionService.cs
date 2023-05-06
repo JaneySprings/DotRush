@@ -6,7 +6,6 @@ using Microsoft.CodeAnalysis.MSBuild;
 namespace DotRush.Server.Services;
 
 public class SolutionService {
-    public static SolutionService Instance { get; private set; } = null!;
     public HashSet<string> ProjectFiles { get; private set; }
     public MSBuildWorkspace? Workspace { get; private set; }
     public Solution? Solution { get; private set; }
@@ -14,40 +13,37 @@ public class SolutionService {
 
     public Action<string>? ProjectLoaded;
 
-    private SolutionService() {
+    public SolutionService(string[] targets) {
         ProjectFiles = new HashSet<string>();
-    }
-
-    public static void Initialize(string[] targets) {
         MSBuildLocator.RegisterDefaults();
 
-        Instance = new SolutionService();
         foreach (var target in targets)
             foreach (var path in Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories)) 
-                Instance.ProjectFiles.Add(path);
+                ProjectFiles.Add(path);
     }
 
     public void UpdateSolution(Solution? solution) {
         Solution = solution;
     }
-    public void AddTargets(string[] targets) {
+    public void AddTargets(string[] targets, CancellationToken cancellationToken) {
         var added = new List<string>();
         foreach (var target in targets) 
             foreach (var path in Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories))
                 if (ProjectFiles.Add(path))
                     added.Add(path);
 
-        LoadProjects(added);
+        LoadProjects(added, cancellationToken);
     }
-    public void RemoveTargets(string[] targets) {
+    public void RemoveTargets(string[] targets, CancellationToken cancellationToken) {
         var changed = false;
         foreach (var target in targets) 
             foreach (var path in Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories))
                 changed = ProjectFiles.Remove(path);
         // MSBuildWorkspace does not support unloading projects
-        if (changed) ForceReload();
+        if (changed) 
+            ForceReload(cancellationToken);
     }
-    public void ForceReload() {
+    public void ForceReload(CancellationToken cancellationToken) {
         var configuration = new Dictionary<string, string>();
         if (!string.IsNullOrEmpty(TargetFramework))
             configuration.Add("TargetFramework", TargetFramework);
@@ -56,21 +52,23 @@ public class SolutionService {
         Workspace.LoadMetadataForReferencedProjects = true;
         Workspace.SkipUnrecognizedProjects = true;
 
-        LoadProjects(ProjectFiles);
+        LoadProjects(ProjectFiles, cancellationToken);
     }
     public Project? GetProjectByPath(string path) {
         return Solution?.Projects.FirstOrDefault(project => project.FilePath == path);
     }
 
 
-    private void LoadProjects(IEnumerable<string> projectPaths) {
+    private void LoadProjects(IEnumerable<string> projectPaths, CancellationToken cancellationToken) {
         foreach (var path in projectPaths) {
+            RestoreProject(path);
             try {
-                RestoreProject(path);
-                Workspace?.OpenProjectAsync(path).Wait();
+                Workspace?.OpenProjectAsync(path, cancellationToken: cancellationToken).Wait();
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+
                 UpdateSolution(Workspace?.CurrentSolution);
                 ProjectLoaded?.Invoke(path);
-                LoggingService.Instance.LogMessage("Loaded project {0}", path);
             } catch(Exception ex) {
                 LoggingService.Instance.LogError(ex.Message, ex);
             }
@@ -84,5 +82,39 @@ public class SolutionService {
             .WaitForExit();
 
         LoggingService.Instance.LogMessage("Restored project {0}", path);
+    }
+
+    // Extensions
+
+    public Document? GetDocumentByPath(string? path) {
+        if (string.IsNullOrEmpty(path)) 
+            return null;
+        var documentId = Solution?
+            .GetDocumentIdsWithFilePath(path)
+            .FirstOrDefault();
+        return Solution?.GetDocument(documentId);
+    }
+    public IEnumerable<Document>? GetDocumentsByDirectoryPath(string? path) {
+        if (string.IsNullOrEmpty(path)) 
+            return null;
+
+        if (!path.EndsWith(Path.DirectorySeparatorChar))
+            path += Path.DirectorySeparatorChar;
+        
+        var project = GetProjectByDocumentPath(path);
+        if (project == null) 
+            return null;
+
+        return project.Documents.Where(it => it.FilePath!.StartsWith(path));
+    }
+    public Project? GetProjectByDocumentPath(string path) {
+        var targetProjectLocation = ProjectFiles
+            .Select(it => Path.GetDirectoryName(it) + Path.DirectorySeparatorChar)
+            .FirstOrDefault(it => path.StartsWith(it));
+        
+        if (targetProjectLocation == null) 
+            return null;
+
+        return Solution?.Projects.FirstOrDefault(it => it.FilePath!.StartsWith(targetProjectLocation));
     }
 }

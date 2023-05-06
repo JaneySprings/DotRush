@@ -1,36 +1,37 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using DotRush.Server.Services;
-using LanguageServer.Parameters;
+using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol;
 
 namespace DotRush.Server.Extensions;
 
 public static class CodeActionConverter {
-    public static LanguageServer.Parameters.TextDocument.CodeAction? ToCodeAction(this CodeAction codeAction, Document document, LanguageServer.Parameters.TextDocument.Diagnostic[] diagnostics) {
-        var worspaceEdit = new LanguageServer.Parameters.WorkspaceEdit();
-        var textDocumentEdits = new List<TextDocumentEdit>();
+    public static async Task<ProtocolModels.CodeAction?> ToCodeAction(this CodeAction codeAction, Document document, IEnumerable<ProtocolModels.Diagnostic> diagnostics, SolutionService solutionService, CancellationToken cancellationToken) {
+        var worspaceEdit = new ProtocolModels.WorkspaceEdit();
+        var textDocumentEdits = new List<ProtocolModels.WorkspaceEditDocumentChange>();
         
         try {
-            var operations = codeAction.GetOperationsAsync(CancellationToken.None).Result;
+            var operations = await codeAction.GetOperationsAsync(cancellationToken);
             foreach (var operation in operations) {
                 if (operation is ApplyChangesOperation applyChangesOperation) {
-                    var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(SolutionService.Instance.Solution!);
+                    var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solutionService.Solution!);
                     foreach (var projectChanges in solutionChanges.GetProjectChanges()) {
                         foreach (var documentChanges in projectChanges.GetChangedDocuments()) {
                             var newDocument = projectChanges.NewProject.GetDocument(documentChanges)!;
-                            var text = newDocument.GetTextAsync().Result;
-                            var textEdits = new List<LanguageServer.Parameters.TextEdit>();
-                            var textChanges = newDocument.GetTextChangesAsync(document).Result;
+                            var text = await newDocument.GetTextAsync(cancellationToken);
+                            var textEdits = new List<ProtocolModels.TextEdit>();
+                            var textChanges = await newDocument.GetTextChangesAsync(document, cancellationToken);
                             foreach (var textChange in textChanges) {
-                                textEdits.Add(new LanguageServer.Parameters.TextEdit() {
-                                    newText = textChange.NewText,
-                                    range = textChange.Span.ToRange(document),
+                                textEdits.Add(new ProtocolModels.TextEdit() {
+                                    NewText = textChange.NewText ?? string.Empty,
+                                    Range = textChange.Span.ToRange(document),
                                 });
                             }
-                            textDocumentEdits.Add(new TextDocumentEdit() { 
-                                edits = textEdits.ToArray(),
-                                textDocument = new VersionedTextDocumentIdentifier() { 
-                                    uri = newDocument.FilePath?.ToUri()
+                            textDocumentEdits.Add(new ProtocolModels.TextDocumentEdit() { 
+                                Edits = textEdits,
+                                TextDocument = new ProtocolModels.OptionalVersionedTextDocumentIdentifier() { 
+                                    Uri = DocumentUri.From(newDocument.FilePath!)
                                 }
                             });
                         }
@@ -38,12 +39,12 @@ public static class CodeActionConverter {
                 }
             }
 
-            return new LanguageServer.Parameters.TextDocument.CodeAction() {
-                kind = LanguageServer.Parameters.CodeActionKind.QuickFix,
-                title = codeAction.Title,
-                diagnostics = diagnostics,
-                edit = new LanguageServer.Parameters.WorkspaceEdit() {
-                    documentChanges = textDocumentEdits.ToArray(),
+            return new ProtocolModels.CodeAction() {
+                Kind = ProtocolModels.CodeActionKind.QuickFix,
+                Title = codeAction.Title,
+                Diagnostics = new ProtocolModels.Container<ProtocolModels.Diagnostic>(diagnostics),
+                Edit = new ProtocolModels.WorkspaceEdit() {
+                    DocumentChanges = textDocumentEdits,
                 },
             };
         } catch (Exception e) {

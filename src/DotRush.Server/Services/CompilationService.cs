@@ -1,26 +1,27 @@
 using DotRush.Server.Extensions;
-using LanguageServer.Client;
-using Microsoft.CodeAnalysis;
+using OmniSharp.Extensions.LanguageServer.Protocol.Server;
+using OmniSharp.Extensions.LanguageServer.Protocol.Document;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using CodeAnalysis = Microsoft.CodeAnalysis;
+using OmniSharp.Extensions.LanguageServer.Protocol;
 
 namespace DotRush.Server.Services;
 
 public class CompilationService {
-    public static CompilationService Instance { get; private set; } = null!;
-    public Dictionary<string, IEnumerable<Diagnostic>> Diagnostics { get; private set; }
+    public Dictionary<string, IEnumerable<CodeAnalysis.Diagnostic>> Diagnostics { get; private set; }
     public HashSet<string> DiagnosedDocuments { get; private set; }
+    private SolutionService solutionService;
     private bool isActive = false;
 
-    private CompilationService() { 
-        Diagnostics = new Dictionary<string, IEnumerable<Diagnostic>>();
+    public CompilationService(SolutionService solutionService) { 
+        Diagnostics = new Dictionary<string, IEnumerable<CodeAnalysis.Diagnostic>>();
         DiagnosedDocuments = new HashSet<string>();
+        this.solutionService = solutionService;
     }
 
-    public static void Initialize() {
-        Instance = new CompilationService();
-    }
 
-    public static async void Compile(string projectPath, Proxy proxy) {
-        var project = SolutionService.Instance.GetProjectByPath(projectPath);
+    public async void Compile(string projectPath, ITextDocumentLanguageServer proxy) {
+        var project = this.solutionService.GetProjectByPath(projectPath);
         if (project == null) 
             return;
 
@@ -29,27 +30,27 @@ public class CompilationService {
             return;
 
         var diagnostics = compilation.GetDiagnostics().ToServerDiagnostics();
-        var diagnosticsGroups = diagnostics.GroupBy(diagnostic => diagnostic.source);
+        var diagnosticsGroups = diagnostics.GroupBy(diagnostic => diagnostic.Source);
         foreach (var diagnosticsGroup in diagnosticsGroups) {
-            proxy.TextDocument.PublishDiagnostics(new LanguageServer.Parameters.TextDocument.PublishDiagnosticsParams() {
-                uri = diagnosticsGroup.Key.ToUri(),
-                diagnostics = diagnosticsGroup.ToArray(),
+            proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+                Uri = DocumentUri.From(diagnosticsGroup.Key!),
+                Diagnostics = new Container<Diagnostic>(diagnosticsGroup),
             });
         }
     }
 
-    public async void Diagnose(Proxy proxy) {
+    public async Task Diagnose(ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
         if (isActive) 
            return;
 
         isActive = true;
         foreach (var targetDocument in DiagnosedDocuments) {
-            var document = DocumentService.GetDocumentByPath(targetDocument);
+            var document = this.solutionService.GetDocumentByPath(targetDocument);
             if (document == null)
                 continue;
 
-            var semanticModel = await document.GetSemanticModelAsync();
-            var diagnostics = semanticModel?.GetDiagnostics();
+            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+            var diagnostics = semanticModel?.GetDiagnostics(cancellationToken: cancellationToken);
             var serverDiagnostics = diagnostics?.ToServerDiagnostics();
             if (semanticModel == null || diagnostics == null || serverDiagnostics == null)
                 continue;
@@ -59,9 +60,9 @@ public class CompilationService {
             else
                 Diagnostics.Add(targetDocument, diagnostics);
 
-            proxy.TextDocument.PublishDiagnostics(new LanguageServer.Parameters.TextDocument.PublishDiagnosticsParams() {
-                uri = document.FilePath?.ToUri(),
-                diagnostics = serverDiagnostics.ToArray(),
+            proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+                Uri = DocumentUri.From(document.FilePath!),
+                Diagnostics = new Container<Diagnostic>(serverDiagnostics),
             });
         }
         isActive = false;
