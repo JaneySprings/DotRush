@@ -27,7 +27,8 @@ public class RenameHandler : RenameHandlerBase {
         if (document == null)
             return null;
         
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(document), cancellationToken);
+        var sourceText = await document.GetTextAsync(cancellationToken);
+        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
         if (symbol == null) 
             return new WorkspaceEdit();
 
@@ -39,10 +40,11 @@ public class RenameHandler : RenameHandlerBase {
             foreach (var documentId in change.GetChangedDocuments()) {
                 var newDocument = change.NewProject.GetDocument(documentId);
                 var oldDocument = change.OldProject.GetDocument(documentId);
-                var textChanges = newDocument!.GetTextChangesAsync(oldDocument!).Result;
-                var edits = textChanges.Select(x => x.ToTextEdit(oldDocument!)).ToArray();
+                var oldSourceText = await oldDocument!.GetTextAsync(cancellationToken);
+                var textChanges = await newDocument!.GetTextChangesAsync(oldDocument!, cancellationToken);
+                var edits = textChanges.Select(x => x.ToTextEdit(oldSourceText));
                 textDocumentEdits.Add(new TextDocumentEdit() { 
-                    Edits = edits,
+                    Edits = new TextEditContainer(edits),
                     TextDocument = new OptionalVersionedTextDocumentIdentifier() { 
                         Uri = DocumentUri.From(newDocument.FilePath!)
                     }

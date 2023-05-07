@@ -23,8 +23,9 @@ public class DefinitionHandler : DefinitionHandlerBase {
         var document = this.solutionService.GetDocumentByPath(request.TextDocument.Uri.GetFileSystemPath());
         if (document == null)
             return new LocationOrLocationLinks();
-    
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(document), cancellationToken);
+
+        var sourceText = await document.GetTextAsync(cancellationToken);
+        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
         if (symbol == null || this.solutionService.Solution == null) 
             return new LocationOrLocationLinks();
         
@@ -32,6 +33,6 @@ public class DefinitionHandler : DefinitionHandlerBase {
         if (definition == null) 
             return new LocationOrLocationLinks();
 
-        return new LocationOrLocationLinks(definition.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation(this.solutionService)!)));
+        return new LocationOrLocationLinks(definition.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
     }
 }

@@ -25,8 +25,9 @@ public class RangeFormattingHandler : DocumentRangeFormattingHandlerBase {
         if (document == null) 
             return new TextEditContainer();
 
-        var formattedDoc = await Formatter.FormatAsync(document, request.Range.ToTextSpan(document), cancellationToken: cancellationToken);
+        var sourceText = await document.GetTextAsync(cancellationToken);
+        var formattedDoc = await Formatter.FormatAsync(document, request.Range.ToTextSpan(sourceText), cancellationToken: cancellationToken);
         var textChanges = await formattedDoc.GetTextChangesAsync(document, cancellationToken);
-        return new TextEditContainer(textChanges.Select(x => x.ToTextEdit(document)));
+        return new TextEditContainer(textChanges.Select(x => x.ToTextEdit(sourceText)));
     }
 }

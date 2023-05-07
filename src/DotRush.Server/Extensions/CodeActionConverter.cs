@@ -10,6 +10,7 @@ public static class CodeActionConverter {
     public static async Task<ProtocolModels.CodeAction?> ToCodeAction(this CodeAction codeAction, Document document, IEnumerable<ProtocolModels.Diagnostic> diagnostics, SolutionService solutionService, CancellationToken cancellationToken) {
         var worspaceEdit = new ProtocolModels.WorkspaceEdit();
         var textDocumentEdits = new List<ProtocolModels.WorkspaceEditDocumentChange>();
+        var sourceText = await document.GetTextAsync(cancellationToken);
         
         try {
             var operations = await codeAction.GetOperationsAsync(cancellationToken);
@@ -25,7 +26,7 @@ public static class CodeActionConverter {
                             foreach (var textChange in textChanges) {
                                 textEdits.Add(new ProtocolModels.TextEdit() {
                                     NewText = textChange.NewText ?? string.Empty,
-                                    Range = textChange.Span.ToRange(document),
+                                    Range = textChange.Span.ToRange(sourceText),
                                 });
                             }
                             textDocumentEdits.Add(new ProtocolModels.TextDocumentEdit() { 

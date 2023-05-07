@@ -25,8 +25,9 @@ public class FormattingHandler : DocumentFormattingHandlerBase {
         if (document == null) 
             return null;
 
+        var sourceText = await document.GetTextAsync(cancellationToken);
         var formattedDoc = await Formatter.FormatAsync(document, cancellationToken: cancellationToken);
         var textChanges = await formattedDoc.GetTextChangesAsync(document, cancellationToken);
-        return new TextEditContainer(textChanges.Select(x => x.ToTextEdit(document)));
+        return new TextEditContainer(textChanges.Select(x => x.ToTextEdit(sourceText)));
     }
 }

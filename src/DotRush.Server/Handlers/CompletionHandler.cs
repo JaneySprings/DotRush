@@ -35,7 +35,8 @@ public class CompletionHandler : CompletionHandlerBase {
         if (completionService == null || document == null) 
             return new CompletionList(completionItems);
 
-        var position = request.Position.ToOffset(document);
+        var sourceText = await document.GetTextAsync(cancellationToken);
+        var position = request.Position.ToOffset(sourceText);
         var completions = await completionService.GetCompletionsAsync(document, position, cancellationToken: cancellationToken);
         if (completions == null)
             return new CompletionList(completionItems);
@@ -77,9 +78,10 @@ public class CompletionHandler : CompletionHandlerBase {
             if (cachedItems.TryGetValue(id, out var item) && completionService != null) {
                 var changes = await completionService.GetChangeAsync(this.targetDocument, item, cancellationToken: cancellationToken);
                 if (changes != null && item.IsComplexTextEdit) {
+                    var sourceText = await this.targetDocument.GetTextAsync(cancellationToken);
                     textEdit = changes.TextChange.ToEmptyTextEdit();
                     additionalTextEdits = changes.TextChanges
-                        .Select(change => change.ToTextEdit(this.targetDocument));
+                        .Select(change => change.ToTextEdit(sourceText));
                 } 
             }
         }

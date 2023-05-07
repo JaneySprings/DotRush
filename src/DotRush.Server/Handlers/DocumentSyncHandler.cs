@@ -36,7 +36,7 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         if (document == null) 
             return Unit.Value;
         // TODO: Incremental sync (unstable)
-        // var originText = document.GetTextAsync().Result;
+        // var originText = await document.GetTextAsync(cancelationToken);
         // var newText = originText.WithChanges(parameters.contentChanges.Select(change => {
         //     var start = change.range.start.ToOffset(document);
         //     var end = change.range.end.ToOffset(document);

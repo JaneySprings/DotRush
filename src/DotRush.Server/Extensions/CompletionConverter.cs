@@ -1,4 +1,4 @@
-using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Server.Extensions;
@@ -41,14 +41,14 @@ public static class CompletionConverter {
         };
     }
 
-    public static ProtocolModels.TextEdit ToTextEdit(this Microsoft.CodeAnalysis.Text.TextChange change, Document document) {
+    public static ProtocolModels.TextEdit ToTextEdit(this TextChange change, SourceText sourceText) {
         return new ProtocolModels.TextEdit() {
             NewText = change.NewText ?? string.Empty,
-            Range = change.Span.ToRange(document)
+            Range = change.Span.ToRange(sourceText)
         };
     }
 
-    public static ProtocolModels.TextEdit ToEmptyTextEdit(this Microsoft.CodeAnalysis.Text.TextChange change) {
+    public static ProtocolModels.TextEdit ToEmptyTextEdit(this TextChange change) {
         var empty = new ProtocolModels.Position(0, 0);
         return new ProtocolModels.TextEdit() {
             Range = new ProtocolModels.Range(empty, empty),

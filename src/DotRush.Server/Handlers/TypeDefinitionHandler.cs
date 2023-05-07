@@ -23,8 +23,9 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
         var document = this.solutionService.GetDocumentByPath(request.TextDocument.Uri.GetFileSystemPath());
         if (document == null)
             return new LocationOrLocationLinks();
-    
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(document), cancellationToken);
+
+        var sourceText = await document.GetTextAsync(cancellationToken);
+        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
         if (symbol == null)
             return new LocationOrLocationLinks();
 
@@ -42,6 +43,6 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
         if (typeSymbol == null)
             return new LocationOrLocationLinks();
 
-        return new LocationOrLocationLinks(typeSymbol.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation(this.solutionService)!)));
+        return new LocationOrLocationLinks(typeSymbol.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
     }
 }

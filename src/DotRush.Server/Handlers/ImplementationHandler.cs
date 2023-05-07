@@ -23,8 +23,9 @@ public class ImplementationHandler : ImplementationHandlerBase {
         var document = this.solutionService.GetDocumentByPath(request.TextDocument.Uri.GetFileSystemPath());
         if (document == null)
             return new LocationOrLocationLinks();
-    
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(document), cancellationToken);
+
+        var sourceText = await document.GetTextAsync(cancellationToken);
+        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
         if (symbol == null || this.solutionService.Solution == null) 
             return new LocationOrLocationLinks();
 
@@ -52,6 +53,6 @@ public class ImplementationHandler : ImplementationHandlerBase {
         return new LocationOrLocationLinks(results
             .SelectMany(i => i.Locations)
             .Where(loc => File.Exists(loc.SourceTree?.FilePath))
-            .Select(loc => new LocationOrLocationLink(loc.ToLocation(this.solutionService)!)));
+            .Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
     }
 }

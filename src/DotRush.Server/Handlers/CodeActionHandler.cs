@@ -7,6 +7,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using CodeAnalysis = Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Server.Handlers;
 
@@ -34,8 +35,9 @@ public class CodeActionHandler : CodeActionHandlerBase {
         if (!diagnostics.Any() || document == null)
             return new CommandOrCodeActionContainer();
 
+        var sourceText = await document.GetTextAsync(cancellationToken);
         foreach (var diagnostic in diagnostics) {
-            var fileDiagnostic = GetDiagnosticByRange(diagnostic.Range, document);
+            var fileDiagnostic = GetDiagnosticByRange(diagnostic.Range, sourceText, document.FilePath!);
             var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
             if (fileDiagnostic == null || codeFixProviders == null || !codeFixProviders.Any())
                 continue;
@@ -63,11 +65,11 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
         return this.codeActionService.CodeFixProviders?.Where(x => x.FixableDiagnosticIds.Contains(diagnosticId));
     }
-    private CodeAnalysis.Diagnostic? GetDiagnosticByRange(ProtocolModels.Range range, Document document) {
-        var diagnostics = this.compilationService.Diagnostics.TryGetValue(document.FilePath!, out var diags) ? diags : null;
+    private CodeAnalysis.Diagnostic? GetDiagnosticByRange(ProtocolModels.Range range, SourceText sourceText, string path) {
+        var diagnostics = this.compilationService.Diagnostics.TryGetValue(path, out var diags) ? diags : null;
         if (diagnostics == null)
             return null;
 
-        return diagnostics.FirstOrDefault(x => x.Location.SourceSpan.ToRange(document) == range);
+        return diagnostics.FirstOrDefault(x => x.Location.SourceSpan.ToRange(sourceText) == range);
     }
 }

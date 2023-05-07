@@ -1,6 +1,5 @@
 using DotRush.Server.Extensions;
 using DotRush.Server.Services;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
@@ -24,16 +23,22 @@ public class ReferencesHandler : ReferencesHandlerBase {
         if (document == null)
             return new LocationContainer();
 
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(document), cancellationToken);
+        var sourceText = await document.GetTextAsync(cancellationToken);
+        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
         if (symbol == null || this.solutionService.Solution == null) 
             return new LocationContainer();
 
         var refs = await SymbolFinder.FindReferencesAsync(symbol, this.solutionService.Solution, cancellationToken);
-        var references = refs
+        var locations = refs
             .SelectMany(r => r.Locations)
-            .Where(l => File.Exists(l.Document.FilePath))
-            .Select(loc => loc.ToLocation());
+            .Where(l => File.Exists(l.Document.FilePath));
 
-        return new LocationContainer(references);
+        var result = new List<Location>();
+        foreach (var location in locations) {
+            var locationSourceText = await location.Document.GetTextAsync(cancellationToken);
+            result.Add(location.ToLocation(locationSourceText));
+        }
+
+        return new LocationContainer(result);
     }
 }

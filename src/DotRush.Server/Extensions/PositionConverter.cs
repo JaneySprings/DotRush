@@ -8,18 +8,14 @@ using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Extensions;
 
 public static class PositionConverter {
-    public static int ToOffset(this ProtocolModels.Position position, Document document) {
-        var text = document.GetTextAsync().Result;
-        return text.Lines.GetPosition(new LinePosition(
-            position.Line, 
-            position.Character 
-        ));
+    public static int ToOffset(this ProtocolModels.Position position, SourceText sourceText) {
+        return sourceText.Lines.GetPosition(
+            new LinePosition(position.Line, position.Character)
+        );
     }
 
-    public static ProtocolModels.Position ToPosition(this int offset, Document document) {
-        var text = document.GetTextAsync().Result;
-        var linePosition = text.Lines.GetLinePosition(offset);
-
+    public static ProtocolModels.Position ToPosition(this int offset, SourceText sourceText) {
+        var linePosition = sourceText.Lines.GetLinePosition(offset);
         return new ProtocolModels.Position(linePosition.Line, linePosition.Character);
     }
 
@@ -30,35 +26,31 @@ public static class PositionConverter {
         );
     }
 
-    public static ProtocolModels.Range ToRange(this TextSpan span, Document document) {
+    public static ProtocolModels.Range ToRange(this TextSpan span, SourceText sourceText) {
         return new ProtocolModels.Range(
-            span.Start.ToPosition(document),
-            span.End.ToPosition(document)
+            span.Start.ToPosition(sourceText)!,
+            span.End.ToPosition(sourceText)!
         );
     }
 
-    public static ProtocolModels.Location? ToLocation(this Location location, SolutionService service) {
-        var document = service.GetDocumentByPath(location.SourceTree!.FilePath);
-        if (document == null) 
-            return null;
-
+    public static ProtocolModels.Location ToLocation(this Location location) {
         return new ProtocolModels.Location() {
-            Uri = DocumentUri.From(document.FilePath!),
-            Range = location.SourceSpan.ToRange(document)
+            Uri = DocumentUri.From(location.SourceTree!.FilePath),
+            Range = location.SourceSpan.ToRange(location.SourceTree.GetText())
         };
     }
 
-    public static ProtocolModels.Location ToLocation(this ReferenceLocation location) {
+    public static ProtocolModels.Location ToLocation(this ReferenceLocation location, SourceText sourceText) {
         return new ProtocolModels.Location() {
             Uri = DocumentUri.From(location.Document.FilePath!),
-            Range = location.Location.SourceSpan.ToRange(location.Document)
+            Range = location.Location.SourceSpan.ToRange(sourceText)
         };
     }
 
-    public static TextSpan ToTextSpan(this ProtocolModels.Range range, Document document) {
+    public static TextSpan ToTextSpan(this ProtocolModels.Range range, SourceText sourceText) {
         return TextSpan.FromBounds(
-            range.Start.ToOffset(document), 
-            range.End.ToOffset(document)
+            range.Start.ToOffset(sourceText), 
+            range.End.ToOffset(sourceText)
         );
     }
 }
