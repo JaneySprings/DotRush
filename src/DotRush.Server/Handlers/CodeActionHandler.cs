@@ -38,9 +38,8 @@ public class CodeActionHandler : CodeActionHandlerBase {
         this.cachedDocuments.Clear();
 
         var codeActions = new List<CodeAction?>();
-        var diagnostics = request.Context.Diagnostics;
         var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
-        if (!diagnostics.Any() || documentIds == null)
+        if (documentIds == null)
             return new CommandOrCodeActionContainer();
 
         foreach (var documentId in documentIds) {
@@ -49,21 +48,20 @@ public class CodeActionHandler : CodeActionHandlerBase {
                 continue;
 
             var sourceText = await document.GetTextAsync(cancellationToken);
-            foreach (var diagnostic in diagnostics) {
-                var fileDiagnostic = await GetDiagnosticByRange(diagnostic.Range, sourceText, document, cancellationToken);
-                var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
-                if (fileDiagnostic == null || codeFixProviders == null || !codeFixProviders.Any())
-                    continue;
+            var fileDiagnostic = await GetDiagnosticByRange(request.Range, sourceText, document, cancellationToken);
+            var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
+            if (fileDiagnostic == null || codeFixProviders == null || !codeFixProviders.Any())
+                continue;
 
-                foreach (var codeFixProvider in codeFixProviders) {
-                    var context = new CodeFixContext(document, fileDiagnostic, (a, _) => {
-                        this.cachedCodeActions.Add(a.GetHashCode(), a);
-                        this.cachedDocuments.Add(a.GetHashCode(), document);
-                        codeActions.Add(a.ToCodeAction());
-                    }, cancellationToken);
-                    await codeFixProvider.RegisterCodeFixesAsync(context);
-                }
+            foreach (var codeFixProvider in codeFixProviders) {
+                var context = new CodeFixContext(document, fileDiagnostic, (a, _) => {
+                    this.cachedCodeActions.Add(a.GetHashCode(), a);
+                    this.cachedDocuments.Add(a.GetHashCode(), document);
+                    codeActions.Add(a.ToCodeAction());
+                }, cancellationToken);
+                await codeFixProvider.RegisterCodeFixesAsync(context);
             }
+            
         }
 
         return new CommandOrCodeActionContainer(codeActions.Where(x => x != null).Select(x => new CommandOrCodeAction(x!)));
