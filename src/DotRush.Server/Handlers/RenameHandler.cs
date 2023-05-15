@@ -23,7 +23,9 @@ public class RenameHandler : RenameHandlerBase {
 
     public override async Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken cancellationToken) {
         var textDocumentEdits = new List<WorkspaceEditDocumentChange>();
-        var document = this.solutionService.GetDocumentByPath(request.TextDocument.Uri.GetFileSystemPath());
+        var documentsHash = new HashSet<string>();
+        var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
+        var document = this.solutionService.Solution?.GetDocument(documentId);
         if (document == null)
             return null;
         
@@ -37,9 +39,16 @@ public class RenameHandler : RenameHandlerBase {
         var changes = updatedSolution.GetChanges(document.Project.Solution);
 
         foreach (var change in changes.GetProjectChanges()) {
-            foreach (var documentId in change.GetChangedDocuments()) {
-                var newDocument = change.NewProject.GetDocument(documentId);
-                var oldDocument = change.OldProject.GetDocument(documentId);
+            foreach (var changedDocId in change.GetChangedDocuments()) {
+                var newDocument = change.NewProject.GetDocument(changedDocId);
+                var oldDocument = change.OldProject.GetDocument(changedDocId);
+                
+                if (newDocument == null || oldDocument == null)
+                    continue;
+                if (documentsHash.Contains(newDocument?.FilePath!))
+                    continue;
+
+                documentsHash.Add(newDocument?.FilePath!);
                 var oldSourceText = await oldDocument!.GetTextAsync(cancellationToken);
                 var textChanges = await newDocument!.GetTextChangesAsync(oldDocument!, cancellationToken);
                 var edits = textChanges.Select(x => x.ToTextEdit(oldSourceText));

@@ -21,7 +21,8 @@ public class RangeFormattingHandler : DocumentRangeFormattingHandlerBase {
 
     public override async Task<TextEditContainer> Handle(DocumentRangeFormattingParams request, CancellationToken cancellationToken) {
         var edits = new List<TextEdit>();
-        var document = this.solutionService.GetDocumentByPath(request.TextDocument.Uri.GetFileSystemPath());
+        var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
+        var document = this.solutionService.Solution?.GetDocument(documentId);
         if (document == null) 
             return new TextEditContainer();
 

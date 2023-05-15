@@ -20,29 +20,38 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
     }
 
     public override async Task<LocationOrLocationLinks> Handle(TypeDefinitionParams request, CancellationToken cancellationToken) {
-        var document = this.solutionService.GetDocumentByPath(request.TextDocument.Uri.GetFileSystemPath());
-        if (document == null)
+        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        if (documentIds == null)
             return new LocationOrLocationLinks();
 
-        var sourceText = await document.GetTextAsync(cancellationToken);
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
-        if (symbol == null)
-            return new LocationOrLocationLinks();
+        var result = new List<LocationOrLocationLink>();
+        foreach (var documentId in documentIds) {
+            var document = this.solutionService.Solution?.GetDocument(documentId);
+            if (document == null)
+                continue;
 
-        ITypeSymbol? typeSymbol = null;
+            var sourceText = await document.GetTextAsync(cancellationToken);
+            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
+            if (symbol == null)
+                return new LocationOrLocationLinks();
 
-        if (symbol is ILocalSymbol localSymbol) 
-            typeSymbol = localSymbol.Type;
-        else if (symbol is IFieldSymbol fieldSymbol)
-            typeSymbol = fieldSymbol.Type;
-        else if (symbol is IPropertySymbol propertySymbol)
-            typeSymbol = propertySymbol.Type;
-        else if (symbol is IParameterSymbol parameterSymbol)
-            typeSymbol = parameterSymbol.Type;
+            ITypeSymbol? typeSymbol = null;
 
-        if (typeSymbol == null)
-            return new LocationOrLocationLinks();
+            if (symbol is ILocalSymbol localSymbol) 
+                typeSymbol = localSymbol.Type;
+            else if (symbol is IFieldSymbol fieldSymbol)
+                typeSymbol = fieldSymbol.Type;
+            else if (symbol is IPropertySymbol propertySymbol)
+                typeSymbol = propertySymbol.Type;
+            else if (symbol is IParameterSymbol parameterSymbol)
+                typeSymbol = parameterSymbol.Type;
 
-        return new LocationOrLocationLinks(typeSymbol.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
+            if (typeSymbol == null)
+                return new LocationOrLocationLinks();
+
+            result.AddRange(typeSymbol.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
+        }
+
+        return new LocationOrLocationLinks(result);
     }
 }

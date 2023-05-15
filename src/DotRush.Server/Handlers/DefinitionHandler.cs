@@ -20,19 +20,28 @@ public class DefinitionHandler : DefinitionHandlerBase {
     }
 
     public override async Task<LocationOrLocationLinks> Handle(DefinitionParams request, CancellationToken cancellationToken) {
-        var document = this.solutionService.GetDocumentByPath(request.TextDocument.Uri.GetFileSystemPath());
-        if (document == null)
+        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        if (documentIds == null)
             return new LocationOrLocationLinks();
 
-        var sourceText = await document.GetTextAsync(cancellationToken);
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
-        if (symbol == null || this.solutionService.Solution == null) 
-            return new LocationOrLocationLinks();
-        
-        var definition = await SymbolFinder.FindSourceDefinitionAsync(symbol, this.solutionService.Solution, cancellationToken);
-        if (definition == null) 
-            return new LocationOrLocationLinks();
+        var result = new List<LocationOrLocationLink>();
+        foreach (var documentId in documentIds) {
+            var document = this.solutionService.Solution?.GetDocument(documentId);
+            if (document == null)
+                continue;
 
-        return new LocationOrLocationLinks(definition.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
+            var sourceText = await document.GetTextAsync(cancellationToken);
+            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
+            if (symbol == null || this.solutionService.Solution == null) 
+                return new LocationOrLocationLinks();
+            
+            var definition = await SymbolFinder.FindSourceDefinitionAsync(symbol, this.solutionService.Solution, cancellationToken);
+            if (definition == null) 
+                return new LocationOrLocationLinks();
+
+            result.AddRange(definition.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
+        }
+
+        return new LocationOrLocationLinks(result);
     }
 }

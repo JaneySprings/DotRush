@@ -19,7 +19,8 @@ public class ReferencesHandler : ReferencesHandlerBase {
     }
 
     public override async Task<LocationContainer> Handle(ReferenceParams request, CancellationToken cancellationToken) {
-        var document = this.solutionService.GetDocumentByPath(request.TextDocument.Uri.GetFileSystemPath());
+        var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
+        var document = this.solutionService.Solution?.GetDocument(documentId);
         if (document == null)
             return new LocationContainer();
 
@@ -28,13 +29,13 @@ public class ReferencesHandler : ReferencesHandlerBase {
         if (symbol == null || this.solutionService.Solution == null) 
             return new LocationContainer();
 
-        var refs = await SymbolFinder.FindReferencesAsync(symbol, this.solutionService.Solution, cancellationToken);
-        var locations = refs
+        var referenceSymbols = await SymbolFinder.FindReferencesAsync(symbol, this.solutionService.Solution, cancellationToken);
+        var referenceLocations = referenceSymbols
             .SelectMany(r => r.Locations)
             .Where(l => File.Exists(l.Document.FilePath));
 
         var result = new List<Location>();
-        foreach (var location in locations) {
+        foreach (var location in referenceLocations) {
             var locationSourceText = await location.Document.GetTextAsync(cancellationToken);
             result.Add(location.ToLocation(locationSourceText));
         }

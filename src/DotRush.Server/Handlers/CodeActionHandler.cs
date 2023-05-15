@@ -12,11 +12,15 @@ using Microsoft.CodeAnalysis.Text;
 namespace DotRush.Server.Handlers;
 
 public class CodeActionHandler : CodeActionHandlerBase {
+    private Dictionary<int, CodeAnalysis.CodeActions.CodeAction> cachedCodeActions;
+    private Dictionary<int, CodeAnalysis.Document> cachedDocuments;
     private SolutionService solutionService;
     private CompilationService compilationService;
     private CodeActionService codeActionService;
 
     public CodeActionHandler(SolutionService solutionService, CompilationService compilationService, CodeActionService codeActionService) {
+        this.cachedCodeActions = new Dictionary<int, CodeAnalysis.CodeActions.CodeAction>();
+        this.cachedDocuments = new Dictionary<int, CodeAnalysis.Document>();
         this.solutionService = solutionService;
         this.compilationService = compilationService;
         this.codeActionService = codeActionService;
@@ -24,38 +28,58 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
     protected override CodeActionRegistrationOptions CreateRegistrationOptions(CodeActionCapability capability, ClientCapabilities clientCapabilities) {
         return new CodeActionRegistrationOptions() {
-            CodeActionKinds = new Container<CodeActionKind>(CodeActionKind.QuickFix)
+            CodeActionKinds = new Container<CodeActionKind>(CodeActionKind.QuickFix),
+            ResolveProvider = true,
         };
     }
 
     public override async Task<CommandOrCodeActionContainer> Handle(CodeActionParams request, CancellationToken cancellationToken) {
+        this.cachedCodeActions.Clear();
+        this.cachedDocuments.Clear();
+
         var codeActions = new List<CodeAction?>();
         var diagnostics = request.Context.Diagnostics;
-        var document = this.solutionService.GetDocumentByPath(request.TextDocument.Uri.GetFileSystemPath());
-        if (!diagnostics.Any() || document == null)
+        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        if (!diagnostics.Any() || documentIds == null)
             return new CommandOrCodeActionContainer();
 
-        var sourceText = await document.GetTextAsync(cancellationToken);
-        foreach (var diagnostic in diagnostics) {
-            var fileDiagnostic = GetDiagnosticByRange(diagnostic.Range, sourceText, document.FilePath!);
-            var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
-            if (fileDiagnostic == null || codeFixProviders == null || !codeFixProviders.Any())
+        foreach (var documentId in documentIds) {
+            var document = this.solutionService.Solution?.GetDocument(documentId);
+            if (document == null)
                 continue;
 
-            foreach (var codeFixProvider in codeFixProviders) {
-                var context = new CodeFixContext(document, fileDiagnostic, async (a, _) => {
-                    var action = await a.ToCodeAction(document, diagnostics, this.solutionService, cancellationToken);
-                    codeActions.Add(action);
-                }, cancellationToken);
-                await codeFixProvider.RegisterCodeFixesAsync(context).WaitAsync(cancellationToken);
+            var sourceText = await document.GetTextAsync(cancellationToken);
+            foreach (var diagnostic in diagnostics) {
+                var fileDiagnostic = await GetDiagnosticByRange(diagnostic.Range, sourceText, document, cancellationToken);
+                var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
+                if (fileDiagnostic == null || codeFixProviders == null || !codeFixProviders.Any())
+                    continue;
+
+                foreach (var codeFixProvider in codeFixProviders) {
+                    var context = new CodeFixContext(document, fileDiagnostic, (a, _) => {
+                        this.cachedCodeActions.Add(a.GetHashCode(), a);
+                        this.cachedDocuments.Add(a.GetHashCode(), document);
+                        codeActions.Add(a.ToCodeAction());
+                    }, cancellationToken);
+                    await codeFixProvider.RegisterCodeFixesAsync(context);
+                }
             }
         }
 
         return new CommandOrCodeActionContainer(codeActions.Where(x => x != null).Select(x => new CommandOrCodeAction(x!)));
     }
 
-    public override Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken) {
-        return Task.FromResult(request);
+    public override async Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken) {
+        if (request.Data == null)
+            return request;
+
+        var codeAction = this.cachedCodeActions[request.Data.ToObject<int>()];
+        var document = this.cachedDocuments[request.Data.ToObject<int>()];
+        var result = await codeAction.ToCodeAction(document, this.solutionService, cancellationToken);
+        if (result == null)
+            return request;
+
+        return result;
     }
 
 
@@ -65,8 +89,8 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
         return this.codeActionService.CodeFixProviders?.Where(x => x.FixableDiagnosticIds.Contains(diagnosticId));
     }
-    private CodeAnalysis.Diagnostic? GetDiagnosticByRange(ProtocolModels.Range range, SourceText sourceText, string path) {
-        var diagnostics = this.compilationService.Diagnostics.TryGetValue(path, out var diags) ? diags : null;
+    private async Task<CodeAnalysis.Diagnostic?> GetDiagnosticByRange(ProtocolModels.Range range, SourceText sourceText, Document document, CancellationToken cancellationToken) {
+        var diagnostics = await this.compilationService.Diagnose(document, cancellationToken);
         if (diagnostics == null)
             return null;
 

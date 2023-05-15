@@ -23,7 +23,6 @@ public class Program {
             .WithOutput(Console.OpenStandardOutput())
             .WithServices(s => ConfigureServices(s, args.Skip(1).ToArray()))
             .OnInitialize(InitializeHandler)
-            .OnNotification<FrameworkChangedParams>("frameworkChanged", FrameworkChanged)
             .OnNotification<ReloadTargetsParams>("reloadTargets", ReloadTargets)
             .WithHandler<DocumentSyncHandler>()
             .WithHandler<WatchedFilesHandler>()
@@ -52,33 +51,19 @@ public class Program {
         LoggingService.Initialize();
     }
 
-    private static Task InitializeHandler(ILanguageServer server, InitializeParams request, CancellationToken cancellationToken) {
-        var solutionService = server.Services.GetService<SolutionService>();
+    private static async Task InitializeHandler(ILanguageServer server, InitializeParams request, CancellationToken cancellationToken) {
         var compilationService = server.Services.GetService<CompilationService>();
-        if (solutionService == null || compilationService == null) 
-            return Task.CompletedTask;
+        if (compilationService == null) 
+            return;
 
-        solutionService.ProjectLoaded = path => {
-            compilationService.Compile(path, server.TextDocument);
-        };
-
-        return Task.CompletedTask;
+        await compilationService.DiagnoseAll(server.TextDocument, cancellationToken);
     }
 
-    private static void FrameworkChanged(FrameworkChangedParams parameters, CancellationToken cancellationToken) {
+    private static async void ReloadTargets(ReloadTargetsParams parameters, CancellationToken cancellationToken) {
         var solutionService = Server?.Services.GetService<SolutionService>();
         if (solutionService == null) 
             return;
 
-        solutionService.TargetFramework = parameters.framework;
-        solutionService.ForceReload(cancellationToken);
-    }
-
-    private static void ReloadTargets(ReloadTargetsParams parameters, CancellationToken cancellationToken) {
-        var solutionService = Server?.Services.GetService<SolutionService>();
-        if (solutionService == null) 
-            return;
-
-        solutionService.ForceReload(cancellationToken);
+        await solutionService.ReloadSolution(cancellationToken);
     }
 }

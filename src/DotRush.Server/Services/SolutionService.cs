@@ -6,75 +6,65 @@ using Microsoft.CodeAnalysis.MSBuild;
 namespace DotRush.Server.Services;
 
 public class SolutionService {
-    public HashSet<string> ProjectFiles { get; private set; }
     public MSBuildWorkspace? Workspace { get; private set; }
     public Solution? Solution { get; private set; }
-    public string? TargetFramework { get; set; }
+    private HashSet<string> ProjectFiles { get; }
+    private bool isReloaded;
 
-    public Action<string>? ProjectLoaded;
 
     public SolutionService(string[] targets) {
         ProjectFiles = new HashSet<string>();
         MSBuildLocator.RegisterDefaults();
 
-        foreach (var target in targets)
-            foreach (var path in Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories)) 
-                ProjectFiles.Add(path);
+        foreach (var target in targets) 
+            AddProjects(Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories));
+
+        foreach (var projectPath in ProjectFiles)
+            RestoreProject(projectPath);
+
+        ReloadSolution(CancellationToken.None).Wait();
     }
+
 
     public void UpdateSolution(Solution? solution) {
         Solution = solution;
     }
-    public void AddTargets(string[] targets, CancellationToken cancellationToken) {
-        var added = new List<string>();
-        foreach (var target in targets) 
-            foreach (var path in Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories))
-                if (ProjectFiles.Add(path))
-                    added.Add(path);
-
-        LoadProjects(added, cancellationToken);
-    }
-    public void RemoveTargets(string[] targets, CancellationToken cancellationToken) {
-        var changed = false;
-        foreach (var target in targets) 
-            foreach (var path in Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories))
-                changed = ProjectFiles.Remove(path);
-        // MSBuildWorkspace does not support unloading projects
-        if (changed) 
-            ForceReload(cancellationToken);
-    }
-    public void ForceReload(CancellationToken cancellationToken) {
-        var configuration = new Dictionary<string, string>();
-        if (!string.IsNullOrEmpty(TargetFramework))
-            configuration.Add("TargetFramework", TargetFramework);
-
-        Workspace = MSBuildWorkspace.Create(configuration);
+    public async Task ReloadSolution(CancellationToken cancellationToken) {
+        if (isReloaded)
+            return;
+        
+        isReloaded = true;
+        Solution = null;
+        if (Workspace != null) {
+            Workspace.Dispose();
+            Workspace = null;
+        }
+        Workspace = MSBuildWorkspace.Create();
         Workspace.LoadMetadataForReferencedProjects = true;
         Workspace.SkipUnrecognizedProjects = true;
-
-        LoadProjects(ProjectFiles, cancellationToken);
+        await LoadProjects(cancellationToken);
+        isReloaded = false;
     }
-    public Project? GetProjectByPath(string path) {
-        return Solution?.Projects.FirstOrDefault(project => project.FilePath == path);
+    public void AddProjects(IEnumerable<string> projectFilePaths) {
+        foreach (var path in projectFilePaths)
+            ProjectFiles.Add(path);
     }
-
-
-    private void LoadProjects(IEnumerable<string> projectPaths, CancellationToken cancellationToken) {
-        foreach (var path in projectPaths) {
-            RestoreProject(path);
+    public void RemoveProjects(IEnumerable<string> projectFilePaths) {
+        foreach (var path in projectFilePaths)
+            ProjectFiles.Remove(path);
+    }
+    
+    
+    private async Task LoadProjects(CancellationToken cancellationToken) {
+        foreach (var path in ProjectFiles) {
             try {
-                Workspace?.OpenProjectAsync(path, cancellationToken: cancellationToken).Wait();
-                if (cancellationToken.IsCancellationRequested)
-                    return;
-
+                var project = await Workspace!.OpenProjectAsync(path, cancellationToken: cancellationToken);
                 UpdateSolution(Workspace?.CurrentSolution);
-                ProjectLoaded?.Invoke(path);
             } catch(Exception ex) {
                 LoggingService.Instance.LogError(ex.Message, ex);
             }
         }
     }
-
     private void RestoreProject(string path) {
         var result = new ProcessRunner("dotnet", new ProcessArgumentBuilder()
             .Append("restore")
@@ -82,39 +72,5 @@ public class SolutionService {
             .WaitForExit();
 
         LoggingService.Instance.LogMessage("Restored project {0}", path);
-    }
-
-    // Extensions
-
-    public Document? GetDocumentByPath(string? path) {
-        if (string.IsNullOrEmpty(path)) 
-            return null;
-        var documentId = Solution?
-            .GetDocumentIdsWithFilePath(path)
-            .FirstOrDefault();
-        return Solution?.GetDocument(documentId);
-    }
-    public IEnumerable<Document>? GetDocumentsByDirectoryPath(string? path) {
-        if (string.IsNullOrEmpty(path)) 
-            return null;
-
-        if (!path.EndsWith(Path.DirectorySeparatorChar))
-            path += Path.DirectorySeparatorChar;
-        
-        var project = GetProjectByDocumentPath(path);
-        if (project == null) 
-            return null;
-
-        return project.Documents.Where(it => it.FilePath!.StartsWith(path));
-    }
-    public Project? GetProjectByDocumentPath(string path) {
-        var targetProjectLocation = ProjectFiles
-            .Select(it => Path.GetDirectoryName(it) + Path.DirectorySeparatorChar)
-            .FirstOrDefault(it => path.StartsWith(it));
-        
-        if (targetProjectLocation == null) 
-            return null;
-
-        return Solution?.Projects.FirstOrDefault(it => it.FilePath!.StartsWith(targetProjectLocation));
     }
 }

@@ -30,7 +30,8 @@ public class CompletionHandler : CompletionHandlerBase {
 
     public override async Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken) {
         var completionItems = new List<CompletionItem>();
-        var document = this.solutionService.GetDocumentByPath(request.TextDocument.Uri.GetFileSystemPath());
+        var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
+        var document = this.solutionService.Solution?.GetDocument(documentId);
         var completionService = CodeAnalysisCompletionService.GetService(document);
         if (completionService == null || document == null) 
             return new CompletionList(completionItems);

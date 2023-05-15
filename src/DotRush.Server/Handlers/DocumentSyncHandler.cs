@@ -32,32 +32,30 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
     }
 
     public override async Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken) {
-        var document = this.solutionService.GetDocumentByPath(request.TextDocument.Uri.GetFileSystemPath());
-        if (document == null) 
+        var documentsIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        if (documentsIds == null) 
             return Unit.Value;
-        // TODO: Incremental sync (unstable)
-        // var originText = await document.GetTextAsync(cancelationToken);
-        // var newText = originText.WithChanges(parameters.contentChanges.Select(change => {
-        //     var start = change.range.start.ToOffset(document);
-        //     var end = change.range.end.ToOffset(document);
-        //     return new TextChange(TextSpan.FromBounds(start, end), change.text);
-        // }));
-        var updatedDocument = document.WithText(SourceText.From(request.ContentChanges.First().Text));
-        this.solutionService.UpdateSolution(updatedDocument.Project.Solution);
 
-        await this.compilationService.Diagnose(serverFacade.TextDocument, cancellationToken);
+        foreach (var documentId in documentsIds) {
+            var document = this.solutionService.Solution?.GetDocument(documentId);
+            if (document == null) 
+                continue;
+            var updatedDocument = document.WithText(SourceText.From(request.ContentChanges.First().Text));
+            this.solutionService.UpdateSolution(updatedDocument.Project.Solution);
+        }
+
+        await this.compilationService.DiagnoseDocument(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, cancellationToken);
         return Unit.Value;
     }
     public override async Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
-        this.compilationService.DiagnosedDocuments.Add(request.TextDocument.Uri.GetFileSystemPath());
-        await this.compilationService.Diagnose(serverFacade.TextDocument, cancellationToken);
+        await this.compilationService.DiagnoseProject(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, cancellationToken);
+        return Unit.Value;
+    }
+    public override async Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {
+        await this.compilationService.DiagnoseDocument(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, cancellationToken);
         return Unit.Value;
     }
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
-        this.compilationService.DiagnosedDocuments.Remove(request.TextDocument.Uri.GetFileSystemPath());
-        return Unit.Task;
-    }
-    public override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {
         return Unit.Task;
     }
 }

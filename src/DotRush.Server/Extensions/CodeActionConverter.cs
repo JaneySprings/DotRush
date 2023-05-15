@@ -7,7 +7,16 @@ using OmniSharp.Extensions.LanguageServer.Protocol;
 namespace DotRush.Server.Extensions;
 
 public static class CodeActionConverter {
-    public static async Task<ProtocolModels.CodeAction?> ToCodeAction(this CodeAction codeAction, Document document, IEnumerable<ProtocolModels.Diagnostic> diagnostics, SolutionService solutionService, CancellationToken cancellationToken) {
+    public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction) {
+        var textDocumentEdits = new List<ProtocolModels.WorkspaceEditDocumentChange>();
+        return new ProtocolModels.CodeAction() {
+            Kind = ProtocolModels.CodeActionKind.QuickFix,
+            Data = codeAction.GetHashCode(),
+            Title = codeAction.Title,
+        };
+    }
+
+    public static async Task<ProtocolModels.CodeAction?> ToCodeAction(this CodeAction codeAction, Document document, SolutionService solutionService, CancellationToken cancellationToken) {
         var worspaceEdit = new ProtocolModels.WorkspaceEdit();
         var textDocumentEdits = new List<ProtocolModels.WorkspaceEditDocumentChange>();
         var sourceText = await document.GetTextAsync(cancellationToken);
@@ -43,7 +52,6 @@ public static class CodeActionConverter {
             return new ProtocolModels.CodeAction() {
                 Kind = ProtocolModels.CodeActionKind.QuickFix,
                 Title = codeAction.Title,
-                Diagnostics = new ProtocolModels.Container<ProtocolModels.Diagnostic>(diagnostics),
                 Edit = new ProtocolModels.WorkspaceEdit() {
                     DocumentChanges = textDocumentEdits,
                 },

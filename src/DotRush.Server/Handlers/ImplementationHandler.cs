@@ -20,37 +20,42 @@ public class ImplementationHandler : ImplementationHandlerBase {
     }
 
     public override async Task<LocationOrLocationLinks> Handle(ImplementationParams request, CancellationToken cancellationToken) {
-        var document = this.solutionService.GetDocumentByPath(request.TextDocument.Uri.GetFileSystemPath());
-        if (document == null)
+        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        if (documentIds == null)
             return new LocationOrLocationLinks();
 
-        var sourceText = await document.GetTextAsync(cancellationToken);
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
-        if (symbol == null || this.solutionService.Solution == null) 
-            return new LocationOrLocationLinks();
+        var result = new List<ISymbol>();
+        foreach (var documentId in documentIds) {
+            var document = this.solutionService.Solution?.GetDocument(documentId);
+            if (document == null)
+                continue;
 
-        var results = new List<ISymbol>();
+            var sourceText = await document.GetTextAsync(cancellationToken);
+            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
+            if (symbol == null || this.solutionService.Solution == null) 
+                return new LocationOrLocationLinks();
 
-        var symbols = await SymbolFinder.FindImplementationsAsync(symbol, this.solutionService.Solution, cancellationToken: cancellationToken);
-        if (symbols != null)
-            results.AddRange(symbols);
-
-        if (symbol is IMethodSymbol methodSymbol) {
-            symbols = await SymbolFinder.FindOverridesAsync(methodSymbol, this.solutionService.Solution, cancellationToken: cancellationToken);
+            var symbols = await SymbolFinder.FindImplementationsAsync(symbol, this.solutionService.Solution, cancellationToken: cancellationToken);
             if (symbols != null)
-                results.AddRange(symbols);
+                result.AddRange(symbols);
+
+            if (symbol is IMethodSymbol methodSymbol) {
+                symbols = await SymbolFinder.FindOverridesAsync(methodSymbol, this.solutionService.Solution, cancellationToken: cancellationToken);
+                if (symbols != null)
+                    result.AddRange(symbols);
+            }
+            if (symbol is INamedTypeSymbol namedTypeSymbol) {
+                symbols = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, this.solutionService.Solution, cancellationToken: cancellationToken);
+                if (symbols != null)
+                    result.AddRange(symbols);
+                
+                symbols = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, this.solutionService.Solution, cancellationToken: cancellationToken);
+                if (symbols != null)
+                    result.AddRange(symbols);
+            }
         }
-        if (symbol is INamedTypeSymbol namedTypeSymbol) {
-            symbols = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, this.solutionService.Solution, cancellationToken: cancellationToken);
-            if (symbols != null)
-                results.AddRange(symbols);
-            
-            symbols = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, this.solutionService.Solution, cancellationToken: cancellationToken);
-            if (symbols != null)
-                results.AddRange(symbols);
-        }
 
-        return new LocationOrLocationLinks(results
+        return new LocationOrLocationLinks(result
             .SelectMany(i => i.Locations)
             .Where(loc => File.Exists(loc.SourceTree?.FilePath))
             .Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));

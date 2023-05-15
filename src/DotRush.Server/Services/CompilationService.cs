@@ -8,63 +8,94 @@ using OmniSharp.Extensions.LanguageServer.Protocol;
 namespace DotRush.Server.Services;
 
 public class CompilationService {
-    public Dictionary<string, IEnumerable<CodeAnalysis.Diagnostic>> Diagnostics { get; private set; }
-    public HashSet<string> DiagnosedDocuments { get; private set; }
     private SolutionService solutionService;
-    private bool isActive = false;
 
-    public CompilationService(SolutionService solutionService) { 
-        Diagnostics = new Dictionary<string, IEnumerable<CodeAnalysis.Diagnostic>>();
-        DiagnosedDocuments = new HashSet<string>();
+    public CompilationService(SolutionService solutionService) {
         this.solutionService = solutionService;
     }
 
-
-    public async void Compile(string projectPath, ITextDocumentLanguageServer proxy) {
-        var project = this.solutionService.GetProjectByPath(projectPath);
-        if (project == null) 
+    public async Task DiagnoseAll(ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
+        var projects = this.solutionService.Solution?.Projects;
+        if (projects == null)
             return;
 
-        var compilation = await project.GetCompilationAsync();
-        if (compilation == null) 
-            return;
+        var result = new Dictionary<string, List<CodeAnalysis.Diagnostic>>();
+        foreach (var project in projects) {
+           foreach (var document in project.Documents) {
+                var diagnostics = await Diagnose(document, cancellationToken);
+                if (result.ContainsKey(document.FilePath!))
+                    result[document.FilePath!].AddRange(diagnostics!);
+                else
+                    result.Add(document.FilePath!, diagnostics!.ToList());
+            }
+        }
 
-        var diagnostics = compilation.GetDiagnostics().ToServerDiagnostics();
-        var diagnosticsGroups = diagnostics.GroupBy(diagnostic => diagnostic.Source);
-        foreach (var diagnosticsGroup in diagnosticsGroups) {
+        foreach (var diagnostic in result) {
             proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
-                Uri = DocumentUri.From(diagnosticsGroup.Key!),
-                Diagnostics = new Container<Diagnostic>(diagnosticsGroup),
+                Uri = DocumentUri.From(diagnostic.Key),
+                Diagnostics = new Container<Diagnostic>(diagnostic.Value.ToServerDiagnostics()),
             });
         }
     }
 
-    public async Task Diagnose(ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
-        if (isActive) 
-           return;
+    public async Task DiagnoseProject(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
+        var projectIds = this.solutionService.Solution?.GetProjectIdsWithDocumentFilePath(documentPath);
+        if (projectIds == null)
+            return;
 
-        isActive = true;
-        foreach (var targetDocument in DiagnosedDocuments) {
-            var document = this.solutionService.GetDocumentByPath(targetDocument);
+        var result = new Dictionary<string, List<CodeAnalysis.Diagnostic>>();
+        foreach (var projectId in projectIds) {
+            var project = this.solutionService.Solution?.GetProject(projectId);
+            if (project == null)
+                continue;
+
+            foreach (var document in project.Documents) {
+                var diagnostics = await Diagnose(document, cancellationToken);
+                if (result.ContainsKey(document.FilePath!))
+                    result[document.FilePath!].AddRange(diagnostics!);
+                else
+                    result.Add(document.FilePath!, diagnostics!.ToList());
+            }
+        }
+
+        foreach (var diagnostic in result) {
+            proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+                Uri = DocumentUri.From(diagnostic.Key),
+                Diagnostics = new Container<Diagnostic>(diagnostic.Value.ToServerDiagnostics()),
+            });
+        }
+    }
+
+    public async Task DiagnoseDocument(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
+        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath);
+        if (documentIds == null)
+            return;
+
+        var result = new Dictionary<string, List<CodeAnalysis.Diagnostic>>();
+        foreach (var documentId in documentIds) {
+            var document = this.solutionService.Solution?.GetDocument(documentId);
             if (document == null)
                 continue;
 
-            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-            var diagnostics = semanticModel?.GetDiagnostics(cancellationToken: cancellationToken);
-            var serverDiagnostics = diagnostics?.ToServerDiagnostics();
-            if (semanticModel == null || diagnostics == null || serverDiagnostics == null)
-                continue;
-
-            if (Diagnostics.ContainsKey(targetDocument))
-                Diagnostics[targetDocument] = diagnostics;
+            var diagnostics = await Diagnose(document, cancellationToken);
+            if (result.ContainsKey(document.FilePath!))
+                result[document.FilePath!].AddRange(diagnostics!);
             else
-                Diagnostics.Add(targetDocument, diagnostics);
+                result.Add(document.FilePath!, diagnostics!.ToList());
+        }
 
+        foreach (var diagnostic in result) {
             proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
-                Uri = DocumentUri.From(document.FilePath!),
-                Diagnostics = new Container<Diagnostic>(serverDiagnostics),
+                Uri = DocumentUri.From(diagnostic.Key),
+                Diagnostics = new Container<Diagnostic>(diagnostic.Value.ToServerDiagnostics()),
             });
         }
-        isActive = false;
+    }
+
+    public async Task<IEnumerable<CodeAnalysis.Diagnostic>?> Diagnose(CodeAnalysis.Document document, CancellationToken cancellationToken) {
+        var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+        return semanticModel?
+            .GetDiagnostics(cancellationToken: cancellationToken)
+            .Where(d => File.Exists(d.Location.SourceTree?.FilePath));
     }
 }

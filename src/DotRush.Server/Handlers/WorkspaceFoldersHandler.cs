@@ -21,11 +21,16 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
         };
     }
 
-    public override Task<Unit> Handle(DidChangeWorkspaceFoldersParams request, CancellationToken cancellationToken) {
+    public override async Task<Unit> Handle(DidChangeWorkspaceFoldersParams request, CancellationToken cancellationToken) {
         var added = request.Event.Added.Select(folder => folder.Uri.GetFileSystemPath());
         var removed = request.Event.Removed.Select(folder => folder.Uri.GetFileSystemPath());
-        this.solutionService.RemoveTargets(removed.ToArray(), cancellationToken);
-        this.solutionService.AddTargets(added.ToArray(), cancellationToken);
-        return Unit.Task;
+
+        foreach (var remove in removed)
+            this.solutionService.RemoveProjects(Directory.GetFiles(remove, "*.csproj", SearchOption.AllDirectories));
+        foreach (var add in added)
+            this.solutionService.AddProjects(Directory.GetFiles(add, "*.csproj", SearchOption.AllDirectories));
+
+        await this.solutionService.ReloadSolution(cancellationToken);
+        return Unit.Value;
     } 
 }

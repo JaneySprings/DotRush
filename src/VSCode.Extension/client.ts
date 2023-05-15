@@ -1,5 +1,4 @@
-import { LanguageClient, LanguageClientOptions, State } from "vscode-languageclient/node";
-import { waitForActivation } from './integration';
+import { LanguageClient, LanguageClientOptions } from "vscode-languageclient/node";
 import { extensions } from "vscode";
 import * as vscode from 'vscode';
 import * as res from './resources';
@@ -8,9 +7,6 @@ import * as path from 'path';
 
 export class ClientController {
     private static client: LanguageClient;
-    private static frameworkList: string[] | undefined;
-    private static targetFramework: string | undefined;
-    private static isRestarted: boolean = false;
 
     private static initialize() {
         const launchArguments = [ process.pid.toString() ];
@@ -27,7 +23,7 @@ export class ClientController {
             documentSelector: [{ scheme: "file", language: "csharp" }],
             synchronize: { 
                 configurationSection: res.extensionId, 
-                fileEvents: vscode.workspace.createFileSystemWatcher("**")
+                fileEvents:  vscode.workspace.createFileSystemWatcher("**/*.cs")
             }
         };
 
@@ -36,16 +32,6 @@ export class ClientController {
             { command: serverExecutable, args: launchArguments, }, 
             clientOptions
         );
-
-        ClientController.client.onDidChangeState((event) => {
-            if (event.oldState === State.Running && event.newState === State.Stopped) 
-                ClientController.isRestarted = true;
-                
-            if (event.newState === State.Running && ClientController.isRestarted) {
-                ClientController.sendFrameworkChangedNotification();
-                ClientController.isRestarted = false;
-            }
-        });
     }
 
 
@@ -67,27 +53,8 @@ export class ClientController {
 
     public static async activate(context: vscode.ExtensionContext) {
         ClientController.start();
-
-        const extensionContext = await waitForActivation(res.extensionMeteorId);
-        if (extensionContext !== undefined) {
-            extensionContext?.exports.deviceChangedEventHandler.add((device: any) => {
-                ClientController.targetFramework = ClientController.frameworkList?.find(f => f.includes(device.platform));
-                ClientController.sendFrameworkChangedNotification();
-            });
-            extensionContext?.exports.projectChangedEventHandler.add((project: any) => {
-                ClientController.frameworkList = project?.frameworks;
-            });
-        } else {
-            ClientController.sendFrameworkChangedNotification();
-        }
     }
 
-    public static sendFrameworkChangedNotification() {
-        ClientController.client.diagnostics?.clear();
-        ClientController.client.sendNotification('frameworkChanged', { 
-            framework: ClientController.targetFramework 
-        });
-    }
     public static sendReloadTargetsNotification() {
         ClientController.client.diagnostics?.clear();
         ClientController.client.sendNotification('reloadTargets');
