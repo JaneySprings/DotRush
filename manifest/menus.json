@@ -6,22 +6,12 @@
           "group": "b_common@1"
         },
         {
-          "command": "%command.id.restore%",
+          "command": "%command.id.rebuild%",
           "group": "b_common@2"
         },
         {
           "command": "%command.id.clean%",
           "group": "b_common@3"
-        },
-        {
-          "command": "%command.id.run%",
-          "group": "b_common@4"
-        }
-      ],
-      "view/title": [
-        {
-          "command": "%command.id.reload%",
-          "group": "a_common"
         }
       ]
     }

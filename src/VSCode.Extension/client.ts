@@ -1,7 +1,7 @@
-import { LanguageClient, LanguageClientOptions } from "vscode-languageclient/node";
+import { LanguageClient } from "vscode-languageclient/node";
 import { extensions } from "vscode";
-import * as vscode from 'vscode';
 import * as res from './resources';
+import * as vscode from 'vscode';
 import * as path from 'path';
 
 
@@ -19,23 +19,20 @@ export class ClientController {
         if (process.platform === 'win32')
             serverExecutable += '.exe';
 
-        const clientOptions: LanguageClientOptions = { 
+        ClientController.client = new LanguageClient(res.extensionId, res.extensionId, { 
+            command: serverExecutable, 
+            args: launchArguments, 
+        }, { 
             documentSelector: [{ scheme: "file", language: "csharp" }],
             synchronize: { 
                 configurationSection: res.extensionId, 
                 fileEvents:  vscode.workspace.createFileSystemWatcher("**/*.cs")
             }
-        };
-
-        ClientController.client = new LanguageClient(
-            res.extensionId, res.extensionId, 
-            { command: serverExecutable, args: launchArguments, }, 
-            clientOptions
-        );
+        });
     }
 
 
-    public static start() {
+    public static async activate(context: vscode.ExtensionContext) {
         if (ClientController.client !== undefined && ClientController.client.isRunning())
             return;
         ClientController.initialize();
@@ -44,19 +41,5 @@ export class ClientController {
     public static stop() {
         if (ClientController.client !== undefined && ClientController.client.isRunning())
             ClientController.client.stop();
-    }
-    public static restart() {
-        ClientController.client.stop();
-        ClientController.start();
-    }
-
-
-    public static async activate(context: vscode.ExtensionContext) {
-        ClientController.start();
-    }
-
-    public static sendReloadTargetsNotification() {
-        ClientController.client.diagnostics?.clear();
-        ClientController.client.sendNotification('reloadTargets');
     }
 }

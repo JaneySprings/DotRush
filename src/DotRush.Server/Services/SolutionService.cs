@@ -21,12 +21,10 @@ public class SolutionService {
 
         foreach (var projectPath in ProjectFiles)
             RestoreProject(projectPath);
-
-        ReloadSolution(CancellationToken.None).Wait();
     }
 
 
-    public void UpdateSolution(Solution? solution) {
+    public void UpdateSolution(Solution solution) {
         Solution = solution;
     }
     public async Task ReloadSolution(CancellationToken cancellationToken) {
@@ -59,13 +57,26 @@ public class SolutionService {
         foreach (var path in ProjectFiles) {
             try {
                 var project = await Workspace!.OpenProjectAsync(path, cancellationToken: cancellationToken);
-                UpdateSolution(Workspace?.CurrentSolution);
+                if (project == null)
+                    continue;
+                
+                UpdateSolution(Workspace.CurrentSolution);
             } catch(Exception ex) {
                 LoggingService.Instance.LogError(ex.Message, ex);
             }
         }
     }
     private void RestoreProject(string path) {
+        var directory = Path.GetDirectoryName(path);
+        if (directory == null)
+            return;
+
+        if (Directory.Exists(Path.Combine(directory, "obj")))
+            Directory.Delete(Path.Combine(directory, "obj"), true);
+
+        if (Directory.Exists(Path.Combine(directory, "bin")))
+            Directory.Delete(Path.Combine(directory, "bin"), true);
+
         var result = new ProcessRunner("dotnet", new ProcessArgumentBuilder()
             .Append("restore")
             .AppendQuoted(path))

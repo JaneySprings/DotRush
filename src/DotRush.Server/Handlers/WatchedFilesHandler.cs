@@ -25,10 +25,8 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
 
     public override async Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
         // TODO (TargetFrameworks): Maybe we can do something with this?
-        if (request.Changes.Any(it => it.Type == FileChangeType.Created || it.Type == FileChangeType.Deleted)) {
+        if (request.Changes.Any(it => it.Type == FileChangeType.Created || it.Type == FileChangeType.Deleted)) 
             await this.solutionService.ReloadSolution(cancellationToken);
-            await this.compilationService.DiagnoseAll(serverFacade.TextDocument, cancellationToken);
-        }
 
         return Unit.Value;
     }

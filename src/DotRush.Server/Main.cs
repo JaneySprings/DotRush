@@ -23,7 +23,6 @@ public class Program {
             .WithOutput(Console.OpenStandardOutput())
             .WithServices(s => ConfigureServices(s, args.Skip(1).ToArray()))
             .OnInitialize(InitializeHandler)
-            .OnNotification<ReloadTargetsParams>("reloadTargets", ReloadTargets)
             .WithHandler<DocumentSyncHandler>()
             .WithHandler<WatchedFilesHandler>()
             .WithHandler<WorkspaceFoldersHandler>()
@@ -53,17 +52,11 @@ public class Program {
 
     private static async Task InitializeHandler(ILanguageServer server, InitializeParams request, CancellationToken cancellationToken) {
         var compilationService = server.Services.GetService<CompilationService>();
-        if (compilationService == null) 
-            return;
-
-        await compilationService.DiagnoseAll(server.TextDocument, cancellationToken);
-    }
-
-    private static async void ReloadTargets(ReloadTargetsParams parameters, CancellationToken cancellationToken) {
-        var solutionService = Server?.Services.GetService<SolutionService>();
-        if (solutionService == null) 
+        var solutionService = server.Services.GetService<SolutionService>();
+        if (compilationService == null || solutionService == null) 
             return;
 
         await solutionService.ReloadSolution(cancellationToken);
+        compilationService.DiagnoseAll(server.TextDocument, CancellationToken.None);
     }
 }

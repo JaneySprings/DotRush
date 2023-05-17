@@ -92,6 +92,6 @@ public class CodeActionHandler : CodeActionHandlerBase {
         if (diagnostics == null)
             return null;
 
-        return diagnostics.FirstOrDefault(x => x.Location.SourceSpan.ToRange(sourceText) == range);
+        return diagnostics.FirstOrDefault(x => x.Location.SourceSpan.Contains(range.ToTextSpan(sourceText)));
     }
 }

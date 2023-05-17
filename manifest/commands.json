@@ -5,20 +5,12 @@
         "title": "%command.title.build%"
       },
       {
-        "command": "%command.id.restore%",
-        "title": "%command.title.restore%"
+        "command": "%command.id.rebuild%",
+        "title": "%command.title.rebuild%"
       },
       {
         "command": "%command.id.clean%",
         "title": "%command.title.clean%"
-      },
-      {
-        "command": "%command.id.run%",
-        "title": "%command.title.run%"
-      },
-      {
-        "command": "%command.id.reload%",
-        "title": "%command.title.reload%"
       }
     ]
   }

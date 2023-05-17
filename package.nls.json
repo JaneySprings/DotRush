@@ -5,14 +5,11 @@
 	"command.title.build": "Build",
 	"command.id.build": "dotrush.build",
 
-	"command.title.restore": "Restore",
-	"command.id.restore": "dotrush.restore",
+	"command.title.rebuild": "Rebuild",
+	"command.id.rebuild": "dotrush.rebuild",
 
 	"command.title.clean": "Clean",
 	"command.id.clean": "dotrush.clean",
-
-	"command.title.run": "Run",
-	"command.id.run": "dotrush.run",
 
 	"command.title.reload": "Reload Projects",
 	"command.id.reload": "dotrush.reload",

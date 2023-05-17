@@ -14,7 +14,7 @@ public class CompilationService {
         this.solutionService = solutionService;
     }
 
-    public async Task DiagnoseAll(ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
+    public async void DiagnoseAll(ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
         var projects = this.solutionService.Solution?.Projects;
         if (projects == null)
             return;
@@ -22,34 +22,6 @@ public class CompilationService {
         var result = new Dictionary<string, List<CodeAnalysis.Diagnostic>>();
         foreach (var project in projects) {
            foreach (var document in project.Documents) {
-                var diagnostics = await Diagnose(document, cancellationToken);
-                if (result.ContainsKey(document.FilePath!))
-                    result[document.FilePath!].AddRange(diagnostics!);
-                else
-                    result.Add(document.FilePath!, diagnostics!.ToList());
-            }
-        }
-
-        foreach (var diagnostic in result) {
-            proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
-                Uri = DocumentUri.From(diagnostic.Key),
-                Diagnostics = new Container<Diagnostic>(diagnostic.Value.ToServerDiagnostics()),
-            });
-        }
-    }
-
-    public async Task DiagnoseProject(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
-        var projectIds = this.solutionService.Solution?.GetProjectIdsWithDocumentFilePath(documentPath);
-        if (projectIds == null)
-            return;
-
-        var result = new Dictionary<string, List<CodeAnalysis.Diagnostic>>();
-        foreach (var projectId in projectIds) {
-            var project = this.solutionService.Solution?.GetProject(projectId);
-            if (project == null)
-                continue;
-
-            foreach (var document in project.Documents) {
                 var diagnostics = await Diagnose(document, cancellationToken);
                 if (result.ContainsKey(document.FilePath!))
                     result[document.FilePath!].AddRange(diagnostics!);
