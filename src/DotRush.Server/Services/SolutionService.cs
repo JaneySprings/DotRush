@@ -71,11 +71,14 @@ public class SolutionService {
         if (directory == null)
             return;
 
-        if (Directory.Exists(Path.Combine(directory, "obj")))
-            Directory.Delete(Path.Combine(directory, "obj"), true);
-
-        if (Directory.Exists(Path.Combine(directory, "bin")))
-            Directory.Delete(Path.Combine(directory, "bin"), true);
+        try {
+            if (Directory.Exists(Path.Combine(directory, "obj")))
+                Directory.Delete(Path.Combine(directory, "obj"), true);
+            if (Directory.Exists(Path.Combine(directory, "bin")))
+                Directory.Delete(Path.Combine(directory, "bin"), true);
+        } catch(Exception ex) {
+            LoggingService.Instance.LogError(ex.Message, ex);
+        }
 
         var result = new ProcessRunner("dotnet", new ProcessArgumentBuilder()
             .Append("restore")

@@ -33,11 +33,11 @@ public class DefinitionHandler : DefinitionHandlerBase {
             var sourceText = await document.GetTextAsync(cancellationToken);
             var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
             if (symbol == null || this.solutionService.Solution == null) 
-                return new LocationOrLocationLinks();
+                continue;
             
             var definition = await SymbolFinder.FindSourceDefinitionAsync(symbol, this.solutionService.Solution, cancellationToken);
             if (definition == null) 
-                return new LocationOrLocationLinks();
+                continue;
 
             result.AddRange(definition.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
         }

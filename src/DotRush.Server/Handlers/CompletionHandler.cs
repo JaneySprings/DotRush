@@ -38,16 +38,22 @@ public class CompletionHandler : CompletionHandlerBase {
 
         var sourceText = await document.GetTextAsync(cancellationToken);
         var position = request.Position.ToOffset(sourceText);
-        var completions = await completionService.GetCompletionsAsync(document, position, cancellationToken: cancellationToken);
-        if (completions == null)
+
+        try {
+            var completions = await completionService.GetCompletionsAsync(document, position, cancellationToken: cancellationToken);
+            if (completions == null)
+                return new CompletionList(completionItems);
+            
+            AssignCacheWithDocument(document);
+            return new CompletionList(completions.ItemsList.Select(x => {
+                var item = x.ToCompletionItem();
+                CacheCompletionItem(item, x);
+                return item;
+            }));
+        } catch (Exception e) {
+            LoggingService.Instance.LogError(e.Message, e);
             return new CompletionList(completionItems);
-        
-        AssignCacheWithDocument(document);
-        return new CompletionList(completions.ItemsList.Select(x => {
-            var item = x.ToCompletionItem();
-            CacheCompletionItem(item, x);
-            return item;
-        }));
+        }
     }
 
     public override async Task<CompletionItem> Handle(CompletionItem request, CancellationToken cancellationToken) {

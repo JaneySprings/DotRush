@@ -7,9 +7,10 @@ public static class WorkspaceExtensions {
         return solution.GetDocumentIdsWithFilePath(filePath).Select(id => id.ProjectId);
     }
 
-    public static IEnumerable<ProjectId>? GetNearestProjectIdsWithPath(this Solution solution, string path) {
-        return solution.Projects
-            .Where(it => path.StartsWith(Path.GetDirectoryName(it.FilePath) + Path.DirectorySeparatorChar))
-            .Select(it => it.Id);
+    public static IEnumerable<string> GetFolders(this Project project, string documentPath) {
+        var rootDirectory = Path.GetDirectoryName(project.FilePath)!;
+        var documentDirectory = Path.GetDirectoryName(documentPath)!;
+        var relativePath = documentDirectory.Replace(rootDirectory, string.Empty);
+        return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
     }
 }

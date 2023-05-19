@@ -24,10 +24,37 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     }
 
     public override async Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
-        // TODO (TargetFrameworks): Maybe we can do something with this?
-        if (request.Changes.Any(it => it.Type == FileChangeType.Created || it.Type == FileChangeType.Deleted)) 
+        if (request.Changes.Any(it => it.Type == FileChangeType.Created)) {
             await this.solutionService.ReloadSolution(cancellationToken);
+            return Unit.Value;
+        }
+
+        foreach (var change in request.Changes) {
+            if (!change.Uri.GetFileSystemPath().EndsWith(".cs")) {
+                foreach (var file in Directory.GetFiles(change.Uri.GetFileSystemPath(), "*.cs", SearchOption.AllDirectories)) {
+                    if (change.Type == FileChangeType.Deleted)
+                        this.DeleteSourceDocument(change.Uri.GetFileSystemPath());
+                }
+            } else {
+                if (change.Type == FileChangeType.Deleted)
+                    this.DeleteSourceDocument(change.Uri.GetFileSystemPath());
+            }
+        }
 
         return Unit.Value;
+    }
+
+    private void DeleteSourceDocument(string path) {
+        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(path);
+        if (documentIds is null) 
+            return;
+
+        foreach (var documentId in documentIds) {
+            var updates = this.solutionService.Solution?.RemoveDocument(documentId);
+            if (updates is null) 
+                continue;
+
+            this.solutionService.UpdateSolution(updates);
+        }
     }
 }

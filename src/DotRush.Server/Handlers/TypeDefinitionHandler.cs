@@ -33,7 +33,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
             var sourceText = await document.GetTextAsync(cancellationToken);
             var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
             if (symbol == null)
-                return new LocationOrLocationLinks();
+                continue;
 
             ITypeSymbol? typeSymbol = null;
 
@@ -47,7 +47,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
                 typeSymbol = parameterSymbol.Type;
 
             if (typeSymbol == null)
-                return new LocationOrLocationLinks();
+                continue;
 
             result.AddRange(typeSymbol.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
         }

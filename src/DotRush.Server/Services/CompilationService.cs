@@ -39,29 +39,22 @@ public class CompilationService {
     }
 
     public async Task DiagnoseDocument(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
-        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath);
-        if (documentIds == null)
+        var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath).FirstOrDefault();
+        if (documentId == null)
             return;
 
-        var result = new Dictionary<string, List<CodeAnalysis.Diagnostic>>();
-        foreach (var documentId in documentIds) {
-            var document = this.solutionService.Solution?.GetDocument(documentId);
-            if (document == null)
-                continue;
+        var document = this.solutionService.Solution?.GetDocument(documentId);
+        if (document == null)
+            return;
 
-            var diagnostics = await Diagnose(document, cancellationToken);
-            if (result.ContainsKey(document.FilePath!))
-                result[document.FilePath!].AddRange(diagnostics!);
-            else
-                result.Add(document.FilePath!, diagnostics!.ToList());
-        }
+        var diagnostics = await Diagnose(document, cancellationToken);
+        if (diagnostics == null)
+            return;
 
-        foreach (var diagnostic in result) {
-            proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
-                Uri = DocumentUri.From(diagnostic.Key),
-                Diagnostics = new Container<Diagnostic>(diagnostic.Value.ToServerDiagnostics()),
-            });
-        }
+        proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+            Uri = DocumentUri.From(documentPath),
+            Diagnostics = new Container<Diagnostic>(diagnostics.ToServerDiagnostics()),
+        });
     }
 
     public async Task<IEnumerable<CodeAnalysis.Diagnostic>?> Diagnose(CodeAnalysis.Document document, CancellationToken cancellationToken) {

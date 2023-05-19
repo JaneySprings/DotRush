@@ -11,7 +11,6 @@ public static class CodeActionConverter {
         var textDocumentEdits = new List<ProtocolModels.WorkspaceEditDocumentChange>();
         return new ProtocolModels.CodeAction() {
             Kind = ProtocolModels.CodeActionKind.QuickFix,
-            Data = codeAction.GetHashCode(),
             Title = codeAction.Title,
         };
     }

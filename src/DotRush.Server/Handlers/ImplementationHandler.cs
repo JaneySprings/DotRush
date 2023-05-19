@@ -33,7 +33,7 @@ public class ImplementationHandler : ImplementationHandlerBase {
             var sourceText = await document.GetTextAsync(cancellationToken);
             var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
             if (symbol == null || this.solutionService.Solution == null) 
-                return new LocationOrLocationLinks();
+                continue;
 
             var symbols = await SymbolFinder.FindImplementationsAsync(symbol, this.solutionService.Solution, cancellationToken: cancellationToken);
             if (symbols != null)
