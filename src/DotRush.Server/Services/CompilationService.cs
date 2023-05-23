@@ -14,14 +14,18 @@ public class CompilationService {
         this.solutionService = solutionService;
     }
 
-    public async void DiagnoseAll(ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
-        var projects = this.solutionService.Solution?.Projects;
-        if (projects == null)
+    public async void DiagnoseProject(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
+        var projectIds = this.solutionService.Solution?.GetProjectIdsWithDocumentFilePath(documentPath);
+        if (projectIds == null)
             return;
 
         var result = new Dictionary<string, List<CodeAnalysis.Diagnostic>>();
-        foreach (var project in projects) {
-           foreach (var document in project.Documents) {
+        foreach (var projectId in projectIds) {
+            var project = this.solutionService.Solution?.GetProject(projectId);
+            if (project == null)
+                continue;
+
+            foreach (var document in project.Documents) {
                 var diagnostics = await Diagnose(document, cancellationToken);
                 if (result.ContainsKey(document.FilePath!))
                     result[document.FilePath!].AddRange(diagnostics!);

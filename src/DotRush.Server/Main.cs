@@ -57,6 +57,5 @@ public class Program {
             return;
 
         await solutionService.ReloadSolution(cancellationToken);
-        compilationService.DiagnoseAll(server.TextDocument, CancellationToken.None);
     }
 }

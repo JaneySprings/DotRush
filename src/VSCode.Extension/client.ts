@@ -26,7 +26,10 @@ export class ClientController {
             documentSelector: [{ scheme: "file", language: "csharp" }],
             synchronize: { 
                 configurationSection: res.extensionId, 
-                fileEvents:  vscode.workspace.createFileSystemWatcher("**/*.cs")
+                fileEvents: [
+                    vscode.workspace.createFileSystemWatcher("**/*.cs"),
+                    vscode.workspace.createFileSystemWatcher("**/*.xaml")
+                ]
             }
         });
     }
