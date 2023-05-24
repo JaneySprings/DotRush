@@ -2,6 +2,7 @@ using System.Text;
 using DotRush.Server.Extensions;
 using DotRush.Server.Services;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -14,6 +15,7 @@ public class CompletionHandler : CompletionHandlerBase {
     private readonly Dictionary<int, CodeAnalysisCompletionItem> cachedItems;
     private readonly SolutionService solutionService;
     private Document? targetDocument;
+    private Position? position;
 
     public CompletionHandler(SolutionService solutionService) {
         this.cachedItems = new Dictionary<int, CodeAnalysisCompletionItem>();
@@ -23,7 +25,7 @@ public class CompletionHandler : CompletionHandlerBase {
     protected override CompletionRegistrationOptions CreateRegistrationOptions(CompletionCapability capability, ClientCapabilities clientCapabilities) {
         return new CompletionRegistrationOptions {
             TriggerCharacters = new[] { ".", ":", " ", "(", "$" },
-            AllCommitCharacters = new[] { "(", "." },
+            AllCommitCharacters = new[] { "(", ".", " " },
             ResolveProvider = true,
         };
     }
@@ -37,10 +39,11 @@ public class CompletionHandler : CompletionHandlerBase {
             return new CompletionList(completionItems);
 
         var sourceText = await document.GetTextAsync(cancellationToken);
-        var position = request.Position.ToOffset(sourceText);
+        var offset = request.Position.ToOffset(sourceText);
+        position = request.Position;
 
         try {
-            var completions = await completionService.GetCompletionsAsync(document, position, cancellationToken: cancellationToken);
+            var completions = await completionService.GetCompletionsAsync(document, offset, cancellationToken: cancellationToken);
             if (completions == null)
                 return new CompletionList(completionItems);
             
@@ -84,12 +87,12 @@ public class CompletionHandler : CompletionHandlerBase {
         if (request.TextEdit == null) {
             if (cachedItems.TryGetValue(id, out var item) && completionService != null) {
                 var changes = await completionService.GetChangeAsync(this.targetDocument, item, cancellationToken: cancellationToken);
-                if (changes != null && item.IsComplexTextEdit) {
-                    var sourceText = await this.targetDocument.GetTextAsync(cancellationToken);
-                    textEdit = changes.TextChange.ToEmptyTextEdit();
-                    additionalTextEdits = changes.TextChanges
-                        .Select(change => change.ToTextEdit(sourceText));
-                } 
+                var sourceText = await this.targetDocument.GetTextAsync(cancellationToken);
+
+                if (changes != null && item.IsComplexTextEdit) 
+                    (textEdit, additionalTextEdits) = ArrangeTextEdits(changes.TextChanges, sourceText);
+                else if (changes != null && !item.IsComplexTextEdit) 
+                   textEdit = changes?.TextChanges.FirstOrDefault().ToTextEdit(sourceText);
             }
         }
 
@@ -98,10 +101,10 @@ public class CompletionHandler : CompletionHandlerBase {
             SortText = request.SortText,
             FilterText = request.FilterText,
             Detail = request.Detail,
-            Data = request.Data,
             Kind = request.Kind,
             Preselect = request.Preselect,
             Documentation = documentation,
+            InsertTextMode = InsertTextMode.AsIs,
             AdditionalTextEdits = additionalTextEdits != null ? new TextEditContainer(additionalTextEdits) : null,
             TextEdit = textEdit != null ? new TextEditOrInsertReplaceEdit(textEdit) : null,
         };
@@ -119,4 +122,52 @@ public class CompletionHandler : CompletionHandlerBase {
         var id = completionItem.Data.ToObject<int>();
         this.cachedItems.TryAdd(id, codeAnalysisCompletionItem);
     }
+    private (TextEdit?, IEnumerable<TextEdit>?) ArrangeTextEdits(IEnumerable<TextChange> changes, SourceText sourceText) {
+        var additionalTextEdits = changes
+            .Where(x => x.Span.Start.ToPosition(sourceText).Line > position?.Line || x.Span.End.ToPosition(sourceText).Line < position?.Line)
+            .Select(x => x.ToTextEdit(sourceText))
+            .ToList();
+
+        // TextEdit? textEdit = null;
+        var specificTextEdit = changes
+            .FirstOrDefault(x => x.Span.Start.ToPosition(sourceText).Line <= position?.Line && x.Span.End.ToPosition(sourceText).Line >= position?.Line)
+            .ToTextEdit(sourceText);
+
+        // var cutPosition = position?.Character - specificTextEdit.Range.Start.Character ?? 0;
+        // if (cutPosition < 0)
+        //     return (specificTextEdit, additionalTextEdits);
+
+        // if (specificTextEdit.Range.Start.Character < position?.Character) {
+        //     var leftTextEdit = new TextEdit() {
+        //         Range = new ProtocolModels.Range(specificTextEdit.Range.Start, position!),
+        //         NewText = string.Empty,
+        //     };
+
+        //     additionalTextEdits.Add(leftTextEdit);
+        // }
+        
+
+        // textEdit = new TextEdit() {
+        //     Range = new ProtocolModels.Range(position!, specificTextEdit.Range.End),
+        //     NewText = specificTextEdit.NewText.ToStrangeString()
+        // };
+        
+
+        return (specificTextEdit, additionalTextEdits);
+    }
+
+    // private (TextEdit?, IEnumerable<TextEdit>?) ArrangeTextEdits(TextChange change, SourceText sourceText) {
+    //     var edit = change.ToTextEdit(sourceText);
+    //     var additionalTextEdits = new List<TextEdit>();
+
+    //     additionalTextEdits.Add(new TextEdit {
+    //         Range = edit.Range,
+    //         NewText = string.Empty,
+    //     });
+
+    //     var textEdit = new TextEdit {
+    //         NewText = change.NewText,
+    //     };
+    //     return (textEdit, additionalTextEdits);
+    // }
 }

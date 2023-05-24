@@ -3,15 +3,15 @@
       "explorer/context": [
         {
           "command": "%command.id.build%",
-          "group": "b_common@1"
+          "group": "z_common@1"
         },
         {
           "command": "%command.id.rebuild%",
-          "group": "b_common@2"
+          "group": "z_common@2"
         },
         {
           "command": "%command.id.clean%",
-          "group": "b_common@3"
+          "group": "z_common@3"
         }
       ]
     }

@@ -24,6 +24,7 @@ public static class CompletionConverter {
             case "Keyword": return ProtocolModels.CompletionItemKind.Keyword;
             case "Namespace": return ProtocolModels.CompletionItemKind.Module;
             case "ExtensionMethod": return ProtocolModels.CompletionItemKind.Method;
+            case "Snippet": return ProtocolModels.CompletionItemKind.Snippet;
         }
 
         return ProtocolModels.CompletionItemKind.Text;
@@ -45,14 +46,6 @@ public static class CompletionConverter {
         return new ProtocolModels.TextEdit() {
             NewText = change.NewText ?? string.Empty,
             Range = change.Span.ToRange(sourceText)
-        };
-    }
-
-    public static ProtocolModels.TextEdit ToEmptyTextEdit(this TextChange change) {
-        var empty = new ProtocolModels.Position(0, 0);
-        return new ProtocolModels.TextEdit() {
-            Range = new ProtocolModels.Range(empty, empty),
-            NewText = string.Empty
         };
     }
 }
