@@ -14,8 +14,8 @@ public class CompilationService {
         this.solutionService = solutionService;
     }
 
-    public async void DiagnoseProject(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
-        var projectIds = this.solutionService.Solution?.GetProjectIdsWithDocumentFilePath(documentPath);
+    public async Task DiagnoseProject(string projectPath, ITextDocumentLanguageServer proxy, Action? onCompleted) {
+        var projectIds = this.solutionService.Solution?.GetProjectIdsWithFilePath(projectPath);
         if (projectIds == null)
             return;
 
@@ -24,9 +24,9 @@ public class CompilationService {
             var project = this.solutionService.Solution?.GetProject(projectId);
             if (project == null)
                 continue;
-
+            
             foreach (var document in project.Documents) {
-                var diagnostics = await Diagnose(document, cancellationToken);
+                var diagnostics = await Diagnose(document, CancellationToken.None);
                 if (result.ContainsKey(document.FilePath!))
                     result[document.FilePath!].AddRange(diagnostics!);
                 else
@@ -40,6 +40,8 @@ public class CompilationService {
                 Diagnostics = new Container<Diagnostic>(diagnostic.Value.ToServerDiagnostics()),
             });
         }
+
+        onCompleted?.Invoke();
     }
 
     public async Task DiagnoseDocument(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {

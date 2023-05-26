@@ -21,7 +21,7 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
         };
     }
 
-    public override async Task<Unit> Handle(DidChangeWorkspaceFoldersParams request, CancellationToken cancellationToken) {
+    public override Task<Unit> Handle(DidChangeWorkspaceFoldersParams request, CancellationToken cancellationToken) {
         var added = request.Event.Added.Select(folder => folder.Uri.GetFileSystemPath());
         var removed = request.Event.Removed.Select(folder => folder.Uri.GetFileSystemPath());
 
@@ -30,7 +30,7 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
         foreach (var add in added)
             this.solutionService.AddProjects(Directory.GetFiles(add, "*.csproj", SearchOption.AllDirectories));
 
-        await this.solutionService.ReloadSolution(cancellationToken);
-        return Unit.Value;
+        this.solutionService.ReloadSolution();
+        return Unit.Task;
     } 
 }

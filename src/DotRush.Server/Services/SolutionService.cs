@@ -27,7 +27,7 @@ public class SolutionService {
     public void UpdateSolution(Solution solution) {
         Solution = solution;
     }
-    public async Task ReloadSolution(CancellationToken cancellationToken) {
+    public async void ReloadSolution(Action<string>? onComplete = null) {
         if (isReloaded)
             return;
         
@@ -40,7 +40,7 @@ public class SolutionService {
         Workspace = MSBuildWorkspace.Create();
         Workspace.LoadMetadataForReferencedProjects = true;
         Workspace.SkipUnrecognizedProjects = true;
-        await LoadProjects(cancellationToken);
+        await LoadProjects(onComplete);
         isReloaded = false;
     }
     public void AddProjects(IEnumerable<string> projectFilePaths) {
@@ -53,14 +53,15 @@ public class SolutionService {
     }
     
     
-    private async Task LoadProjects(CancellationToken cancellationToken) {
+    private async Task LoadProjects(Action<string>? onComplete = null) {
         foreach (var path in ProjectFiles) {
             try {
-                var project = await Workspace!.OpenProjectAsync(path, cancellationToken: cancellationToken);
+                var project = await Workspace!.OpenProjectAsync(path);
                 if (project == null)
                     continue;
                 
                 UpdateSolution(Workspace.CurrentSolution);
+                onComplete?.Invoke(path);
             } catch(Exception ex) {
                 LoggingService.Instance.LogError(ex.Message, ex);
             }
@@ -74,8 +75,6 @@ public class SolutionService {
         try {
             if (Directory.Exists(Path.Combine(directory, "obj")))
                 Directory.Delete(Path.Combine(directory, "obj"), true);
-            if (Directory.Exists(Path.Combine(directory, "bin")))
-                Directory.Delete(Path.Combine(directory, "bin"), true);
         } catch(Exception ex) {
             LoggingService.Instance.LogError(ex.Message, ex);
         }

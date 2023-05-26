@@ -53,16 +53,16 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         await this.compilationService.DiagnoseDocument(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, cancellationToken);
         return Unit.Value;
     }
-    public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
-        this.compilationService.DiagnoseProject(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, CancellationToken.None);
-        return Unit.Task;
+    public override async Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
+        await this.compilationService.DiagnoseDocument(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, cancellationToken);
+        return Unit.Value;
     }
     public override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {
         return Unit.Task;
     }
-    public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
-        this.compilationService.DiagnoseProject(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, CancellationToken.None);
-        return Unit.Task;
+    public override async Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
+        await this.compilationService.DiagnoseDocument(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, cancellationToken);
+        return Unit.Value;
     }
 
     private void HandleAdditionalDocumentChanged(CodeAnalysis.TextDocument? textDocument, string newText) {

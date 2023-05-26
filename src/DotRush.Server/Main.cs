@@ -5,6 +5,7 @@ using DotRush.Server.Services;
 using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
+using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 using OmniSharp.Extensions.LanguageServer.Server;
 
 namespace DotRush.Server;
@@ -22,7 +23,7 @@ public class Program {
             .WithInput(Console.OpenStandardInput())
             .WithOutput(Console.OpenStandardOutput())
             .WithServices(s => ConfigureServices(s, args.Skip(1).ToArray()))
-            .OnInitialize(InitializeHandler)
+            .OnInitialized(InitializedHandler)
             .WithHandler<DocumentSyncHandler>()
             .WithHandler<WatchedFilesHandler>()
             .WithHandler<WorkspaceFoldersHandler>()
@@ -50,12 +51,21 @@ public class Program {
         LoggingService.Initialize();
     }
 
-    private static async Task InitializeHandler(ILanguageServer server, InitializeParams request, CancellationToken cancellationToken) {
+    private static Task InitializedHandler(ILanguageServer server, InitializeParams request, InitializeResult response, CancellationToken cancellationToken) {
         var compilationService = server.Services.GetService<CompilationService>();
         var solutionService = server.Services.GetService<SolutionService>();
         if (compilationService == null || solutionService == null) 
-            return;
+            return Task.CompletedTask;
 
-        await solutionService.ReloadSolution(cancellationToken);
+        solutionService.ReloadSolution(async (path) => {
+            await compilationService.DiagnoseProject(path, server.TextDocument, () => {
+                server.Window.ShowMessage(new ShowMessageParams {
+                    Message = $"{Path.GetFileNameWithoutExtension(path)} ready.",
+                    Type = MessageType.Log
+                });
+            });
+        });
+
+        return Task.CompletedTask;
     }
 }

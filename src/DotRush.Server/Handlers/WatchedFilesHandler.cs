@@ -23,15 +23,15 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         return new DidChangeWatchedFilesRegistrationOptions();
     }
 
-    public override async Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
+    public override Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
         if (request.Changes.Any(it => it.Uri.GetFileSystemPath().Split(Path.DirectorySeparatorChar).Any(it => it.StartsWith("."))))
-            return Unit.Value;
+            return Unit.Task;
 
         if (request.Changes.Any(it => it.Type == FileChangeType.Created)) {
-            await this.solutionService.ReloadSolution(cancellationToken);
-            return Unit.Value;
+            this.solutionService.ReloadSolution();
+            return Unit.Task;
         }
 
-        return Unit.Value;
+        return Unit.Task;
     }
 }
