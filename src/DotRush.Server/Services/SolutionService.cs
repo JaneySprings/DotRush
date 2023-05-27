@@ -1,4 +1,3 @@
-using DotRush.Server.Processes;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -18,9 +17,6 @@ public class SolutionService {
 
         foreach (var target in targets) 
             AddProjects(Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories));
-
-        foreach (var projectPath in ProjectFiles)
-            RestoreProject(projectPath);
     }
 
 
@@ -66,24 +62,5 @@ public class SolutionService {
                 LoggingService.Instance.LogError(ex.Message, ex);
             }
         }
-    }
-    private void RestoreProject(string path) {
-        var directory = Path.GetDirectoryName(path);
-        if (directory == null)
-            return;
-
-        try {
-            if (Directory.Exists(Path.Combine(directory, "obj")))
-                Directory.Delete(Path.Combine(directory, "obj"), true);
-        } catch(Exception ex) {
-            LoggingService.Instance.LogError(ex.Message, ex);
-        }
-
-        var result = new ProcessRunner("dotnet", new ProcessArgumentBuilder()
-            .Append("restore")
-            .AppendQuoted(path))
-            .WaitForExit();
-
-        LoggingService.Instance.LogMessage("Restored project {0}", path);
     }
 }

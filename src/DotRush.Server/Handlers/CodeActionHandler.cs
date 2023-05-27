@@ -47,7 +47,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
             return new CommandOrCodeActionContainer();
 
         var sourceText = await document.GetTextAsync(cancellationToken);
-        var fileDiagnostic = await GetDiagnosticByRange(request.Range, sourceText, document, cancellationToken);
+        var fileDiagnostic = GetDiagnosticByRange(request.Range, sourceText, document);
         var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
         if (fileDiagnostic == null || codeFixProviders == null || !codeFixProviders.Any())
             return new CommandOrCodeActionContainer();
@@ -90,11 +90,12 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
         return this.codeActionService.CodeFixProviders?.Where(x => x.FixableDiagnosticIds.Contains(diagnosticId));
     }
-    private async Task<CodeAnalysis.Diagnostic?> GetDiagnosticByRange(ProtocolModels.Range range, SourceText sourceText, Document document, CancellationToken cancellationToken) {
-        var diagnostics = await this.compilationService.Diagnose(document, cancellationToken);
-        if (diagnostics == null)
+    private CodeAnalysis.Diagnostic? GetDiagnosticByRange(ProtocolModels.Range range, SourceText sourceText, Document document) {
+        if (!this.compilationService.Diagnostics.ContainsKey(document.FilePath!))
             return null;
 
-        return diagnostics.FirstOrDefault(x => x.Location.SourceSpan.Contains(range.ToTextSpan(sourceText)));
+        return this.compilationService.Diagnostics[document.FilePath!]
+            .GetTotalDiagnostics()
+            .FirstOrDefault(x => x.Location.SourceSpan.Contains(range.ToTextSpan(sourceText)));
     }
 }

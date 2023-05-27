@@ -11,7 +11,8 @@ using OmniSharp.Extensions.LanguageServer.Server;
 namespace DotRush.Server;
 
 public class Program {
-    private static LanguageServer? Server;
+    public static readonly string AnalyzersLocation = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "analyzers");
+
     public static async Task Main(string[] args) {
         var ideProcess = Process.GetProcessById(int.Parse(args[0]));
         ideProcess.EnableRaisingEvents = true;
@@ -19,7 +20,7 @@ public class Program {
 
         LogConfig.InitializeLog();
         
-        Server = await LanguageServer.From(options => options
+        var server = await LanguageServer.From(options => options
             .WithInput(Console.OpenStandardInput())
             .WithOutput(Console.OpenStandardOutput())
             .WithServices(s => ConfigureServices(s, args.Skip(1).ToArray()))
@@ -38,7 +39,7 @@ public class Program {
             .WithHandler<TypeDefinitionHandler>()
         ).ConfigureAwait(false);
 
-        await Server.WaitForExit.ConfigureAwait(false);
+        await server.WaitForExit.ConfigureAwait(false);
     }
 
 
@@ -57,12 +58,11 @@ public class Program {
         if (compilationService == null || solutionService == null) 
             return Task.CompletedTask;
 
-        solutionService.ReloadSolution(async (path) => {
-            await compilationService.DiagnoseProject(path, server.TextDocument, () => {
-                server.Window.ShowMessage(new ShowMessageParams {
-                    Message = $"{Path.GetFileNameWithoutExtension(path)} ready.",
-                    Type = MessageType.Log
-                });
+        solutionService.ReloadSolution(path => {
+            compilationService.DiagnoseProject(path, server.TextDocument);
+            server.Window.ShowMessage(new ShowMessageParams {
+                Message = $"{Path.GetFileNameWithoutExtension(path)} ready.",
+                Type = MessageType.Log
             });
         });
 

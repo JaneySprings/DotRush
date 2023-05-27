@@ -1,15 +1,10 @@
 using DotRush.Server.Extensions;
 using DotRush.Server.Services;
-using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.CSharp.Transforms;
-using ICSharpCode.Decompiler.Metadata;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using TypeSystem = ICSharpCode.Decompiler.TypeSystem;
 
 namespace DotRush.Server.Handlers;
 
@@ -52,40 +47,40 @@ public class DefinitionHandler : DefinitionHandlerBase {
         return new LocationOrLocationLinks(result);
     }
 
-    private async Task<ISymbol?> FindSourceDefinitionWithDecompilerAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
-        var decompilationCacheDirectory = Path.Combine(Path.GetDirectoryName(project.FilePath!)!, ".dotrush", "decompilation");
-        var targetFilePath = Path.Combine(decompilationCacheDirectory, $"{symbol.ToDisplayString()}.cs");
+    // private async Task<ISymbol?> FindSourceDefinitionWithDecompilerAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
+    //     var decompilationCacheDirectory = Path.Combine(Path.GetDirectoryName(project.FilePath!)!, ".dotrush", "decompilation");
+    //     var targetFilePath = Path.Combine(decompilationCacheDirectory, $"{symbol.ToDisplayString()}.cs");
         
-        if (File.Exists(targetFilePath))
-            return await FindSourceDefinitionWithFilePathAsync(symbol, targetFilePath, project, cancellationToken);
+    //     if (File.Exists(targetFilePath))
+    //         return await FindSourceDefinitionWithFilePathAsync(symbol, targetFilePath, project, cancellationToken);
         
-        var compilation = await project.GetCompilationAsync();
-        var assembly = compilation?.GetMetadataReference(symbol.ContainingAssembly) as PortableExecutableReference;
+    //     var compilation = await project.GetCompilationAsync();
+    //     var assembly = compilation?.GetMetadataReference(symbol.ContainingAssembly) as PortableExecutableReference;
 
-        var resolver = new UniversalAssemblyResolver(assembly?.FilePath, false, string.Empty);
-        var decompiler = new CSharpDecompiler(assembly?.FilePath, resolver, new DecompilerSettings());
-        decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+    //     var resolver = new UniversalAssemblyResolver(assembly?.FilePath, false, string.Empty);
+    //     var decompiler = new CSharpDecompiler(assembly?.FilePath, resolver, new DecompilerSettings());
+    //     decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 
-        try {
-            var decompiled = decompiler.DecompileTypeAsString(new TypeSystem.FullTypeName(symbol.ToDisplayString()));
-            if (decompiled == null)
-                return null;
+    //     try {
+    //         var decompiled = decompiler.DecompileTypeAsString(new TypeSystem.FullTypeName(symbol.ToDisplayString()));
+    //         if (decompiled == null)
+    //             return null;
 
-            if (!Directory.Exists(decompilationCacheDirectory))
-                Directory.CreateDirectory(decompilationCacheDirectory);
+    //         if (!Directory.Exists(decompilationCacheDirectory))
+    //             Directory.CreateDirectory(decompilationCacheDirectory);
 
-            File.WriteAllText(targetFilePath, decompiled);
-            return await FindSourceDefinitionWithFilePathAsync(symbol, targetFilePath, project, cancellationToken);
-        } catch {
-            return null;
-        }
-    }
+    //         File.WriteAllText(targetFilePath, decompiled);
+    //         return await FindSourceDefinitionWithFilePathAsync(symbol, targetFilePath, project, cancellationToken);
+    //     } catch {
+    //         return null;
+    //     }
+    // }
 
-    private async Task<ISymbol?> FindSourceDefinitionWithFilePathAsync(ISymbol symbol, string filePath, Project project, CancellationToken cancellationToken) {
-        var documentContent = File.ReadAllText(filePath);
-        var folders = project.GetFolders(filePath);
-        var updates = project.AddDocument(Path.GetFileName(filePath), documentContent, folders, filePath);
+    // private async Task<ISymbol?> FindSourceDefinitionWithFilePathAsync(ISymbol symbol, string filePath, Project project, CancellationToken cancellationToken) {
+    //     var documentContent = File.ReadAllText(filePath);
+    //     var folders = project.GetFolders(filePath);
+    //     var updates = project.AddDocument(Path.GetFileName(filePath), documentContent, folders, filePath);
 
-        return await SymbolFinder.FindSourceDefinitionAsync(symbol, updates.Project.Solution, cancellationToken);
-    }
+    //     return await SymbolFinder.FindSourceDefinitionAsync(symbol, updates.Project.Solution, cancellationToken);
+    // }
 }
