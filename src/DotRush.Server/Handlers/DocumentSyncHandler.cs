@@ -15,13 +15,14 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
     private readonly SolutionService solutionService;
     private readonly CompilationService compilationService;
     private readonly ILanguageServerFacade serverFacade;
+    private CancellationTokenSource? analyzersCancellationTokenSource;
 
     public DocumentSyncHandler(ILanguageServerFacade serverFacade, SolutionService solutionService, CompilationService compilationService) {
         this.solutionService = solutionService;
         this.compilationService = compilationService;
         this.serverFacade = serverFacade;
     }
-    
+
     public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) {
         return new TextDocumentAttributes(uri, "csharp");
     }
@@ -32,10 +33,10 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         };
     }
 
-    public override async Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken) {
+    public override Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken) {
         var documentsIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
-        if (documentsIds == null) 
-            return Unit.Value;
+        if (documentsIds == null)
+            return Unit.Task;
 
         foreach (var documentId in documentsIds) {
             var document = this.solutionService.Solution?.GetDocument(documentId);
@@ -49,16 +50,12 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
             this.solutionService.UpdateSolution(updatedDocument.Project.Solution);
         }
 
-
-        await this.compilationService.DiagnoseDocument(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, cancellationToken);
-        this.compilationService.AnalyzerDiagnose(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument);
-        
-        return Unit.Value;
+        this.compilationService.DiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, GetToken());
+        return Unit.Task;
     }
-    public override async Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
-        await this.compilationService.DiagnoseDocument(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, cancellationToken);
-        this.compilationService.AnalyzerDiagnose(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument);
-        return Unit.Value;
+    public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
+        this.compilationService.DiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, GetToken());
+        return Unit.Task;
     }
     public override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {
         return Unit.Task;
@@ -68,7 +65,7 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
     }
 
     private void HandleAdditionalDocumentChanged(CodeAnalysis.TextDocument? textDocument, string newText) {
-        if (textDocument == null) 
+        if (textDocument == null)
             return;
 
         var updates = this.solutionService.Solution?.WithAdditionalDocumentText(textDocument.Id, SourceText.From(newText));
@@ -76,5 +73,12 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
             return;
 
         this.solutionService.UpdateSolution(updates);
+    }
+
+    private CancellationToken GetToken() {
+        this.analyzersCancellationTokenSource?.Cancel();
+        this.analyzersCancellationTokenSource?.Dispose();
+        this.analyzersCancellationTokenSource = new CancellationTokenSource();
+        return this.analyzersCancellationTokenSource.Token;
     }
 }

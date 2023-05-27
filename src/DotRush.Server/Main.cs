@@ -59,7 +59,6 @@ public class Program {
             return Task.CompletedTask;
 
         solutionService.ReloadSolution(path => {
-            compilationService.DiagnoseProject(path, server.TextDocument);
             server.Window.ShowMessage(new ShowMessageParams {
                 Message = $"{Path.GetFileNameWithoutExtension(path)} ready.",
                 Type = MessageType.Log

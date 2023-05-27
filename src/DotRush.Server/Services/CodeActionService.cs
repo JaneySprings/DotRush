@@ -18,6 +18,9 @@ public class CodeActionService {
         foreach (var location in providersLocations)
             AddCodeFixesWithAssemblyName(location);
 
+        if (!Directory.Exists(Program.AnalyzersLocation))
+            return;
+
         foreach (var codefixPath in Directory.GetFiles(Program.AnalyzersLocation, "*.dll"))
             AddCodeFixesWithAssemblyPath(codefixPath);
     }
