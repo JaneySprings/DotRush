@@ -1,12 +1,15 @@
 using System.Reflection;
+using DotRush.Server.Extensions;
 using Microsoft.CodeAnalysis.CodeFixes;
 
 namespace DotRush.Server.Services;
 
 public class CodeActionService {
+    public FileCodeActions CodeActions { get; }
     public HashSet<CodeFixProvider> CodeFixProviders { get; private set; }
 
     public CodeActionService() {
+        CodeActions = new FileCodeActions();
         CodeFixProviders = new HashSet<CodeFixProvider>();
         var providersLocations = new List<string>() {
             "Microsoft.CodeAnalysis.CSharp.Features",

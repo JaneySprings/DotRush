@@ -1,6 +1,6 @@
 using Microsoft.CodeAnalysis;
 
-namespace DotRush.Server.Services;
+namespace DotRush.Server.Extensions;
 
 public class FileDiagnostics {
     public IEnumerable<Diagnostic> SyntaxDiagnostics { get; private set; }

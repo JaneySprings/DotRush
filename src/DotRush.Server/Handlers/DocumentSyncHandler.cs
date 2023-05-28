@@ -14,12 +14,14 @@ namespace DotRush.Server.Handlers;
 public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
     private readonly SolutionService solutionService;
     private readonly CompilationService compilationService;
+    private readonly CodeActionService codeActionService;
     private readonly ILanguageServerFacade serverFacade;
     private CancellationTokenSource? analyzersCancellationTokenSource;
 
-    public DocumentSyncHandler(ILanguageServerFacade serverFacade, SolutionService solutionService, CompilationService compilationService) {
+    public DocumentSyncHandler(ILanguageServerFacade serverFacade, SolutionService solutionService, CompilationService compilationService, CodeActionService codeActionService) {
         this.solutionService = solutionService;
         this.compilationService = compilationService;
+        this.codeActionService = codeActionService;
         this.serverFacade = serverFacade;
     }
 
@@ -61,6 +63,7 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
+        this.codeActionService.CodeActions.ClearWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
         return Unit.Task;
     }
 

@@ -11,14 +11,14 @@ public static class CodeActionConverter {
         var textDocumentEdits = new List<ProtocolModels.WorkspaceEditDocumentChange>();
         return new ProtocolModels.CodeAction() {
             Kind = ProtocolModels.CodeActionKind.QuickFix,
+            Data = codeAction.GetHashCode(),
             Title = codeAction.Title,
         };
     }
 
-    public static async Task<ProtocolModels.CodeAction?> ToCodeAction(this CodeAction codeAction, Document document, SolutionService solutionService, CancellationToken cancellationToken) {
+    public static async Task<ProtocolModels.CodeAction?> ToCodeAction(this CodeAction codeAction, SolutionService solutionService, CancellationToken cancellationToken) {
         var worspaceEdit = new ProtocolModels.WorkspaceEdit();
         var textDocumentEdits = new List<ProtocolModels.WorkspaceEditDocumentChange>();
-        var sourceText = await document.GetTextAsync(cancellationToken);
         
         try {
             var operations = await codeAction.GetOperationsAsync(cancellationToken);
@@ -28,9 +28,14 @@ public static class CodeActionConverter {
                     foreach (var projectChanges in solutionChanges.GetProjectChanges()) {
                         foreach (var documentChanges in projectChanges.GetChangedDocuments()) {
                             var newDocument = projectChanges.NewProject.GetDocument(documentChanges)!;
+                            var oldDocument = solutionService.Solution?.GetDocument(newDocument.Id);
+                            if (oldDocument == null)
+                                continue;
+
+                            var sourceText = await oldDocument.GetTextAsync(cancellationToken);
                             var text = await newDocument.GetTextAsync(cancellationToken);
                             var textEdits = new List<ProtocolModels.TextEdit>();
-                            var textChanges = await newDocument.GetTextChangesAsync(document, cancellationToken);
+                            var textChanges = await newDocument.GetTextChangesAsync(oldDocument, cancellationToken);
                             foreach (var textChange in textChanges) {
                                 textEdits.Add(new ProtocolModels.TextEdit() {
                                     NewText = textChange.NewText ?? string.Empty,

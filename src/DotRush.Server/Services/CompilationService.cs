@@ -67,7 +67,7 @@ public class CompilationService {
             });
 
             await AnalyzerDiagnoseAsync(documentPath, proxy, cancellationToken);
-        } catch (Exception ex) {
+        } catch {
             return;
         }   
     }
@@ -102,17 +102,20 @@ public class CompilationService {
 
         var compilationWithAnalyzers = compilation.WithAnalyzers(ImmutableArray.Create(DiagnosticAnalyzers.ToArray()), cancellationToken: cancellationToken);
         var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
-        var fileDiagnostics = diagnostics.Where(d => d.Location.SourceTree?.FilePath == documentPath);
-        if (!Diagnostics.ContainsKey(documentPath))
-            Diagnostics.Add(documentPath, new FileDiagnostics());
+        var diagnosticGroups = diagnostics.GroupBy(d => d.Location.SourceTree?.FilePath);
 
-        Diagnostics[documentPath].SetAnalyzerDiagnostics(fileDiagnostics);
-        proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
-            Uri = DocumentUri.From(documentPath),
-            Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath]
-                .GetTotalDiagnostics()
-                .ToServerDiagnostics()
-            ),
-        });
+        foreach (var diagnosticGroup in diagnosticGroups) {
+            if (!Diagnostics.ContainsKey(diagnosticGroup.Key!))
+                Diagnostics.Add(diagnosticGroup.Key!, new FileDiagnostics());
+
+            Diagnostics[diagnosticGroup.Key!].SetAnalyzerDiagnostics(diagnosticGroup);
+            proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+                Uri = DocumentUri.From(diagnosticGroup.Key!),
+                Diagnostics = new Container<Diagnostic>(Diagnostics[diagnosticGroup.Key!]
+                    .GetTotalDiagnostics()
+                    .ToServerDiagnostics()
+                ),
+            });
+        }
     }
 }
