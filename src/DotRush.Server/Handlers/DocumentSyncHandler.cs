@@ -63,6 +63,7 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
+        this.compilationService.ClearAnalyzersDiagnostics(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument);
         this.codeActionService.CodeActions.ClearWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
         return Unit.Task;
     }

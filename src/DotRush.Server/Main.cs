@@ -37,6 +37,7 @@ public class Program {
             .WithHandler<ImplementationHandler>()
             .WithHandler<DefinitionHandler>()
             .WithHandler<TypeDefinitionHandler>()
+            .WithHandler<HoverHandler>()
         ).ConfigureAwait(false);
 
         await server.WaitForExit.ConfigureAwait(false);

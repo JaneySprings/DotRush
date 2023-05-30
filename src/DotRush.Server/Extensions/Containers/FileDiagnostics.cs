@@ -22,8 +22,10 @@ public class FileDiagnostics {
         return SyntaxDiagnostics.Concat(AnalyzerDiagnostics);
     }
 
-    public void Clear() {
-        SyntaxDiagnostics = Enumerable.Empty<Diagnostic>();
+    public void ClearAnalyzersDiagnostics() {
         AnalyzerDiagnostics = Enumerable.Empty<Diagnostic>();
+    }
+    public void ClearSyntaxDiagnostics() {
+        SyntaxDiagnostics = Enumerable.Empty<Diagnostic>();
     }
 }

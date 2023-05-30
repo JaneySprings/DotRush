@@ -66,7 +66,7 @@ public class CompilationService {
                 ),
             });
 
-            await AnalyzerDiagnoseAsync(documentPath, proxy, cancellationToken);
+            await DeepDiagnoseAsync(documentPath, proxy, cancellationToken);
         } catch {
             return;
         }   
@@ -87,7 +87,7 @@ public class CompilationService {
         Diagnostics[document.FilePath!].SetSyntaxDiagnostics(diagnostics);
     }
 
-    private async Task AnalyzerDiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
+    private async Task DeepDiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
         var projectId = this.solutionService.Solution?.GetProjectIdsWithDocumentFilePath(documentPath).FirstOrDefault();
         var project = this.solutionService.Solution?.GetProject(projectId);
         if (project == null)
@@ -97,25 +97,54 @@ public class CompilationService {
         if (compilation == null)
             return;
 
-        if (!DiagnosticAnalyzers.Any())
-            return;
+        var compilationDiagnostics = compilation.GetDiagnostics(cancellationToken);
+        var compilationDiagnosticsGrouped = compilationDiagnostics.GroupBy(x => x.Location.SourceTree?.FilePath);
 
-        var compilationWithAnalyzers = compilation.WithAnalyzers(ImmutableArray.Create(DiagnosticAnalyzers.ToArray()), cancellationToken: cancellationToken);
-        var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
-        var diagnosticGroups = diagnostics.GroupBy(d => d.Location.SourceTree?.FilePath);
+        foreach (var compilationDiagnosticsGroup in compilationDiagnosticsGrouped) {
+            if (!Diagnostics.ContainsKey(compilationDiagnosticsGroup.Key!))
+                Diagnostics.Add(compilationDiagnosticsGroup.Key!, new FileDiagnostics());
 
-        foreach (var diagnosticGroup in diagnosticGroups) {
-            if (!Diagnostics.ContainsKey(diagnosticGroup.Key!))
-                Diagnostics.Add(diagnosticGroup.Key!, new FileDiagnostics());
-
-            Diagnostics[diagnosticGroup.Key!].SetAnalyzerDiagnostics(diagnosticGroup);
+            Diagnostics[compilationDiagnosticsGroup.Key!].SetSyntaxDiagnostics(compilationDiagnosticsGroup);
             proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
-                Uri = DocumentUri.From(diagnosticGroup.Key!),
-                Diagnostics = new Container<Diagnostic>(Diagnostics[diagnosticGroup.Key!]
+                Uri = DocumentUri.From(compilationDiagnosticsGroup.Key!),
+                Diagnostics = new Container<Diagnostic>(Diagnostics[compilationDiagnosticsGroup.Key!]
                     .GetTotalDiagnostics()
                     .ToServerDiagnostics()
                 ),
             });
         }
+
+        if (!DiagnosticAnalyzers.Any())
+            return;
+
+        var compilationWithAnalyzers = compilation.WithAnalyzers(ImmutableArray.Create(DiagnosticAnalyzers.ToArray()), cancellationToken: cancellationToken);
+        var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
+        var fileDiagnostics = diagnostics.Where(d => d.Location.SourceTree?.FilePath == documentPath);
+
+        if (!Diagnostics.ContainsKey(documentPath))
+            Diagnostics.Add(documentPath, new FileDiagnostics());
+
+        Diagnostics[documentPath].SetAnalyzerDiagnostics(fileDiagnostics);
+        proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+            Uri = DocumentUri.From(documentPath),
+            Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath]
+                .GetTotalDiagnostics()
+                .ToServerDiagnostics()
+            ),
+        });
+    }
+
+    public void ClearAnalyzersDiagnostics(string documentPath, ITextDocumentLanguageServer proxy) {
+        if (!Diagnostics.ContainsKey(documentPath))
+            return;
+
+        Diagnostics[documentPath].ClearAnalyzersDiagnostics();
+        proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+            Uri = DocumentUri.From(documentPath),
+            Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath]
+                .GetTotalDiagnostics()
+                .ToServerDiagnostics()
+            ),
+        });
     }
 }
