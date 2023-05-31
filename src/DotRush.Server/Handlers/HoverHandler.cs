@@ -59,9 +59,9 @@ public class HoverHandler : HoverHandlerBase {
         //         return MakeHover(symbol.GetDocumentationCommentXml());
         // }
 
-        var displayString =  symbol.Kind == CodeAnalysis.SymbolKind.NamedType ? 
-            symbol.ToDisplayString(DefaultFormat) : 
-            symbol.ToMinimalDisplayString(semanticModel, offset, MinimalFormat);
+        var displayString = symbol.Kind == CodeAnalysis.SymbolKind.NamedType 
+            ? symbol.ToDisplayString(DefaultFormat) 
+            : symbol.ToMinimalDisplayString(semanticModel, offset, MinimalFormat);
 
         return new Hover {
             Contents = new MarkedStringsOrMarkupContent(new MarkupContent {

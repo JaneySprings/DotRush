@@ -66,7 +66,8 @@ public class CompilationService {
                 ),
             });
 
-            await DeepDiagnoseAsync(documentPath, proxy, cancellationToken);
+            await Task.Delay(TimeSpan.FromMilliseconds(1500), cancellationToken);
+            await AnalyzerDiagnoseAsync(documentPath, proxy, cancellationToken);
         } catch {
             return;
         }   
@@ -87,34 +88,14 @@ public class CompilationService {
         Diagnostics[document.FilePath!].SetSyntaxDiagnostics(diagnostics);
     }
 
-    private async Task DeepDiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
+    private async Task AnalyzerDiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
         var projectId = this.solutionService.Solution?.GetProjectIdsWithDocumentFilePath(documentPath).FirstOrDefault();
         var project = this.solutionService.Solution?.GetProject(projectId);
-        if (project == null)
+        if (project == null || !DiagnosticAnalyzers.Any())
             return;
 
         var compilation = await project.GetCompilationAsync(cancellationToken);
         if (compilation == null)
-            return;
-
-        var compilationDiagnostics = compilation.GetDiagnostics(cancellationToken);
-        var compilationDiagnosticsGrouped = compilationDiagnostics.GroupBy(x => x.Location.SourceTree?.FilePath);
-
-        foreach (var compilationDiagnosticsGroup in compilationDiagnosticsGrouped) {
-            if (!Diagnostics.ContainsKey(compilationDiagnosticsGroup.Key!))
-                Diagnostics.Add(compilationDiagnosticsGroup.Key!, new FileDiagnostics());
-
-            Diagnostics[compilationDiagnosticsGroup.Key!].SetSyntaxDiagnostics(compilationDiagnosticsGroup);
-            proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
-                Uri = DocumentUri.From(compilationDiagnosticsGroup.Key!),
-                Diagnostics = new Container<Diagnostic>(Diagnostics[compilationDiagnosticsGroup.Key!]
-                    .GetTotalDiagnostics()
-                    .ToServerDiagnostics()
-                ),
-            });
-        }
-
-        if (!DiagnosticAnalyzers.Any())
             return;
 
         var compilationWithAnalyzers = compilation.WithAnalyzers(ImmutableArray.Create(DiagnosticAnalyzers.ToArray()), cancellationToken: cancellationToken);
@@ -132,6 +113,39 @@ public class CompilationService {
                 .ToServerDiagnostics()
             ),
         });
+    }
+
+    public async void DeepDiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
+        var projectId = this.solutionService.Solution?.GetProjectIdsWithDocumentFilePath(documentPath).FirstOrDefault();
+        var project = this.solutionService.Solution?.GetProject(projectId);
+        if (project == null || !DiagnosticAnalyzers.Any())
+            return;
+
+        try {
+            var compilation = await project.GetCompilationAsync(cancellationToken);
+            if (compilation == null)
+                return;
+
+            var compilationDiagnostics = compilation.GetDiagnostics(cancellationToken);
+            var compilationDiagnosticsGrouped = compilationDiagnostics.GroupBy(x => x.Location.SourceTree?.FilePath);
+
+            foreach (var compilationDiagnosticsGroup in compilationDiagnosticsGrouped) {
+                if (!Diagnostics.ContainsKey(compilationDiagnosticsGroup.Key!))
+                    Diagnostics.Add(compilationDiagnosticsGroup.Key!, new FileDiagnostics());
+
+                if (Diagnostics[compilationDiagnosticsGroup.Key!].SyntaxDiagnosticsEquals(compilationDiagnosticsGroup))
+                    continue;
+
+                Diagnostics[compilationDiagnosticsGroup.Key!].SetSyntaxDiagnostics(compilationDiagnosticsGroup);
+                proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+                    Uri = DocumentUri.From(compilationDiagnosticsGroup.Key!),
+                    Diagnostics = new Container<Diagnostic>(Diagnostics[compilationDiagnosticsGroup.Key!]
+                        .GetTotalDiagnostics()
+                        .ToServerDiagnostics()
+                    ),
+                });
+            }
+        } catch {}
     }
 
     public void ClearAnalyzersDiagnostics(string documentPath, ITextDocumentLanguageServer proxy) {

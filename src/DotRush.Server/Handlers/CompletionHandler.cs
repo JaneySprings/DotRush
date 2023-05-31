@@ -30,12 +30,11 @@ public class CompletionHandler : CompletionHandlerBase {
     }
 
     public override async Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken) {
-        var completionItems = new List<CompletionItem>();
         var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
         var document = this.solutionService.Solution?.GetDocument(documentId);
         var completionService = CodeAnalysisCompletionService.GetService(document);
-        if (completionService == null || document == null) 
-            return new CompletionList(completionItems);
+        if (completionService == null || document == null)
+            return new CompletionList(Enumerable.Empty<CompletionItem>());
 
         var sourceText = await document.GetTextAsync(cancellationToken);
         var offset = request.Position.ToOffset(sourceText);
@@ -44,7 +43,7 @@ public class CompletionHandler : CompletionHandlerBase {
         try {
             var completions = await completionService.GetCompletionsAsync(document, offset, cancellationToken: cancellationToken);
             if (completions == null)
-                return new CompletionList(completionItems);
+                return new CompletionList(Enumerable.Empty<CompletionItem>());
             
             AssignCacheWithDocument(document);
             return new CompletionList(completions.ItemsList.Select(x => {
@@ -52,10 +51,9 @@ public class CompletionHandler : CompletionHandlerBase {
                 CacheCompletionItem(item, x);
                 return item;
             }));
-        } catch (Exception e) {
-            LoggingService.Instance.LogError(e.Message, e);
-            return new CompletionList(completionItems);
-        }
+        } catch {}
+
+        return new CompletionList(Enumerable.Empty<CompletionItem>());
     }
 
     public override async Task<CompletionItem> Handle(CompletionItem request, CancellationToken cancellationToken) {

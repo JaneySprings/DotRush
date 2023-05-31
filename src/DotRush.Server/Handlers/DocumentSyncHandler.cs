@@ -56,7 +56,9 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
-        this.compilationService.DiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, GetToken());
+        var compilationToken = GetToken();
+        this.compilationService.DeepDiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, compilationToken);
+        this.compilationService.DiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, compilationToken);
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {
