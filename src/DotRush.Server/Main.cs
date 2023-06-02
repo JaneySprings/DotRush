@@ -28,16 +28,18 @@ public class Program {
             .WithHandler<DocumentSyncHandler>()
             .WithHandler<WatchedFilesHandler>()
             .WithHandler<WorkspaceFoldersHandler>()
-            .WithHandler<FormattingHandler>()
-            .WithHandler<RangeFormattingHandler>()
-            .WithHandler<RenameHandler>()
-            .WithHandler<CompletionHandler>()
-            .WithHandler<CodeActionHandler>()
-            .WithHandler<ReferencesHandler>()
-            .WithHandler<ImplementationHandler>()
-            .WithHandler<DefinitionHandler>()
-            .WithHandler<TypeDefinitionHandler>()
             .WithHandler<HoverHandler>()
+            //
+            // TODO: Refactor bottom handlers
+            // .WithHandler<FormattingHandler>()
+            // .WithHandler<RangeFormattingHandler>()
+            // .WithHandler<RenameHandler>()
+            .WithHandler<CompletionHandler>()
+            // .WithHandler<CodeActionHandler>()
+            // .WithHandler<ReferencesHandler>()
+            // .WithHandler<ImplementationHandler>()
+            // .WithHandler<DefinitionHandler>()
+            // .WithHandler<TypeDefinitionHandler>()
         ).ConfigureAwait(false);
 
         await server.WaitForExit.ConfigureAwait(false);
@@ -61,7 +63,7 @@ public class Program {
 
         solutionService.ReloadSolution(path => {
             server.Window.ShowMessage(new ShowMessageParams {
-                Message = $"{Path.GetFileNameWithoutExtension(path)} ready.",
+                Message = $"Project {Path.GetFileNameWithoutExtension(path)} ready.",
                 Type = MessageType.Log
             });
         });

@@ -36,56 +36,34 @@ public class HoverHandler : HoverHandlerBase {
     }
 
     public override async Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken) {
-        var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
-        var document = this.solutionService.Solution?.GetDocument(documentId);
-        if (document == null)
+        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        if (documentIds == null)
             return null;
+        
+        foreach (var documentId in documentIds) {
+            var document = this.solutionService.Solution?.GetDocument(documentId);
+            if (document == null)
+                continue;
 
-        var sourceText = await document.GetTextAsync(cancellationToken);
-        var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-        var offset = request.Position.ToOffset(sourceText);
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset);
-        if (symbol == null || semanticModel == null)
-            return null;
+            var sourceText = await document.GetTextAsync(cancellationToken);
+            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+            var offset = request.Position.ToOffset(sourceText);
+            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset);
+            if (symbol == null || semanticModel == null)
+                continue;
 
-        // switch (symbol) {
-        //     case IParameterSymbol parameter:
-        //         return GetParameterDocumentation(parameter);
-        //     case ITypeParameterSymbol typeParam:
-        //         return GetTypeParameterDocumentation(typeParam);
-        //     case IAliasSymbol alias:
-        //         return GetAliasDocumentation(alias);
-        //     default:
-        //         return MakeHover(symbol.GetDocumentationCommentXml());
-        // }
+            var displayString = symbol.Kind == CodeAnalysis.SymbolKind.NamedType 
+                ? symbol.ToDisplayString(DefaultFormat) 
+                : symbol.ToMinimalDisplayString(semanticModel, offset, MinimalFormat);
 
-        var displayString = symbol.Kind == CodeAnalysis.SymbolKind.NamedType 
-            ? symbol.ToDisplayString(DefaultFormat) 
-            : symbol.ToMinimalDisplayString(semanticModel, offset, MinimalFormat);
+            return new Hover {
+                Contents = new MarkedStringsOrMarkupContent(new MarkupContent {
+                    Kind = MarkupKind.Markdown,
+                    Value = $"```csharp\n{displayString}\n```"
+                })
+            };
+        }
 
-        return new Hover {
-            Contents = new MarkedStringsOrMarkupContent(new MarkupContent {
-                Kind = MarkupKind.Markdown,
-                Value = $"```csharp\n{displayString}\n```"
-            })
-        };
-
+        return null;
     }
-
-    // private Hover? GetParameterDocumentation(IParameterSymbol parameter) {
-    //     var contaningSymbolDef = parameter.ContainingSymbol.OriginalDefinition;
-    //     var documentationComment = contaningSymbolDef.GetDocumentationCommentXml();
-    //     return MakeHover(XmlConverter.ConvertDocumentation(documentationComment, Environment.NewLine));
-    // }
-    // private Hover? GetTypeParameterDocumentation(ITypeParameterSymbol typeParam, string lineEnding = "\n") {
-    //     var contaningSymbol = typeParam.ContainingSymbol;
-    //     var documentationComment = contaningSymbol.GetDocumentationCommentXml();
-    //     return MakeHover(XmlConverter.ConvertDocumentation(documentationComment, Environment.NewLine));
-    // }
-
-    // private Hover? GetAliasDocumentation(IAliasSymbol alias, string lineEnding = "\n") {
-    //     var target = alias.Target;
-    //     var documentationComment = target.GetDocumentationCommentXml();
-    //     return MakeHover(XmlConverter.ConvertDocumentation(documentationComment, Environment.NewLine));
-    // }
 }

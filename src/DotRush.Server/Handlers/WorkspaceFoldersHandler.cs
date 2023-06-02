@@ -3,14 +3,18 @@ using MediatR;
 using Microsoft.CodeAnalysis;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol.Server;
+using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
 
 namespace DotRush.Server.Handlers;
 
 public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
     private SolutionService solutionService;
+    private readonly ILanguageServerFacade serverFacade;
 
-    public WorkspaceFoldersHandler(SolutionService solutionService) {
+    public WorkspaceFoldersHandler(ILanguageServerFacade serverFacade, SolutionService solutionService) {
+        this.serverFacade = serverFacade;
         this.solutionService = solutionService;
     }
 
@@ -30,7 +34,13 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
         foreach (var add in added)
             this.solutionService.AddProjects(Directory.GetFiles(add, "*.csproj", SearchOption.AllDirectories));
 
-        this.solutionService.ReloadSolution();
+        this.solutionService.ReloadSolution(path => {
+            serverFacade.Window.ShowMessage(new ShowMessageParams {
+                Message = $"Project {Path.GetFileNameWithoutExtension(path)} ready.",
+                Type = MessageType.Log
+            });
+        });
+
         return Unit.Task;
     } 
 }
