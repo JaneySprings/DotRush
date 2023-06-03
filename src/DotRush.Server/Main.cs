@@ -29,17 +29,15 @@ public class Program {
             .WithHandler<WatchedFilesHandler>()
             .WithHandler<WorkspaceFoldersHandler>()
             .WithHandler<HoverHandler>()
-            //
-            // TODO: Refactor bottom handlers
-            // .WithHandler<FormattingHandler>()
-            // .WithHandler<RangeFormattingHandler>()
-            // .WithHandler<RenameHandler>()
+            .WithHandler<FormattingHandler>()
+            .WithHandler<RangeFormattingHandler>()
+            .WithHandler<RenameHandler>()
             .WithHandler<CompletionHandler>()
-            // .WithHandler<CodeActionHandler>()
-            // .WithHandler<ReferencesHandler>()
-            // .WithHandler<ImplementationHandler>()
-            // .WithHandler<DefinitionHandler>()
-            // .WithHandler<TypeDefinitionHandler>()
+            .WithHandler<CodeActionHandler>()
+            .WithHandler<ReferencesHandler>()
+            .WithHandler<ImplementationHandler>()
+            .WithHandler<DefinitionHandler>()
+            .WithHandler<TypeDefinitionHandler>()
         ).ConfigureAwait(false);
 
         await server.WaitForExit.ConfigureAwait(false);

@@ -23,29 +23,6 @@ public class FileDiagnostics {
     public void ClearSyntaxDiagnostics() {
         SyntaxDiagnostics = Enumerable.Empty<Diagnostic>();
     }
-    public bool AnalyzersDiagnosticsEquals(IEnumerable<Diagnostic> diagnostics) {
-        if (diagnostics.Count() != SyntaxDiagnostics.Count())
-            return false;
-
-        foreach (var diagnostic in diagnostics) {
-            if (AnalyzerDiagnostics.FirstOrDefault(d => d.Equals(diagnostic)) == null)
-                return false;
-        }
-
-        return true;
-    }
-    public bool SyntaxDiagnosticsEquals(IEnumerable<Diagnostic> diagnostics) {
-        if (diagnostics.Count() != SyntaxDiagnostics.Count())
-            return false;
-
-        foreach (var diagnostic in diagnostics) {
-            if (SyntaxDiagnostics.FirstOrDefault(d => d.Equals(diagnostic)) == null)
-                return false;
-        }
-
-        return true;
-    }
-
 
     public IEnumerable<Diagnostic> GetTotalDiagnostics() {
         return SyntaxDiagnostics.Concat(AnalyzerDiagnostics);

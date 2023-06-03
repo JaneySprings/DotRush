@@ -115,39 +115,6 @@ public class CompilationService {
         });
     }
 
-    public async void DeepDiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
-        var projectId = this.solutionService.Solution?.GetProjectIdsWithDocumentFilePath(documentPath).FirstOrDefault();
-        var project = this.solutionService.Solution?.GetProject(projectId);
-        if (project == null || !DiagnosticAnalyzers.Any())
-            return;
-
-        try {
-            var compilation = await project.GetCompilationAsync(cancellationToken);
-            if (compilation == null)
-                return;
-
-            var compilationDiagnostics = compilation.GetDiagnostics(cancellationToken);
-            var compilationDiagnosticsGrouped = compilationDiagnostics.GroupBy(x => x.Location.SourceTree?.FilePath);
-
-            foreach (var compilationDiagnosticsGroup in compilationDiagnosticsGrouped) {
-                if (!Diagnostics.ContainsKey(compilationDiagnosticsGroup.Key!))
-                    Diagnostics.Add(compilationDiagnosticsGroup.Key!, new FileDiagnostics());
-
-                if (Diagnostics[compilationDiagnosticsGroup.Key!].SyntaxDiagnosticsEquals(compilationDiagnosticsGroup))
-                    continue;
-
-                Diagnostics[compilationDiagnosticsGroup.Key!].SetSyntaxDiagnostics(compilationDiagnosticsGroup);
-                proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
-                    Uri = DocumentUri.From(compilationDiagnosticsGroup.Key!),
-                    Diagnostics = new Container<Diagnostic>(Diagnostics[compilationDiagnosticsGroup.Key!]
-                        .GetTotalDiagnostics()
-                        .ToServerDiagnostics()
-                    ),
-                });
-            }
-        } catch {}
-    }
-
     public void ClearAnalyzersDiagnostics(string documentPath, ITextDocumentLanguageServer proxy) {
         if (!Diagnostics.ContainsKey(documentPath))
             return;
