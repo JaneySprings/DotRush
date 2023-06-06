@@ -15,6 +15,5 @@
 	"command.id.reload": "dotrush.reload",
 
 	"config.title": "DotRush Configuration",
-	"config.description.buildOnlyFramework": "Build only the selected framework",
-	"config.description.useDotnetMeteor": "Use active project form .NET Meteor status bar"
+	"config.description.additionalMSBuildArgs": "Additional MSBuild arguments to pass to the build command."
 }

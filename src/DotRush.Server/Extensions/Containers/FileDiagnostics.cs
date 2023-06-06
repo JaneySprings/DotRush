@@ -17,6 +17,12 @@ public class FileDiagnostics {
     public void SetAnalyzerDiagnostics(IEnumerable<Diagnostic> diagnostics) {
         AnalyzerDiagnostics = diagnostics;
     }
+    public void AddSyntaxDiagnostics(IEnumerable<Diagnostic> diagnostics) {
+        SyntaxDiagnostics = SyntaxDiagnostics.Concat(diagnostics);
+    }
+    public void AddAnalyzerDiagnostics(IEnumerable<Diagnostic> diagnostics) {
+        AnalyzerDiagnostics = AnalyzerDiagnostics.Concat(diagnostics);
+    }
     public void ClearAnalyzersDiagnostics() {
         AnalyzerDiagnostics = Enumerable.Empty<Diagnostic>();
     }

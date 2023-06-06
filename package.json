@@ -26,7 +26,8 @@
   "contributes": {
     "include": "manifest/themes.json",
     "include": "manifest/commands.json",
-    "include": "manifest/menus.json"
+    "include": "manifest/menus.json",
+    "include": "manifest/configuration.json"
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

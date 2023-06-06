@@ -10,4 +10,4 @@ export const commandIdClean = "dotrush.clean";
 export const commandIdReload = "dotrush.reload";
 
 export const taskDefinitionId = "dotrush.task";
-export const configIdBuildOnlyFramework = "context.buildOnlyFramework";
+export const configIdAdditionalMSBuildArgs = "additionalMSBuildArgs";

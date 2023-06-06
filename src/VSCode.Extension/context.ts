@@ -1,3 +1,4 @@
+import { getSetting } from './extension';
 import * as res from './resources';
 import * as vscode from 'vscode';
 
@@ -32,7 +33,8 @@ class DotNetTaskProvider {
             return undefined;
         
         const csproj = vscode.Uri.joinPath(directory, csprojName[0]);
-        const command = `dotnet ${target} ${csproj.fsPath}`;
+        const args = getSetting<string>(res.configIdAdditionalMSBuildArgs) ?? '';
+        const command = `dotnet ${target} ${csproj.fsPath} ${args}`;
         return new vscode.Task({ type: `${res.extensionId}.${res.taskDefinitionId}` }, 
             vscode.TaskScope.Workspace, target, res.extensionId, new vscode.ShellExecution(command)
         );

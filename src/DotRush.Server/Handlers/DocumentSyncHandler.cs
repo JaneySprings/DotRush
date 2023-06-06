@@ -45,11 +45,15 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
                 break;
         }
         
-        this.compilationService.DiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, GetToken());
+        var diagnosticCancellation = GetToken();
+        this.compilationService.DiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, diagnosticCancellation);
+        this.compilationService.AnalyzerDiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, diagnosticCancellation);
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
-        this.compilationService.DiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, GetToken());
+        var diagnosticCancellation = GetToken();
+        this.compilationService.DiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, diagnosticCancellation);
+        this.compilationService.AnalyzerDiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, diagnosticCancellation);
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
