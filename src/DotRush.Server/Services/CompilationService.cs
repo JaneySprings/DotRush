@@ -79,10 +79,7 @@ public class CompilationService {
 
         proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
             Uri = DocumentUri.From(documentPath),
-            Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath]
-                .GetTotalDiagnostics()
-                .ToServerDiagnostics()
-            ),
+            Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath].SyntaxDiagnostics.ToServerDiagnostics()),
         });
     }
 
