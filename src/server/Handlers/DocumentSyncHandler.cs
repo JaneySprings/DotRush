@@ -46,19 +46,26 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         }
         
         var diagnosticCancellation = GetToken();
-        this.compilationService.DiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, diagnosticCancellation);
+        this.compilationService.Documents.Add(filePath);
+        this.compilationService.DiagnoseAsync(serverFacade.TextDocument, diagnosticCancellation);
         this.compilationService.AnalyzerDiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, diagnosticCancellation);
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
+        var filePath = request.TextDocument.Uri.GetFileSystemPath();
         var diagnosticCancellation = GetToken();
-        this.compilationService.DiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, diagnosticCancellation);
-        this.compilationService.AnalyzerDiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, diagnosticCancellation);
+
+        this.compilationService.Documents.Add(filePath);
+        this.compilationService.DiagnoseAsync(serverFacade.TextDocument, diagnosticCancellation);
+        this.compilationService.AnalyzerDiagnoseAsync(filePath, serverFacade.TextDocument, diagnosticCancellation);
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
-        this.compilationService.ClearAnalyzersDiagnostics(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument);
-        this.codeActionService.CodeActions.ClearWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        var filePath = request.TextDocument.Uri.GetFileSystemPath();
+    
+        this.compilationService.Documents.Remove(filePath);
+        this.compilationService.ClearAnalyzersDiagnostics(filePath, serverFacade.TextDocument);
+        this.codeActionService.CodeActions.ClearWithFilePath(filePath);
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {

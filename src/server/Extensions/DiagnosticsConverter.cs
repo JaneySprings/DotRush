@@ -4,13 +4,13 @@ using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Extensions;
 
 public static class DiagnosticsConverter {
-    public static List<ProtocolModels.Diagnostic> ToServerDiagnostics(this IEnumerable<Diagnostic> diagnostics) {
+    public static List<ProtocolModels.Diagnostic> ToServerDiagnostics(this IEnumerable<SourceDiagnostic> diagnostics) {
         var result = new List<ProtocolModels.Diagnostic>();
         foreach (var diagnostic in diagnostics) {
-            if (diagnostic.Location.Kind != LocationKind.SourceFile)
+            if (diagnostic.InnerDiagnostic.Location.Kind != LocationKind.SourceFile)
                 continue;
 
-            var diagnosticSource = diagnostic.Location.SourceTree?.FilePath;
+            var diagnosticSource = diagnostic.InnerDiagnostic.Location.SourceTree?.FilePath;
 
             // TODO: This is a temp hack, we should check relative path to the project root
             if (diagnosticSource?.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") == true || 
@@ -21,11 +21,11 @@ public static class DiagnosticsConverter {
                 continue;
 
             result.Add(new ProtocolModels.Diagnostic() {
-                Message = diagnostic.GetMessage(),
-                Severity = diagnostic.Severity.ToServerSeverity(),
-                Source = diagnosticSource,
-                Code = diagnostic.Id,
-                Range = diagnostic.Location.GetLineSpan().Span.ToRange(),
+                Message = diagnostic.InnerDiagnostic.GetMessage(),
+                Range = diagnostic.InnerDiagnostic.Location.GetLineSpan().Span.ToRange(),
+                Severity = diagnostic.InnerDiagnostic.Severity.ToServerSeverity(),
+                Source = diagnostic.Source ?? diagnosticSource,
+                Code = diagnostic.InnerDiagnostic.Id,
             });
         }
 

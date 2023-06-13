@@ -12,7 +12,7 @@ public string RootDirectory => MakeAbsolute(Directory(".")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
 public string ExtensionStagingDirectory => _Path.Combine(RootDirectory, "extension");
 public string ExtensionAssembliesDirectory => _Path.Combine(ExtensionStagingDirectory, "bin");
-public string ServerProjectFilePath => _Path.Combine(RootDirectory, "src", "DotRush.Server", "DotRush.csproj");
+public string ServerProjectFilePath => _Path.Combine(RootDirectory, "src", "server", "DotRush.csproj");
 
 
 Setup(context => {
@@ -33,22 +33,9 @@ Task("build-server").Does(() => DotNetBuild(ServerProjectFilePath, new DotNetBui
    Runtime = runtime
 }));
 
-Task("manifest").Does(() => {
-   var options = System.Text.RegularExpressions.RegexOptions.Multiline;
-   var packageFile = _Path.Combine(RootDirectory, "package.json");
-   var includes = FindRegexMatchesInFile(packageFile, @"""include"": ""(.+)""", options);
-   foreach (string include in includes) {
-      var includePath = include.Split(':')[1].Trim().Replace("\"", string.Empty);
-      var includeFile = _Path.Combine(RootDirectory, includePath);
-      var includeContent = FileReadText(includeFile);
-      includeContent = includeContent.Substring(8, includeContent.Length - 12);
-      ReplaceTextInFiles(packageFile, include, includeContent);
-   }
-});
 
 Task("vsix")
    .IsDependentOn("clean")
-   .IsDependentOn("manifest")
    .IsDependentOn("build-server")
    .DoesForEach<FilePath>(GetFiles("*.json"), file => {
       var regex = @"^\s\s(""version"":\s+)("".+"")(,)";
