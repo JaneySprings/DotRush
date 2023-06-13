@@ -11,12 +11,14 @@ namespace DotRush.Server.Services;
 
 public class CompilationService {
     public Dictionary<string, FileDiagnostics> Diagnostics { get; }
+    public HashSet<string> Documents { get; }
     public HashSet<DiagnosticAnalyzer> DiagnosticAnalyzers { get; }
     private readonly SolutionService solutionService;
 
     public CompilationService(SolutionService solutionService) {
         this.solutionService = solutionService;
-        this.Diagnostics = new Dictionary<string, FileDiagnostics>();
+        Documents = new HashSet<string>();
+        Diagnostics = new Dictionary<string, FileDiagnostics>();
         DiagnosticAnalyzers = new HashSet<DiagnosticAnalyzer>();
 
         if (!Directory.Exists(Program.AnalyzersLocation))
@@ -48,44 +50,46 @@ public class CompilationService {
             DiagnosticAnalyzers.Add(analyzer!);
     }
 
-    public async void DiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
-        if (!Diagnostics.ContainsKey(documentPath))
-            Diagnostics.Add(documentPath, new FileDiagnostics());
+    public async void DiagnoseAsync(ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
+        foreach (var documentPath in Documents) {
+            if (!Diagnostics.ContainsKey(documentPath))
+                Diagnostics.Add(documentPath, new FileDiagnostics());
 
-        Diagnostics[documentPath].ClearSyntaxDiagnostics();
-        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath);
-        if (documentIds == null)
-            return;
+            Diagnostics[documentPath].ClearSyntaxDiagnostics();
+            var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath);
+            if (documentIds == null)
+                return;
 
-        try {
             foreach (var documentId in documentIds) {
                 var document = this.solutionService.Solution?.GetDocument(documentId);
                 if (document == null)
                     continue;
+                
+                try {
+                    var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+                    var diagnostics = semanticModel?
+                        .GetDiagnostics(cancellationToken: cancellationToken)
+                        .Where(d => File.Exists(d.Location.SourceTree?.FilePath));
 
-                var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-                var diagnostics = semanticModel?
-                    .GetDiagnostics(cancellationToken: cancellationToken)
-                    .Where(d => File.Exists(d.Location.SourceTree?.FilePath));
+                    if (diagnostics == null)
+                        continue;
 
-                if (diagnostics == null)
-                    continue;
+                    Diagnostics[documentPath].AddSyntaxDiagnostics(diagnostics, document.Project);
+                } catch (OperationCanceledException) {
+                    return; 
+                } 
+            }  
 
-                Diagnostics[documentPath].AddSyntaxDiagnostics(diagnostics);
-            }
-        } catch {
-            return;
-        }   
-
-        proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
-            Uri = DocumentUri.From(documentPath),
-            Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath].SyntaxDiagnostics.ToServerDiagnostics()),
-        });
+            proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+                Uri = DocumentUri.From(documentPath),
+                Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath].SyntaxDiagnostics.ToServerDiagnostics()),
+            });
+        }
     }
 
     public async void AnalyzerDiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
         try {
-            await Task.Delay(TimeSpan.FromMilliseconds(1200), cancellationToken);
+            await Task.Delay(TimeSpan.FromMilliseconds(300), cancellationToken);
 
             var projectId = this.solutionService.Solution?.GetProjectIdsWithDocumentFilePath(documentPath).FirstOrDefault();
             var project = this.solutionService.Solution?.GetProject(projectId);
@@ -100,13 +104,10 @@ public class CompilationService {
             var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
             var fileDiagnostics = diagnostics.Where(d => d.Location.SourceTree?.FilePath == documentPath);
 
-            Diagnostics[documentPath].SetAnalyzerDiagnostics(fileDiagnostics);
+            Diagnostics[documentPath].SetAnalyzerDiagnostics(fileDiagnostics, project);
             proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
                 Uri = DocumentUri.From(documentPath),
-                Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath]
-                    .GetTotalDiagnostics()
-                    .ToServerDiagnostics()
-                ),
+                Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath].GetTotalServerDiagnostics()),
             });
         } catch {
             return;
@@ -120,10 +121,7 @@ public class CompilationService {
         Diagnostics[documentPath].ClearAnalyzersDiagnostics();
         proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
             Uri = DocumentUri.From(documentPath),
-            Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath]
-                .GetTotalDiagnostics()
-                .ToServerDiagnostics()
-            ),
+            Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath].GetTotalServerDiagnostics()),
         });
     }
 }

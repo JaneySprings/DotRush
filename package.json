@@ -1,12 +1,12 @@
 {
   "name": "dotrush",
   "publisher": "nromanov",
-  "version": "23.1.23092",
-  "description": "%extension.description%",
-  "displayName": "%extension.displayName%",
+  "version": "23.1.23164",
+  "description": "Lightweight .NET development environment for Visual Studio Code.",
+  "displayName": "DotRush",
   "author": "Nikita Romanov",
   "license": "MIT",
-  "icon": "res/icon.png",
+  "icon": "assets/icon.png",
   "preview": false,
   "repository": {
     "type": "git",
@@ -24,15 +24,65 @@
   ],
   "main": "./extension/extension.js",
   "contributes": {
-    "include": "manifest/themes.json",
-    "include": "manifest/commands.json",
-    "include": "manifest/menus.json",
-    "include": "manifest/configuration.json"
+    "themes": [
+      {
+        "label": "Visual Studio 2022 Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/vs2022_dark.json"
+      },
+      {
+        "label": "Visual Studio 2022 Light",
+        "uiTheme": "vs",
+        "path": "./themes/vs2022_light.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "dotrush.build",
+        "title": "Build"
+      },
+      {
+        "command": "dotrush.rebuild",
+        "title": "Rebuild"
+      },
+      {
+        "command": "dotrush.clean",
+        "title": "Clean"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "dotrush.build",
+          "group": "z_common@1"
+        },
+        {
+          "command": "dotrush.rebuild",
+          "group": "z_common@2"
+        },
+        {
+          "command": "dotrush.clean",
+          "group": "z_common@3"
+        }
+      ]
+    },
+    "configuration":[
+      {
+        "title": "DotRush Configuration",
+        "properties": {
+          "dotrush.additionalMSBuildArgs": {
+            "type": "string",
+            "default": "",
+            "description": "Additional MSBuild arguments to pass to the build command."
+          }
+        }
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./src/VSCode.Extension/tsconfig.json --sourceMap false",
-    "watch": "tsc -watch -p ./src/VSCode.Extension/tsconfig.json"
+    "compile": "tsc -p ./src/tsconfig.json --sourceMap false",
+    "watch": "tsc -watch -p ./src/tsconfig.json"
   },
   "devDependencies": {
     "@types/node": "16.x",

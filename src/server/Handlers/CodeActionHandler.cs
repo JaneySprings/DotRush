@@ -47,11 +47,10 @@ public class CodeActionHandler : CodeActionHandlerBase {
             return new CommandOrCodeActionContainer();
 
         foreach (var codeFixProvider in codeFixProviders) {
-            var context = new CodeFixContext(document, fileDiagnostic, (a, _) => {
+            await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, fileDiagnostic, (a, _) => {
                 this.codeActionService.CodeActions.SetCodeAction(a, a.GetHashCode(), document.FilePath!);
                 result.Add(a.ToCodeAction());
-            }, cancellationToken);
-            await codeFixProvider.RegisterCodeFixesAsync(context);
+            }, cancellationToken));
         }
 
         return new CommandOrCodeActionContainer(result.Where(x => x != null).Select(x => new CommandOrCodeAction(x!)));
