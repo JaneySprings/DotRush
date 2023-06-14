@@ -15,8 +15,11 @@ public class SolutionService {
         MSBuildLocator.RegisterDefaults();
         ProjectFiles = new HashSet<string>();
 
-        foreach (var target in targets) 
+        foreach (var target in targets) {
+            if (!Directory.Exists(target))
+                continue;
             AddProjects(Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories));
+        }
     }
 
 
@@ -31,7 +34,9 @@ public class SolutionService {
 
         foreach (var path in ProjectFiles) {
             try {
+                await DotNetService.Instance.RestoreProjectAsync(path);
                 await workspace.OpenProjectAsync(path);
+
                 UpdateSolution(workspace.CurrentSolution);
                 onComplete?.Invoke(path);
             } catch(Exception ex) {
@@ -50,7 +55,6 @@ public class SolutionService {
         foreach (var path in projectFilePaths)
             ProjectFiles.Remove(path);
     }
-    
 
     public void CreateCSharpDocument(string file) {
         var projectIds = Solution?.GetProjectIdsMayContainsFilePath(file);
@@ -87,6 +91,21 @@ public class SolutionService {
             UpdateSolution(updates.Solution);
         }
     }
+    public void UpdateCSharpDocument(string file, string? text = null) {
+        var documentIds = Solution?.GetDocumentIdsWithFilePath(file);
+        if (documentIds == null || !File.Exists(file))
+            return;
+
+        var sourceText = SourceText.From(text ?? File.ReadAllText(file));
+        foreach (var documentId in documentIds) {
+            var document = Solution?.GetDocument(documentId);
+            if (document == null)
+                continue;
+
+            var updatedDocument = document.WithText(sourceText);
+            UpdateSolution(updatedDocument.Project.Solution);
+        }
+    }
 
     public void CreateAdditionalDocument(string file) {
         var projectIds = Solution?.GetProjectIdsMayContainsFilePath(file);
@@ -121,6 +140,20 @@ public class SolutionService {
 
             var updates = project.RemoveAdditionalDocument(documentId);
             UpdateSolution(updates.Solution);
+        }
+    }
+    public void UpdateAdditionalDocument(string file, string? text = null) {
+        var documentIds = Solution?.GetDocumentIdsWithFilePath(file);
+        if (documentIds == null || !File.Exists(file))
+            return;
+
+        var sourceText = SourceText.From(text ?? File.ReadAllText(file));
+        foreach (var documentId in documentIds) {
+            var updates = Solution?.WithAdditionalDocumentText(documentId, sourceText);
+            if (updates == null)
+                return;
+
+            UpdateSolution(updates);
         }
     }
 }
