@@ -33,12 +33,12 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     }
 
     public override Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
-        // TODO: Use relative path
-        if (request.Changes.Any(it => it.Uri.GetFileSystemPath().Split(Path.DirectorySeparatorChar).Any(it => it.StartsWith("."))))
-            return Unit.Task;
-
         foreach (var change in request.Changes) {
             var path = change.Uri.GetFileSystemPath();
+            var pathSegments = path.Split(Path.DirectorySeparatorChar);
+            if (pathSegments.Any(it => it.StartsWith(".")))
+                continue; // TODO: Use relative paths instead of absolute paths
+
             switch (Path.GetExtension(path)) {
                 case ".cs":
                     if (change.Type == FileChangeType.Created)

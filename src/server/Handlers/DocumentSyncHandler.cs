@@ -1,6 +1,5 @@
 using DotRush.Server.Services;
 using MediatR;
-using Microsoft.CodeAnalysis.Text;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
@@ -10,7 +9,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 
 namespace DotRush.Server.Handlers;
 
-public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
+public class DocumentSyncHandler : ITextDocumentSyncHandler {
     private readonly SolutionService solutionService;
     private readonly CompilationService compilationService;
     private readonly CodeActionService codeActionService;
@@ -24,34 +23,48 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         this.serverFacade = serverFacade;
     }
 
-    public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) {
-        return new TextDocumentAttributes(uri, "csharp");
-    }
-    protected override TextDocumentSyncRegistrationOptions CreateRegistrationOptions(SynchronizationCapability capability, ClientCapabilities clientCapabilities) {
+    public TextDocumentChangeRegistrationOptions GetRegistrationOptions(SynchronizationCapability capability, ClientCapabilities clientCapabilities) {
         return new TextDocumentSyncRegistrationOptions {
-            DocumentSelector = DocumentSelector.ForLanguage("csharp", "xml", "xaml"),
+            DocumentSelector = DocumentSelector.ForLanguage("csharp", "xaml", "xml"),
             Change = TextDocumentSyncKind.Full
         };
     }
+    TextDocumentOpenRegistrationOptions IRegistration<TextDocumentOpenRegistrationOptions, SynchronizationCapability>.GetRegistrationOptions(SynchronizationCapability capability, ClientCapabilities clientCapabilities) {
+        return new TextDocumentSyncRegistrationOptions {
+            DocumentSelector = DocumentSelector.ForLanguage("csharp")
+        };
+    }
+    TextDocumentCloseRegistrationOptions IRegistration<TextDocumentCloseRegistrationOptions, SynchronizationCapability>.GetRegistrationOptions(SynchronizationCapability capability, ClientCapabilities clientCapabilities) {
+        return new TextDocumentSyncRegistrationOptions {
+            DocumentSelector = DocumentSelector.ForLanguage("csharp")
+        };
+    }
+    TextDocumentSaveRegistrationOptions IRegistration<TextDocumentSaveRegistrationOptions, SynchronizationCapability>.GetRegistrationOptions(SynchronizationCapability capability, ClientCapabilities clientCapabilities) {
+        return new TextDocumentSyncRegistrationOptions();
+    }
+    public TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) {
+        return new TextDocumentAttributes(uri, "csharp");
+    }
 
-    public override Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken) {
+    public Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
+        var text = request.ContentChanges.First().Text;
         switch (Path.GetExtension(filePath)) {
             case ".cs":
-                HandleCSharpDocumentChanges(filePath, request.ContentChanges.First().Text);
+                this.solutionService.UpdateCSharpDocument(filePath, text);
                 break;
-            case ".xaml":
-                HandleAdditionalDocumentChanges(filePath, request.ContentChanges.First().Text);
-                break;
+            default:
+                this.solutionService.UpdateAdditionalDocument(filePath, text);
+                return Unit.Task;
         }
-        
+    
         var diagnosticCancellation = GetToken();
         this.compilationService.Documents.Add(filePath);
         this.compilationService.DiagnoseAsync(serverFacade.TextDocument, diagnosticCancellation);
         this.compilationService.AnalyzerDiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, diagnosticCancellation);
         return Unit.Task;
     }
-    public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
+    public Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
         var diagnosticCancellation = GetToken();
 
@@ -60,7 +73,7 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         this.compilationService.AnalyzerDiagnoseAsync(filePath, serverFacade.TextDocument, diagnosticCancellation);
         return Unit.Task;
     }
-    public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
+    public Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
     
         this.compilationService.Documents.Remove(filePath);
@@ -68,39 +81,10 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         this.codeActionService.CodeActions.ClearWithFilePath(filePath);
         return Unit.Task;
     }
-    public override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {
+    public Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {
         return Unit.Task;
     }
     
-
-    private void HandleCSharpDocumentChanges(string documentPath, string newText) {
-        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath);
-        if (documentIds == null)
-            return;
-
-        foreach (var documentId in documentIds) {
-            var document = this.solutionService.Solution?.GetDocument(documentId);
-            if (document == null)
-                continue;
-
-            var updatedDocument = document.WithText(SourceText.From(newText));
-            this.solutionService.UpdateSolution(updatedDocument.Project.Solution);
-        }
-    }
-    private void HandleAdditionalDocumentChanges(string documentPath, string newText) {
-        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath);
-        if (documentIds == null)
-            return;
-
-        foreach (var documentId in documentIds) {
-            var updates = this.solutionService.Solution?.WithAdditionalDocumentText(documentId, SourceText.From(newText));
-            if (updates == null)
-                return;
-
-            this.solutionService.UpdateSolution(updates);
-        }
-    }
-
     private CancellationToken GetToken() {
         this.analyzersCancellationTokenSource?.Cancel();
         this.analyzersCancellationTokenSource?.Dispose();
