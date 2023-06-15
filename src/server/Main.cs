@@ -23,7 +23,7 @@ public class Program {
         var server = await LanguageServer.From(options => options
             .WithInput(Console.OpenStandardInput())
             .WithOutput(Console.OpenStandardOutput())
-            .WithServices(s => ConfigureServices(s, args.Skip(1).ToArray()))
+            .WithServices(s => ConfigureServices(s))
             .OnInitialized(InitializedHandler)
             .WithHandler<DocumentSyncHandler>()
             .WithHandler<WatchedFilesHandler>()
@@ -44,8 +44,8 @@ public class Program {
     }
 
 
-    private static void ConfigureServices(IServiceCollection services, string[] targets) {
-        services.AddSingleton<SolutionService>(x => new SolutionService(targets));
+    private static void ConfigureServices(IServiceCollection services) {
+        services.AddSingleton<SolutionService>();
         services.AddSingleton<CodeActionService>();
         services.AddSingleton<CompilationService>();
 
@@ -59,11 +59,15 @@ public class Program {
         if (compilationService == null || solutionService == null) 
             return Task.CompletedTask;
 
+        var workspaceFolders = server.Workspace.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
+        if (workspaceFolders == null) {
+            server.Window.ShowWarning("No workspace folders found.");
+            return Task.CompletedTask;
+        }
+
+        solutionService.AddWorkspaceFolders(workspaceFolders);
         solutionService.ReloadSolution(path => {
-            server.Window.ShowMessage(new ShowMessageParams {
-                Message = $"Project {Path.GetFileNameWithoutExtension(path)} ready.",
-                Type = MessageType.Log
-            });
+            server.Window.ShowInfo($"Project {Path.GetFileNameWithoutExtension(path)} ready.");
         });
 
         return Task.CompletedTask;

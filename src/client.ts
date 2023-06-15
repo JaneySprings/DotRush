@@ -1,4 +1,4 @@
-import { LanguageClient } from "vscode-languageclient/node";
+import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
 import { extensions } from "vscode";
 import * as res from './resources';
 import * as vscode from 'vscode';
@@ -9,20 +9,20 @@ export class ClientController {
     private static client: LanguageClient;
 
     private static initialize() {
-        const launchArguments = [ process.pid.toString() ];
         const extensionPath = extensions.getExtension(`${res.extensionPublisher}.${res.extensionId}`)?.extensionPath ?? '';
         let serverExecutable = path.join(extensionPath, "extension", "bin", "DotRush");
 
-        for (const folder of vscode.workspace.workspaceFolders ?? [])
-            launchArguments.push(folder.uri.fsPath);
-
         if (process.platform === 'win32')
             serverExecutable += '.exe';
-
-        ClientController.client = new LanguageClient(res.extensionId, res.extensionId, { 
+        
+        const serverOptions: ServerOptions = { 
             command: serverExecutable, 
-            args: launchArguments, 
-        }, { 
+            args: [ 
+                process.pid.toString() 
+            ], 
+        };
+
+        ClientController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
             documentSelector: [{ scheme: "file", language: "csharp" }],
             synchronize: { 
                 configurationSection: res.extensionId,
