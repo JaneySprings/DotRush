@@ -29,11 +29,11 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
         var added = request.Event.Added.Select(folder => folder.Uri.GetFileSystemPath());
         var removed = request.Event.Removed.Select(folder => folder.Uri.GetFileSystemPath());
 
-        foreach (var remove in removed)
-            this.solutionService.RemoveProjects(Directory.GetFiles(remove, "*.csproj", SearchOption.AllDirectories));
-        foreach (var add in added)
-            this.solutionService.AddProjects(Directory.GetFiles(add, "*.csproj", SearchOption.AllDirectories));
+        if (!added.Any() && !removed.Any())
+            return Unit.Task;
 
+        this.solutionService.RemoveWorkspaceFolders(removed);
+        this.solutionService.AddWorkspaceFolders(added);
         this.solutionService.ReloadSolution(path => {
             serverFacade.Window.ShowMessage(new ShowMessageParams {
                 Message = $"Project {Path.GetFileNameWithoutExtension(path)} ready.",

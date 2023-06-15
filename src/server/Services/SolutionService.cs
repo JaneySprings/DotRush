@@ -10,18 +10,10 @@ public class SolutionService {
     public Solution? Solution { get; private set; }
     private HashSet<string> ProjectFiles { get; }
 
-
-    public SolutionService(string[] targets) {
+    public SolutionService() {
         MSBuildLocator.RegisterDefaults();
         ProjectFiles = new HashSet<string>();
-
-        foreach (var target in targets) {
-            if (!Directory.Exists(target))
-                continue;
-            AddProjects(Directory.GetFiles(target, "*.csproj", SearchOption.AllDirectories));
-        }
     }
-
 
     public async void ReloadSolution(Action<string>? onComplete = null) {
         if (Solution != null) 
@@ -47,13 +39,21 @@ public class SolutionService {
     public void UpdateSolution(Solution solution) {
         Solution = solution;
     }
-    public void AddProjects(IEnumerable<string> projectFilePaths) {
-        foreach (var path in projectFilePaths)
-            ProjectFiles.Add(path);
+    public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
+        foreach (var folder in workspaceFolders) {
+            if (!Directory.Exists(folder))
+                continue;
+            foreach (var projectFile in Directory.GetFiles(folder, "*.csproj", SearchOption.AllDirectories))
+                ProjectFiles.Add(projectFile);
+        }
     }
-    public void RemoveProjects(IEnumerable<string> projectFilePaths) {
-        foreach (var path in projectFilePaths)
-            ProjectFiles.Remove(path);
+    public void RemoveWorkspaceFolders(IEnumerable<string> workspaceFolders) {
+        foreach (var folder in workspaceFolders) {
+            if (!Directory.Exists(folder))
+                continue;
+            foreach (var projectFile in Directory.GetFiles(folder, "*.csproj", SearchOption.AllDirectories))
+                ProjectFiles.Remove(projectFile);
+        }
     }
 
     public void CreateCSharpDocument(string file) {
