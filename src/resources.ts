@@ -7,7 +7,8 @@ export const extensionMeteorId = "nromanov.dotnet-meteor";
 export const commandIdBuild = "dotrush.build";
 export const commandIdRebuild = "dotrush.rebuild";
 export const commandIdClean = "dotrush.clean";
-export const commandIdReload = "dotrush.reload";
+export const commandIdRun = "dotrush.run";
 
 export const taskDefinitionId = "dotrush.task";
-export const configIdAdditionalMSBuildArgs = "additionalMSBuildArgs";
+export const configIdadditionalBuildArgs = "additionalBuildArgs";
+export const configIdadditionalRunArgs = "additionalRunArgs";

@@ -3,38 +3,49 @@ using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 
 namespace DotRush.Server.Services;
 
 public class SolutionService {
     public Solution? Solution { get; private set; }
     private HashSet<string> ProjectFiles { get; }
+    private CancellationTokenSource? reloadCancellationTokenSource;
+    private CancellationToken CancellationToken {
+        get {
+            this.reloadCancellationTokenSource?.Cancel();
+            this.reloadCancellationTokenSource?.Dispose();
+            this.reloadCancellationTokenSource = new CancellationTokenSource();
+            return this.reloadCancellationTokenSource.Token;
+        }
+    }
 
     public SolutionService() {
         MSBuildLocator.RegisterDefaults();
         ProjectFiles = new HashSet<string>();
     }
 
-    public async void ReloadSolution(Action<string>? onComplete = null) {
+    public async void ReloadSolution(IWorkDoneObserver? observer = null) {
         if (Solution != null) 
             Solution.Workspace?.Dispose();
     
         Solution = null;
         var workspace = MSBuildWorkspace.Create();
+        var cancellationToken = CancellationToken;
         workspace.LoadMetadataForReferencedProjects = true;
         workspace.SkipUnrecognizedProjects = true;
 
         foreach (var path in ProjectFiles) {
-            try {
-                await DotNetService.Instance.RestoreProjectAsync(path);
-                await workspace.OpenProjectAsync(path);
-
+            await ServerExtensions.SafeHandlerAsync(async () => {
+                observer?.OnNext(new WorkDoneProgressReport { Message = $"Loading {Path.GetFileNameWithoutExtension(path)}" });
+                await DotNetService.Instance.RestoreProjectAsync(path, cancellationToken);
+                await workspace.OpenProjectAsync(path, cancellationToken: cancellationToken);
                 UpdateSolution(workspace.CurrentSolution);
-                onComplete?.Invoke(path);
-            } catch(Exception ex) {
-                LoggingService.Instance.LogError(ex.Message, ex);
-            }
+            });
         }
+
+        observer?.OnCompleted();
     }
     public void UpdateSolution(Solution solution) {
         Solution = solution;

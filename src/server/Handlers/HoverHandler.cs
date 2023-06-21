@@ -36,34 +36,36 @@ public class HoverHandler : HoverHandlerBase {
     }
 
     public override async Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken) {
-        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
-        if (documentIds == null)
+        return await ServerExtensions.SafeHandlerAsync<Hover?>(async () => {
+            var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+            if (documentIds == null)
+                return null;
+            
+            foreach (var documentId in documentIds) {
+                var document = this.solutionService.Solution?.GetDocument(documentId);
+                if (document == null)
+                    continue;
+
+                var sourceText = await document.GetTextAsync(cancellationToken);
+                var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+                var offset = request.Position.ToOffset(sourceText);
+                var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset);
+                if (symbol == null || semanticModel == null)
+                    continue;
+
+                var displayString = symbol.Kind == CodeAnalysis.SymbolKind.NamedType 
+                    ? symbol.ToDisplayString(DefaultFormat) 
+                    : symbol.ToMinimalDisplayString(semanticModel, offset, MinimalFormat);
+
+                return new Hover {
+                    Contents = new MarkedStringsOrMarkupContent(new MarkupContent {
+                        Kind = MarkupKind.Markdown,
+                        Value = $"```csharp\n{displayString}\n```"
+                    })
+                };
+            }
+
             return null;
-        
-        foreach (var documentId in documentIds) {
-            var document = this.solutionService.Solution?.GetDocument(documentId);
-            if (document == null)
-                continue;
-
-            var sourceText = await document.GetTextAsync(cancellationToken);
-            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-            var offset = request.Position.ToOffset(sourceText);
-            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset);
-            if (symbol == null || semanticModel == null)
-                continue;
-
-            var displayString = symbol.Kind == CodeAnalysis.SymbolKind.NamedType 
-                ? symbol.ToDisplayString(DefaultFormat) 
-                : symbol.ToMinimalDisplayString(semanticModel, offset, MinimalFormat);
-
-            return new Hover {
-                Contents = new MarkedStringsOrMarkupContent(new MarkupContent {
-                    Kind = MarkupKind.Markdown,
-                    Value = $"```csharp\n{displayString}\n```"
-                })
-            };
-        }
-
-        return null;
+        });
     }
 }

@@ -30,44 +30,47 @@ public class CodeActionHandler : CodeActionHandlerBase {
     }
 
     public override async Task<CommandOrCodeActionContainer> Handle(CodeActionParams request, CancellationToken cancellationToken) {
-        var result = new List<CodeAction?>();
-        var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
-        if (documentId == null)
-            return new CommandOrCodeActionContainer();
+        return await ServerExtensions.SafeHandlerAsync<CommandOrCodeActionContainer>(new CommandOrCodeActionContainer(), async () => {
+            var result = new List<CodeAction?>();
+            var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
+            if (documentId == null)
+                return new CommandOrCodeActionContainer();
 
+            var document = this.solutionService.Solution?.GetDocument(documentId);
+            if (document == null)
+                return new CommandOrCodeActionContainer();
 
-        var document = this.solutionService.Solution?.GetDocument(documentId);
-        if (document == null)
-            return new CommandOrCodeActionContainer();
+            var sourceText = await document.GetTextAsync(cancellationToken);
+            var fileDiagnostic = GetDiagnosticByRange(request.Range, sourceText, document);
+            var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
+            if (fileDiagnostic == null || codeFixProviders == null || !codeFixProviders.Any())
+                return new CommandOrCodeActionContainer();
 
-        var sourceText = await document.GetTextAsync(cancellationToken);
-        var fileDiagnostic = GetDiagnosticByRange(request.Range, sourceText, document);
-        var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
-        if (fileDiagnostic == null || codeFixProviders == null || !codeFixProviders.Any())
-            return new CommandOrCodeActionContainer();
+            foreach (var codeFixProvider in codeFixProviders) {
+                await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, fileDiagnostic, (a, _) => {
+                    this.codeActionService.CodeActions.SetCodeAction(a, a.GetHashCode(), document.FilePath!);
+                    result.Add(a.ToCodeAction());
+                }, cancellationToken));
+            }
 
-        foreach (var codeFixProvider in codeFixProviders) {
-            await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, fileDiagnostic, (a, _) => {
-                this.codeActionService.CodeActions.SetCodeAction(a, a.GetHashCode(), document.FilePath!);
-                result.Add(a.ToCodeAction());
-            }, cancellationToken));
-        }
-
-        return new CommandOrCodeActionContainer(result.Where(x => x != null).Select(x => new CommandOrCodeAction(x!)));
+            return new CommandOrCodeActionContainer(result.Where(x => x != null).Select(x => new CommandOrCodeAction(x!)));
+        });
     }
     public override async Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken) {
-        if (request.Data == null)
-            return request;
+        return await ServerExtensions.SafeHandlerAsync<CodeAction>(request, async () => {
+            if (request.Data == null)
+                return request;
 
-        var codeAction = this.codeActionService.CodeActions.GetCodeAction(request.Data.ToObject<int>());
-        if (codeAction == null)
-            return request;
+            var codeAction = this.codeActionService.CodeActions.GetCodeAction(request.Data.ToObject<int>());
+            if (codeAction == null)
+                return request;
 
-        var result = await codeAction.ToCodeAction(this.solutionService, cancellationToken);
-        if (result == null)
-            return request;
+            var result = await codeAction.ToCodeActionAsync(this.solutionService, cancellationToken);
+            if (result == null)
+                return request;
 
-        return result;
+            return result;
+        });
     }
 
     private IEnumerable<CodeFixProvider>? GetProvidersForDiagnosticId(string? diagnosticId) {

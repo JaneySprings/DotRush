@@ -25,14 +25,14 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         return new DidChangeWatchedFilesRegistrationOptions() {
             Watchers = new[] {
                 new OmniSharp.Extensions.LanguageServer.Protocol.Models.FileSystemWatcher() {
-                    Kind = WatchKind.Create | WatchKind.Delete,
+                    Kind = WatchKind.Create | WatchKind.Delete | WatchKind.Change,
                     GlobPattern = "**/*"
                 },
             }
         };
     }
 
-    public override Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
+    public override async Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
         foreach (var change in request.Changes) {
             var path = change.Uri.GetFileSystemPath();
             var pathSegments = path.Split(Path.DirectorySeparatorChar);
@@ -58,10 +58,14 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
                     if (change.Type == FileChangeType.Deleted)
                         DeleteFolder(path);
                     break;
+                case ".csproj":
+                    var observer = await LanguageServer.CreateWorkDoneObserver();
+                    this.solutionService.ReloadSolution(observer);
+                    return Unit.Value;
             }
         }
 
-        return Unit.Task;
+        return Unit.Value;
     }
 
     private void DeleteFolder(string path) {

@@ -5,13 +5,15 @@ using DotRush.Server.Services;
 using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
+using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 using OmniSharp.Extensions.LanguageServer.Server;
 
 namespace DotRush.Server;
 
-public class Program {
+public class LanguageServer {
     public static readonly string AnalyzersLocation = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "analyzers");
+    private static IServerWorkDoneManager? workDoneManager;
 
     public static async Task Main(string[] args) {
         var ideProcess = Process.GetProcessById(int.Parse(args[0]));
@@ -20,11 +22,11 @@ public class Program {
 
         LogConfig.InitializeLog();
         
-        var server = await LanguageServer.From(options => options
+        var server = await OmniSharp.Extensions.LanguageServer.Server.LanguageServer.From(options => options
             .WithInput(Console.OpenStandardInput())
             .WithOutput(Console.OpenStandardOutput())
             .WithServices(s => ConfigureServices(s))
-            .OnInitialized(InitializedHandler)
+            .OnStarted(StartedHandler)
             .WithHandler<DocumentSyncHandler>()
             .WithHandler<WatchedFilesHandler>()
             .WithHandler<WorkspaceFoldersHandler>()
@@ -43,7 +45,6 @@ public class Program {
         await server.WaitForExit.ConfigureAwait(false);
     }
 
-
     private static void ConfigureServices(IServiceCollection services) {
         services.AddSingleton<SolutionService>();
         services.AddSingleton<CodeActionService>();
@@ -53,23 +54,26 @@ public class Program {
         LoggingService.Initialize();
     }
 
-    private static Task InitializedHandler(ILanguageServer server, InitializeParams request, InitializeResult response, CancellationToken cancellationToken) {
+    private static async Task StartedHandler(ILanguageServer server, CancellationToken cancellationToken) {
         var compilationService = server.Services.GetService<CompilationService>();
         var solutionService = server.Services.GetService<SolutionService>();
         if (compilationService == null || solutionService == null) 
-            return Task.CompletedTask;
+            return;
 
         var workspaceFolders = server.Workspace.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
         if (workspaceFolders == null) {
             server.Window.ShowWarning("No workspace folders found.");
-            return Task.CompletedTask;
+            return;
         }
 
-        solutionService.AddWorkspaceFolders(workspaceFolders);
-        solutionService.ReloadSolution(path => {
-            server.Window.ShowInfo($"Project {Path.GetFileNameWithoutExtension(path)} ready.");
-        });
+        workDoneManager = server.WorkDoneManager;
 
-        return Task.CompletedTask;
+        var workDoneProgress = await CreateWorkDoneObserver();
+        solutionService.AddWorkspaceFolders(workspaceFolders);
+        solutionService.ReloadSolution(workDoneProgress);
+    }
+
+    public static async Task<IWorkDoneObserver> CreateWorkDoneObserver() {
+        return await workDoneManager!.Create(new WorkDoneProgressBegin());
     }
 }

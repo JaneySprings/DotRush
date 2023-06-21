@@ -32,16 +32,10 @@ public class DefinitionHandler : DefinitionHandlerBase {
 
             var sourceText = await document.GetTextAsync(cancellationToken);
             var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
-            if (symbol == null || this.solutionService.Solution == null) 
+            if (symbol == null || symbol.Locations == null) 
                 continue;
-            
-            var definition = await SymbolFinder.FindSourceDefinitionAsync(symbol, this.solutionService.Solution, cancellationToken);
-            // if (definition == null) 
-            //     definition = await FindSourceDefinitionWithDecompilerAsync(symbol, document.Project, cancellationToken);
-            if (definition == null)
-                continue;
-            
-            result.AddRange(definition.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
+
+            result.AddRange(symbol.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
         }
 
         return new LocationOrLocationLinks(result);
