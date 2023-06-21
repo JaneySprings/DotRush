@@ -4,22 +4,18 @@ using System.Diagnostics;
 public class DotNetService {
     public static DotNetService Instance { get; } = new DotNetService();
 
-    public async Task RestoreProjectAsync(string projectFilePath) {
+    public async Task RestoreProjectAsync(string projectFilePath, CancellationToken cancellationToken = default) {
         if (!File.Exists(projectFilePath))
             throw new FileNotFoundException("Project file not found for restore!", projectFilePath);
 
-        var projectDirectory = Path.GetDirectoryName(projectFilePath)!;
-        if (File.Exists(Path.Combine(projectDirectory, "obj", "project.assets.json")))
-            return;
-
-        await StartProcess("dotnet", "restore", $"\"{projectFilePath}\"");
+        await StartProcess("dotnet", $"restore \"{projectFilePath}\"", cancellationToken);
     }
 
-    public async Task StartProcess(string command, params string[] args) {
+    public async Task StartProcess(string command, string args, CancellationToken cancellationToken) {
         var process = new Process {
             StartInfo = new ProcessStartInfo {
                 FileName = command,
-                Arguments = string.Join(" ", args),
+                Arguments = args,
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
@@ -29,6 +25,6 @@ public class DotNetService {
         };
 
         process.Start();
-        await process.WaitForExitAsync();
+        await process.WaitForExitAsync(cancellationToken);
     }
 }

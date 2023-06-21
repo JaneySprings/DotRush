@@ -24,6 +24,7 @@ export class ClientController {
 
         ClientController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
             documentSelector: [{ scheme: "file", language: "csharp" }],
+            progressOnInitialization: true,
             synchronize: { 
                 configurationSection: res.extensionId,
             }

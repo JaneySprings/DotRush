@@ -6,35 +6,37 @@ import * as vscode from 'vscode';
 export class ContextMenuController {
     public static activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdBuild, async (path: vscode.Uri) => {
-            const task = await DotNetTaskProvider.getTask("build", path);
+            const args = getSetting<string>(res.configIdadditionalBuildArgs);
+            const task = await DotNetTaskProvider.getTask("build", path, args);
             if (task !== undefined) 
                 vscode.tasks.executeTask(task);
         }));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRebuild, async (path: vscode.Uri) => {
-            vscode.workspace.fs.delete(vscode.Uri.joinPath(path, "bin"), { recursive: true });
-            vscode.workspace.fs.delete(vscode.Uri.joinPath(path, "obj"), { recursive: true });
+            await vscode.workspace.fs.delete(vscode.Uri.joinPath(path, "..", "bin"), { recursive: true });
+            await vscode.workspace.fs.delete(vscode.Uri.joinPath(path, "..", "obj"), { recursive: true });
 
-            const task = await DotNetTaskProvider.getTask("build", path);
+            const args = getSetting<string>(res.configIdadditionalBuildArgs);
+            const task = await DotNetTaskProvider.getTask("build", path, args);
             if (task !== undefined) 
                 vscode.tasks.executeTask(task);
         }));
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdClean, (path: vscode.Uri) => {
-            vscode.workspace.fs.delete(vscode.Uri.joinPath(path, "bin"), { recursive: true });
-            vscode.workspace.fs.delete(vscode.Uri.joinPath(path, "obj"), { recursive: true });
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdClean, async (path: vscode.Uri) => {
+            await vscode.workspace.fs.delete(vscode.Uri.joinPath(path, "..", "bin"), { recursive: true });
+            await vscode.workspace.fs.delete(vscode.Uri.joinPath(path, "..", "obj"), { recursive: true });
+        }));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRun, async (path: vscode.Uri) => {
+            const args = getSetting<string>(res.configIdadditionalRunArgs);
+            const task = await DotNetTaskProvider.getTask("run", path, args);
+            if (task !== undefined) 
+                vscode.tasks.executeTask(task);
         }));
     }
 }
 
 class DotNetTaskProvider {
-    public static async getTask(target: string, directory: vscode.Uri): Promise<vscode.Task | undefined> { 
-        const files = await vscode.workspace.fs.readDirectory(directory);
-        const csprojName = files.find((file) => file[0].endsWith(".csproj"));
-        if (csprojName === undefined)
-            return undefined;
-        
-        const csproj = vscode.Uri.joinPath(directory, csprojName[0]);
-        const args = getSetting<string>(res.configIdAdditionalMSBuildArgs) ?? '';
-        const command = `dotnet ${target} ${csproj.fsPath} ${args}`;
+    public static async getTask(target: string, projectFile: vscode.Uri, additionalArgs: string | undefined): Promise<vscode.Task | undefined> { 
+        const args = additionalArgs ?? '';
+        const command = `dotnet ${target} "${projectFile.fsPath}" ${args}`;
         return new vscode.Task({ type: `${res.extensionId}.${res.taskDefinitionId}` }, 
             vscode.TaskScope.Workspace, target, res.extensionId, new vscode.ShellExecution(command)
         );
