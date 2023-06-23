@@ -17,17 +17,20 @@ public static class CodeActionConverter {
     }
 
     public static async Task<ProtocolModels.CodeAction?> ToCodeActionAsync(this CodeAction codeAction, SolutionService solutionService, CancellationToken cancellationToken) {
+        if (solutionService.Solution == null)
+            return null;
+        
         var worspaceEdit = new ProtocolModels.WorkspaceEdit();
         var textDocumentEdits = new List<ProtocolModels.WorkspaceEditDocumentChange>();
         var operations = await codeAction.GetOperationsAsync(cancellationToken);
         foreach (var operation in operations) {
             if (operation is ApplyChangesOperation applyChangesOperation) {
-                var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solutionService.Solution!);
+                var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solutionService.Solution);
                 foreach (var projectChanges in solutionChanges.GetProjectChanges()) {
                     foreach (var documentChanges in projectChanges.GetChangedDocuments()) {
-                        var newDocument = projectChanges.NewProject.GetDocument(documentChanges)!;
-                        var oldDocument = solutionService.Solution?.GetDocument(newDocument.Id);
-                        if (oldDocument == null)
+                        var newDocument = projectChanges.NewProject.GetDocument(documentChanges);
+                        var oldDocument = solutionService.Solution?.GetDocument(newDocument?.Id);
+                        if (oldDocument?.FilePath == null || newDocument?.FilePath == null)
                             continue;
 
                         var sourceText = await oldDocument.GetTextAsync(cancellationToken);
@@ -43,7 +46,7 @@ public static class CodeActionConverter {
                         textDocumentEdits.Add(new ProtocolModels.TextDocumentEdit() { 
                             Edits = textEdits,
                             TextDocument = new ProtocolModels.OptionalVersionedTextDocumentIdentifier() { 
-                                Uri = DocumentUri.From(newDocument.FilePath!)
+                                Uri = DocumentUri.From(newDocument.FilePath)
                             }
                         });
                     }

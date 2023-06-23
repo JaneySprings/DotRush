@@ -23,6 +23,7 @@ public class LanguageServer {
         LogConfig.InitializeLog();
         
         var server = await OmniSharp.Extensions.LanguageServer.Server.LanguageServer.From(options => options
+            .AddDefaultLoggingProvider()
             .WithInput(Console.OpenStandardInput())
             .WithOutput(Console.OpenStandardOutput())
             .WithServices(s => ConfigureServices(s))

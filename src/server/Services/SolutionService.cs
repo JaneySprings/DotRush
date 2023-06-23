@@ -11,6 +11,7 @@ namespace DotRush.Server.Services;
 public class SolutionService {
     public Solution? Solution { get; private set; }
     private HashSet<string> ProjectFiles { get; }
+    private MSBuildWorkspace Workspace { get; }
     private CancellationTokenSource? reloadCancellationTokenSource;
     private CancellationToken CancellationToken {
         get {
@@ -24,24 +25,24 @@ public class SolutionService {
     public SolutionService() {
         MSBuildLocator.RegisterDefaults();
         ProjectFiles = new HashSet<string>();
+        Workspace = MSBuildWorkspace.Create(new Dictionary<string, string> {
+            { "DesignTimeBuild", "false"}
+        });
+        Workspace.LoadMetadataForReferencedProjects = true;
+        Workspace.SkipUnrecognizedProjects = true;
     }
 
     public async void ReloadSolution(IWorkDoneObserver? observer = null) {
-        if (Solution != null) 
-            Solution.Workspace?.Dispose();
-    
-        Solution = null;
-        var workspace = MSBuildWorkspace.Create();
         var cancellationToken = CancellationToken;
-        workspace.LoadMetadataForReferencedProjects = true;
-        workspace.SkipUnrecognizedProjects = true;
+        Workspace.CloseSolution();
+        Solution = null;
 
         foreach (var path in ProjectFiles) {
             await ServerExtensions.SafeHandlerAsync(async () => {
                 observer?.OnNext(new WorkDoneProgressReport { Message = $"Loading {Path.GetFileNameWithoutExtension(path)}" });
                 await DotNetService.Instance.RestoreProjectAsync(path, cancellationToken);
-                await workspace.OpenProjectAsync(path, cancellationToken: cancellationToken);
-                UpdateSolution(workspace.CurrentSolution);
+                await Workspace.OpenProjectAsync(path, null, cancellationToken);
+                UpdateSolution(Workspace.CurrentSolution);
             });
         }
 

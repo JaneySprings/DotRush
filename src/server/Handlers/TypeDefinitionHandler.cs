@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.FindSymbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Server.Handlers;
 
@@ -24,7 +25,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
         if (documentIds == null)
             return new LocationOrLocationLinks();
 
-        var result = new List<LocationOrLocationLink>();
+        var result = new List<ProtocolModels.Location?>();
         foreach (var documentId in documentIds) {
             var document = this.solutionService.Solution?.GetDocument(documentId);
             if (document == null)
@@ -46,12 +47,15 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
             else if (symbol is IParameterSymbol parameterSymbol)
                 typeSymbol = parameterSymbol.Type;
 
-            if (typeSymbol == null)
+            if (typeSymbol == null || typeSymbol.Locations == null)
                 continue;
 
-            result.AddRange(typeSymbol.Locations.Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
+            result.AddRange(typeSymbol.Locations.Select(loc => loc.ToLocation()));
         }
 
-        return new LocationOrLocationLinks(result);
+        return new LocationOrLocationLinks(result
+            .Where(loc => loc != null)
+            .Select(loc => new LocationOrLocationLink(loc!))
+        );
     }
 }

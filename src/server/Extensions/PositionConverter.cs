@@ -28,21 +28,27 @@ public static class PositionConverter {
 
     public static ProtocolModels.Range ToRange(this TextSpan span, SourceText sourceText) {
         return new ProtocolModels.Range(
-            span.Start.ToPosition(sourceText)!,
-            span.End.ToPosition(sourceText)!
+            span.Start.ToPosition(sourceText),
+            span.End.ToPosition(sourceText)
         );
     }
 
-    public static ProtocolModels.Location ToLocation(this Location location) {
+    public static ProtocolModels.Location? ToLocation(this Location location) {
+        if (location.SourceTree == null)
+            return null;
+
         return new ProtocolModels.Location() {
-            Uri = DocumentUri.From(location.SourceTree!.FilePath),
+            Uri = DocumentUri.From(location.SourceTree.FilePath),
             Range = location.SourceSpan.ToRange(location.SourceTree.GetText())
         };
     }
 
-    public static ProtocolModels.Location ToLocation(this ReferenceLocation location, SourceText sourceText) {
+    public static ProtocolModels.Location? ToLocation(this ReferenceLocation location, SourceText sourceText) {
+        if (location.Document.FilePath == null)
+            return null;
+
         return new ProtocolModels.Location() {
-            Uri = DocumentUri.From(location.Document.FilePath!),
+            Uri = DocumentUri.From(location.Document.FilePath),
             Range = location.Location.SourceSpan.ToRange(sourceText)
         };
     }

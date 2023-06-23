@@ -57,7 +57,9 @@ public class ImplementationHandler : ImplementationHandlerBase {
 
         return new LocationOrLocationLinks(result
             .SelectMany(i => i.Locations)
-            .Where(loc => File.Exists(loc.SourceTree?.FilePath))
-            .Select(loc => new LocationOrLocationLink(loc.ToLocation()!)));
+            .Select(loc => loc.ToLocation())
+            .Where(loc => loc != null)
+            .Select(loc => new LocationOrLocationLink(loc!))
+        );
     }
 }

@@ -37,7 +37,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
                 return new CommandOrCodeActionContainer();
 
             var document = this.solutionService.Solution?.GetDocument(documentId);
-            if (document == null)
+            if (document?.FilePath == null)
                 return new CommandOrCodeActionContainer();
 
             var sourceText = await document.GetTextAsync(cancellationToken);
@@ -48,7 +48,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
             foreach (var codeFixProvider in codeFixProviders) {
                 await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, fileDiagnostic, (a, _) => {
-                    this.codeActionService.CodeActions.SetCodeAction(a, a.GetHashCode(), document.FilePath!);
+                    this.codeActionService.CodeActions.SetCodeAction(a, a.GetHashCode(), document.FilePath);
                     result.Add(a.ToCodeAction());
                 }, cancellationToken));
             }
@@ -80,10 +80,12 @@ public class CodeActionHandler : CodeActionHandlerBase {
         return this.codeActionService.CodeFixProviders?.Where(x => x.FixableDiagnosticIds.Contains(diagnosticId));
     }
     private CodeAnalysis.Diagnostic? GetDiagnosticByRange(ProtocolModels.Range range, SourceText sourceText, Document document) {
-        if (!this.compilationService.Diagnostics.ContainsKey(document.FilePath!))
+        if (document.FilePath == null)
+            return null;
+        if (!this.compilationService.Diagnostics.ContainsKey(document.FilePath))
             return null;
 
-        return this.compilationService.Diagnostics[document.FilePath!]
+        return this.compilationService.Diagnostics[document.FilePath]
             .GetTotalDiagnostics()
             .FirstOrDefault(x => x.Location.SourceSpan.Contains(range.ToTextSpan(sourceText)));
     }

@@ -59,8 +59,8 @@ public class DocumentSyncHandler : ITextDocumentSyncHandler {
         }
     
         var diagnosticCancellation = GetToken();
-        this.compilationService.Documents.Add(filePath);
-        this.compilationService.DiagnoseAsync(serverFacade.TextDocument, diagnosticCancellation);
+        this.compilationService.AddDocument(filePath);
+        this.compilationService.DiagnoseAsync(filePath, serverFacade.TextDocument, diagnosticCancellation);
         this.compilationService.AnalyzerDiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument, diagnosticCancellation);
         return Unit.Task;
     }
@@ -68,16 +68,16 @@ public class DocumentSyncHandler : ITextDocumentSyncHandler {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
         var diagnosticCancellation = GetToken();
 
-        this.compilationService.Documents.Add(filePath);
-        this.compilationService.DiagnoseAsync(serverFacade.TextDocument, diagnosticCancellation);
+        this.compilationService.AddDocument(filePath);
+        this.compilationService.DiagnoseAsync(filePath, serverFacade.TextDocument, diagnosticCancellation);
         this.compilationService.AnalyzerDiagnoseAsync(filePath, serverFacade.TextDocument, diagnosticCancellation);
         return Unit.Task;
     }
     public Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
+        var diagnosticCancellation = GetToken(); // cancel any diagnostics for this file
     
-        this.compilationService.Documents.Remove(filePath);
-        this.compilationService.ClearAnalyzersDiagnostics(filePath, serverFacade.TextDocument);
+        this.compilationService.RemoveDocument(filePath, serverFacade.TextDocument);
         this.codeActionService.CodeActions.ClearWithFilePath(filePath);
         return Unit.Task;
     }

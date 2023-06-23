@@ -22,11 +22,10 @@ public class RenameHandler : RenameHandlerBase {
     }
 
     public override async Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken cancellationToken) {
-        var textDocumentEdits = new List<WorkspaceEditDocumentChange>();
-        var documentsHash = new HashSet<string>();
+        var documentEdits = new Dictionary<DocumentUri, IEnumerable<TextEdit>>();
         var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
         var document = this.solutionService.Solution?.GetDocument(documentId);
-        if (document == null)
+        if (document == null || this.solutionService.Solution == null)
             return null;
         
         var sourceText = await document.GetTextAsync(cancellationToken);
@@ -39,30 +38,27 @@ public class RenameHandler : RenameHandlerBase {
         var changes = updatedSolution.GetChanges(document.Project.Solution);
 
         foreach (var change in changes.GetProjectChanges()) {
+            if (change.NewProject.FilePath == null || change.OldProject.FilePath == null)
+                continue;
+
             foreach (var changedDocId in change.GetChangedDocuments()) {
                 var newDocument = change.NewProject.GetDocument(changedDocId);
                 var oldDocument = change.OldProject.GetDocument(changedDocId);
                 
-                if (newDocument == null || oldDocument == null)
-                    continue;
-                if (documentsHash.Contains(newDocument?.FilePath!))
+                if (newDocument?.FilePath == null || oldDocument?.FilePath == null)
                     continue;
 
-                documentsHash.Add(newDocument?.FilePath!);
-                var oldSourceText = await oldDocument!.GetTextAsync(cancellationToken);
-                var textChanges = await newDocument!.GetTextChangesAsync(oldDocument!, cancellationToken);
+                var oldSourceText = await oldDocument.GetTextAsync(cancellationToken);
+                var textChanges = await newDocument.GetTextChangesAsync(oldDocument, cancellationToken);
                 var edits = textChanges.Select(x => x.ToTextEdit(oldSourceText));
-                textDocumentEdits.Add(new TextDocumentEdit() { 
-                    Edits = new TextEditContainer(edits),
-                    TextDocument = new OptionalVersionedTextDocumentIdentifier() { 
-                        Uri = DocumentUri.From(newDocument.FilePath!)
-                    }
-                });
+ 
+                if (!edits.Any())
+                    continue;
+
+                documentEdits.TryAdd(DocumentUri.From(newDocument.FilePath), edits);
             }
         }
 
-        return new WorkspaceEdit() { 
-            DocumentChanges = textDocumentEdits
-        };
+        return new WorkspaceEdit() { Changes = documentEdits };
     }
 }
