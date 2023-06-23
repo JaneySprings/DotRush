@@ -13,7 +13,7 @@ public static class DiagnosticsConverter {
             var diagnosticSource = diagnostic.InnerDiagnostic.Location.SourceTree?.FilePath;
 
             // TODO: This is a temp hack, we should check relative path to the project root
-            if (diagnosticSource?.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") == true || 
+            if (diagnosticSource?.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") == true ||
                 diagnosticSource?.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") == true)
                 continue;
 
@@ -40,10 +40,8 @@ public static class DiagnosticsConverter {
                 return ProtocolModels.DiagnosticSeverity.Warning;
             case DiagnosticSeverity.Info:
                 return ProtocolModels.DiagnosticSeverity.Information;
-            case DiagnosticSeverity.Hidden:
-                return ProtocolModels.DiagnosticSeverity.Information;
             default:
-                return ProtocolModels.DiagnosticSeverity.Error;
+                return ProtocolModels.DiagnosticSeverity.Hint;
         }
     }
 }
