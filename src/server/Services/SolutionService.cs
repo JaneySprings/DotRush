@@ -1,62 +1,30 @@
 using DotRush.Server.Extensions;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 
 namespace DotRush.Server.Services;
 
 public class SolutionService {
     public Solution? Solution { get; private set; }
-    private HashSet<string> ProjectFiles { get; }
-    private MSBuildWorkspace Workspace { get; }
-    private CancellationTokenSource? reloadCancellationTokenSource;
-    private CancellationToken CancellationToken {
-        get {
-            this.reloadCancellationTokenSource?.Cancel();
-            this.reloadCancellationTokenSource?.Dispose();
-            this.reloadCancellationTokenSource = new CancellationTokenSource();
-            return this.reloadCancellationTokenSource.Token;
-        }
-    }
+    private ProjectService ProjectService { get; }
 
     public SolutionService() {
         MSBuildLocator.RegisterDefaults();
-        ProjectFiles = new HashSet<string>();
-        Workspace = MSBuildWorkspace.Create(new Dictionary<string, string> {
-            { "DesignTimeBuild", "false"}
-        });
-        Workspace.LoadMetadataForReferencedProjects = true;
-        Workspace.SkipUnrecognizedProjects = true;
+        ProjectService = new ProjectService();
+        ProjectService.WorkspaceUpdated = s => Solution = s;
     }
 
-    public async void ReloadSolution(IWorkDoneObserver? observer = null) {
-        var cancellationToken = CancellationToken;
-        Workspace.CloseSolution();
-        Solution = null;
-
-        foreach (var path in ProjectFiles) {
-            await ServerExtensions.SafeHandlerAsync(async () => {
-                observer?.OnNext(new WorkDoneProgressReport { Message = $"Loading {Path.GetFileNameWithoutExtension(path)}" });
-                await DotNetService.Instance.RestoreProjectAsync(path, cancellationToken);
-                await Workspace.OpenProjectAsync(path, null, cancellationToken);
-                UpdateSolution(Workspace.CurrentSolution);
-            });
-        }
-
-        observer?.OnCompleted();
-    }
-    public void UpdateSolution(Solution solution) {
-        Solution = solution;
+    public async void ReloadSolutionAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
+        await ProjectService.ReloadAsync(observer, forceRestore);
     }
     public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
         foreach (var folder in workspaceFolders) {
             if (!Directory.Exists(folder))
                 continue;
             foreach (var projectFile in Directory.GetFiles(folder, "*.csproj", SearchOption.AllDirectories))
-                ProjectFiles.Add(projectFile);
+                ProjectService.Projects.Add(projectFile);
         }
     }
     public void RemoveWorkspaceFolders(IEnumerable<string> workspaceFolders) {
@@ -64,7 +32,7 @@ public class SolutionService {
             if (!Directory.Exists(folder))
                 continue;
             foreach (var projectFile in Directory.GetFiles(folder, "*.csproj", SearchOption.AllDirectories))
-                ProjectFiles.Remove(projectFile);
+                ProjectService.Projects.Remove(projectFile);
         }
     }
 
@@ -81,15 +49,18 @@ public class SolutionService {
             var documentIds = project.GetDocumentIdsWithFolderPath(file);
             if (documentIds.Any())
                 continue;
-            
+
             var sourceText = SourceText.From(File.ReadAllText(file));
             var folders = project.GetFolders(file);
             var updates = project.AddDocument(Path.GetFileName(file), sourceText, folders, file);
-            UpdateSolution(updates.Project.Solution);
+            Solution = updates.Project.Solution;
         }
     }
     public void DeleteCSharpDocument(string file) {
         var documentIds = Solution?.GetDocumentIdsWithFilePath(file);
+        DeleteCSharpDocument(documentIds);
+    }
+    public void DeleteCSharpDocument(IEnumerable<DocumentId>? documentIds) {
         if (documentIds == null || Solution == null)
             return;
 
@@ -100,7 +71,7 @@ public class SolutionService {
                 continue;
 
             var updates = project.RemoveDocument(documentId);
-            UpdateSolution(updates.Solution);
+            Solution = updates.Solution;
         }
     }
     public void UpdateCSharpDocument(string file, string? text = null) {
@@ -115,7 +86,7 @@ public class SolutionService {
                 continue;
 
             var updatedDocument = document.WithText(sourceText);
-            UpdateSolution(updatedDocument.Project.Solution);
+            Solution = updatedDocument.Project.Solution;
         }
     }
 
@@ -132,15 +103,18 @@ public class SolutionService {
             var documentIds = project.GetAdditionalDocumentIdsWithFilePath(file);
             if (documentIds.Any())
                 continue;
-            
+
             var sourceText = SourceText.From(File.ReadAllText(file));
             var folders = project.GetFolders(file);
             var updates = project.AddAdditionalDocument(Path.GetFileName(file), sourceText, folders, file);
-            UpdateSolution(updates.Project.Solution);
+            Solution = updates.Project.Solution;
         }
     }
     public void DeleteAdditionalDocument(string file) {
         var documentIds = Solution?.GetAdditionalDocumentIdsWithFilePath(file);
+        DeleteAdditionalDocument(documentIds);
+    }
+    public void DeleteAdditionalDocument(IEnumerable<DocumentId>? documentIds) {
         if (documentIds == null || Solution == null)
             return;
 
@@ -151,7 +125,7 @@ public class SolutionService {
                 continue;
 
             var updates = project.RemoveAdditionalDocument(documentId);
-            UpdateSolution(updates.Solution);
+            Solution = updates.Solution;
         }
     }
     public void UpdateAdditionalDocument(string file, string? text = null) {
@@ -165,7 +139,7 @@ public class SolutionService {
             if (updates == null)
                 return;
 
-            UpdateSolution(updates);
+            Solution = updates;
         }
     }
 }

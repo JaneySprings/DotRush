@@ -71,7 +71,7 @@ public class LanguageServer {
 
         var workDoneProgress = await CreateWorkDoneObserver();
         solutionService.AddWorkspaceFolders(workspaceFolders);
-        solutionService.ReloadSolution(workDoneProgress);
+        solutionService.ReloadSolutionAsync(workDoneProgress);
     }
 
     public static async Task<IWorkDoneObserver> CreateWorkDoneObserver() {

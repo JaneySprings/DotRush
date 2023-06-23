@@ -7,14 +7,21 @@ public static class WorkspaceExtensions {
         return solution.GetDocumentIdsWithFilePath(filePath).Select(id => id.ProjectId);
     }
 
-    public static IEnumerable<ProjectId> GetProjectIdsWithDocumentFolderPath(this Solution solution, string folderPath) {
-        return solution.Projects
-            .Where(project => folderPath.StartsWith(Path.GetDirectoryName(project.FilePath) + Path.DirectorySeparatorChar))
-            .Select(project => project.Id);
+    public static IEnumerable<DocumentId> GetDocumentIdsWithFolderPath(this Solution solution, string folderPath) {
+        return solution.Projects.SelectMany(project => project.GetDocumentIdsWithFolderPath(folderPath));
     }
     public static IEnumerable<DocumentId> GetDocumentIdsWithFolderPath(this Project project, string folderPath) {
         return project.Documents
-            .Where(document => document.FilePath != null && document.FilePath.StartsWith(folderPath))
+            .Where(document => document.FilePath?.StartsWith(folderPath, StringComparison.OrdinalIgnoreCase) == true)
+            .Select(document => document.Id);
+    }
+
+    public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Solution solution, string folderPath) {
+        return solution.Projects.SelectMany(project => project.GetAdditionalDocumentIdsWithFolderPath(folderPath));
+    }
+    public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Project project, string folderPath) {
+        return project.AdditionalDocuments
+            .Where(document => document.FilePath?.StartsWith(folderPath, StringComparison.OrdinalIgnoreCase) == true)
             .Select(document => document.Id);
     }
 
@@ -28,9 +35,9 @@ public static class WorkspaceExtensions {
     }
 
     public static IEnumerable<ProjectId>? GetProjectIdsMayContainsFilePath(this Solution solution, string documentPath) {
-        var projects = solution.Projects.Where(p => documentPath.StartsWith(Path.GetDirectoryName(p.FilePath) + Path.DirectorySeparatorChar));
+        var projects = solution.Projects.Where(p => documentPath.StartsWith(Path.GetDirectoryName(p.FilePath) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
 
-        if (!projects.Any()) 
+        if (!projects.Any())
             return null;
 
         var maxCommonFoldersCount = projects.Max(project => GetCommonFoldersCount(project, documentPath));
@@ -48,7 +55,6 @@ public static class WorkspaceExtensions {
         var relativePath = documentDirectory.Replace(rootDirectory, string.Empty);
         return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
     }
-
 
     private static int GetCommonFoldersCount(Project project, string documentPath) {
         var folders = project.GetFolders(documentPath);

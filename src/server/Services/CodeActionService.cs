@@ -6,7 +6,7 @@ namespace DotRush.Server.Services;
 
 public class CodeActionService {
     public FileCodeActions CodeActions { get; }
-    public HashSet<CodeFixProvider> CodeFixProviders { get; private set; }
+    public HashSet<CodeFixProvider> CodeFixProviders { get; }
 
     public CodeActionService() {
         CodeActions = new FileCodeActions();

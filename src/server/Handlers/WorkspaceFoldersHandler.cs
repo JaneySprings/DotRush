@@ -34,7 +34,7 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
 
         this.solutionService.RemoveWorkspaceFolders(removed);
         this.solutionService.AddWorkspaceFolders(added);
-        this.solutionService.ReloadSolution(observer);
+        this.solutionService.ReloadSolutionAsync(observer);
 
         return Unit.Value;
     }

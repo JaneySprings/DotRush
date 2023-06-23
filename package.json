@@ -48,21 +48,33 @@
       {
         "command": "dotrush.clean",
         "title": "Clean"
+      },
+      {
+        "command": "dotrush.run",
+        "title": "Run"
       }
     ],
     "menus": {
       "explorer/context": [
         {
           "command": "dotrush.build",
-          "group": "z_common@1"
+          "group": "z_common@1",
+          "when": "!explorerResourceIsFold && resourceFilename =~ /.*\\.csproj$/"
         },
         {
           "command": "dotrush.rebuild",
-          "group": "z_common@2"
+          "group": "z_common@2",
+          "when": "!explorerResourceIsFold && resourceFilename =~ /.*\\.csproj$/"
         },
         {
           "command": "dotrush.clean",
-          "group": "z_common@3"
+          "group": "z_common@3",
+          "when": "!explorerResourceIsFold && resourceFilename =~ /.*\\.csproj$/"
+        },
+        {
+          "command": "dotrush.run",
+          "group": "z_common@4",
+          "when": "!explorerResourceIsFold && resourceFilename =~ /.*\\.csproj$/"
         }
       ]
     },
@@ -70,10 +82,15 @@
       {
         "title": "DotRush Configuration",
         "properties": {
-          "dotrush.additionalMSBuildArgs": {
+          "dotrush.additionalBuildArgs": {
             "type": "string",
             "default": "",
             "description": "Additional MSBuild arguments to pass to the build command."
+          },
+          "dotrush.additionalRunArgs": {
+            "type": "string",
+            "default": "",
+            "description": "Additional MSBuild arguments to pass to the run command."
           }
         }
       }

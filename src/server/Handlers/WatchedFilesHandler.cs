@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using DotRush.Server.Extensions;
 using DotRush.Server.Services;
 using MediatR;
@@ -46,7 +45,7 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
                     if (change.Type == FileChangeType.Deleted)
                         this.solutionService.DeleteCSharpDocument(path);
                     break;
-                case ".xaml": 
+                case ".xaml":
                     if (change.Type == FileChangeType.Created)
                         this.solutionService.CreateAdditionalDocument(path);
                     if (change.Type == FileChangeType.Deleted)
@@ -60,7 +59,7 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
                     break;
                 case ".csproj":
                     var observer = await LanguageServer.CreateWorkDoneObserver();
-                    this.solutionService.ReloadSolution(observer);
+                    this.solutionService.ReloadSolutionAsync(observer, true);
                     return Unit.Value;
             }
         }
@@ -69,19 +68,10 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     }
 
     private void DeleteFolder(string path) {
-        var projectIds = solutionService.Solution?.GetProjectIdsWithDocumentFolderPath(path);
-        if (projectIds == null || solutionService.Solution == null)
-            return;
-
-        foreach (var projectId in projectIds) {
-            var project = solutionService.Solution.GetProject(projectId);
-            if (project == null)
-                continue;
-
-            var documentIds = project.GetDocumentIdsWithFolderPath(path);
-            var updates = project.RemoveDocuments(ImmutableArray.Create(documentIds.ToArray()));
-            solutionService.UpdateSolution(updates.Solution);
-        }
+        var csharpDocumentIds = this.solutionService.Solution?.GetDocumentIdsWithFolderPath(path);
+        var additionalDocumentIds = this.solutionService.Solution?.GetAdditionalDocumentIdsWithFolderPath(path);
+        this.solutionService.DeleteCSharpDocument(csharpDocumentIds);
+        this.solutionService.DeleteAdditionalDocument(additionalDocumentIds);
     }
     private void CreateFolder(string path) {
         if (!Directory.Exists(path))
