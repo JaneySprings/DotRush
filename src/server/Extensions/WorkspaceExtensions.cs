@@ -40,8 +40,11 @@ public static class WorkspaceExtensions {
     }
 
     public static IEnumerable<string> GetFolders(this Project project, string documentPath) {
-        var rootDirectory = Path.GetDirectoryName(project.FilePath)!;
-        var documentDirectory = Path.GetDirectoryName(documentPath)!;
+        var rootDirectory = Path.GetDirectoryName(project.FilePath);
+        var documentDirectory = Path.GetDirectoryName(documentPath);
+        if (documentDirectory == null || rootDirectory == null)
+            return Enumerable.Empty<string>();
+
         var relativePath = documentDirectory.Replace(rootDirectory, string.Empty);
         return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
     }

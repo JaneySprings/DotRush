@@ -37,7 +37,9 @@ public class ReferencesHandler : ReferencesHandlerBase {
         var result = new List<Location>();
         foreach (var location in referenceLocations) {
             var locationSourceText = await location.Document.GetTextAsync(cancellationToken);
-            result.Add(location.ToLocation(locationSourceText));
+            var referenceLocation = location.ToLocation(locationSourceText);
+            if (referenceLocation != null)
+                result.Add(referenceLocation);
         }
 
         return new LocationContainer(result);

@@ -11,13 +11,13 @@ namespace DotRush.Server.Services;
 
 public class CompilationService {
     public Dictionary<string, FileDiagnostics> Diagnostics { get; }
-    public HashSet<string> Documents { get; }
     public HashSet<DiagnosticAnalyzer> DiagnosticAnalyzers { get; }
+    private readonly HashSet<string> documents;
     private readonly SolutionService solutionService;
 
     public CompilationService(SolutionService solutionService) {
         this.solutionService = solutionService;
-        Documents = new HashSet<string>();
+        this.documents = new HashSet<string>();
         Diagnostics = new Dictionary<string, FileDiagnostics>();
         DiagnosticAnalyzers = new HashSet<DiagnosticAnalyzer>();
 
@@ -50,12 +50,9 @@ public class CompilationService {
             DiagnosticAnalyzers.Add(analyzer!);
     }
 
-    public void DiagnoseAsync(ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
+    public void DiagnoseAsync(string currentDocumentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
         ServerExtensions.SafeCancellation(async () => {
-            foreach (var documentPath in Documents) {
-                if (!Diagnostics.ContainsKey(documentPath))
-                    Diagnostics.Add(documentPath, new FileDiagnostics());
-
+            foreach (var documentPath in this.documents) {
                 Diagnostics[documentPath].ClearSyntaxDiagnostics();
                 var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath);
                 if (documentIds == null)
@@ -77,9 +74,13 @@ public class CompilationService {
                     Diagnostics[documentPath].AddSyntaxDiagnostics(diagnostics, document.Project);
                 }  
 
+                var totalDiagnostics = (documentPath == currentDocumentPath)
+                    ? Diagnostics[documentPath].SyntaxDiagnostics.ToServerDiagnostics()
+                    : Diagnostics[documentPath].GetTotalServerDiagnostics();
+
                 proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
                     Uri = DocumentUri.From(documentPath),
-                    Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath].SyntaxDiagnostics.ToServerDiagnostics()),
+                    Diagnostics = new Container<Diagnostic>(totalDiagnostics),
                 });
             }
         });
@@ -100,7 +101,7 @@ public class CompilationService {
 
             var compilationWithAnalyzers = compilation.WithAnalyzers(ImmutableArray.Create(DiagnosticAnalyzers.ToArray()), cancellationToken: cancellationToken);
             var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
-            var fileDiagnostics = diagnostics.Where(d => d.Location.SourceTree?.FilePath == documentPath);
+            var fileDiagnostics = diagnostics.Where(d => d.Location.SourceTree?.FilePath != null && d.Location.SourceTree?.FilePath == documentPath);
 
             Diagnostics[documentPath].SetAnalyzerDiagnostics(fileDiagnostics, project);
             proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
@@ -110,14 +111,23 @@ public class CompilationService {
         });
     }
 
-    public void ClearAnalyzersDiagnostics(string documentPath, ITextDocumentLanguageServer proxy) {
-        if (!Diagnostics.ContainsKey(documentPath))
+    public void AddDocument(string documentPath) {
+        if (this.documents.Contains(documentPath))
             return;
 
-        Diagnostics[documentPath].ClearAnalyzersDiagnostics();
+        this.documents.Add(documentPath);
+        Diagnostics.Add(documentPath, new FileDiagnostics());
+    }
+
+    public void RemoveDocument(string documentPath, ITextDocumentLanguageServer proxy) {
+        if (!this.documents.Contains(documentPath))
+            return;
+
+        this.documents.Remove(documentPath);
+        Diagnostics.Remove(documentPath);
         proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
             Uri = DocumentUri.From(documentPath),
-            Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath].GetTotalServerDiagnostics()),
+            Diagnostics = new Container<Diagnostic>(Enumerable.Empty<Diagnostic>()),
         });
     }
 }
