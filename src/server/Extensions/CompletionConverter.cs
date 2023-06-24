@@ -30,18 +30,6 @@ public static class CompletionConverter {
         return ProtocolModels.CompletionItemKind.Text;
     }
 
-    public static ProtocolModels.CompletionItem ToCompletionItem(this Microsoft.CodeAnalysis.Completion.CompletionItem item) {
-        return new ProtocolModels.CompletionItem() {
-            Label = item.DisplayTextPrefix + item.DisplayText + item.DisplayTextSuffix,
-            SortText = item.SortText,
-            FilterText = item.FilterText,
-            Detail = item.InlineDescription,
-            Data = item.GetHashCode(),
-            Kind = item.Tags.First().ToCompletionKind(),
-            Preselect = item.Rules.MatchPriority == Microsoft.CodeAnalysis.Completion.MatchPriority.Preselect
-        };
-    }
-
     public static ProtocolModels.TextEdit ToTextEdit(this TextChange change, SourceText sourceText) {
         return new ProtocolModels.TextEdit() {
             NewText = change.NewText ?? string.Empty,
