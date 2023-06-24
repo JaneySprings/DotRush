@@ -53,7 +53,7 @@ public class CompletionHandler : CompletionHandlerBase {
                 FilterText = item.FilterText,
                 Detail = item.InlineDescription,
                 Data = item.GetHashCode(),
-                Kind = item.Tags[0].ToCompletionKind(),
+                Kind = item.Tags[0].ToCompletionItemKind(),
                 Preselect = item.Rules.MatchPriority == Microsoft.CodeAnalysis.Completion.MatchPriority.Preselect
             });
         }

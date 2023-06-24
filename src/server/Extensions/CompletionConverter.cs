@@ -1,30 +1,34 @@
 using Microsoft.CodeAnalysis.Text;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using Microsoft.CodeAnalysis.Tags;
 
 namespace DotRush.Server.Extensions;
 
 public static class CompletionConverter {
-    public static ProtocolModels.CompletionItemKind ToCompletionKind(this string tag) {
+    public static ProtocolModels.CompletionItemKind ToCompletionItemKind(this string tag) {
         switch (tag) {
-            case "Class": return ProtocolModels.CompletionItemKind.Class;
-            case "Delegate": return ProtocolModels.CompletionItemKind.Function;
-            case "Enum": return ProtocolModels.CompletionItemKind.Enum;
-            case "EnumMember": return ProtocolModels.CompletionItemKind.EnumMember;
-            case "Interface": return ProtocolModels.CompletionItemKind.Interface;
-            case "Structure": return ProtocolModels.CompletionItemKind.Struct;
-            case "Local": return ProtocolModels.CompletionItemKind.Variable;
-            case "Parameter": return ProtocolModels.CompletionItemKind.Variable;
-            case "RangeVariable": return ProtocolModels.CompletionItemKind.Variable;
-            case "Constant": return ProtocolModels.CompletionItemKind.Constant;
-            case "Event": return ProtocolModels.CompletionItemKind.Event;
-            case "Field": return ProtocolModels.CompletionItemKind.Field;
-            case "Method": return ProtocolModels.CompletionItemKind.Method;
-            case "Property": return ProtocolModels.CompletionItemKind.Property;
-            case "Label": return ProtocolModels.CompletionItemKind.Unit;
-            case "Keyword": return ProtocolModels.CompletionItemKind.Keyword;
-            case "Namespace": return ProtocolModels.CompletionItemKind.Module;
-            case "ExtensionMethod": return ProtocolModels.CompletionItemKind.Method;
-            case "Snippet": return ProtocolModels.CompletionItemKind.Snippet;
+            case WellKnownTags.Class: return ProtocolModels.CompletionItemKind.Class;
+            case WellKnownTags.Delegate: return ProtocolModels.CompletionItemKind.Function;
+            case WellKnownTags.Enum: return ProtocolModels.CompletionItemKind.Enum;
+            case WellKnownTags.EnumMember: return ProtocolModels.CompletionItemKind.EnumMember;
+            case WellKnownTags.Interface: return ProtocolModels.CompletionItemKind.Interface;
+            case WellKnownTags.Structure: return ProtocolModels.CompletionItemKind.Struct;
+            case WellKnownTags.Local:
+            case WellKnownTags.Parameter:
+            case WellKnownTags.RangeVariable: return ProtocolModels.CompletionItemKind.Variable;
+            case WellKnownTags.Constant: return ProtocolModels.CompletionItemKind.Constant;
+            case WellKnownTags.Event: return ProtocolModels.CompletionItemKind.Event;
+            case WellKnownTags.Field: return ProtocolModels.CompletionItemKind.Field;
+            case WellKnownTags.Method: return ProtocolModels.CompletionItemKind.Method;
+            case WellKnownTags.Property: return ProtocolModels.CompletionItemKind.Property;
+            case WellKnownTags.Label: return ProtocolModels.CompletionItemKind.Text;
+            case WellKnownTags.Keyword: return ProtocolModels.CompletionItemKind.Keyword;
+            case WellKnownTags.Namespace: return ProtocolModels.CompletionItemKind.Module;
+            case WellKnownTags.ExtensionMethod: return ProtocolModels.CompletionItemKind.Method;
+            case WellKnownTags.Snippet: return ProtocolModels.CompletionItemKind.Snippet;
+            case WellKnownTags.File: return ProtocolModels.CompletionItemKind.File;
+            case WellKnownTags.Folder: return ProtocolModels.CompletionItemKind.Folder;
+            case WellKnownTags.Project: return ProtocolModels.CompletionItemKind.Reference;
         }
 
         return ProtocolModels.CompletionItemKind.Text;
