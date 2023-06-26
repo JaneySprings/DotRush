@@ -6,6 +6,7 @@
     "colors": {
         "editor.background": "#FFFFFF",
         "editor.foreground": "#000000",
+        "editor.inlineValuesBackground": "#00000000",
         "editor.inactiveSelectionBackground": "#E5EBF1",
         "editorIndentGuide.background": "#D3D3D3",
         "editorIndentGuide.activeBackground": "#939393",

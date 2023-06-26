@@ -46,7 +46,7 @@ public class CompilationService {
                 }
             }).Where(x => x != null);
 
-        foreach (var analyzer in analyzers)
+        foreach (var analyzer in analyzers) 
             DiagnosticAnalyzers.Add(analyzer!);
     }
 
@@ -62,7 +62,7 @@ public class CompilationService {
                     var document = this.solutionService.Solution?.GetDocument(documentId);
                     if (document == null)
                         continue;
-                    
+
                     var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
                     var diagnostics = semanticModel?
                         .GetDiagnostics(cancellationToken: cancellationToken)
@@ -72,7 +72,7 @@ public class CompilationService {
                         continue;
 
                     Diagnostics[documentPath].AddSyntaxDiagnostics(diagnostics, document.Project);
-                }  
+                }
 
                 var totalDiagnostics = (documentPath == currentDocumentPath)
                     ? Diagnostics[documentPath].SyntaxDiagnostics.ToServerDiagnostics()
