@@ -9,6 +9,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using RoslynCompletionItem = Microsoft.CodeAnalysis.Completion.CompletionItem;
 using RoslynCompletionService = Microsoft.CodeAnalysis.Completion.CompletionService;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace DotRush.Server.Handlers;
 
@@ -54,7 +55,8 @@ public class CompletionHandler : CompletionHandlerBase {
                 Detail = item.InlineDescription,
                 Data = item.GetHashCode(),
                 Kind = item.Tags[0].ToCompletionItemKind(),
-                Preselect = item.Rules.MatchPriority == Microsoft.CodeAnalysis.Completion.MatchPriority.Preselect
+                Preselect = item.Rules.MatchPriority == Microsoft.CodeAnalysis.Completion.MatchPriority.Preselect,
+                TextEdit = item.IsComplexTextEdit ? TextEditOrInsertReplaceEdit.From(ArrangeTextEdit()) : null
             });
         }
 
@@ -69,11 +71,11 @@ public class CompletionHandler : CompletionHandlerBase {
         if (roslynCompletionItem == null)
             return request;
 
-        StringOrMarkupContent? documentation = null;
-        IEnumerable<TextEdit>? additionalTextEdits = null;
-        TextEdit? textEdit = null;
+        var additionalTextEdits = Enumerable.Empty<TextEdit>();
+        var documentation = new StringOrMarkupContent(string.Empty);
+        var textEdit = ArrangeTextEdit();
 
-        if (request.Documentation == null) {
+        if (request.Documentation is null) {
             var description = await this.roslynCompletionService.GetDescriptionAsync(this.targetDocument, roslynCompletionItem, cancellationToken);
             if (description != null) {
                 var stringBuilder = new StringBuilder();
@@ -85,12 +87,11 @@ public class CompletionHandler : CompletionHandlerBase {
             }
         }
 
-        if (request.TextEdit == null) {
+        if (request.AdditionalTextEdits is null) {
             var changes = await this.roslynCompletionService.GetChangeAsync(this.targetDocument, roslynCompletionItem, cancellationToken: cancellationToken);
             var sourceText = await this.targetDocument.GetTextAsync(cancellationToken);
             if (changes?.TextChanges != null) {
                 if (roslynCompletionItem.IsComplexTextEdit) {
-                    textEdit = ArrangeTextEdit(changes.TextChanges, roslynCompletionItem, sourceText);
                     additionalTextEdits = ArrangeAdditionalTextEdits(changes.TextChanges, roslynCompletionItem, sourceText);
                 } else {
                     textEdit = changes.TextChanges.FirstOrDefault().ToTextEdit(sourceText);
@@ -107,12 +108,12 @@ public class CompletionHandler : CompletionHandlerBase {
             Preselect = request.Preselect,
             Documentation = documentation,
             InsertTextMode = InsertTextMode.AsIs,
-            AdditionalTextEdits = additionalTextEdits != null ? new TextEditContainer(additionalTextEdits) : null,
-            TextEdit = textEdit != null ? new TextEditOrInsertReplaceEdit(textEdit) : null,
+            AdditionalTextEdits = TextEditContainer.From(additionalTextEdits),
+            TextEdit = TextEditOrInsertReplaceEdit.From(textEdit)
         };
     }
 
-    private TextEdit? ArrangeTextEdit(IEnumerable<TextChange> changes, RoslynCompletionItem completionItem, SourceText sourceText) {
+    private TextEdit ArrangeTextEdit() {
         // This textEdit removes the text that was already typed by the user
         return new TextEdit { NewText = string.Empty };
     }

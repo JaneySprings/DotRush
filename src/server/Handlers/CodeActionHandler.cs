@@ -12,9 +12,9 @@ using Microsoft.CodeAnalysis.Text;
 namespace DotRush.Server.Handlers;
 
 public class CodeActionHandler : CodeActionHandlerBase {
-    private SolutionService solutionService;
-    private CompilationService compilationService;
-    private CodeActionService codeActionService;
+    private readonly SolutionService solutionService;
+    private readonly CompilationService compilationService;
+    private readonly CodeActionService codeActionService;
 
     public CodeActionHandler(SolutionService solutionService, CompilationService compilationService, CodeActionService codeActionService) {
         this.solutionService = solutionService;
@@ -43,7 +43,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
             var sourceText = await document.GetTextAsync(cancellationToken);
             var fileDiagnostic = GetDiagnosticByRange(request.Range, sourceText, document);
             var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
-            if (fileDiagnostic == null || codeFixProviders == null || !codeFixProviders.Any())
+            if (fileDiagnostic == null || codeFixProviders?.Any() != true)
                 return new CommandOrCodeActionContainer();
 
             foreach (var codeFixProvider in codeFixProviders) {
@@ -66,10 +66,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
                 return request;
 
             var result = await codeAction.ToCodeActionAsync(this.solutionService, cancellationToken);
-            if (result == null)
-                return request;
-
-            return result;
+            return result ?? request;
         });
     }
 
