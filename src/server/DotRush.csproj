@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-    <CodeAnalysisVersion>4.6.0</CodeAnalysisVersion>
+    <CodeAnalysisVersion>4.4.0</CodeAnalysisVersion>
   </PropertyGroup>
 
   <ItemGroup>
