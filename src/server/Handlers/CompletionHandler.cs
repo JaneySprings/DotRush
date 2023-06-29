@@ -15,12 +15,14 @@ namespace DotRush.Server.Handlers;
 
 public class CompletionHandler : CompletionHandlerBase {
     private readonly SolutionService solutionService;
+    private readonly CompilationService compilationService;
     private IEnumerable<RoslynCompletionItem>? codeAnalysisCompletionItems;
     private RoslynCompletionService? roslynCompletionService;
     private Document? targetDocument;
 
-    public CompletionHandler(SolutionService solutionService) {
+    public CompletionHandler(SolutionService solutionService, CompilationService compilationService) {
         this.solutionService = solutionService;
+        this.compilationService = compilationService;
     }
 
     protected override CompletionRegistrationOptions CreateRegistrationOptions(CompletionCapability capability, ClientCapabilities clientCapabilities) {
@@ -31,6 +33,8 @@ public class CompletionHandler : CompletionHandlerBase {
     }
 
     public override async Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken) {
+        this.compilationService.CancelAnalyzerDiagnostics();
+
         var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
         this.targetDocument = this.solutionService.Solution?.GetDocument(documentId);
         this.roslynCompletionService = RoslynCompletionService.GetService(targetDocument);

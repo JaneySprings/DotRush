@@ -4,38 +4,45 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using Microsoft.CodeAnalysis.Diagnostics;
-using System.Reflection;
 using System.Collections.Immutable;
 
 namespace DotRush.Server.Services;
 
 public class CompilationService {
     public Dictionary<string, FileDiagnostics> Diagnostics { get; }
-    public HashSet<DiagnosticAnalyzer> DiagnosticAnalyzers { get; }
+    public ImmutableArray<DiagnosticAnalyzer> DiagnosticAnalyzers { get; private set; }
     private readonly HashSet<string> documents;
     private readonly SolutionService solutionService;
+    private readonly AssemblyService assemblyService;
 
-    public CompilationService(SolutionService solutionService) {
+    private CancellationTokenSource? analyzerDiagnosticsTokenSource;
+    private CancellationToken AnalyzerDiagnosticsCancellationToken {
+        get {
+            CancelAnalyzerDiagnostics();
+            this.analyzerDiagnosticsTokenSource = new CancellationTokenSource();
+            return this.analyzerDiagnosticsTokenSource.Token;
+        }
+    }
+    private CancellationTokenSource? diagnosticsTokenSource;
+    private CancellationToken DiagnosticsCancellationToken {
+        get {
+            CancelDiagnostics();
+            this.diagnosticsTokenSource = new CancellationTokenSource();
+            return this.diagnosticsTokenSource.Token;
+        }
+    }
+
+    public CompilationService(SolutionService solutionService, AssemblyService assemblyService) {
         this.solutionService = solutionService;
+        this.assemblyService = assemblyService;
         this.documents = new HashSet<string>();
         Diagnostics = new Dictionary<string, FileDiagnostics>();
-        DiagnosticAnalyzers = new HashSet<DiagnosticAnalyzer>();
-
-        if (!Directory.Exists(LanguageServer.AnalyzersLocation))
-            return;
-
-        foreach (var analyzerPath in Directory.GetFiles(LanguageServer.AnalyzersLocation, "*.dll"))
-            AddAnalyzersWithAssemblyPath(analyzerPath);
+        DiagnosticAnalyzers = ImmutableArray<DiagnosticAnalyzer>.Empty;
     }
 
-    private void AddAnalyzersWithAssemblyName(string assemblyName) {
-        AddAnalyzers(Assembly.Load(assemblyName));
-    }
-    private void AddAnalyzersWithAssemblyPath(string assemblyPath) {
-        AddAnalyzers(Assembly.LoadFrom(assemblyPath));
-    }
-    private void AddAnalyzers(Assembly assembly) {
-        var analyzers = assembly.DefinedTypes
+    public void InitializeAnalyzers() {
+        DiagnosticAnalyzers = this.assemblyService.Assemblies
+            .SelectMany(x => x.DefinedTypes)
             .Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(DiagnosticAnalyzer)))
             .Select(x => {
                 try {
@@ -44,13 +51,13 @@ public class CompilationService {
                     LoggingService.Instance.LogError($"Creating instance of analyzer '{x.AsType()}' failed, error: {ex}");
                     return null;
                 }
-            }).Where(x => x != null);
-
-        foreach (var analyzer in analyzers) 
-            DiagnosticAnalyzers.Add(analyzer!);
+            })
+            .Where(x => x != null)
+            .ToImmutableArray()!;
     }
 
-    public void DiagnoseAsync(string currentDocumentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
+    public void DiagnoseAsync(string currentDocumentPath, ITextDocumentLanguageServer proxy) {
+        var cancellationToken = DiagnosticsCancellationToken;
         ServerExtensions.SafeCancellation(async () => {
             foreach (var documentPath in this.documents) {
                 Diagnostics[documentPath].ClearSyntaxDiagnostics();
@@ -86,20 +93,24 @@ public class CompilationService {
         });
     }
 
-    public void AnalyzerDiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy, CancellationToken cancellationToken) {
+    public void AnalyzerDiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy) {
+        if (DiagnosticAnalyzers.IsEmpty)
+            return;
+
+        var cancellationToken = AnalyzerDiagnosticsCancellationToken;
         ServerExtensions.SafeCancellation(async () => {
-            await Task.Delay(TimeSpan.FromMilliseconds(300), cancellationToken);
+            await Task.Delay(750, cancellationToken); //TODO: Wait for completionHandler. Maybe there is a better way to do this?
 
             var projectId = this.solutionService.Solution?.GetProjectIdsWithDocumentFilePath(documentPath).FirstOrDefault();
             var project = this.solutionService.Solution?.GetProject(projectId);
-            if (project == null || !DiagnosticAnalyzers.Any())
+            if (project == null)
                 return;
 
             var compilation = await project.GetCompilationAsync(cancellationToken);
             if (compilation == null)
                 return;
 
-            var compilationWithAnalyzers = compilation.WithAnalyzers(ImmutableArray.Create(DiagnosticAnalyzers.ToArray()), cancellationToken: cancellationToken);
+            var compilationWithAnalyzers = compilation.WithAnalyzers(DiagnosticAnalyzers, project.AnalyzerOptions, cancellationToken);
             var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
             var fileDiagnostics = diagnostics.Where(d => d.Location.SourceTree?.FilePath != null && d.Location.SourceTree?.FilePath == documentPath);
 
@@ -112,22 +123,30 @@ public class CompilationService {
     }
 
     public void AddDocument(string documentPath) {
-        if (this.documents.Contains(documentPath))
+        if (!this.documents.Add(documentPath))
             return;
 
-        this.documents.Add(documentPath);
         Diagnostics.Add(documentPath, new FileDiagnostics());
     }
-
     public void RemoveDocument(string documentPath, ITextDocumentLanguageServer proxy) {
-        if (!this.documents.Contains(documentPath))
+        if (!this.documents.Remove(documentPath))
             return;
 
-        this.documents.Remove(documentPath);
         Diagnostics.Remove(documentPath);
         proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
             Uri = DocumentUri.From(documentPath),
             Diagnostics = new Container<Diagnostic>(Enumerable.Empty<Diagnostic>()),
         });
+    }
+
+    public void CancelAnalyzerDiagnostics() {
+        this.analyzerDiagnosticsTokenSource?.Cancel();
+        this.analyzerDiagnosticsTokenSource?.Dispose();
+        this.analyzerDiagnosticsTokenSource = null;
+    }
+    public void CancelDiagnostics() {
+        this.diagnosticsTokenSource?.Cancel();
+        this.diagnosticsTokenSource?.Dispose();
+        this.diagnosticsTokenSource = null;
     }
 }

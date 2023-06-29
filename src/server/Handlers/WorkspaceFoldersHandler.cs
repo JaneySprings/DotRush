@@ -27,7 +27,7 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
     public override async Task<Unit> Handle(DidChangeWorkspaceFoldersParams request, CancellationToken cancellationToken) {
         var added = request.Event.Added.Select(folder => folder.Uri.GetFileSystemPath());
         var removed = request.Event.Removed.Select(folder => folder.Uri.GetFileSystemPath());
-        var observer = await LanguageServer.CreateWorkDoneObserver();
+        var observer = await LanguageServer.CreateWorkDoneObserverAsync();
 
         if (!added.Any() && !removed.Any())
             return Unit.Value;

@@ -58,7 +58,7 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
                         DeleteFolder(path);
                     break;
                 case ".csproj":
-                    var observer = await LanguageServer.CreateWorkDoneObserver();
+                    var observer = await LanguageServer.CreateWorkDoneObserverAsync();
                     this.solutionService.ReloadSolutionAsync(observer, true);
                     return Unit.Value;
             }

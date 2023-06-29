@@ -91,6 +91,16 @@
             "type": "string",
             "default": "",
             "description": "Additional MSBuild arguments to pass to the run command."
+          },
+          "dotrush.enableRoslynAnalyzers": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable Roslyn analyzers (may affect performance)."
+          },
+          "dotrush.customRoslynAnalyzersPath": {
+            "type": "string",
+            "default": "",
+            "description": "Set custom path to Roslyn analyzer assemblies directory (subdirectories included)."
           }
         }
       }

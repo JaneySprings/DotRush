@@ -45,4 +45,12 @@ public static class ServerExtensions {
             return fallback;
         }
     }
+
+    public static void SafeHandler(Action action) {
+        try {
+            action.Invoke();
+        } catch (Exception) {
+            // ignore
+        }
+    }
 }
