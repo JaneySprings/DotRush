@@ -23,8 +23,8 @@
         "statusBarItem.remoteBackground": "#16825D",
         "sideBarSectionHeader.background": "#0000",
         "sideBarSectionHeader.border": "#61616130",
-        "statusBar.background": "#435089",
-        "statusBar.debuggingBackground": "#975044",
+        "statusBar.background": "#2E6BB8",
+        "statusBar.debuggingBackground": "#BC5922",
         "focusBorder": "#435089"
     },
     "semanticHighlighting": true,

@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 export class ContextMenuController {
     public static activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdBuild, async (path: vscode.Uri) => {
-            const args = getSetting<string>(res.configIdadditionalBuildArgs);
+            const args = getSetting<string>(res.configIdadditionalBuildArguments);
             const task = await DotNetTaskProvider.getTask("build", path, args);
             if (task !== undefined) 
                 vscode.tasks.executeTask(task);
@@ -15,7 +15,7 @@ export class ContextMenuController {
             await vscode.workspace.fs.delete(vscode.Uri.joinPath(path, "..", "bin"), { recursive: true });
             await vscode.workspace.fs.delete(vscode.Uri.joinPath(path, "..", "obj"), { recursive: true });
 
-            const args = getSetting<string>(res.configIdadditionalBuildArgs);
+            const args = getSetting<string>(res.configIdadditionalBuildArguments);
             const task = await DotNetTaskProvider.getTask("build", path, args);
             if (task !== undefined) 
                 vscode.tasks.executeTask(task);
@@ -24,12 +24,12 @@ export class ContextMenuController {
             await vscode.workspace.fs.delete(vscode.Uri.joinPath(path, "..", "bin"), { recursive: true });
             await vscode.workspace.fs.delete(vscode.Uri.joinPath(path, "..", "obj"), { recursive: true });
         }));
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRun, async (path: vscode.Uri) => {
-            const args = getSetting<string>(res.configIdadditionalRunArgs);
-            const task = await DotNetTaskProvider.getTask("run", path, args);
-            if (task !== undefined) 
-                vscode.tasks.executeTask(task);
-        }));
+        // context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRun, async (path: vscode.Uri) => {
+        //     const args = getSetting<string>(res.configIdadditionalRunArgs);
+        //     const task = await DotNetTaskProvider.getTask("run", path, args);
+        //     if (task !== undefined) 
+        //         vscode.tasks.executeTask(task);
+        // }));
     }
 }
 

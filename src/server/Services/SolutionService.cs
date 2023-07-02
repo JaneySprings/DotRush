@@ -10,14 +10,19 @@ public class SolutionService {
     public Solution? Solution { get; private set; }
     private ProjectService ProjectService { get; }
 
-    public SolutionService() {
+    private readonly ConfigurationService configurationService;
+
+    public SolutionService(ConfigurationService configurationService) {
+        this.configurationService = configurationService;
+
         MSBuildLocator.RegisterDefaults();
         ProjectService = new ProjectService();
         ProjectService.WorkspaceUpdated = s => Solution = s;
     }
 
     public async void ReloadSolutionAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
-        await ProjectService.ReloadAsync(observer, forceRestore);
+        var options = this.configurationService.AdditionalWorkspaceArguments();
+        await ProjectService.ReloadAsync(options, observer, forceRestore);
     }
     public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
         foreach (var folder in workspaceFolders) {

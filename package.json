@@ -48,10 +48,6 @@
       {
         "command": "dotrush.clean",
         "title": "Clean"
-      },
-      {
-        "command": "dotrush.run",
-        "title": "Run"
       }
     ],
     "menus": {
@@ -70,37 +66,32 @@
           "command": "dotrush.clean",
           "group": "z_common@3",
           "when": "!explorerResourceIsFold && resourceFilename =~ /.*\\.csproj$/"
-        },
-        {
-          "command": "dotrush.run",
-          "group": "z_common@4",
-          "when": "!explorerResourceIsFold && resourceFilename =~ /.*\\.csproj$/"
         }
       ]
     },
     "configuration":[
       {
-        "title": "DotRush Configuration",
+        "title": "DotRush",
         "properties": {
-          "dotrush.additionalBuildArgs": {
+          "dotrush.additionalBuildArguments": {
             "type": "string",
             "default": "",
             "description": "Additional MSBuild arguments to pass to the build command."
           },
-          "dotrush.additionalRunArgs": {
+          "dotrush.additionalWorkspaceArguments": {
             "type": "string",
-            "default": "",
-            "description": "Additional MSBuild arguments to pass to the run command."
+            "default": "DesignTimeBuild=false",
+            "description": "Additional MSBuild arguments to pass to the workspace."
           },
           "dotrush.enableRoslynAnalyzers": {
             "type": "boolean",
             "default": false,
             "description": "Enable Roslyn analyzers (may affect performance)."
           },
-          "dotrush.customRoslynAnalyzersPath": {
+          "dotrush.additionalRoslynAnalyzersPath": {
             "type": "string",
             "default": "",
-            "description": "Set custom path to Roslyn analyzer assemblies directory (subdirectories included)."
+            "description": "Set an additional path to the Roslyn analyzer assemblies directory."
           }
         }
       }
