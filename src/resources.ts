@@ -10,5 +10,5 @@ export const commandIdClean = "dotrush.clean";
 export const commandIdRun = "dotrush.run";
 
 export const taskDefinitionId = "dotrush.task";
-export const configIdadditionalBuildArgs = "additionalBuildArgs";
-export const configIdadditionalRunArgs = "additionalRunArgs";
+export const configIdadditionalBuildArguments = "additionalBuildArguments";
+export const configIdadditionalRunArguments = "additionalRunArguments";

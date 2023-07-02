@@ -9,8 +9,6 @@ namespace DotRush.Server.Services;
 
 public class ProjectService {
     public HashSet<string> Projects { get; }
-    public MSBuildWorkspace Workspace { get; }
-
     public Action<Solution?>? WorkspaceUpdated { get; set; }
 
     private CancellationTokenSource? reloadCancellationTokenSource;
@@ -23,19 +21,28 @@ public class ProjectService {
         }
     }
 
-    public ProjectService() {
-        Projects = new HashSet<string>();
-        Workspace = MSBuildWorkspace.Create(new Dictionary<string, string> {
-            { "DesignTimeBuild", "false"}
-        });
-        Workspace.LoadMetadataForReferencedProjects = true;
-        Workspace.SkipUnrecognizedProjects = true;
+    public MSBuildWorkspace? workspace;
+    public MSBuildWorkspace? Workspace { 
+        get => this.workspace;
+        set {
+            this.workspace = value;
+            if (this.workspace == null)
+                return;
+            this.workspace.LoadMetadataForReferencedProjects = true;
+            this.workspace.SkipUnrecognizedProjects = true;
+        }
     }
 
-    public async Task ReloadAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
+    public ProjectService() {
+        Projects = new HashSet<string>();
+    }
+
+    public async Task ReloadAsync(Dictionary<string, string> options, IWorkDoneObserver? observer = null, bool forceRestore = false) {
         var cancellationToken = CancellationToken;
         WorkspaceUpdated?.Invoke(null);
-        Workspace.CloseSolution();
+        Workspace?.CloseSolution();
+        Workspace?.Dispose();
+        Workspace = MSBuildWorkspace.Create(options);
 
         foreach (var projectFile in Projects) {
             await ServerExtensions.SafeHandlerAsync(async () => {

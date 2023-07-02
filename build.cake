@@ -7,6 +7,7 @@ string version;
 string runtime = Argument<string>("runtime", null);
 string target = Argument<string>("target", "vsix");
 string configuration = Argument<string>("configuration", "debug");
+string roslynVersion = Argument<string>("roslynVersion", "4.4.0");
 
 public string RootDirectory => MakeAbsolute(Directory(".")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
@@ -27,7 +28,10 @@ Task("clean")
    .Does(() => CleanDirectory(ArtifactsDirectory));
 
 Task("build-server").Does(() => DotNetBuild(ServerProjectFilePath, new DotNetBuildSettings {
-   MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
+   MSBuildSettings = new DotNetMSBuildSettings { 
+      ArgumentCustomization = args => args.Append($"-p:CodeAnalysisVersion={roslynVersion}"),
+      AssemblyVersion = version,
+   },
    OutputDirectory = ExtensionAssembliesDirectory,
    Configuration = configuration,
    Runtime = runtime
@@ -43,7 +47,7 @@ Task("vsix")
       ReplaceRegexInFiles(file.ToString(), regex, $"  $1\"{version}\"$3", options);
    })
    .Does(() => VscePackage(new VscePackageSettings {
-      OutputFilePath = _Path.Combine(ArtifactsDirectory, $"DotRush.{version}-{configuration}.vsix"),
+      OutputFilePath = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}.r{roslynVersion}.vsix"),
       WorkingDirectory = RootDirectory,
    }));
 

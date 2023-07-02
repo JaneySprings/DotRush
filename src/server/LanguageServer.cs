@@ -53,6 +53,7 @@ public class LanguageServer {
     }
 
     private static void ConfigureServices(IServiceCollection services) {
+        services.AddSingleton<ConfigurationService>();
         services.AddSingleton<AssemblyService>();
         services.AddSingleton<SolutionService>();
         services.AddSingleton<CodeActionService>();
@@ -65,8 +66,10 @@ public class LanguageServer {
         var compilationService = server.Services.GetService<CompilationService>();
         var codeActionService = server.Services.GetService<CodeActionService>();
         var assemblyService = server.Services.GetService<AssemblyService>();
+
+        var configurationService = server.Services.GetService<ConfigurationService>();
         var solutionService = server.Services.GetService<SolutionService>();
-        if (solutionService == null)
+        if (solutionService == null || configurationService == null)
             return;
 
         var workspaceFolders = server.Workspace.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
@@ -76,18 +79,18 @@ public class LanguageServer {
         }
 
         workDoneManager = server.WorkDoneManager;
-
         var workDoneProgress = await CreateWorkDoneObserverAsync();
+
+        configurationService.Initialize(server.Configuration);
         solutionService.AddWorkspaceFolders(workspaceFolders);
         solutionService.ReloadSolutionAsync(workDoneProgress);
 
-        codeActionService?.InitializeCodeFixes();
-        if (server.Configuration.GetValue<bool>(Configuration.EnableRoslynAnalyzersId)) {
-            var additionalAnalyzersPath = server.Configuration.GetValue<string>(Configuration.CustomRoslynAnalyzersPathId);
-            assemblyService?.LoadAssemblies(additionalAnalyzersPath);
+        if (configurationService.IsRoslynAnalyzersEnabled()) {
+            assemblyService?.LoadAssemblies(configurationService.AdditionalRoslynAnalyzersPath());
             compilationService?.InitializeAnalyzers();
         }
 
+        codeActionService?.InitializeCodeFixes();
         assemblyService?.ClearAssemblyCache();
     }
 }
