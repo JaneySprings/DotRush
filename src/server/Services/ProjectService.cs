@@ -10,6 +10,7 @@ namespace DotRush.Server.Services;
 public class ProjectService {
     public HashSet<string> Projects { get; }
     public Action<Solution?>? WorkspaceUpdated { get; set; }
+    public MSBuildWorkspace? Workspace { get; set; }
 
     private CancellationTokenSource? reloadCancellationTokenSource;
     private CancellationToken CancellationToken {
@@ -21,39 +22,30 @@ public class ProjectService {
         }
     }
 
-    public MSBuildWorkspace? workspace;
-    public MSBuildWorkspace? Workspace { 
-        get => this.workspace;
-        set {
-            this.workspace = value;
-            if (this.workspace == null)
-                return;
-            this.workspace.LoadMetadataForReferencedProjects = true;
-            this.workspace.SkipUnrecognizedProjects = true;
-        }
-    }
-
     public ProjectService() {
         Projects = new HashSet<string>();
     }
 
-    public async Task ReloadAsync(Dictionary<string, string> options, IWorkDoneObserver? observer = null, bool forceRestore = false) {
+    public async Task LoadAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
         var cancellationToken = CancellationToken;
-        WorkspaceUpdated?.Invoke(null);
-        Workspace?.CloseSolution();
-        Workspace?.Dispose();
-        Workspace = MSBuildWorkspace.Create(options);
-
         foreach (var projectFile in Projects) {
             await ServerExtensions.SafeHandlerAsync(async () => {
                 observer?.OnNext(new WorkDoneProgressReport { Message = $"Loading {Path.GetFileNameWithoutExtension(projectFile)}" });
+                if (Workspace.ContainsProjectsWithPath(projectFile))
+                    return;
+
                 await RestoreProjectAsync(projectFile, forceRestore, cancellationToken);
-                await Workspace.OpenProjectAsync(projectFile, null, cancellationToken);
+                await Workspace!.OpenProjectAsync(projectFile, null, cancellationToken);
                 WorkspaceUpdated?.Invoke(Workspace.CurrentSolution);
             });
         }
 
         observer?.OnCompleted();
+    }
+    public async Task ReloadAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
+        WorkspaceUpdated?.Invoke(null);
+        Workspace!.CloseSolution();
+        await LoadAsync(observer, forceRestore);
     }
 
     public async Task RestoreProjectAsync(string projectFilePath, bool forceRestore = false, CancellationToken cancellationToken = default) {

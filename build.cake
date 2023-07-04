@@ -47,7 +47,7 @@ Task("vsix")
       ReplaceRegexInFiles(file.ToString(), regex, $"  $1\"{version}\"$3", options);
    })
    .Does(() => VscePackage(new VscePackageSettings {
-      OutputFilePath = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}.r{roslynVersion}.vsix"),
+      OutputFilePath = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_Roslyn.v{roslynVersion}.vsix"),
       WorkingDirectory = RootDirectory,
    }));
 

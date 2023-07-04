@@ -56,6 +56,10 @@ public static class WorkspaceExtensions {
         return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
     }
 
+    public static bool ContainsProjectsWithPath(this Workspace? workspace, string projectPath) {
+        return workspace?.CurrentSolution.Projects.Any(project => project.FilePath == projectPath) == true;
+    }
+
     private static int GetCommonFoldersCount(Project project, string documentPath) {
         var folders = project.GetFolders(documentPath);
         var maxCounter = 0;
