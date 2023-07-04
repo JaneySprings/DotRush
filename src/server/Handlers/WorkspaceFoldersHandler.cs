@@ -29,13 +29,17 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
         var removed = request.Event.Removed.Select(folder => folder.Uri.GetFileSystemPath());
         var observer = await LanguageServer.CreateWorkDoneObserverAsync();
 
-        if (!added.Any() && !removed.Any())
+        if (removed.Any()) {
+            this.solutionService.RemoveWorkspaceFolders(removed);
+            await this.solutionService.ReloadSolutionAsync(observer);
             return Unit.Value;
+        }
 
-        this.solutionService.RemoveWorkspaceFolders(removed);
-        this.solutionService.AddWorkspaceFolders(added);
-        this.solutionService.ReloadSolutionAsync(observer);
-
+        if (added.Any()) {
+            this.solutionService.AddWorkspaceFolders(added);
+            await this.solutionService.LoadSolutionAsync(observer);
+        }
+        
         return Unit.Value;
     }
 }

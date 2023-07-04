@@ -1,6 +1,7 @@
 using DotRush.Server.Extensions;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 
@@ -20,9 +21,17 @@ public class SolutionService {
         ProjectService.WorkspaceUpdated = s => Solution = s;
     }
 
-    public async void ReloadSolutionAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
+    public async Task ReloadSolutionAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
+        await ProjectService.ReloadAsync(observer, forceRestore);
+    }
+    public async Task LoadSolutionAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
+        await ProjectService.LoadAsync(observer, forceRestore);
+    }
+    public void InitializeWorkspace() {
         var options = this.configurationService.AdditionalWorkspaceArguments();
-        await ProjectService.ReloadAsync(options, observer, forceRestore);
+        ProjectService.Workspace = MSBuildWorkspace.Create(options);
+        ProjectService.Workspace.LoadMetadataForReferencedProjects = true;
+        ProjectService.Workspace.SkipUnrecognizedProjects = true;
     }
     public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
         foreach (var folder in workspaceFolders) {

@@ -52,6 +52,7 @@ public class LanguageServer {
         await server.WaitForExit.ConfigureAwait(false);
     }
 
+
     private static void ConfigureServices(IServiceCollection services) {
         services.AddSingleton<ConfigurationService>();
         services.AddSingleton<AssemblyService>();
@@ -82,9 +83,6 @@ public class LanguageServer {
         var workDoneProgress = await CreateWorkDoneObserverAsync();
 
         configurationService.Initialize(server.Configuration);
-        solutionService.AddWorkspaceFolders(workspaceFolders);
-        solutionService.ReloadSolutionAsync(workDoneProgress);
-
         if (configurationService.IsRoslynAnalyzersEnabled()) {
             assemblyService?.LoadAssemblies(configurationService.AdditionalRoslynAnalyzersPath());
             compilationService?.InitializeAnalyzers();
@@ -92,5 +90,9 @@ public class LanguageServer {
 
         codeActionService?.InitializeCodeFixes();
         assemblyService?.ClearAssemblyCache();
+
+        solutionService.InitializeWorkspace();
+        solutionService.AddWorkspaceFolders(workspaceFolders);
+        await solutionService.ReloadSolutionAsync(workDoneProgress);
     }
 }

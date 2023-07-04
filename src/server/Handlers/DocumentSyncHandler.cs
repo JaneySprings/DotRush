@@ -9,7 +9,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 
 namespace DotRush.Server.Handlers;
 
-public class DocumentSyncHandler : ITextDocumentSyncHandler {
+public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
     private readonly SolutionService solutionService;
     private readonly CompilationService compilationService;
     private readonly CodeActionService codeActionService;
@@ -23,30 +23,17 @@ public class DocumentSyncHandler : ITextDocumentSyncHandler {
         this.serverFacade = serverFacade;
     }
 
-    public TextDocumentChangeRegistrationOptions GetRegistrationOptions(SynchronizationCapability capability, ClientCapabilities clientCapabilities) {
+    protected override TextDocumentSyncRegistrationOptions CreateRegistrationOptions(SynchronizationCapability capability, ClientCapabilities clientCapabilities) {
         return new TextDocumentSyncRegistrationOptions {
             DocumentSelector = DocumentSelector.ForLanguage("csharp", "xaml", "xml"),
             Change = TextDocumentSyncKind.Full
         };
     }
-    TextDocumentOpenRegistrationOptions IRegistration<TextDocumentOpenRegistrationOptions, SynchronizationCapability>.GetRegistrationOptions(SynchronizationCapability capability, ClientCapabilities clientCapabilities) {
-        return new TextDocumentSyncRegistrationOptions {
-            DocumentSelector = DocumentSelector.ForLanguage("csharp")
-        };
-    }
-    TextDocumentCloseRegistrationOptions IRegistration<TextDocumentCloseRegistrationOptions, SynchronizationCapability>.GetRegistrationOptions(SynchronizationCapability capability, ClientCapabilities clientCapabilities) {
-        return new TextDocumentSyncRegistrationOptions {
-            DocumentSelector = DocumentSelector.ForLanguage("csharp")
-        };
-    }
-    TextDocumentSaveRegistrationOptions IRegistration<TextDocumentSaveRegistrationOptions, SynchronizationCapability>.GetRegistrationOptions(SynchronizationCapability capability, ClientCapabilities clientCapabilities) {
-        return new TextDocumentSyncRegistrationOptions();
-    }
-    public TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) {
+    public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) {
         return new TextDocumentAttributes(uri, "csharp");
     }
 
-    public Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken) {
+    public override Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
         var text = request.ContentChanges.First().Text;
         switch (Path.GetExtension(filePath)) {
@@ -55,7 +42,7 @@ public class DocumentSyncHandler : ITextDocumentSyncHandler {
                 break;
             default:
                 this.solutionService.UpdateAdditionalDocument(filePath, text);
-                return Unit.Task;
+                break;
         }
 
         this.compilationService.AddDocument(filePath);
@@ -63,7 +50,7 @@ public class DocumentSyncHandler : ITextDocumentSyncHandler {
         this.compilationService.AnalyzerDiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument);
         return Unit.Task;
     }
-    public Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
+    public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
 
         this.compilationService.AddDocument(filePath);
@@ -71,7 +58,7 @@ public class DocumentSyncHandler : ITextDocumentSyncHandler {
         this.compilationService.AnalyzerDiagnoseAsync(filePath, serverFacade.TextDocument);
         return Unit.Task;
     }
-    public Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
+    public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
 
         this.compilationService.CancelDiagnostics();
@@ -80,7 +67,7 @@ public class DocumentSyncHandler : ITextDocumentSyncHandler {
         this.codeActionService.CodeActions.ClearWithFilePath(filePath);
         return Unit.Task;
     }
-    public Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {
+    public  override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {
         return Unit.Task;
     }
 }
