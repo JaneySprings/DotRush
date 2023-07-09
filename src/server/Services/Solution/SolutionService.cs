@@ -7,46 +7,41 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 
 namespace DotRush.Server.Services;
 
-public class SolutionService {
+public class SolutionService: ProjectService {
     public Solution? Solution { get; private set; }
-    private ProjectService ProjectService { get; }
 
     private readonly ConfigurationService configurationService;
 
     public SolutionService(ConfigurationService configurationService) {
         this.configurationService = configurationService;
-
         MSBuildLocator.RegisterDefaults();
-        ProjectService = new ProjectService();
-        ProjectService.WorkspaceUpdated = s => Solution = s;
+        WorkspaceUpdated = s => Solution = s;
     }
 
-    public async Task ReloadSolutionAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
-        await ProjectService.ReloadAsync(observer, forceRestore);
+    public async void ReloadSolutionAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
+        await ReloadAsync(observer, forceRestore);
     }
-    public async Task LoadSolutionAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
-        await ProjectService.LoadAsync(observer, forceRestore);
+    public async void LoadSolutionAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
+        await LoadAsync(observer, forceRestore);
     }
     public void InitializeWorkspace() {
         var options = this.configurationService.AdditionalWorkspaceArguments();
-        ProjectService.Workspace = MSBuildWorkspace.Create(options);
-        ProjectService.Workspace.LoadMetadataForReferencedProjects = true;
-        ProjectService.Workspace.SkipUnrecognizedProjects = true;
+        Workspace = MSBuildWorkspace.Create(options);
+        Workspace.LoadMetadataForReferencedProjects = true;
+        Workspace.SkipUnrecognizedProjects = true;
     }
     public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
         foreach (var folder in workspaceFolders) {
             if (!Directory.Exists(folder))
                 continue;
-            foreach (var projectFile in Directory.GetFiles(folder, "*.csproj", SearchOption.AllDirectories))
-                ProjectService.Projects.Add(projectFile);
+            AddProjects(Directory.GetFiles(folder, "*.csproj", SearchOption.AllDirectories));
         }
     }
     public void RemoveWorkspaceFolders(IEnumerable<string> workspaceFolders) {
         foreach (var folder in workspaceFolders) {
             if (!Directory.Exists(folder))
                 continue;
-            foreach (var projectFile in Directory.GetFiles(folder, "*.csproj", SearchOption.AllDirectories))
-                ProjectService.Projects.Remove(projectFile);
+            RemoveProjects(Directory.GetFiles(folder, "*.csproj", SearchOption.AllDirectories));
         }
     }
 

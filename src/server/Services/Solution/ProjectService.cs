@@ -7,10 +7,11 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 
 namespace DotRush.Server.Services;
 
-public class ProjectService {
-    public HashSet<string> Projects { get; }
-    public Action<Solution?>? WorkspaceUpdated { get; set; }
-    public MSBuildWorkspace? Workspace { get; set; }
+public abstract class ProjectService {
+    protected Action<Solution?>? WorkspaceUpdated { get; set; }
+    protected MSBuildWorkspace? Workspace { get; set; }
+
+    protected HashSet<string> projects;
 
     private CancellationTokenSource? reloadCancellationTokenSource;
     private CancellationToken CancellationToken {
@@ -22,13 +23,28 @@ public class ProjectService {
         }
     }
 
-    public ProjectService() {
-        Projects = new HashSet<string>();
+    protected ProjectService() {
+        this.projects = new HashSet<string>();
     }
 
-    public async Task LoadAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
+    protected void AddProjects(IEnumerable<string> projects) {
+        var projectGroups = projects.GroupBy(p => Path.GetDirectoryName(p));
+        foreach (var group in projectGroups) {
+            var orderedGroup = group
+                .OrderByDescending(p => p.Length)
+                .ThenByDescending(p => Path.GetFileNameWithoutExtension(p));
+
+            this.projects.Add(orderedGroup.First());
+        }
+    }
+    protected void RemoveProjects(IEnumerable<string> projects) {
+        foreach (var project in projects)
+            this.projects.Remove(project);
+    }
+
+    protected async Task LoadAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
         var cancellationToken = CancellationToken;
-        foreach (var projectFile in Projects) {
+        foreach (var projectFile in this.projects) {
             await ServerExtensions.SafeHandlerAsync(async () => {
                 observer?.OnNext(new WorkDoneProgressReport { Message = $"Loading {Path.GetFileNameWithoutExtension(projectFile)}" });
                 if (Workspace.ContainsProjectsWithPath(projectFile))
@@ -42,13 +58,13 @@ public class ProjectService {
 
         observer?.OnCompleted();
     }
-    public async Task ReloadAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
+    protected async Task ReloadAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
         WorkspaceUpdated?.Invoke(null);
         Workspace!.CloseSolution();
         await LoadAsync(observer, forceRestore);
     }
 
-    public async Task RestoreProjectAsync(string projectFilePath, bool forceRestore = false, CancellationToken cancellationToken = default) {
+    protected async Task RestoreProjectAsync(string projectFilePath, bool forceRestore = false, CancellationToken cancellationToken = default) {
         if (!File.Exists(projectFilePath))
             throw new FileNotFoundException("Project file not found for restore!", projectFilePath);
 

@@ -61,7 +61,7 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
                     if (change.Type != FileChangeType.Changed)
                         break;
                     var observer = await LanguageServer.CreateWorkDoneObserverAsync();
-                    await this.solutionService.ReloadSolutionAsync(observer, true);
+                    this.solutionService.ReloadSolutionAsync(observer, true);
                     return Unit.Value;
             }
         }
