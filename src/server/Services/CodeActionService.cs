@@ -6,13 +6,13 @@ using Microsoft.CodeAnalysis.CodeFixes;
 namespace DotRush.Server.Services;
 
 public class CodeActionService {
-    public FileCodeActions CodeActions { get; }
+    public CodeActionCollection CodeActions { get; }
     public ImmutableArray<CodeFixProvider> CodeFixProviders { get; private set; }
     private readonly AssemblyService assemblyService;
 
     public CodeActionService(AssemblyService assemblyService) {
         this.assemblyService = assemblyService;
-        CodeActions = new FileCodeActions();
+        CodeActions = new CodeActionCollection();
         CodeFixProviders = ImmutableArray<CodeFixProvider>.Empty;
     }
 
