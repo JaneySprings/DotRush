@@ -93,6 +93,6 @@ public class LanguageServer {
 
         solutionService.InitializeWorkspace();
         solutionService.AddWorkspaceFolders(workspaceFolders);
-        await solutionService.ReloadSolutionAsync(workDoneProgress);
+        solutionService.ReloadSolutionAsync(workDoneProgress);
     }
 }
