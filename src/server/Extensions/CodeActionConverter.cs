@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CodeActions;
 using DotRush.Server.Services;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol;
+using System.Collections.Immutable;
 
 namespace DotRush.Server.Extensions;
 
@@ -61,5 +62,12 @@ public static class CodeActionConverter {
                 DocumentChanges = textDocumentEdits,
             },
         };
+    }
+
+    public static bool ContainsWithMapping(this ImmutableArray<string> array, string item) {
+        if (item == "CS8019")
+            return array.Contains("RemoveUnnecessaryImportsFixable");
+
+        return array.Contains(item);
     }
 }
