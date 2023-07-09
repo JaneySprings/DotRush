@@ -1,7 +1,5 @@
 using System.Reflection;
 using DotRush.Server.Extensions;
-using Microsoft.Extensions.Configuration;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 
 namespace DotRush.Server.Services;
 

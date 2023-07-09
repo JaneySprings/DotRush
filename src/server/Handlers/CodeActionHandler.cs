@@ -74,7 +74,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
         if (diagnosticId == null)
             return null;
 
-        return this.codeActionService.CodeFixProviders.Where(x => x.FixableDiagnosticIds.Contains(diagnosticId));
+        return this.codeActionService.CodeFixProviders.Where(x => x.FixableDiagnosticIds.ContainsWithMapping(diagnosticId));
     }
     private CodeAnalysis.Diagnostic? GetDiagnosticByRange(ProtocolModels.Range range, SourceText sourceText, Document document) {
         if (document.FilePath == null)
