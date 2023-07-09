@@ -2,7 +2,7 @@
   "name": "dotrush",
   "publisher": "nromanov",
   "version": "23.1.23164",
-  "description": "Lightweight .NET development environment for Visual Studio Code.",
+  "description": "Lightweight C# development environment for Visual Studio Code.",
   "displayName": "DotRush",
   "author": "Nikita Romanov",
   "license": "MIT",
@@ -13,7 +13,7 @@
     "url": "https://github.com/JaneySprings/DotRush"
   },
   "categories": [
-    "Other"
+    "Programming Languages", "Other"
   ],
   "engines": {
     "vscode": "^1.73.0"
