@@ -1,4 +1,3 @@
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using DotRush.Server.Services;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -8,12 +7,12 @@ using System.Collections.Immutable;
 namespace DotRush.Server.Extensions;
 
 public static class CodeActionConverter {
-    public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction) {
+    public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction, int id) {
         var textDocumentEdits = new List<ProtocolModels.WorkspaceEditDocumentChange>();
         return new ProtocolModels.CodeAction() {
             Kind = ProtocolModels.CodeActionKind.QuickFix,
-            Data = codeAction.GetHashCode(),
             Title = codeAction.Title,
+            Data = id,
         };
     }
 

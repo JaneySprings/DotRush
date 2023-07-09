@@ -31,26 +31,31 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
     public override async Task<CommandOrCodeActionContainer> Handle(CodeActionParams request, CancellationToken cancellationToken) {
         return await ServerExtensions.SafeHandlerAsync<CommandOrCodeActionContainer>(new CommandOrCodeActionContainer(), async () => {
+            var filePath = request.TextDocument.Uri.GetFileSystemPath();         
             var result = new List<CodeAction?>();
-            var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
-            if (documentId == null)
+            var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(filePath);
+            if (documentIds == null)
                 return new CommandOrCodeActionContainer();
 
-            var document = this.solutionService.Solution?.GetDocument(documentId);
-            if (document?.FilePath == null)
-                return new CommandOrCodeActionContainer();
+            this.codeActionService.CodeActions.ClearWithFilePath(filePath);
+            foreach (var documentId in documentIds) {
+                var document = this.solutionService.Solution?.GetDocument(documentId);
+                if (document?.FilePath == null)
+                    return new CommandOrCodeActionContainer();
 
-            var sourceText = await document.GetTextAsync(cancellationToken);
-            var fileDiagnostic = GetDiagnosticByRange(request.Range, sourceText, document);
-            var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
-            if (fileDiagnostic == null || codeFixProviders?.Any() != true)
-                return new CommandOrCodeActionContainer();
+                var sourceText = await document.GetTextAsync(cancellationToken);
+                var fileDiagnostic = GetDiagnosticByRange(request.Range, sourceText, document);
+                var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
+                if (fileDiagnostic == null || codeFixProviders?.Any() != true)
+                    return new CommandOrCodeActionContainer();
 
-            foreach (var codeFixProvider in codeFixProviders) {
-                await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, fileDiagnostic, (a, _) => {
-                    this.codeActionService.CodeActions.SetCodeAction(a, a.GetHashCode(), document.FilePath);
-                    result.Add(a.ToCodeAction());
-                }, cancellationToken));
+                foreach (var codeFixProvider in codeFixProviders) {
+                    await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, fileDiagnostic, (a, _) => {
+                        var id = this.codeActionService.CodeActions.AddCodeAction(a, fileDiagnostic.Location.SourceSpan, document.FilePath);
+                        if (id != -1)
+                            result.Add(a.ToCodeAction(id));
+                    }, cancellationToken));
+                }
             }
 
             return new CommandOrCodeActionContainer(result.Where(x => x != null).Select(x => new CommandOrCodeAction(x!)));
