@@ -18,16 +18,16 @@ public class SolutionService: ProjectService {
         WorkspaceUpdated = s => Solution = s;
     }
 
-    public async void ReloadSolutionAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
-        await ReloadAsync(observer, forceRestore);
+    public async void ReloadSolutionAsync(IWorkDoneObserver? observer = null) {
+        await ReloadAsync(observer);
     }
-    public async void LoadSolutionAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
-        await LoadAsync(observer, forceRestore);
+    public async void LoadSolutionAsync(IWorkDoneObserver? observer = null) {
+        await LoadAsync(observer);
     }
     public void InitializeWorkspace() {
         var options = this.configurationService.AdditionalWorkspaceArguments();
         Workspace = MSBuildWorkspace.Create(options);
-        Workspace.LoadMetadataForReferencedProjects = true;
+        Workspace.LoadMetadataForReferencedProjects = false;
         Workspace.SkipUnrecognizedProjects = true;
     }
     public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
