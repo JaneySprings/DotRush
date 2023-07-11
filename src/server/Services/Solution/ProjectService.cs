@@ -42,35 +42,37 @@ public abstract class ProjectService {
             this.projects.Remove(project);
     }
 
-    protected async Task LoadAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
+    protected async Task LoadAsync(IWorkDoneObserver? observer = null) {
         var cancellationToken = CancellationToken;
         foreach (var projectFile in this.projects) {
+            if (cancellationToken.IsCancellationRequested)
+                break;
+
             await ServerExtensions.SafeHandlerAsync(async () => {
-                observer?.OnNext(new WorkDoneProgressReport { Message = $"Loading {Path.GetFileNameWithoutExtension(projectFile)}" });
                 if (Workspace.ContainsProjectsWithPath(projectFile))
                     return;
 
-                await RestoreProjectAsync(projectFile, forceRestore, cancellationToken);
+                observer?.OnNext(new WorkDoneProgressReport { Message = $"Restoring {Path.GetFileNameWithoutExtension(projectFile)}" });
+                await RestoreProjectAsync(projectFile, cancellationToken);
+
+                observer?.OnNext(new WorkDoneProgressReport { Message = $"Loading {Path.GetFileNameWithoutExtension(projectFile)}" });
                 await Workspace!.OpenProjectAsync(projectFile, null, cancellationToken);
+
                 WorkspaceUpdated?.Invoke(Workspace.CurrentSolution);
             });
         }
 
         observer?.OnCompleted();
     }
-    protected async Task ReloadAsync(IWorkDoneObserver? observer = null, bool forceRestore = false) {
+    protected async Task ReloadAsync(IWorkDoneObserver? observer = null) {
         WorkspaceUpdated?.Invoke(null);
         Workspace!.CloseSolution();
-        await LoadAsync(observer, forceRestore);
+        await LoadAsync(observer);
     }
 
-    protected async Task RestoreProjectAsync(string projectFilePath, bool forceRestore = false, CancellationToken cancellationToken = default) {
+    protected async Task RestoreProjectAsync(string projectFilePath, CancellationToken cancellationToken = default) {
         if (!File.Exists(projectFilePath))
             throw new FileNotFoundException("Project file not found for restore!", projectFilePath);
-
-        var projectDirectory = Path.GetDirectoryName(projectFilePath)!;
-        if (File.Exists(Path.Combine(projectDirectory, "obj", "project.assets.json")) && !forceRestore)
-            return;
 
         await StartProcessAsync("dotnet", $"restore \"{projectFilePath}\"", cancellationToken).ConfigureAwait(false);
     }
