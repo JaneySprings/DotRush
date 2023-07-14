@@ -5,6 +5,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Immutable;
+using DotRush.Server.Containers;
 
 namespace DotRush.Server.Services;
 
