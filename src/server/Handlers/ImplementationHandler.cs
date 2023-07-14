@@ -1,3 +1,4 @@
+using DotRush.Server.Containers;
 using DotRush.Server.Extensions;
 using DotRush.Server.Services;
 using Microsoft.CodeAnalysis;
@@ -24,7 +25,7 @@ public class ImplementationHandler : ImplementationHandlerBase {
         if (documentIds == null)
             return new LocationOrLocationLinks();
 
-        var result = new List<ISymbol>();
+        var resultSymbols = new List<ISymbol>();
         foreach (var documentId in documentIds) {
             var document = this.solutionService.Solution?.GetDocument(documentId);
             if (document == null)
@@ -37,29 +38,28 @@ public class ImplementationHandler : ImplementationHandlerBase {
 
             var symbols = await SymbolFinder.FindImplementationsAsync(symbol, this.solutionService.Solution, cancellationToken: cancellationToken);
             if (symbols != null)
-                result.AddRange(symbols);
+                resultSymbols.AddRange(symbols);
 
             if (symbol is IMethodSymbol methodSymbol) {
                 symbols = await SymbolFinder.FindOverridesAsync(methodSymbol, this.solutionService.Solution, cancellationToken: cancellationToken);
                 if (symbols != null)
-                    result.AddRange(symbols);
+                    resultSymbols.AddRange(symbols);
             }
             if (symbol is INamedTypeSymbol namedTypeSymbol) {
                 symbols = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, this.solutionService.Solution, cancellationToken: cancellationToken);
                 if (symbols != null)
-                    result.AddRange(symbols);
+                    resultSymbols.AddRange(symbols);
                 
                 symbols = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, this.solutionService.Solution, cancellationToken: cancellationToken);
                 if (symbols != null)
-                    result.AddRange(symbols);
+                    resultSymbols.AddRange(symbols);
             }
         }
 
-        return new LocationOrLocationLinks(result
+        return new LocationCollection()
+            .AddRange(resultSymbols
             .SelectMany(i => i.Locations)
-            .Select(loc => loc.ToLocation())
-            .Where(loc => loc != null)
-            .Select(loc => new LocationOrLocationLink(loc!))
-        );
+            .Select(loc => loc.ToLocation()))
+            .ToLocationOrLocationLinks();
     }
 }

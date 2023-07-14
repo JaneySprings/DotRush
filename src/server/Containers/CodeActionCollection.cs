@@ -1,7 +1,7 @@
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.Text;
 
-namespace DotRush.Server.Extensions;
+namespace DotRush.Server.Containers;
 
 public class CodeActionCollection {
     private readonly HashSet<FileCodeAction> codeActionCollection;

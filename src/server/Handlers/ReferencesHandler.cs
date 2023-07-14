@@ -1,3 +1,4 @@
+using DotRush.Server.Containers;
 using DotRush.Server.Extensions;
 using DotRush.Server.Services;
 using Microsoft.CodeAnalysis.FindSymbols;
@@ -34,7 +35,7 @@ public class ReferencesHandler : ReferencesHandlerBase {
             .SelectMany(r => r.Locations)
             .Where(l => File.Exists(l.Document.FilePath));
 
-        var result = new List<Location>();
+        var result = new LocationCollection();
         foreach (var location in referenceLocations) {
             var locationSourceText = await location.Document.GetTextAsync(cancellationToken);
             var referenceLocation = location.ToLocation(locationSourceText);
@@ -42,6 +43,6 @@ public class ReferencesHandler : ReferencesHandlerBase {
                 result.Add(referenceLocation);
         }
 
-        return new LocationContainer(result);
+        return result.ToLocationContainer();
     }
 }

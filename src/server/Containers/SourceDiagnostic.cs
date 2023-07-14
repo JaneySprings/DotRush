@@ -1,6 +1,6 @@
 using Microsoft.CodeAnalysis;
 
-namespace DotRush.Server.Extensions;
+namespace DotRush.Server.Containers;
 
 public class SourceDiagnostic {
     public Diagnostic InnerDiagnostic { get; private set; }

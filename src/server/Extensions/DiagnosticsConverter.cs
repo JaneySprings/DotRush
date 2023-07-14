@@ -1,3 +1,4 @@
+using DotRush.Server.Containers;
 using Microsoft.CodeAnalysis;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 

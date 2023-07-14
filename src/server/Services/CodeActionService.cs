@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 using System.Reflection;
-using DotRush.Server.Extensions;
+using DotRush.Server.Containers;
 using Microsoft.CodeAnalysis.CodeFixes;
 
 namespace DotRush.Server.Services;
