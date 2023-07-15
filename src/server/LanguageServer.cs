@@ -3,7 +3,6 @@ using DotRush.Server.Handlers;
 using DotRush.Server.Logging;
 using DotRush.Server.Services;
 using Microsoft.CodeAnalysis;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
@@ -59,6 +58,7 @@ public class LanguageServer {
         services.AddSingleton<SolutionService>();
         services.AddSingleton<CodeActionService>();
         services.AddSingleton<CompilationService>();
+        services.AddSingleton<DecompilationService>();
         //TODO: Temp
         LoggingService.Initialize();
     }
