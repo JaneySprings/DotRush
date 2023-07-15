@@ -22,7 +22,7 @@ public class RenameHandler : RenameHandlerBase {
     }
 
     public override async Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken cancellationToken) {
-        var documentEdits = new Dictionary<DocumentUri, IEnumerable<TextEdit>>();
+        var documentEdits = new Dictionary<string, IEnumerable<TextEdit>>();
         var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
         var document = this.solutionService.Solution?.GetDocument(documentId);
         if (document == null || this.solutionService.Solution == null)
@@ -55,10 +55,13 @@ public class RenameHandler : RenameHandlerBase {
                 if (!edits.Any())
                     continue;
 
-                documentEdits.TryAdd(DocumentUri.From(newDocument.FilePath), edits);
+                if (!documentEdits.ContainsKey(newDocument.FilePath))
+                    documentEdits.Add(newDocument.FilePath, edits);
             }
         }
 
-        return new WorkspaceEdit() { Changes = documentEdits };
+        return new WorkspaceEdit() { 
+            Changes = documentEdits.Keys.ToDictionary(x => DocumentUri.From(x), x => documentEdits[x]) 
+        };
     }
 }

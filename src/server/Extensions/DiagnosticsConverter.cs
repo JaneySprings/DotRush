@@ -12,13 +12,7 @@ public static class DiagnosticsConverter {
                 continue;
 
             var diagnosticSource = diagnostic.InnerDiagnostic.Location.SourceTree?.FilePath;
-
-            // TODO: This is a temp hack, we should check relative path to the project root
-            if (diagnosticSource?.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") == true ||
-                diagnosticSource?.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") == true)
-                continue;
-
-            if (!Path.Exists(diagnosticSource))
+            if (!File.Exists(diagnosticSource))
                 continue;
 
             result.Add(new ProtocolModels.Diagnostic() {

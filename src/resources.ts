@@ -12,3 +12,5 @@ export const commandIdRun = "dotrush.run";
 export const taskDefinitionId = "dotrush.task";
 export const configIdadditionalBuildArguments = "additionalBuildArguments";
 export const configIdadditionalRunArguments = "additionalRunArguments";
+
+export const messageRuntimeNotFound = "Cannot find .NET Core runtime. Please install it from https://dotnet.microsoft.com/en-us/download/";
