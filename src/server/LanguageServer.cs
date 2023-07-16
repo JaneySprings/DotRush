@@ -54,7 +54,6 @@ public class LanguageServer {
 
     private static void ConfigureServices(IServiceCollection services) {
         services.AddSingleton<ConfigurationService>();
-        services.AddSingleton<AssemblyService>();
         services.AddSingleton<SolutionService>();
         services.AddSingleton<CodeActionService>();
         services.AddSingleton<CompilationService>();
@@ -66,7 +65,6 @@ public class LanguageServer {
     private static async Task StartedHandlerAsync(ILanguageServer server, CancellationToken cancellationToken) {
         var compilationService = server.Services.GetService<CompilationService>();
         var codeActionService = server.Services.GetService<CodeActionService>();
-        var assemblyService = server.Services.GetService<AssemblyService>();
 
         var configurationService = server.Services.GetService<ConfigurationService>();
         var solutionService = server.Services.GetService<SolutionService>();
@@ -83,13 +81,8 @@ public class LanguageServer {
         var workDoneProgress = await CreateWorkDoneObserverAsync();
 
         configurationService.Initialize(server.Configuration);
-        if (configurationService.IsRoslynAnalyzersEnabled()) {
-            assemblyService?.LoadAssemblies(configurationService.AdditionalRoslynAnalyzersPath());
-            compilationService?.InitializeAnalyzers();
-        }
 
         codeActionService?.InitializeCodeFixes();
-        assemblyService?.ClearAssemblyCache();
 
         solutionService.InitializeWorkspace();
         solutionService.AddWorkspaceFolders(workspaceFolders);
