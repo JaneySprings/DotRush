@@ -12,17 +12,17 @@ stages:
     condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
     dependsOn: []
     jobs:
-      - job: Build
+#//////////////////////////////////////////////////////////////////////
+#// Linux 
+#//////////////////////////////////////////////////////////////////////
+      - job: Build (Linux)
         pool:
           vmImage: ubuntu-latest
-        timeoutInMinutes: 20
+        timeoutInMinutes: 6
         variables:
           - name: version
             value: $[ replace(variables['Build.SourceBranch'], 'refs/tags/', '') ] 
         steps:
-#//////////////////////////////////////////////////////////////////////
-#// Prepare Environment 
-#//////////////////////////////////////////////////////////////////////
         - task: UseDotNet@2
           inputs:
             version: '8.x'
@@ -33,31 +33,72 @@ stages:
           displayName: 'Restore .NET tools'
         - script: npm install -g vsce
           displayName: 'Install VSCode builder'
-#//////////////////////////////////////////////////////////////////////
-#// Build
-#//////////////////////////////////////////////////////////////////////
-        - script: dotnet cake --target=vsix --configuration=release --arch=win-x64
-          displayName: 'Build VSIX (win-x64)'
-        - script: dotnet cake --target=vsix --configuration=release --arch=win-arm64
-          displayName: 'Build VSIX (win-arm64)'
-        - script: dotnet cake --target=vsix --configuration=release --arch=osx-x64
-          displayName: 'Build VSIX (osx-x64)'
-        - script: dotnet cake --target=vsix --configuration=release --arch=osx-arm64
-          displayName: 'Build VSIX (osx-arm64)'
+
         - script: dotnet cake --target=vsix --configuration=release --arch=linux-x64
           displayName: 'Build VSIX (linux-x64)'
         - script: dotnet cake --target=vsix --configuration=release --arch=linux-arm64
           displayName: 'Build VSIX (linux-arm64)'
-#//////////////////////////////////////////////////////////////////////
-#// Publish
-#//////////////////////////////////////////////////////////////////////
+
         - publish: '$(System.DefaultWorkingDirectory)/artifacts'
           displayName: 'Publish Artifacts'
           artifact: artifacts
-        # - task: GitHubRelease@1
-        #   inputs:
-        #     gitHubConnection: 'upstream'
-        #     repositoryName: '$(Build.Repository.Name)'
-        #     action: 'create'
-        #     tagSource: 'gitTag'
-        #     assets: 'artifacts/DotRush*'
+#//////////////////////////////////////////////////////////////////////
+#// MacOS 
+#//////////////////////////////////////////////////////////////////////
+      - job: Build (MacOS)
+        pool:
+          vmImage: macos-latest
+        timeoutInMinutes: 6
+        variables:
+          - name: version
+            value: $[ replace(variables['Build.SourceBranch'], 'refs/tags/', '') ] 
+        steps:
+        - task: UseDotNet@2
+          inputs:
+            version: '8.x'
+            includePreviewVersions: true
+        - script: npm install
+          displayName: 'Restore Node.js modules'
+        - script: dotnet tool restore
+          displayName: 'Restore .NET tools'
+        - script: npm install -g vsce
+          displayName: 'Install VSCode builder'
+
+        - script: dotnet cake --target=vsix --configuration=release --arch=osx-x64
+          displayName: 'Build VSIX (osx-x64)'
+        - script: dotnet cake --target=vsix --configuration=release --arch=osx-arm64
+          displayName: 'Build VSIX (osx-arm64)'
+
+        - publish: '$(System.DefaultWorkingDirectory)/artifacts'
+          displayName: 'Publish Artifacts'
+          artifact: artifacts
+#//////////////////////////////////////////////////////////////////////
+#// Windows 
+#//////////////////////////////////////////////////////////////////////
+      - job: Build (Windows)
+        pool:
+          vmImage: windows-latest
+        timeoutInMinutes: 6
+        variables:
+          - name: version
+            value: $[ replace(variables['Build.SourceBranch'], 'refs/tags/', '') ] 
+        steps:
+        - task: UseDotNet@2
+          inputs:
+            version: '8.x'
+            includePreviewVersions: true
+        - script: npm install
+          displayName: 'Restore Node.js modules'
+        - script: dotnet tool restore
+          displayName: 'Restore .NET tools'
+        - script: npm install -g vsce
+          displayName: 'Install VSCode builder'
+
+        - script: dotnet cake --target=vsix --configuration=release --arch=win-x64
+          displayName: 'Build VSIX (win-x64)'
+        - script: dotnet cake --target=vsix --configuration=release --arch=win-arm64
+          displayName: 'Build VSIX (win-arm64)'
+
+        - publish: '$(System.DefaultWorkingDirectory)/artifacts'
+          displayName: 'Publish Artifacts'
+          artifact: artifacts
