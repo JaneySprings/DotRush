@@ -14,7 +14,7 @@ public class CompilationService {
     public ImmutableArray<DiagnosticAnalyzer> DiagnosticAnalyzers { get; private set; }
     private readonly HashSet<string> documents;
     private readonly SolutionService solutionService;
-    private readonly AssemblyService assemblyService;
+    private readonly ConfigurationService configurationService;
 
     private CancellationTokenSource? analyzerDiagnosticsTokenSource;
     private CancellationToken AnalyzerDiagnosticsCancellationToken {
@@ -33,29 +33,29 @@ public class CompilationService {
         }
     }
 
-    public CompilationService(SolutionService solutionService, AssemblyService assemblyService) {
+    public CompilationService(SolutionService solutionService, ConfigurationService configurationService) {
+        this.configurationService = configurationService;
         this.solutionService = solutionService;
-        this.assemblyService = assemblyService;
         this.documents = new HashSet<string>();
         Diagnostics = new Dictionary<string, FileDiagnostics>();
         DiagnosticAnalyzers = ImmutableArray<DiagnosticAnalyzer>.Empty;
     }
 
-    public void InitializeAnalyzers() {
-        DiagnosticAnalyzers = this.assemblyService.Assemblies
-            .SelectMany(x => x.DefinedTypes)
-            .Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(DiagnosticAnalyzer)))
-            .Select(x => {
-                try {
-                    return Activator.CreateInstance(x.AsType()) as DiagnosticAnalyzer;
-                } catch (Exception ex) {
-                    LoggingService.Instance.LogError($"Creating instance of analyzer '{x.AsType()}' failed, error: {ex}");
-                    return null;
-                }
-            })
-            .Where(x => x != null)
-            .ToImmutableArray()!;
-    }
+    // public void InitializeAnalyzers() {
+    //     DiagnosticAnalyzers = this.assemblyService.Assemblies
+    //         .SelectMany(x => x.DefinedTypes)
+    //         .Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(DiagnosticAnalyzer)))
+    //         .Select(x => {
+    //             try {
+    //                 return Activator.CreateInstance(x.AsType()) as DiagnosticAnalyzer;
+    //             } catch (Exception ex) {
+    //                 LoggingService.Instance.LogError($"Creating instance of analyzer '{x.AsType()}' failed, error: {ex}");
+    //                 return null;
+    //             }
+    //         })
+    //         .Where(x => x != null)
+    //         .ToImmutableArray()!;
+    // }
 
     public void DiagnoseAsync(string currentDocumentPath, ITextDocumentLanguageServer proxy) {
         var cancellationToken = DiagnosticsCancellationToken;
@@ -95,7 +95,7 @@ public class CompilationService {
     }
 
     public void AnalyzerDiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy) {
-        if (DiagnosticAnalyzers.IsEmpty)
+        if (!this.configurationService.IsRoslynAnalyzersEnabled())
             return;
 
         var cancellationToken = AnalyzerDiagnosticsCancellationToken;
@@ -107,11 +107,19 @@ public class CompilationService {
             if (project == null)
                 return;
 
+            var diagnosticAnalyzers = project.AnalyzerReferences
+                .SelectMany(x => x.GetAnalyzers(project.Language))
+                .OfType<DiagnosticAnalyzer>()
+                .ToImmutableArray();
+            
+            if (diagnosticAnalyzers.IsEmpty)
+                return;
+
             var compilation = await project.GetCompilationAsync(cancellationToken);
             if (compilation == null)
                 return;
 
-            var compilationWithAnalyzers = compilation.WithAnalyzers(DiagnosticAnalyzers, project.AnalyzerOptions, cancellationToken);
+            var compilationWithAnalyzers = compilation.WithAnalyzers(diagnosticAnalyzers, project.AnalyzerOptions, cancellationToken);
             var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
             var fileDiagnostics = diagnostics.Where(d => d.Location.SourceTree?.FilePath != null && d.Location.SourceTree?.FilePath == documentPath);
 

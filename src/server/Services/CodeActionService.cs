@@ -8,16 +8,22 @@ namespace DotRush.Server.Services;
 public class CodeActionService {
     public CodeActionCollection CodeActions { get; }
     public ImmutableArray<CodeFixProvider> CodeFixProviders { get; private set; }
-    private readonly AssemblyService assemblyService;
 
-    public CodeActionService(AssemblyService assemblyService) {
-        this.assemblyService = assemblyService;
+    private readonly string[] embeddedAnalyzerReferences = new string[] {
+        "Microsoft.CodeAnalysis.CSharp.Features",
+        "Microsoft.CodeAnalysis.CSharp.Workspaces",
+        "Microsoft.CodeAnalysis.Workspaces",
+        "Microsoft.CodeAnalysis.Features"
+    };
+
+    public CodeActionService() {
         CodeActions = new CodeActionCollection();
         CodeFixProviders = ImmutableArray<CodeFixProvider>.Empty;
     }
 
     public void InitializeCodeFixes() {
-        CodeFixProviders = this.assemblyService.Assemblies
+        CodeFixProviders = this.embeddedAnalyzerReferences
+            .Select(x => Assembly.Load(x))
             .SelectMany(x => x.DefinedTypes)
             .Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(CodeFixProvider)))
             .Select(x => {
