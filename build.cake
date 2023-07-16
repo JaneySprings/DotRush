@@ -20,11 +20,13 @@ Setup(context => {
 	var minor = DateTime.Now.Month < 7 ? "1" : "2";
 	var build = DateTime.Now.DayOfYear;
 	version = $"{major}.{minor}.{major}{build:000}";
+	EnsureDirectoryExists(ArtifactsDirectory);
 });
 
 Task("clean")
 	.Does(() => CleanDirectory(ExtensionStagingDirectory))
-	.Does(() => CleanDirectory(ArtifactsDirectory));
+	.Does(() => CleanDirectories(_Path.Combine(RootDirectory, "src", "**", "bin")))
+	.Does(() => CleanDirectories(_Path.Combine(RootDirectory, "src", "**", "obj")));
 
 Task("server").Does(() => DotNetBuild(ServerProjectFilePath, new DotNetBuildSettings {
 	Runtime = runtime,
