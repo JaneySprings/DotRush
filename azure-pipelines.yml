@@ -1,0 +1,60 @@
+trigger:
+  batch: true
+  tags:
+    include:
+    - '*'
+
+stages:
+  - stage: Publish
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
+    dependsOn: []
+    jobs:
+      - job: Build
+        pool:
+          vmImage: ubuntu-latest
+        timeoutInMinutes: 20
+        variables:
+          - name: version
+            value: $[ replace(variables['Build.SourceBranch'], 'refs/tags/', '') ] 
+        steps:
+#//////////////////////////////////////////////////////////////////////
+#// Prepare Environment 
+#//////////////////////////////////////////////////////////////////////
+        - task: UseDotNet@2
+          inputs:
+            version: '8.x'
+            includePreviewVersions: true
+        - script: npm install
+          displayName: 'Restore Node.js modules'
+        - script: dotnet tool restore
+          displayName: 'Restore .NET tools'
+        - script: npm install -g vsce
+          displayName: 'Install VSCode builder'
+#//////////////////////////////////////////////////////////////////////
+#// Build
+#//////////////////////////////////////////////////////////////////////
+        - script: dotnet cake --target=vsix --configuration=release --runtime=win-x64
+          displayName: 'Build VSIX (win-x64)'
+        - script: dotnet cake --target=vsix --configuration=release --runtime=win-arm64
+          displayName: 'Build VSIX (win-arm64)'
+        - script: dotnet cake --target=vsix --configuration=release --runtime=osx-x64
+          displayName: 'Build VSIX (osx-x64)'
+        - script: dotnet cake --target=vsix --configuration=release --runtime=osx-arm64
+          displayName: 'Build VSIX (osx-arm64)'
+        - script: dotnet cake --target=vsix --configuration=release --runtime=linux-x64
+          displayName: 'Build VSIX (linux-x64)'
+        - script: dotnet cake --target=vsix --configuration=release --runtime=linux-arm64
+          displayName: 'Build VSIX (linux-arm64)'
+#//////////////////////////////////////////////////////////////////////
+#// Publish
+#//////////////////////////////////////////////////////////////////////
+        - publish: '$(System.DefaultWorkingDirectory)/artifacts'
+          displayName: 'Publish Artifacts'
+          artifact: artifacts
+        # - task: GitHubRelease@1
+        #   inputs:
+        #     gitHubConnection: 'upstream'
+        #     repositoryName: '$(Build.Repository.Name)'
+        #     action: 'create'
+        #     tagSource: 'gitTag'
+        #     assets: 'artifacts/DotRush*'
