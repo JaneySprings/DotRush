@@ -41,7 +41,7 @@ stages:
 
         - publish: '$(System.DefaultWorkingDirectory)/artifacts'
           displayName: 'Publish Artifacts'
-          artifact: artifacts
+          artifact: 'Linux Build'
 #//////////////////////////////////////////////////////////////////////
 #// MacOS 
 #//////////////////////////////////////////////////////////////////////
@@ -71,14 +71,14 @@ stages:
 
         - publish: '$(System.DefaultWorkingDirectory)/artifacts'
           displayName: 'Publish Artifacts'
-          artifact: artifacts
+          artifact: 'MacOS Build'
 #//////////////////////////////////////////////////////////////////////
 #// Windows 
 #//////////////////////////////////////////////////////////////////////
       - job: Windows
         pool:
           vmImage: windows-latest
-        timeoutInMinutes: 6
+        timeoutInMinutes: 10
         variables:
           - name: version
             value: $[ replace(variables['Build.SourceBranch'], 'refs/tags/', '') ] 
@@ -101,4 +101,4 @@ stages:
 
         - publish: '$(System.DefaultWorkingDirectory)/artifacts'
           displayName: 'Publish Artifacts'
-          artifact: artifacts
+          artifact: 'Windows Build'
