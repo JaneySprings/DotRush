@@ -38,7 +38,8 @@ class DotNetTaskProvider {
         const args = additionalArgs ?? '';
         const command = `dotnet ${target} "${projectFile.fsPath}" ${args}`;
         return new vscode.Task({ type: `${res.extensionId}.${res.taskDefinitionId}` }, 
-            vscode.TaskScope.Workspace, target, res.extensionId, new vscode.ShellExecution(command)
+            vscode.TaskScope.Workspace, target, res.extensionId, new vscode.ShellExecution(command),
+            "$dotrush.problemMatcher"
         );
     }
 }

@@ -69,6 +69,25 @@
         }
       ]
     },
+    "problemMatchers": [
+      {
+        "name": "dotrush.problemMatcher",
+        "applyTo": "closedDocuments",
+        "source": "dotrush",
+        "owner": "dotrush",
+        "fileLocation": [
+          "absolute"
+        ],
+        "pattern": {
+          "regexp": "^(.*.cs)\\((\\d+),(\\d+)\\):.*?(error|warning)\\s.*?:\\s(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    ],
     "configuration":[
       {
         "title": "DotRush",
@@ -87,11 +106,6 @@
             "type": "boolean",
             "default": false,
             "description": "Enable Roslyn analyzers (may affect performance)."
-          },
-          "dotrush.additionalRoslynAnalyzersPath": {
-            "type": "string",
-            "default": "",
-            "description": "Set an additional path to the Roslyn analyzer assemblies directory."
           }
         }
       }

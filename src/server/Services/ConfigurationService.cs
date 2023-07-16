@@ -19,7 +19,6 @@ public class ConfigurationService {
 
     public Dictionary<string, string> AdditionalWorkspaceArguments() => ConfigurationService.ToWorkspaceOptions(configuration?.GetValue<string>(AdditionalWorkspaceArgumentsId));
     public bool IsRoslynAnalyzersEnabled() => configuration?.GetValue<bool>(EnableRoslynAnalyzersId) ?? false;
-    public string AdditionalRoslynAnalyzersPath() => configuration?.GetValue<string>(AdditionalRoslynAnalyzersPathId) ?? string.Empty;
 
     private static Dictionary<string, string> ToWorkspaceOptions(string? options) {
         if (string.IsNullOrEmpty(options))
