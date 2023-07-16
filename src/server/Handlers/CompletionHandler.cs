@@ -9,7 +9,6 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using RoslynCompletionItem = Microsoft.CodeAnalysis.Completion.CompletionItem;
 using RoslynCompletionService = Microsoft.CodeAnalysis.Completion.CompletionService;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using System.ComponentModel.DataAnnotations;
 
 namespace DotRush.Server.Handlers;
 
@@ -34,37 +33,38 @@ public class CompletionHandler : CompletionHandlerBase {
 
     public override async Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken) {
         this.compilationService.CancelAnalyzerDiagnostics();
+        return await ServerExtensions.SafeHandlerAsync<CompletionList>(new CompletionList(), async () => {
+            var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
+            this.targetDocument = this.solutionService.Solution?.GetDocument(documentId);
+            this.roslynCompletionService = RoslynCompletionService.GetService(targetDocument);
+            if (this.roslynCompletionService == null || this.targetDocument == null)
+                return new CompletionList(Enumerable.Empty<CompletionItem>());
 
-        var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
-        this.targetDocument = this.solutionService.Solution?.GetDocument(documentId);
-        this.roslynCompletionService = RoslynCompletionService.GetService(targetDocument);
-        if (this.roslynCompletionService == null || this.targetDocument == null)
-            return new CompletionList(Enumerable.Empty<CompletionItem>());
+            var sourceText = await this.targetDocument.GetTextAsync(cancellationToken);
+            var offset = request.Position.ToOffset(sourceText);
 
-        var sourceText = await this.targetDocument.GetTextAsync(cancellationToken);
-        var offset = request.Position.ToOffset(sourceText);
+            var completions = await this.roslynCompletionService.GetCompletionsAsync(this.targetDocument, offset, cancellationToken: cancellationToken);
+            if (completions == null)
+                return new CompletionList(Enumerable.Empty<CompletionItem>());
 
-        var completions = await this.roslynCompletionService.GetCompletionsAsync(this.targetDocument, offset, cancellationToken: cancellationToken);
-        if (completions == null)
-            return new CompletionList(Enumerable.Empty<CompletionItem>());
+            this.codeAnalysisCompletionItems = completions.ItemsList;
+            var completionItems = new List<CompletionItem>();
 
-        this.codeAnalysisCompletionItems = completions.ItemsList;
-        var completionItems = new List<CompletionItem>();
+            foreach (var item in completions.ItemsList) {
+                completionItems.Add(new CompletionItem() {
+                    Label = item.DisplayTextPrefix + item.DisplayText + item.DisplayTextSuffix,
+                    SortText = item.SortText,
+                    FilterText = item.FilterText,
+                    Detail = item.InlineDescription,
+                    Data = item.GetHashCode(),
+                    Kind = item.Tags[0].ToCompletionItemKind(),
+                    Preselect = item.Rules.MatchPriority == Microsoft.CodeAnalysis.Completion.MatchPriority.Preselect,
+                    TextEdit = item.IsComplexTextEdit ? TextEditOrInsertReplaceEdit.From(ArrangeTextEdit()) : null
+                });
+            }
 
-        foreach (var item in completions.ItemsList) {
-            completionItems.Add(new CompletionItem() {
-                Label = item.DisplayTextPrefix + item.DisplayText + item.DisplayTextSuffix,
-                SortText = item.SortText,
-                FilterText = item.FilterText,
-                Detail = item.InlineDescription,
-                Data = item.GetHashCode(),
-                Kind = item.Tags[0].ToCompletionItemKind(),
-                Preselect = item.Rules.MatchPriority == Microsoft.CodeAnalysis.Completion.MatchPriority.Preselect,
-                TextEdit = item.IsComplexTextEdit ? TextEditOrInsertReplaceEdit.From(ArrangeTextEdit()) : null
-            });
-        }
-
-        return new CompletionList(completionItems);
+            return new CompletionList(completionItems);
+        });
     }
 
     public override async Task<CompletionItem> Handle(CompletionItem request, CancellationToken cancellationToken) {

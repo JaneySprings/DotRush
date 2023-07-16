@@ -11,7 +11,6 @@ namespace DotRush.Server.Services;
 
 public class CompilationService {
     public Dictionary<string, FileDiagnostics> Diagnostics { get; }
-    public ImmutableArray<DiagnosticAnalyzer> DiagnosticAnalyzers { get; private set; }
     private readonly HashSet<string> documents;
     private readonly SolutionService solutionService;
     private readonly ConfigurationService configurationService;
@@ -38,24 +37,7 @@ public class CompilationService {
         this.solutionService = solutionService;
         this.documents = new HashSet<string>();
         Diagnostics = new Dictionary<string, FileDiagnostics>();
-        DiagnosticAnalyzers = ImmutableArray<DiagnosticAnalyzer>.Empty;
     }
-
-    // public void InitializeAnalyzers() {
-    //     DiagnosticAnalyzers = this.assemblyService.Assemblies
-    //         .SelectMany(x => x.DefinedTypes)
-    //         .Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(DiagnosticAnalyzer)))
-    //         .Select(x => {
-    //             try {
-    //                 return Activator.CreateInstance(x.AsType()) as DiagnosticAnalyzer;
-    //             } catch (Exception ex) {
-    //                 LoggingService.Instance.LogError($"Creating instance of analyzer '{x.AsType()}' failed, error: {ex}");
-    //                 return null;
-    //             }
-    //         })
-    //         .Where(x => x != null)
-    //         .ToImmutableArray()!;
-    // }
 
     public void DiagnoseAsync(string currentDocumentPath, ITextDocumentLanguageServer proxy) {
         var cancellationToken = DiagnosticsCancellationToken;

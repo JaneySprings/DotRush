@@ -10,9 +10,7 @@ using Microsoft.CodeAnalysis.Text;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using FullTypeName = ICSharpCode.Decompiler.TypeSystem.FullTypeName;
-using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using ICSharpCode.Decompiler.Disassembler;
 using System.Text;
 
 namespace DotRush.Server.Services;
@@ -49,9 +47,12 @@ public class DecompilationService {
                 return null;
 
             var resolver = new UniversalAssemblyResolver(portableExecutableReference.FilePath, false, string.Empty);
-            var decompiler = new CSharpDecompiler(portableExecutableReference.FilePath, resolver, new DecompilerSettings() {
-                ShowXmlDocumentation = false,
+            var decompiler = new CSharpDecompiler(portableExecutableReference.FilePath, resolver, new DecompilerSettings(LanguageVersion.Latest) {
+                DecompileMemberBodies = false,
+                AsyncAwait = false,
             });
+
+            decompiler.CancellationToken = cancellationToken;
             decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 
             var decompiledSourceTextBuilder = new StringBuilder(decompiler.DecompileTypeAsString(new FullTypeName(namedTypeSymbol.ToDisplayString())));
