@@ -7,7 +7,7 @@ string version;
 string runtime = Argument<string>("arch", "osx-arm64");
 string target = Argument<string>("target", "vsix");
 string configuration = Argument<string>("configuration", "debug");
-string roslynVersion = Argument<string>("roslyn", "4.4.0");
+string roslynVersion = Argument<string>("roslyn", "4.6.0");
 
 public string RootDirectory => MakeAbsolute(Directory(".")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
