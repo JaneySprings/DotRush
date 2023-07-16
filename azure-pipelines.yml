@@ -3,6 +3,9 @@ trigger:
   tags:
     include:
     - '*'
+  branches:
+    include:
+    - main
 
 stages:
   - stage: Publish
