@@ -6,6 +6,7 @@
 		<OutputType>Exe</OutputType>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<SelfContained>false</SelfContained>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 		<OutputPath>..\..\extension\bin</OutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
