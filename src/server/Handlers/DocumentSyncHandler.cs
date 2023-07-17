@@ -48,7 +48,6 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         this.compilationService.AddDocument(filePath);
         this.compilationService.DiagnoseAsync(filePath, serverFacade.TextDocument);
         this.compilationService.AnalyzerDiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument);
-        this.codeActionService.CodeActions.ClearWithFilePath(filePath);
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
@@ -57,7 +56,6 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         this.compilationService.AddDocument(filePath);
         this.compilationService.DiagnoseAsync(filePath, serverFacade.TextDocument);
         this.compilationService.AnalyzerDiagnoseAsync(filePath, serverFacade.TextDocument);
-        this.codeActionService.CodeActions.ClearWithFilePath(filePath);
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
@@ -66,7 +64,6 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         this.compilationService.CancelDiagnostics();
         this.compilationService.CancelAnalyzerDiagnostics();
         this.compilationService.RemoveDocument(filePath, serverFacade.TextDocument);
-        this.codeActionService.CodeActions.ClearWithFilePath(filePath);
         return Unit.Task;
     }
     public  override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {

@@ -6,8 +6,8 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using CodeAnalysis = Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Text;
+using CodeAnalysisCodeAction = Microsoft.CodeAnalysis.CodeActions.CodeAction;
+using DotRush.Server.Containers;
 
 namespace DotRush.Server.Handlers;
 
@@ -16,7 +16,11 @@ public class CodeActionHandler : CodeActionHandlerBase {
     private readonly CompilationService compilationService;
     private readonly CodeActionService codeActionService;
 
+    private List<CodeAnalysisCodeAction> codeActionsCollection;
+
+
     public CodeActionHandler(SolutionService solutionService, CompilationService compilationService, CodeActionService codeActionService) {
+        this.codeActionsCollection = new List<CodeAnalysisCodeAction>();
         this.solutionService = solutionService;
         this.compilationService = compilationService;
         this.codeActionService = codeActionService;
@@ -32,33 +36,30 @@ public class CodeActionHandler : CodeActionHandlerBase {
     public override async Task<CommandOrCodeActionContainer> Handle(CodeActionParams request, CancellationToken cancellationToken) {
         return await ServerExtensions.SafeHandlerAsync<CommandOrCodeActionContainer>(new CommandOrCodeActionContainer(), async () => {
             var filePath = request.TextDocument.Uri.GetFileSystemPath();         
-            var result = new List<CodeAction?>();
-            var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(filePath);
-            if (documentIds == null)
+            this.codeActionsCollection.Clear();
+
+            var result = new List<CodeAction>();
+            var fileDiagnostic = GetDiagnosticByRange(request.Range, filePath);
+            var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.InnerDiagnostic.Id);
+            if (fileDiagnostic == null || codeFixProviders?.Any() != true)
                 return new CommandOrCodeActionContainer();
 
-            this.codeActionService.CodeActions.ClearWithFilePath(filePath);
-            foreach (var documentId in documentIds) {
-                var document = this.solutionService.Solution?.GetDocument(documentId);
-                if (document?.FilePath == null)
-                    return new CommandOrCodeActionContainer();
+            var project = this.solutionService.Solution?.GetProject(fileDiagnostic.SourceId);
+            if (project == null)
+                return new CommandOrCodeActionContainer();
 
-                var sourceText = await document.GetTextAsync(cancellationToken);
-                var fileDiagnostic = GetDiagnosticByRange(request.Range, sourceText, document);
-                var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.Id);
-                if (fileDiagnostic == null || codeFixProviders?.Any() != true)
-                    return new CommandOrCodeActionContainer();
+            var document = project.Documents.FirstOrDefault(x => x.FilePath == filePath);
+            if (document == null)
+                return new CommandOrCodeActionContainer();
 
-                foreach (var codeFixProvider in codeFixProviders) {
-                    await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, fileDiagnostic, (a, _) => {
-                        var id = this.codeActionService.CodeActions.AddCodeAction(a, fileDiagnostic.Location.SourceSpan, document.FilePath);
-                        if (id != -1)
-                            result.Add(a.ToCodeAction(id));
-                    }, cancellationToken));
-                }
+            foreach (var codeFixProvider in codeFixProviders) {
+                await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, fileDiagnostic.InnerDiagnostic, (a, _) => {
+                    codeActionsCollection.Add(a);
+                    result.Add(a.ToCodeAction());
+                }, cancellationToken));
             }
 
-            return new CommandOrCodeActionContainer(result.Where(x => x != null).Select(x => new CommandOrCodeAction(x!)));
+            return new CommandOrCodeActionContainer(result.Select(x => new CommandOrCodeAction(x!)));
         });
     }
     public override async Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken) {
@@ -66,7 +67,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
             if (request.Data == null)
                 return request;
 
-            var codeAction = this.codeActionService.CodeActions.GetCodeAction(request.Data.ToObject<int>());
+            var codeAction = this.codeActionsCollection.FirstOrDefault(x => x.EquivalenceKey == request.Data.ToObject<string>());
             if (codeAction == null)
                 return request;
 
@@ -81,14 +82,14 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
         return this.codeActionService.CodeFixProviders.Where(x => x.FixableDiagnosticIds.ContainsWithMapping(diagnosticId));
     }
-    private CodeAnalysis.Diagnostic? GetDiagnosticByRange(ProtocolModels.Range range, SourceText sourceText, Document document) {
-        if (document.FilePath == null)
+    private SourceDiagnostic? GetDiagnosticByRange(ProtocolModels.Range range, string documentPath) {
+        if (documentPath == null)
             return null;
-        if (!this.compilationService.Diagnostics.ContainsKey(document.FilePath))
+        if (!this.compilationService.Diagnostics.ContainsKey(documentPath))
             return null;
 
-        return this.compilationService.Diagnostics[document.FilePath]
-            .GetTotalDiagnostics()
-            .FirstOrDefault(x => x.Location.SourceSpan.Contains(range.ToTextSpan(sourceText)));
+        return this.compilationService.Diagnostics[documentPath]
+            .GetTotalDiagnosticWrappers()
+            .FirstOrDefault(x => x.InnerDiagnostic.Location.GetLineSpan().Span.ToRange() == range);
     }
 }

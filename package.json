@@ -114,7 +114,7 @@
   "scripts": {
     "vscode:prepublish": "npm run package",
     "compile": "webpack",
-    "watch": "webpack --watch",
+    "watch": "tsc -watch -p ./src/tsconfig.json",
     "package": "webpack --mode production --devtool hidden-source-map"
   },
   "devDependencies": {
