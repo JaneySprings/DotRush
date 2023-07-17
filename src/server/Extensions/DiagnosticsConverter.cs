@@ -19,7 +19,7 @@ public static class DiagnosticsConverter {
                 Message = diagnostic.InnerDiagnostic.GetMessage(),
                 Range = diagnostic.InnerDiagnostic.Location.GetLineSpan().Span.ToRange(),
                 Severity = diagnostic.InnerDiagnostic.Severity.ToServerSeverity(),
-                Source = diagnostic.Source ?? diagnosticSource,
+                Source = diagnostic.SourceName ?? diagnosticSource,
                 Code = diagnostic.InnerDiagnostic.Id,
             });
         }

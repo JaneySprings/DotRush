@@ -82,8 +82,6 @@ public class LanguageServer {
 
         configurationService.Initialize(server.Configuration);
 
-        codeActionService?.InitializeCodeFixes();
-
         solutionService.InitializeWorkspace();
         solutionService.AddWorkspaceFolders(workspaceFolders);
         solutionService.ReloadSolutionAsync(workDoneProgress);

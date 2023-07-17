@@ -1,27 +1,17 @@
 using System.Collections.Immutable;
 using System.Reflection;
-using DotRush.Server.Containers;
 using Microsoft.CodeAnalysis.CodeFixes;
 
 namespace DotRush.Server.Services;
 
 public class CodeActionService {
-    public CodeActionCollection CodeActions { get; }
-    public ImmutableArray<CodeFixProvider> CodeFixProviders { get; private set; }
+    public ImmutableArray<CodeFixProvider> CodeFixProviders { get; }
 
     private readonly string[] embeddedAnalyzerReferences = new string[] {
         "Microsoft.CodeAnalysis.CSharp.Features",
-        "Microsoft.CodeAnalysis.CSharp.Workspaces",
-        "Microsoft.CodeAnalysis.Workspaces",
-        "Microsoft.CodeAnalysis.Features"
     };
 
     public CodeActionService() {
-        CodeActions = new CodeActionCollection();
-        CodeFixProviders = ImmutableArray<CodeFixProvider>.Empty;
-    }
-
-    public void InitializeCodeFixes() {
         CodeFixProviders = this.embeddedAnalyzerReferences
             .Select(x => Assembly.Load(x))
             .SelectMany(x => x.DefinedTypes)

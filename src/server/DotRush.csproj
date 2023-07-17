@@ -7,7 +7,6 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-		<SelfContained>true</SelfContained>
 		<OutputPath>..\..\extension\bin</OutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 	</PropertyGroup>
@@ -20,11 +19,7 @@
 		<PackageReference Include="Microsoft.Build" Version="17.5.0" ExcludeAssets="runtime"/>
 		<PackageReference Include="Microsoft.Build.Framework" Version="17.5.0" ExcludeAssets="runtime"/>
 		<PackageReference Include="Microsoft.Build.Locator" Version="1.5.5" />
-		<PackageReference Include="Microsoft.CodeAnalysis" Version="$(CodeAnalysisVersion)" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(CodeAnalysisVersion)" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(CodeAnalysisVersion)" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(CodeAnalysisVersion)" />
-		<PackageReference Include="Microsoft.CodeAnalysis.Features" Version="$(CodeAnalysisVersion)" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(CodeAnalysisVersion)" />
 	</ItemGroup>
 </Project>
