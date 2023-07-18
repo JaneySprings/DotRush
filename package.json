@@ -106,6 +106,19 @@
             "type": "boolean",
             "default": false,
             "description": "Enable Roslyn analyzers (may affect performance)."
+          },
+
+          "dotrush.decompiler.decompileMemberBodies": {
+            "type": "boolean",
+            "default": false
+          },
+          "dotrush.decompiler.showXmlDocumentation": {
+            "type": "boolean",
+            "default": true
+          },
+          "dotrush.decompiler.asyncAwait": {
+            "type": "boolean",
+            "default": false
           }
         }
       }

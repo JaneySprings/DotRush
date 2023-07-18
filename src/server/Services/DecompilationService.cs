@@ -18,13 +18,15 @@ namespace DotRush.Server.Services;
 public class DecompilationService {
     private readonly string decompilationCacheDirectory;
 
+    private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;
     private readonly SolutionService solutionService;
 
 
-    public DecompilationService(ILanguageServerFacade serverFacade, SolutionService solutionService) {
+    public DecompilationService(ILanguageServerFacade serverFacade, SolutionService solutionService, ConfigurationService configurationService) {
         this.serverFacade = serverFacade;
         this.solutionService = solutionService;
+        this.configurationService = configurationService;
         this.decompilationCacheDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "decompilation");
     
         if (!Directory.Exists(this.decompilationCacheDirectory))
@@ -47,10 +49,7 @@ public class DecompilationService {
                 return null;
 
             var resolver = new UniversalAssemblyResolver(portableExecutableReference.FilePath, false, string.Empty);
-            var decompiler = new CSharpDecompiler(portableExecutableReference.FilePath, resolver, new DecompilerSettings(LanguageVersion.Latest) {
-                DecompileMemberBodies = false,
-                AsyncAwait = false,
-            });
+            var decompiler = new CSharpDecompiler(portableExecutableReference.FilePath, resolver, this.configurationService.DecompilerSettings());
 
             decompiler.CancellationToken = cancellationToken;
             decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
