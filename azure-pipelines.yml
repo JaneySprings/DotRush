@@ -102,3 +102,34 @@ stages:
         - publish: '$(System.DefaultWorkingDirectory)/artifacts'
           displayName: 'Publish Artifacts'
           artifact: 'Windows Build'
+
+#//////////////////////////////////////////////////////////////////////
+#// Copy to one folder and publish 
+#//////////////////////////////////////////////////////////////////////
+      - job: Publish
+        dependsOn: [Linux, MacOS, Windows]
+        pool:
+          vmImage: ubuntu-latest
+        timeoutInMinutes: 4
+        variables:
+          - name: version
+            value: $[ replace(variables['Build.SourceBranch'], 'refs/tags/', '') ] 
+        steps:
+        - download: current
+          artifact: 'Linux Build'
+        - download: current
+          artifact: 'MacOS Build'
+        - download: current
+          artifact: 'Windows Build'
+        - task: CopyFiles@2
+          inputs:
+            contents: '**/*.vsix'
+            targetFolder: '$(Build.ArtifactStagingDirectory)'
+        - task: GitHubRelease@1
+          inputs:
+            gitHubConnection: 'JaneySprings'
+            repositoryName: '$(Build.Repository.Name)'
+            action: 'create'
+            tagSource: 'gitTag'
+            assets: '$(Build.ArtifactStagingDirectory)/*.vsix'
+        
