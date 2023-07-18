@@ -1,3 +1,4 @@
+using ICSharpCode.Decompiler;
 using Microsoft.Extensions.Configuration;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 
@@ -5,10 +6,15 @@ namespace DotRush.Server;
 
 public class ConfigurationService {
     private const string ExtensionId = "dotrush";
+    private const string Decompiler = "decompiler";
 
     private const string EnableRoslynAnalyzersId = $"{ExtensionId}:enableRoslynAnalyzers";
     private const string AdditionalRoslynAnalyzersPathId = $"{ExtensionId}:additionalRoslynAnalyzersPath";
     private const string AdditionalWorkspaceArgumentsId = $"{ExtensionId}:additionalWorkspaceArguments";
+
+    private const string DecompileMemberBodiesId = $"{ExtensionId}:{Decompiler}:decompileMemberBodies";
+    private const string ShowXmlDocumentationId = $"{ExtensionId}:{Decompiler}:showXmlDocumentation";
+    private const string AsyncAwaitId = $"{ExtensionId}:{Decompiler}:asyncAwait";
 
     private ILanguageServerConfiguration? configuration;
 
@@ -18,6 +24,11 @@ public class ConfigurationService {
 
     public Dictionary<string, string> AdditionalWorkspaceArguments() => ConfigurationService.ToWorkspaceOptions(configuration?.GetValue<string>(AdditionalWorkspaceArgumentsId));
     public bool IsRoslynAnalyzersEnabled() => configuration?.GetValue<bool>(EnableRoslynAnalyzersId) ?? false;
+    public DecompilerSettings DecompilerSettings() => new() {
+        DecompileMemberBodies = configuration?.GetValue<bool>(DecompileMemberBodiesId) ?? false,
+        ShowXmlDocumentation = configuration?.GetValue<bool>(ShowXmlDocumentationId) ?? true,
+        AsyncAwait = configuration?.GetValue<bool>(AsyncAwaitId) ?? false,
+    };
 
     private static Dictionary<string, string> ToWorkspaceOptions(string? options) {
         if (string.IsNullOrEmpty(options))

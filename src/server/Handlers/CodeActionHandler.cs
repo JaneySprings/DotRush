@@ -90,6 +90,6 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
         return this.compilationService.Diagnostics[documentPath]
             .GetTotalDiagnosticWrappers()
-            .FirstOrDefault(x => x.InnerDiagnostic.Location.GetLineSpan().Span.ToRange() == range);
+            .FirstOrDefault(x => x.InnerDiagnostic.Location.ToRange() == range);
     }
 }

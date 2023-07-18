@@ -17,7 +17,7 @@ public static class DiagnosticsConverter {
 
             result.Add(new ProtocolModels.Diagnostic() {
                 Message = diagnostic.InnerDiagnostic.GetMessage(),
-                Range = diagnostic.InnerDiagnostic.Location.GetLineSpan().Span.ToRange(),
+                Range = diagnostic.InnerDiagnostic.Location.ToRange(),
                 Severity = diagnostic.InnerDiagnostic.Severity.ToServerSeverity(),
                 Source = diagnostic.SourceName ?? diagnosticSource,
                 Code = diagnostic.InnerDiagnostic.Id,

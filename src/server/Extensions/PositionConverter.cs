@@ -1,4 +1,3 @@
-using DotRush.Server.Services;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Text;
@@ -31,6 +30,10 @@ public static class PositionConverter {
             span.Start.ToPosition(sourceText),
             span.End.ToPosition(sourceText)
         );
+    }
+
+    public static ProtocolModels.Range ToRange(this Location location) {
+        return location.GetLineSpan().Span.ToRange();
     }
 
     public static ProtocolModels.Location? ToLocation(this Location location) {
