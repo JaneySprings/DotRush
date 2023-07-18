@@ -127,7 +127,7 @@ stages:
             targetFolder: '$(Build.ArtifactStagingDirectory)'
         - task: GitHubRelease@1
           inputs:
-            gitHubConnection: 'JaneySprings'
+            gitHubConnection: 'github.com_JaneySprings'
             repositoryName: '$(Build.Repository.Name)'
             action: 'create'
             tagSource: 'gitTag'
