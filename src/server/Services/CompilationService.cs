@@ -91,7 +91,6 @@ public class CompilationService {
 
             var diagnosticAnalyzers = project.AnalyzerReferences
                 .SelectMany(x => x.GetAnalyzers(project.Language))
-                .OfType<DiagnosticAnalyzer>()
                 .ToImmutableArray();
             
             if (diagnosticAnalyzers.IsEmpty)
