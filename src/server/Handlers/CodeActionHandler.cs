@@ -14,15 +14,17 @@ namespace DotRush.Server.Handlers;
 public class CodeActionHandler : CodeActionHandlerBase {
     private readonly SolutionService solutionService;
     private readonly CompilationService compilationService;
+    private readonly ConfigurationService configurationService;
     private readonly CodeActionService codeActionService;
 
     private List<CodeAnalysisCodeAction> codeActionsCollection;
 
 
-    public CodeActionHandler(SolutionService solutionService, CompilationService compilationService, CodeActionService codeActionService) {
+    public CodeActionHandler(SolutionService solutionService, CompilationService compilationService, CodeActionService codeActionService, ConfigurationService configurationService) {
         this.codeActionsCollection = new List<CodeAnalysisCodeAction>();
         this.solutionService = solutionService;
         this.compilationService = compilationService;
+        this.configurationService = configurationService;
         this.codeActionService = codeActionService;
     }
 
@@ -40,8 +42,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
             var result = new List<CodeAction>();
             var fileDiagnostic = GetDiagnosticByRange(request.Range, filePath);
-            var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic?.InnerDiagnostic.Id);
-            if (fileDiagnostic == null || codeFixProviders?.Any() != true)
+            if (fileDiagnostic == null)
                 return new CommandOrCodeActionContainer();
 
             var project = this.solutionService.Solution?.GetProject(fileDiagnostic.SourceId);
@@ -50,6 +51,13 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
             var document = project.Documents.FirstOrDefault(x => x.FilePath == filePath);
             if (document == null)
+                return new CommandOrCodeActionContainer();
+
+            if (this.configurationService.IsRoslynAnalyzersEnabled())
+                this.codeActionService.AddCodeFixProviders(project);
+
+            var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic.InnerDiagnostic.Id);
+            if (codeFixProviders == null)
                 return new CommandOrCodeActionContainer();
 
             foreach (var codeFixProvider in codeFixProviders) {
@@ -80,7 +88,9 @@ public class CodeActionHandler : CodeActionHandlerBase {
         if (diagnosticId == null)
             return null;
 
-        return this.codeActionService.CodeFixProviders.Where(x => x.FixableDiagnosticIds.ContainsWithMapping(diagnosticId));
+        return this.codeActionService
+            .GetCodeFixProviders()
+            .Where(x => x.FixableDiagnosticIds.ContainsWithMapping(diagnosticId));
     }
     private SourceDiagnostic? GetDiagnosticByRange(ProtocolModels.Range range, string documentPath) {
         if (documentPath == null)
