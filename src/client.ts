@@ -1,9 +1,8 @@
 import { LanguageClient, ServerOptions, TransportKind } from "vscode-languageclient/node";
-import { extensions } from "vscode";
-import * as res from './resources';
-import * as vscode from 'vscode';
-import * as path from 'path';
+import { ExtensionContext, extensions } from "vscode";
 import { RuntimeController } from "./selector";
+import * as res from './resources';
+import * as path from 'path';
 
 
 export class ClientController {
@@ -26,12 +25,15 @@ export class ClientController {
             progressOnInitialization: true,
             synchronize: { 
                 configurationSection: res.extensionId,
+            },
+            connectionOptions: {
+                maxRestartCount: 0,
             }
         });
     }
 
 
-    public static async activate(context: vscode.ExtensionContext) {
+    public static async activate(context: ExtensionContext) {
         if (ClientController.client !== undefined && ClientController.client.isRunning())
             return;
         ClientController.initialize();

@@ -49,7 +49,8 @@ public class CodeActionHandler : CodeActionHandlerBase {
             if (project == null)
                 return new CommandOrCodeActionContainer();
 
-            var document = project.Documents.FirstOrDefault(x => x.FilePath == filePath);
+            var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(filePath).Single(x => x.ProjectId == project.Id);
+            var document = this.solutionService.Solution?.GetDocument(documentId);
             if (document == null)
                 return new CommandOrCodeActionContainer();
 
@@ -100,6 +101,6 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
         return this.compilationService.Diagnostics[documentPath]
             .GetTotalDiagnosticWrappers()
-            .FirstOrDefault(x => x.InnerDiagnostic.Location.ToRange() == range);
+            .FirstOrDefault(x => x.InnerDiagnostic.Location.ToRange().Contains(range));
     }
 }
