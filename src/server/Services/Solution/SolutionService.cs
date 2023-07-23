@@ -27,7 +27,7 @@ public class SolutionService: ProjectService {
     public void InitializeWorkspace() {
         var options = this.configurationService.AdditionalWorkspaceArguments();
         Workspace = MSBuildWorkspace.Create(options);
-        Workspace.LoadMetadataForReferencedProjects = false;
+        Workspace.LoadMetadataForReferencedProjects = true;
         Workspace.SkipUnrecognizedProjects = true;
     }
     public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
