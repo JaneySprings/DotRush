@@ -49,7 +49,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
             if (project == null)
                 return new CommandOrCodeActionContainer();
 
-            var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(filePath).Single(x => x.ProjectId == project.Id);
+            var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(filePath).FirstOrDefault(x => x.ProjectId == project.Id);
             var document = this.solutionService.Solution?.GetDocument(documentId);
             if (document == null)
                 return new CommandOrCodeActionContainer();
