@@ -10,14 +10,12 @@ namespace DotRush.Server.Services;
 public class CodeActionService {
     private HashSet<CodeFixProviderContainer> codeFixProviders;
 
-    private const string EmbeddedCodeFixAssembly = "Microsoft.CodeAnalysis.CSharp.Features";
-
     public CodeActionService() {
         this.codeFixProviders = new HashSet<CodeFixProviderContainer>();
 
-        var embeddedProviders = CreateCodeFixProviders(Assembly.Load(EmbeddedCodeFixAssembly));
+        var embeddedProviders = CreateCodeFixProviders(Assembly.Load(LanguageServer.EmbeddedCodeFixAssembly));
         foreach (var provider in embeddedProviders)
-            this.codeFixProviders.Add(new CodeFixProviderContainer(provider, EmbeddedCodeFixAssembly));
+            this.codeFixProviders.Add(new CodeFixProviderContainer(provider, LanguageServer.EmbeddedCodeFixAssembly));
     }
 
     public void AddCodeFixProviders(Project project) {

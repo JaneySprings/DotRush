@@ -6,14 +6,16 @@ using OmniSharp.Extensions.LanguageServer.Protocol;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Immutable;
 using DotRush.Server.Containers;
+using System.Reflection;
 
 namespace DotRush.Server.Services;
 
 public class CompilationService {
-    public Dictionary<string, FileDiagnostics> Diagnostics { get; }
     private readonly HashSet<string> documents;
     private readonly SolutionService solutionService;
-    private readonly ConfigurationService configurationService;
+    private IEnumerable<DiagnosticAnalyzer> embeddedAnalyzers;
+
+    public Dictionary<string, FileDiagnostics> Diagnostics { get; }
 
     private CancellationTokenSource? analyzerDiagnosticsTokenSource;
     private CancellationToken AnalyzerDiagnosticsCancellationToken {
@@ -32,11 +34,25 @@ public class CompilationService {
         }
     }
 
-    public CompilationService(SolutionService solutionService, ConfigurationService configurationService) {
-        this.configurationService = configurationService;
+    public CompilationService(SolutionService solutionService) {
+        this.embeddedAnalyzers = Enumerable.Empty<DiagnosticAnalyzer>();
         this.solutionService = solutionService;
         this.documents = new HashSet<string>();
         Diagnostics = new Dictionary<string, FileDiagnostics>();
+    }
+
+    public void InitializeEmbeddedAnalyzers() {
+        this.embeddedAnalyzers = Assembly.Load(LanguageServer.EmbeddedCodeFixAssembly).DefinedTypes
+            .Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(DiagnosticAnalyzer)))
+            .Select(x => {
+                try {
+                    return Activator.CreateInstance(x.AsType()) as DiagnosticAnalyzer;
+                } catch (Exception ex) {
+                    LoggingService.Instance.LogError($"Creating instance of analyzer '{x.AsType()}' failed, error: {ex}");
+                    return null;
+                }
+            })
+            .Where(x => x != null)!;
     }
 
     public void DiagnoseAsync(string currentDocumentPath, ITextDocumentLanguageServer proxy) {
@@ -44,6 +60,7 @@ public class CompilationService {
         ServerExtensions.SafeCancellation(async () => {
             foreach (var documentPath in this.documents) {
                 Diagnostics[documentPath].ClearSyntaxDiagnostics();
+                
                 var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath);
                 if (documentIds == null)
                     return;
@@ -77,9 +94,6 @@ public class CompilationService {
     }
 
     public void AnalyzerDiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy) {
-        if (!this.configurationService.IsRoslynAnalyzersEnabled())
-            return;
-
         var cancellationToken = AnalyzerDiagnosticsCancellationToken;
         ServerExtensions.SafeCancellation(async () => {
             await Task.Delay(750, cancellationToken); //TODO: Wait for completionHandler. Maybe there is a better way to do this?
@@ -91,6 +105,7 @@ public class CompilationService {
 
             var diagnosticAnalyzers = project.AnalyzerReferences
                 .SelectMany(x => x.GetAnalyzers(project.Language))
+                .Concat(this.embeddedAnalyzers)
                 .ToImmutableArray();
             
             if (diagnosticAnalyzers.IsEmpty)

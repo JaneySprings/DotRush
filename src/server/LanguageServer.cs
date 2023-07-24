@@ -14,6 +14,7 @@ using OmniSharpLanguageServer = OmniSharp.Extensions.LanguageServer.Server.Langu
 namespace DotRush.Server;
 
 public class LanguageServer {
+    public const string EmbeddedCodeFixAssembly = "Microsoft.CodeAnalysis.CSharp.Features";
     private static IServerWorkDoneManager? workDoneManager;
 
     public static async Task<IWorkDoneObserver> CreateWorkDoneObserverAsync() {
@@ -81,6 +82,8 @@ public class LanguageServer {
         var workDoneProgress = await CreateWorkDoneObserverAsync();
 
         configurationService.Initialize(server.Configuration);
+        if (configurationService.IsRoslynAnalyzersEnabled())
+            compilationService?.InitializeEmbeddedAnalyzers();
 
         solutionService.InitializeWorkspace();
         solutionService.AddWorkspaceFolders(workspaceFolders);

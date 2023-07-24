@@ -12,14 +12,14 @@ namespace DotRush.Server.Handlers;
 public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
     private readonly SolutionService solutionService;
     private readonly CompilationService compilationService;
-    private readonly CodeActionService codeActionService;
+    private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;
     
 
-    public DocumentSyncHandler(ILanguageServerFacade serverFacade, SolutionService solutionService, CompilationService compilationService, CodeActionService codeActionService) {
+    public DocumentSyncHandler(ILanguageServerFacade serverFacade, SolutionService solutionService, CompilationService compilationService, ConfigurationService configurationService) {
         this.solutionService = solutionService;
         this.compilationService = compilationService;
-        this.codeActionService = codeActionService;
+        this.configurationService = configurationService;
         this.serverFacade = serverFacade;
     }
 
@@ -47,7 +47,10 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
 
         this.compilationService.AddDocument(filePath);
         this.compilationService.DiagnoseAsync(filePath, serverFacade.TextDocument);
-        this.compilationService.AnalyzerDiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument);
+        
+        if (this.configurationService.IsRoslynAnalyzersEnabled())
+            this.compilationService.AnalyzerDiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument);
+
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
@@ -55,7 +58,10 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
 
         this.compilationService.AddDocument(filePath);
         this.compilationService.DiagnoseAsync(filePath, serverFacade.TextDocument);
-        this.compilationService.AnalyzerDiagnoseAsync(filePath, serverFacade.TextDocument);
+
+        if (this.configurationService.IsRoslynAnalyzersEnabled())
+            this.compilationService.AnalyzerDiagnoseAsync(filePath, serverFacade.TextDocument);
+        
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
