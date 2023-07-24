@@ -60,8 +60,13 @@ public class RenameHandler : RenameHandlerBase {
             }
         }
 
-        return new WorkspaceEdit() { 
-            Changes = documentEdits.Keys.ToDictionary(x => DocumentUri.From(x), x => documentEdits[x]) 
-        };
+        var result = new Dictionary<DocumentUri, IEnumerable<TextEdit>>();
+        foreach (var documentEdit in documentEdits) {
+            var documentUri = DocumentUri.From(documentEdit.Key);
+            if (!result.ContainsKey(documentUri))
+                result.Add(documentUri, documentEdit.Value);
+        }
+
+        return new WorkspaceEdit() { Changes = result };
     }
 }
