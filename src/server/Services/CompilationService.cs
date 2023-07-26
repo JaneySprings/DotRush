@@ -61,33 +61,23 @@ public class CompilationService {
             foreach (var documentPath in this.documents) {
                 Diagnostics[documentPath].ClearSyntaxDiagnostics();
                 
-                var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath);
-                if (documentIds == null)
-                    return;
+                var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath).FirstOrDefault();
+                var document = this.solutionService.Solution?.GetDocument(documentId);
+                if (document == null)
+                    continue;
 
-                foreach (var documentId in documentIds) {
-                    var document = this.solutionService.Solution?.GetDocument(documentId);
-                    if (document == null)
-                        continue;
+                var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+                var diagnostics = semanticModel?
+                    .GetDiagnostics(cancellationToken: cancellationToken)
+                    .Where(d => File.Exists(d.Location.SourceTree?.FilePath));
 
-                    var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-                    var diagnostics = semanticModel?
-                        .GetDiagnostics(cancellationToken: cancellationToken)
-                        .Where(d => File.Exists(d.Location.SourceTree?.FilePath));
+                if (diagnostics == null)
+                    continue;
 
-                    if (diagnostics == null)
-                        continue;
-
-                    Diagnostics[documentPath].AddSyntaxDiagnostics(diagnostics, document.Project);
-                }
-
-                var totalDiagnostics = (documentPath == currentDocumentPath)
-                    ? Diagnostics[documentPath].SyntaxDiagnostics.ToServerDiagnostics()
-                    : Diagnostics[documentPath].GetTotalServerDiagnostics();
-
+                Diagnostics[documentPath].SetSyntaxDiagnostics(diagnostics, document.Project);
                 proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
                     Uri = DocumentUri.From(documentPath),
-                    Diagnostics = new Container<Diagnostic>(totalDiagnostics),
+                    Diagnostics = new Container<Diagnostic>(Diagnostics[documentPath].GetTotalServerDiagnostics()),
                 });
             }
         });

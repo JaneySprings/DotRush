@@ -18,10 +18,12 @@ public class CompletionHandler : CompletionHandlerBase {
     private IEnumerable<RoslynCompletionItem>? codeAnalysisCompletionItems;
     private RoslynCompletionService? roslynCompletionService;
     private Document? targetDocument;
+    private object? completionOptions;
 
     public CompletionHandler(SolutionService solutionService, CompilationService compilationService) {
         this.solutionService = solutionService;
         this.compilationService = compilationService;
+        this.completionOptions = CompletionServiceExtensions.GetCompletionOptions();
     }
 
     protected override CompletionRegistrationOptions CreateRegistrationOptions(CompletionCapability capability, ClientCapabilities clientCapabilities) {
@@ -43,7 +45,10 @@ public class CompletionHandler : CompletionHandlerBase {
             var sourceText = await this.targetDocument.GetTextAsync(cancellationToken);
             var offset = request.Position.ToOffset(sourceText);
 
-            var completions = await this.roslynCompletionService.GetCompletionsAsync(this.targetDocument, offset, cancellationToken: cancellationToken);
+            var completions = completionOptions == null 
+                ? await this.roslynCompletionService.GetCompletionsAsync(this.targetDocument, offset, cancellationToken: cancellationToken)
+                : await this.roslynCompletionService.GetCompletionsAsync(this.targetDocument, offset, completionOptions, cancellationToken);
+
             if (completions == null)
                 return new CompletionList(Enumerable.Empty<CompletionItem>());
 
