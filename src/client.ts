@@ -1,4 +1,4 @@
-import { LanguageClient, ServerOptions, TransportKind } from "vscode-languageclient/node";
+import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
 import { ExtensionContext, extensions } from "vscode";
 import { RuntimeController } from "./selector";
 import * as res from './resources';
@@ -15,7 +15,6 @@ export class ClientController {
         const serverExtension = process.platform === 'win32' ? '.exe' : '';
         const serverOptions: ServerOptions = {
             command: serverExecutable + serverExtension,
-            transport: TransportKind.stdio,
             args: [ process.pid.toString() ]
         };
 
