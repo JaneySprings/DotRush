@@ -5,6 +5,8 @@ using Microsoft.CodeAnalysis.Completion;
 namespace DotRush.Server.Extensions;
 
 public static class CompletionServiceExtensions {
+    private static MethodInfo? getCompletionsAsyncMethod;
+
     public static object? GetCompletionOptions() {
         var completionOptionsType = typeof(CompletionService).Assembly.GetType("Microsoft.CodeAnalysis.Completion.CompletionOptions");
         if (completionOptionsType == null)
@@ -16,7 +18,9 @@ public static class CompletionServiceExtensions {
     }
 
     public static Task<CompletionList> GetCompletionsAsync(this CompletionService completionService, Document document, int position, object completionOptions, CancellationToken cancellationToken) {
-        var getCompletionsAsyncMethod = completionService.GetType().GetMethod("GetCompletionsAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+        if (getCompletionsAsyncMethod == null)
+            getCompletionsAsyncMethod = completionService.GetType().GetMethod("GetCompletionsAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+        
         var passThroughOptions = document.Project.Solution.Options;
         var completionTrigger = CompletionTrigger.Invoke;
 

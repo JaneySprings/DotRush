@@ -34,14 +34,14 @@ public class SolutionService: ProjectService {
         foreach (var folder in workspaceFolders) {
             if (!Directory.Exists(folder))
                 continue;
-            AddProjects(Directory.GetFiles(folder, "*.csproj", SearchOption.AllDirectories));
+            AddProjects(WorkspaceExtensions.GetFilesFromVisibleFolders(folder, "*.csproj"));
         }
     }
     public void RemoveWorkspaceFolders(IEnumerable<string> workspaceFolders) {
         foreach (var folder in workspaceFolders) {
             if (!Directory.Exists(folder))
                 continue;
-            RemoveProjects(Directory.GetFiles(folder, "*.csproj", SearchOption.AllDirectories));
+            RemoveProjects(WorkspaceExtensions.GetFilesFromVisibleFolders(folder, "*.csproj"));
         }
     }
 

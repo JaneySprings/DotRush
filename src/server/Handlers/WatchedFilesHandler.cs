@@ -79,8 +79,8 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         if (!Directory.Exists(path))
             return;
 
-        var csharpDocuments = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
-        var additionalDocuments = Directory.GetFiles(path, "*.xaml", SearchOption.AllDirectories);
+        var csharpDocuments = WorkspaceExtensions.GetFilesFromVisibleFolders(path, "*.cs");
+        var additionalDocuments = WorkspaceExtensions.GetFilesFromVisibleFolders(path, "*.xaml");
 
         foreach (var file in csharpDocuments)
             this.solutionService.CreateCSharpDocument(file);
