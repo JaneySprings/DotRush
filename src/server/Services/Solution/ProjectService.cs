@@ -16,8 +16,7 @@ public abstract class ProjectService {
     private CancellationTokenSource? reloadCancellationTokenSource;
     private CancellationToken CancellationToken {
         get {
-            this.reloadCancellationTokenSource?.Cancel();
-            this.reloadCancellationTokenSource?.Dispose();
+            CancelWorkspaceReloading();
             this.reloadCancellationTokenSource = new CancellationTokenSource();
             return this.reloadCancellationTokenSource.Token;
         }
@@ -54,10 +53,7 @@ public abstract class ProjectService {
 
                 observer?.OnNext(new WorkDoneProgressReport { Message = $"Restoring {Path.GetFileNameWithoutExtension(projectFile)}" });
                 await RestoreProjectAsync(projectFile, cancellationToken);
-
-                observer?.OnNext(new WorkDoneProgressReport { Message = $"Loading {Path.GetFileNameWithoutExtension(projectFile)}" });
-                await Workspace!.OpenProjectAsync(projectFile, null, cancellationToken);
-
+                await Workspace!.OpenProjectAsync(projectFile, new ProgressNotification(observer), cancellationToken);
                 WorkspaceUpdated?.Invoke(Workspace.CurrentSolution);
             });
         }
@@ -75,6 +71,15 @@ public abstract class ProjectService {
             throw new FileNotFoundException("Project file not found for restore!", projectFilePath);
 
         await StartProcessAsync("dotnet", $"restore \"{projectFilePath}\"", cancellationToken).ConfigureAwait(false);
+    }
+
+    protected void CancelWorkspaceReloading() {
+        if (this.reloadCancellationTokenSource == null)
+            return;
+
+        this.reloadCancellationTokenSource.Cancel();
+        this.reloadCancellationTokenSource.Dispose();
+        this.reloadCancellationTokenSource = null;
     }
 
     private static async Task StartProcessAsync(string command, string args, CancellationToken cancellationToken) {

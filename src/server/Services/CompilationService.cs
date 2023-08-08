@@ -145,13 +145,19 @@ public class CompilationService {
     }
 
     public void CancelAnalyzerDiagnostics() {
-        this.analyzerDiagnosticsTokenSource?.Cancel();
-        this.analyzerDiagnosticsTokenSource?.Dispose();
+        if (this.analyzerDiagnosticsTokenSource == null)
+            return;
+    
+        this.analyzerDiagnosticsTokenSource.Cancel();
+        this.analyzerDiagnosticsTokenSource.Dispose();
         this.analyzerDiagnosticsTokenSource = null;
     }
     public void CancelDiagnostics() {
-        this.diagnosticsTokenSource?.Cancel();
-        this.diagnosticsTokenSource?.Dispose();
+        if (this.diagnosticsTokenSource == null)
+            return;
+
+        this.diagnosticsTokenSource.Cancel();
+        this.diagnosticsTokenSource.Dispose();
         this.diagnosticsTokenSource = null;
     }
 }

@@ -11,6 +11,7 @@ public class ConfigurationService {
     private const string EnableRoslynAnalyzersId = $"{ExtensionId}:enableRoslynAnalyzers";
     private const string AdditionalRoslynAnalyzersPathId = $"{ExtensionId}:additionalRoslynAnalyzersPath";
     private const string AdditionalWorkspaceArgumentsId = $"{ExtensionId}:additionalWorkspaceArguments";
+    private const string ShowWorkspaceDiagnostics = $"{ExtensionId}:showWorkspaceDiagnostics";
 
     private const string DecompileMemberBodiesId = $"{ExtensionId}:{Decompiler}:decompileMemberBodies";
     private const string ShowXmlDocumentationId = $"{ExtensionId}:{Decompiler}:showXmlDocumentation";
@@ -24,6 +25,7 @@ public class ConfigurationService {
 
     public Dictionary<string, string> AdditionalWorkspaceArguments() => ConfigurationService.ToWorkspaceOptions(configuration?.GetValue<string>(AdditionalWorkspaceArgumentsId));
     public bool IsRoslynAnalyzersEnabled() => configuration?.GetValue<bool>(EnableRoslynAnalyzersId) ?? false;
+    public bool IsWorkspaceDiagnosticsEnabled() => configuration?.GetValue<bool>(ShowWorkspaceDiagnostics) ?? true;
     public DecompilerSettings DecompilerSettings() => new() {
         DecompileMemberBodies = configuration?.GetValue<bool>(DecompileMemberBodiesId) ?? false,
         ShowXmlDocumentation = configuration?.GetValue<bool>(ShowXmlDocumentationId) ?? true,

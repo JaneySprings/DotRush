@@ -107,6 +107,11 @@
             "default": false,
             "description": "Enable Roslyn analyzers (may affect performance)."
           },
+          "dotrush.showWorkspaceDiagnostics": {
+            "type": "boolean",
+            "default": true,
+            "description": "Show workspace diagnostic information."
+          },
 
           "dotrush.decompiler.decompileMemberBodies": {
             "type": "boolean",
