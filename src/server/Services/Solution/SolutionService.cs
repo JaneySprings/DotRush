@@ -3,7 +3,9 @@ using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
+using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
+using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 
 namespace DotRush.Server.Services;
 
@@ -11,9 +13,11 @@ public class SolutionService: ProjectService {
     public Solution? Solution { get; private set; }
 
     private readonly ConfigurationService configurationService;
+    private readonly ILanguageServerFacade serverFacade;
 
-    public SolutionService(ConfigurationService configurationService) {
+    public SolutionService(ConfigurationService configurationService, ILanguageServerFacade serverFacade) {
         this.configurationService = configurationService;
+        this.serverFacade = serverFacade;
         MSBuildLocator.RegisterDefaults();
         WorkspaceUpdated = s => Solution = s;
     }
@@ -25,12 +29,18 @@ public class SolutionService: ProjectService {
         await LoadAsync(observer);
     }
     public void InitializeWorkspace() {
+        CancelWorkspaceReloading();
         var options = this.configurationService.AdditionalWorkspaceArguments();
         Workspace = MSBuildWorkspace.Create(options);
         Workspace.LoadMetadataForReferencedProjects = true;
         Workspace.SkipUnrecognizedProjects = true;
+        Workspace.WorkspaceFailed += (s, e) => {
+            if (configurationService.IsWorkspaceDiagnosticsEnabled())
+                serverFacade.Window.ShowWarning(e.Diagnostic.Message);
+        };
     }
     public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
+        CancelWorkspaceReloading();
         foreach (var folder in workspaceFolders) {
             if (!Directory.Exists(folder))
                 continue;
@@ -38,6 +48,7 @@ public class SolutionService: ProjectService {
         }
     }
     public void RemoveWorkspaceFolders(IEnumerable<string> workspaceFolders) {
+        CancelWorkspaceReloading();
         foreach (var folder in workspaceFolders) {
             if (!Directory.Exists(folder))
                 continue;

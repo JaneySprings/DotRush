@@ -1,5 +1,6 @@
 using DotRush.Server.Containers;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.MSBuild;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Server.Extensions;
@@ -38,5 +39,18 @@ public static class DiagnosticsConverter {
             default:
                 return ProtocolModels.DiagnosticSeverity.Hint;
         }
+    }
+
+    public static string ToOperationString(this ProjectLoadOperation operation) {
+        switch (operation) {
+            case ProjectLoadOperation.Evaluate:
+                return "Evaluating";
+            case ProjectLoadOperation.Build:
+                return "Building";
+            case ProjectLoadOperation.Resolve:
+                return "Resolving";
+        }
+
+        return "Loading";
     }
 }
