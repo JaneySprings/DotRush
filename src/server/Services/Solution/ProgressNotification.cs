@@ -1,4 +1,3 @@
-using DotRush.Server.Extensions;
 using Microsoft.CodeAnalysis.MSBuild;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
@@ -14,7 +13,6 @@ public class ProgressNotification : IProgress<ProjectLoadProgress> {
 
     void IProgress<ProjectLoadProgress>.Report(ProjectLoadProgress value) {
         var projectName = Path.GetFileNameWithoutExtension(value.FilePath);
-        var operation = value.Operation.ToOperationString();
-        observer?.OnNext(new WorkDoneProgressReport { Message = $"{operation} {projectName}"});
+        observer?.OnNext(new WorkDoneProgressReport { Message = $"Indexing {projectName}"});
     }
 }
