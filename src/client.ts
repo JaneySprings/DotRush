@@ -20,7 +20,7 @@ export class ClientController {
 
         ClientController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
             documentSelector: [{ scheme: "file", language: "csharp" }],
-            diagnosticCollectionName: res.extensionId,
+            diagnosticCollectionName: res.microsoftProblemMatcherId,
             progressOnInitialization: true,
             synchronize: { 
                 configurationSection: res.extensionId,

@@ -61,8 +61,10 @@ public static class WorkspaceExtensions {
     }
 
     public static IEnumerable<string> GetFilesFromVisibleFolders(string folder, string mask) {
-        var files = Directory.GetFiles(folder, mask, SearchOption.AllDirectories);
-        return files.Where(it => !it.Replace(folder, string.Empty).Split(Path.DirectorySeparatorChar).Any(x => x.StartsWith(".")));
+        return new DirectoryInfo(folder)
+            .GetFiles(mask, SearchOption.AllDirectories)
+            .Where(it => !it.Attributes.HasFlag(FileAttributes.Hidden))
+            .Select(it => it.FullName);
     }
 
     private static int GetCommonFoldersCount(Project project, string documentPath) {
