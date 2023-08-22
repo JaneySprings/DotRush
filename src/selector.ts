@@ -1,6 +1,8 @@
 import { execSync } from 'child_process';
 import * as res from './resources';
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
 
 
 export class RuntimeController {
@@ -15,17 +17,19 @@ export class RuntimeController {
             return false;
         }
 
-        RuntimeController.targetFolderName = `net${versionRegexCollection[0]}`;
+        const version = versionRegexCollection[0];
+        const extensionPath = vscode.extensions.getExtension(`${res.extensionPublisher}.${res.extensionId}`)?.extensionPath ?? '';
+        const extensionBinaryPath = path.join(extensionPath, "extension", "bin", `net${version}`);
+        if (!fs.existsSync(extensionBinaryPath)) {
+            vscode.window.showErrorMessage(res.messageEmbeddedRuntimeNotFound);
+            return false;
+        }
+
+        RuntimeController.targetFolderName = `net${version}`;
         return true;
     }
 
     public static runtimeVersion(): string {
-        return ProcessRunner.execSync("dotnet", "--version");
-    }
-}
-
-class ProcessRunner {
-    public static execSync(...args: string[]): string {
-        return execSync(args.join(' ')).toString();
+        return execSync("dotnet --version").toString();
     }
 }

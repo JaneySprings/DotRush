@@ -1,7 +1,7 @@
 {
   "name": "dotrush",
   "publisher": "nromanov",
-  "version": "23.1.23164",
+  "version": "23.2.23234",
   "description": "Lightweight C# development environment for Visual Studio Code.",
   "displayName": "DotRush",
   "author": "Nikita Romanov",
@@ -36,67 +36,10 @@
         "path": "./themes/vs2022_light.json"
       }
     ],
-    "commands": [
-      {
-        "command": "dotrush.build",
-        "title": "Build"
-      },
-      {
-        "command": "dotrush.rebuild",
-        "title": "Rebuild"
-      },
-      {
-        "command": "dotrush.clean",
-        "title": "Clean"
-      }
-    ],
-    "menus": {
-      "explorer/context": [
-        {
-          "command": "dotrush.build",
-          "group": "z_common@1",
-          "when": "!explorerResourceIsFold && resourceFilename =~ /.*\\.csproj$/"
-        },
-        {
-          "command": "dotrush.rebuild",
-          "group": "z_common@2",
-          "when": "!explorerResourceIsFold && resourceFilename =~ /.*\\.csproj$/"
-        },
-        {
-          "command": "dotrush.clean",
-          "group": "z_common@3",
-          "when": "!explorerResourceIsFold && resourceFilename =~ /.*\\.csproj$/"
-        }
-      ]
-    },
-    "problemMatchers": [
-      {
-        "name": "dotrush.problemMatcher",
-        "applyTo": "closedDocuments",
-        "source": "dotrush",
-        "owner": "dotrush",
-        "fileLocation": [
-          "absolute"
-        ],
-        "pattern": {
-          "regexp": "^(.*.cs)\\((\\d+),(\\d+)\\):.*?(error|warning)\\s.*?:\\s(.*)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "message": 5
-        }
-      }
-    ],
     "configuration":[
       {
         "title": "DotRush",
         "properties": {
-          "dotrush.additionalBuildArguments": {
-            "type": "string",
-            "default": "",
-            "description": "Additional MSBuild arguments to pass to the build command."
-          },
           "dotrush.additionalWorkspaceArguments": {
             "type": "string",
             "default": "DesignTimeBuild=false",

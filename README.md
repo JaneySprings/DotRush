@@ -9,11 +9,22 @@ DotRush is a lightweight VSCode extension that has basic IDE functions for worki
 
 ## Features
 
-readme in progress...
+* **Multitargeting Support**
+</br>
+Readme in progress...
 
-<!-- 1) all - code-workspace
-2) roslyn analyzers
-3) multitargeting (navigation)
-3) multitargeting (errors)
-4) Performance?
-5) MultiPlatform? -->
+* **Unity Support**
+</br>
+Readme in progress...
+
+* **Everything is `.code-workspace`**
+</br>
+Readme in progress...
+
+* **Roslyn Analyzers Support**
+</br>
+Readme in progress...
+
+
+
+
