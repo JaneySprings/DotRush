@@ -7,7 +7,6 @@ string version;
 string runtime = Argument<string>("arch", "osx-arm64");
 string target = Argument<string>("target", "vsix");
 string configuration = Argument<string>("configuration", "debug");
-string roslynVersion = Argument<string>("roslyn", "4.7.0");
 
 public string RootDirectory => MakeAbsolute(Directory(".")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
@@ -31,8 +30,7 @@ Task("clean")
 Task("server").Does(() => DotNetBuild(ServerProjectFilePath, new DotNetBuildSettings {
 	Runtime = runtime,
 	Configuration = configuration,
-	MSBuildSettings = new DotNetMSBuildSettings { 
-		ArgumentCustomization = args => args.Append($"-p:CodeAnalysisVersion={roslynVersion}"),
+	MSBuildSettings = new DotNetMSBuildSettings {
 		AssemblyVersion = version,
 	},
 }));

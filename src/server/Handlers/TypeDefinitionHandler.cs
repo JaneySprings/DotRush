@@ -3,17 +3,21 @@ using DotRush.Server.Extensions;
 using DotRush.Server.Services;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
+using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Server.Handlers;
 
 public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
-    private SolutionService solutionService;
+    private readonly SolutionService solutionService;
+    private readonly DecompilationService decompilationService;
 
-    public TypeDefinitionHandler(SolutionService solutionService) {
+    public TypeDefinitionHandler(SolutionService solutionService, DecompilationService decompilationService) {
         this.solutionService = solutionService;
+        this.decompilationService = decompilationService;
     }
 
     protected override TypeDefinitionRegistrationOptions CreateRegistrationOptions(TypeDefinitionCapability capability, ClientCapabilities clientCapabilities) {
@@ -25,9 +29,12 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
         if (documentIds == null)
             return new LocationOrLocationLinks();
 
+        Document? document = null;
+        ITypeSymbol? typeSymbol = null;
+
         var result = new LocationCollection();
         foreach (var documentId in documentIds) {
-            var document = this.solutionService.Solution?.GetDocument(documentId);
+            document = this.solutionService.Solution?.GetDocument(documentId);
             if (document == null)
                 continue;
 
@@ -35,8 +42,6 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
             var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
             if (symbol == null)
                 continue;
-
-            ITypeSymbol? typeSymbol = null;
 
             if (symbol is ILocalSymbol localSymbol) 
                 typeSymbol = localSymbol.Type;
@@ -51,6 +56,19 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
                 continue;
 
             result.AddRange(typeSymbol.Locations.Select(loc => loc.ToLocation()));
+        }
+
+        if (result.IsEmpty && document != null && typeSymbol != null) {
+            var decompiledDocument = await this.decompilationService.DecompileAsync(typeSymbol, document.Project, cancellationToken);
+
+            // TODO
+            result.Add(new ProtocolModels.LocationLink() {
+                Uri = DocumentUri.From(decompiledDocument!.FilePath!),
+                Range = new ProtocolModels.Range() {
+                    Start = new ProtocolModels.Position(0, 0),
+                    End = new ProtocolModels.Position(0, 0),
+                },
+            });
         }
 
         return result.ToLocationOrLocationLinks();
