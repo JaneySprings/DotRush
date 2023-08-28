@@ -62,7 +62,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
             var decompiledDocument = await this.decompilationService.DecompileAsync(typeSymbol, document.Project, cancellationToken);
 
             // TODO
-            result.Add(new ProtocolModels.LocationLink() {
+            result.Add(new ProtocolModels.Location() {
                 Uri = DocumentUri.From(decompiledDocument!.FilePath!),
                 Range = new ProtocolModels.Range() {
                     Start = new ProtocolModels.Position(0, 0),
