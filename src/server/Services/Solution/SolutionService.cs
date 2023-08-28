@@ -10,7 +10,8 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 namespace DotRush.Server.Services;
 
 public class SolutionService: ProjectService {
-    public Solution? Solution { get; private set; }
+    // TODO: Make private set;
+    public Solution? Solution { get; set; }
 
     private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;

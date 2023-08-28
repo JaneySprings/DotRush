@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<CodeAnalysisVersion>4.4.0</CodeAnalysisVersion>
+		<CodeAnalysisVersion>4.7.0</CodeAnalysisVersion>
 	
 		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
 		<OutputType>Exe</OutputType>

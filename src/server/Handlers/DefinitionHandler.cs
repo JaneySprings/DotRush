@@ -6,6 +6,8 @@ using Microsoft.CodeAnalysis.FindSymbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol;
 
 namespace DotRush.Server.Handlers;
 
@@ -27,24 +29,38 @@ public class DefinitionHandler : DefinitionHandlerBase {
         if (documentIds == null)
             return new LocationOrLocationLinks();
 
+        Document? document = null;
+        ISymbol? symbol = null;
+
         var result = new LocationCollection();
         foreach (var documentId in documentIds) {
-            var document = this.solutionService.Solution?.GetDocument(documentId);
+            document = this.solutionService.Solution?.GetDocument(documentId);
             if (document == null)
                 continue;
 
             var sourceText = await document.GetTextAsync(cancellationToken);
-            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
+            symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
             if (symbol == null || symbol.Locations == null) 
                 continue;
 
             result.AddRange(symbol.Locations.Select(loc => loc.ToLocation()));
         }
 
-        if (result.IsEmpty) {
-            var decompiledLocation = await this.decompilationService.DecompileSourceTextWithDefinitionRequest(request, cancellationToken);
-            if (decompiledLocation != null)
-                result.Add(decompiledLocation);
+        if (result.IsEmpty && document != null && symbol != null) {
+            var decompiledDocument = await this.decompilationService.DecompileAsync(symbol, document.Project, cancellationToken);
+            //var model = await decompiledDocument.GetSemanticModelAsync();
+            //var fullNameOfSymbol = "Microsoft.Maui.Controls.Shell";
+            // find the symbol in the decompiled document
+            //var symbolInDecompiledDocument = model.GetSymbolInfo(decompiledDocument.GetSyntaxRootAsync()!.DescendantNodes().First(node => node.ToString() == fullNameOfSymbol), cancellationToken).Symbol;
+            
+            // TODO
+            result.Add(new ProtocolModels.Location() {
+                Uri = DocumentUri.From(decompiledDocument!.FilePath!),
+                Range = new ProtocolModels.Range() {
+                    Start = new ProtocolModels.Position(0, 0),
+                    End = new ProtocolModels.Position(0, 0),
+                },
+            });
         }
     
         return result.ToLocationOrLocationLinks();
