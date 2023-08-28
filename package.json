@@ -42,7 +42,7 @@
         "properties": {
           "dotrush.additionalWorkspaceArguments": {
             "type": "string",
-            "default": "DesignTimeBuild=false",
+            "default": "",
             "description": "Additional MSBuild arguments to pass to the workspace."
           },
           "dotrush.enableRoslynAnalyzers": {
