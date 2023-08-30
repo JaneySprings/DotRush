@@ -60,15 +60,15 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
 
         if (result.IsEmpty && document != null && typeSymbol != null) {
             var decompiledDocument = await this.decompilationService.DecompileAsync(typeSymbol, document.Project, cancellationToken);
-
-            // TODO
-            result.Add(new ProtocolModels.Location() {
-                Uri = DocumentUri.From(decompiledDocument!.FilePath!),
-                Range = new ProtocolModels.Range() {
-                    Start = new ProtocolModels.Position(0, 0),
-                    End = new ProtocolModels.Position(0, 0),
-                },
-            });
+            if (decompiledDocument != null)
+                // TODO
+                result.Add(new ProtocolModels.Location() {
+                    Uri = DocumentUri.From(decompiledDocument.FilePath!),
+                    Range = new ProtocolModels.Range() {
+                        Start = new ProtocolModels.Position(0, 0),
+                        End = new ProtocolModels.Position(0, 0),
+                    },
+                });
         }
 
         return result.ToLocationOrLocationLinks();

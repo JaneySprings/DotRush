@@ -54,19 +54,6 @@
             "type": "boolean",
             "default": true,
             "description": "Show workspace diagnostic information."
-          },
-
-          "dotrush.decompiler.decompileMemberBodies": {
-            "type": "boolean",
-            "default": false
-          },
-          "dotrush.decompiler.showXmlDocumentation": {
-            "type": "boolean",
-            "default": true
-          },
-          "dotrush.decompiler.asyncAwait": {
-            "type": "boolean",
-            "default": false
           }
         }
       }
