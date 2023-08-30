@@ -58,7 +58,11 @@ public class DecompilationService {
 
         var file = new PEFile(assemblyLocation, PEStreamOptions.PrefetchEntireImage);
         var resolver = new UniversalAssemblyResolver(file.FullName, false, null);
-        var decompiler = new CSharpDecompiler(file, resolver, new DecompilerSettings());
+        var decompiler = new CSharpDecompiler(file, resolver, new DecompilerSettings() {
+            DecompileMemberBodies = false,
+            ShowXmlDocumentation = true,
+            AsyncAwait = true,
+        });
         decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 
         var fullTypeName = new FullTypeName(fullName);
