@@ -10,6 +10,8 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 namespace DotRush.Server.Services;
 
 public class SolutionService: ProjectService {
+    private const int MAX_WORKSPACE_ERRORS = 15;
+
     // TODO: Make private set;
     public Solution? Solution { get; set; }
 
@@ -31,13 +33,16 @@ public class SolutionService: ProjectService {
     }
     public void InitializeWorkspace() {
         CancelWorkspaceReloading();
+        var workspaceErrors = 0;
         var options = this.configurationService.AdditionalWorkspaceArguments();
         Workspace = MSBuildWorkspace.Create(options);
         Workspace.LoadMetadataForReferencedProjects = true;
         Workspace.SkipUnrecognizedProjects = true;
         Workspace.WorkspaceFailed += (s, e) => {
-            if (configurationService.IsWorkspaceDiagnosticsEnabled())
+            if (configurationService.IsWorkspaceDiagnosticsEnabled() && workspaceErrors < MAX_WORKSPACE_ERRORS) {
                 serverFacade.Window.ShowWarning(e.Diagnostic.Message);
+                workspaceErrors++;
+            }
         };
     }
     public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {

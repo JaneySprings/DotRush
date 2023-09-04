@@ -37,6 +37,7 @@ public class LanguageServer {
             .WithHandler<WatchedFilesHandler>()
             .WithHandler<WorkspaceFoldersHandler>()
             .WithHandler<HoverHandler>()
+            // .WithHandler<SignatureHelpHandler>() WIP
             .WithHandler<FormattingHandler>()
             .WithHandler<RangeFormattingHandler>()
             .WithHandler<RenameHandler>()
@@ -66,11 +67,15 @@ public class LanguageServer {
     private static async Task StartedHandlerAsync(ILanguageServer server, CancellationToken cancellationToken) {
         var compilationService = server.Services.GetService<CompilationService>();
         var codeActionService = server.Services.GetService<CodeActionService>();
+        var decompilationService = server.Services.GetService<DecompilationService>();
 
         var configurationService = server.Services.GetService<ConfigurationService>();
         var solutionService = server.Services.GetService<SolutionService>();
         if (solutionService == null || configurationService == null)
             return;
+
+        if (decompilationService?.DecompilationDirectory != null && Directory.Exists(decompilationService.DecompilationDirectory))
+            Directory.Delete(decompilationService.DecompilationDirectory, true);
 
         var workspaceFolders = server.Workspace.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
         if (workspaceFolders == null) {

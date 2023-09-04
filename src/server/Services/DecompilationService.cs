@@ -1,6 +1,5 @@
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.Metadata;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
@@ -15,12 +14,16 @@ namespace DotRush.Server.Services;
 public class DecompilationService {
     private const string DecompiledProjectName = "_decompilation_";
 
+    public string DecompilationDirectory { get; private set;}
+    
     private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;
     private readonly SolutionService solutionService;
 
 
     public DecompilationService(ILanguageServerFacade serverFacade, SolutionService solutionService, ConfigurationService configurationService) {
+        DecompilationDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DecompiledProjectName);
+
         this.serverFacade = serverFacade;
         this.solutionService = solutionService;
         this.configurationService = configurationService;
@@ -29,8 +32,10 @@ public class DecompilationService {
     public async Task<Document?> DecompileAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
         var namedType = symbol.GetNamedTypeSymbol();
         var fullName = namedType.GetFullReflectionName();
+        if (string.IsNullOrEmpty(fullName))
+            return null;
 
-        var documentPath = GetDecompiledDocumentPath(symbol, fullName, project.FilePath);
+        var documentPath = GetDecompiledDocumentPath(fullName);
         var documentId = solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath).FirstOrDefault();
         if (documentId != null)
             return solutionService.Solution?.GetDocument(documentId);
@@ -56,14 +61,16 @@ public class DecompilationService {
         if (assemblyLocation == null || metadataReference == null)
             return null;
 
-        var file = new PEFile(assemblyLocation, PEStreamOptions.PrefetchEntireImage);
-        var resolver = new UniversalAssemblyResolver(file.FullName, false, null);
-        var decompiler = new CSharpDecompiler(file, resolver, new DecompilerSettings() {
-            DecompileMemberBodies = false,
+        var module = new PEFile(assemblyLocation, PEStreamOptions.PrefetchEntireImage);
+        var resolver = new UniversalAssemblyResolver(module.FullName, false, module.Metadata.DetectTargetFrameworkId());
+        var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings() {
+            ThrowOnAssemblyResolveErrors = false,
+            RemoveDeadCode = false,
+            RemoveDeadStores = false,
             ShowXmlDocumentation = true,
-            AsyncAwait = true,
+            UseSdkStyleProjectFormat = module.DetectTargetFrameworkId() != null,
+            UseNestedDirectoriesForNamespaces = false,
         });
-        decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 
         var fullTypeName = new FullTypeName(fullName);
         var assemblyInfoBuilder = new StringBuilder();
@@ -78,13 +85,15 @@ public class DecompilationService {
         return metadataProject.AddDocument(Path.GetFileName(documentPath), SourceText.From(assemblyInfoBuilder.ToString()), null, documentPath);
     }
 
-    private string GetDecompiledDocumentPath(ISymbol symbol, string fullName, string? projectPath) {
-        var topLevelSymbol = symbol.GetTopLevelContainingNamedType();
-        var projectDirectory = Path.GetDirectoryName(projectPath) ?? string.Empty;
-        var decompilationDirectory = Path.Combine(projectDirectory, ".dotrush", DecompiledProjectName, topLevelSymbol.ContainingAssembly.Name);
-        if (!Directory.Exists(decompilationDirectory))
-            Directory.CreateDirectory(decompilationDirectory);
+    private string GetDecompiledDocumentPath(string fullName) {
+        var typeFullName = fullName.Split(".");
+        var typeName = typeFullName.Last();
+        var typeDirectory = Path.Combine(typeFullName.SkipLast(1).ToArray());
+        var targetDirectory = Path.Combine(DecompilationDirectory, typeDirectory);
 
-        return Path.Combine(decompilationDirectory, $"{fullName}.cs");
+        if (!Directory.Exists(targetDirectory))
+            Directory.CreateDirectory(targetDirectory);
+
+        return Path.Combine(targetDirectory, $"{typeName}.cs");
     }
 }

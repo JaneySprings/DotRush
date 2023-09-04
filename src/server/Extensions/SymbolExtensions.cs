@@ -6,8 +6,10 @@ namespace DotRush.Server.Extensions;
 public static class SymbolExtensions {
     public static string GetFullReflectionName(this INamedTypeSymbol containingType) {
         var stack = new Stack<string>();
+        if (containingType?.MetadataName == null)
+            return string.Empty;
+
         stack.Push(containingType.MetadataName);
-        
         var ns = containingType.ContainingNamespace;
         do {
             stack.Push(ns.Name);
