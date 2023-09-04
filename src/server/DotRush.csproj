@@ -16,7 +16,7 @@
 		<PackageReference Include="NLog" Version="5.1.1" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.7" />
-		<PackageReference Include="ICSharpCode.Decompiler" Version="8.0.0.7345" />
+		<PackageReference Include="ICSharpCode.Decompiler" Version="8.1.0.7455" />
 		<PackageReference Include="Microsoft.Build" Version="17.7.2" ExcludeAssets="runtime"/>
 		<PackageReference Include="Microsoft.Build.Framework" Version="17.7.2" ExcludeAssets="runtime"/>
 		<PackageReference Include="Microsoft.Build.Locator" Version="1.5.5" />
