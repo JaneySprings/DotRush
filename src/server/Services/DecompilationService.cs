@@ -8,6 +8,9 @@ using FullTypeName = ICSharpCode.Decompiler.TypeSystem.FullTypeName;
 using System.Reflection.PortableExecutable;
 using DotRush.Server.Extensions;
 using System.Text;
+using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using Microsoft.CodeAnalysis.CSharp;
+using OmniSharp.Extensions.LanguageServer.Protocol;
 
 namespace DotRush.Server.Services;
 
@@ -29,37 +32,49 @@ public class DecompilationService {
         this.configurationService = configurationService;
     }
 
-    public async Task<Document?> DecompileAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
+    public async Task<IEnumerable<ProtocolModels.Location>?> DecompileAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
+        var locations = new List<ProtocolModels.Location>();
         var namedType = symbol.GetNamedTypeSymbol();
         var fullName = namedType.GetFullReflectionName();
         if (string.IsNullOrEmpty(fullName))
             return null;
 
         var documentPath = GetDecompiledDocumentPath(fullName);
-        var documentId = solutionService.Solution?.GetDocumentIdsWithFilePath(documentPath).FirstOrDefault();
-        if (documentId != null)
-            return solutionService.Solution?.GetDocument(documentId);
-
-        var metadataProject = solutionService.Solution?.Projects.FirstOrDefault(it => it.Name == DecompiledProjectName);
-        if (metadataProject == null) {
-            metadataProject = project.Solution
-                .AddProject(DecompiledProjectName, $"{DecompiledProjectName}.dll", LanguageNames.CSharp)
-                // .WithCompilationOptions(project.CompilationOptions)
-                .WithMetadataReferences(project.MetadataReferences);
-            solutionService.Solution = metadataProject.Solution;
+        if (!File.Exists(documentPath)) {
+            var compilation = await project.GetCompilationAsync(cancellationToken);
+            var metadataReference = compilation?.GetMetadataReference(symbol.ContainingAssembly);
+            if (!DecompileDocument(fullName, documentPath, metadataReference, symbol.ContainingAssembly))
+                return null;
         }
-    
-        var compilation = await project.GetCompilationAsync(cancellationToken);
-        var metadataReference = compilation?.GetMetadataReference(symbol.ContainingAssembly);
-        var document = DecompileDocument(fullName, documentPath, metadataReference, symbol.ContainingAssembly, metadataProject);
 
-        return document;
+        var symbolFinder = new PlainTextSymbolFinder(symbol);
+        var sourceText = SourceText.From(File.ReadAllText(documentPath));
+        var syntaxTree = CSharpSyntaxTree.ParseText(sourceText);
+        var root = await syntaxTree.GetRootAsync(cancellationToken);
+
+        symbolFinder.Visit(root);
+        locations.AddRange(symbolFinder.Locations.Select(loc => new ProtocolModels.Location() {
+            Uri = DocumentUri.From(documentPath),
+            Range = loc.ToRange(sourceText),
+        }));
+
+        if (locations.Count == 0) {
+            locations.Add(new ProtocolModels.Location() {
+                Uri = DocumentUri.From(documentPath),
+                Range = new ProtocolModels.Range() {
+                    Start = new ProtocolModels.Position(0, 0),
+                    End = new ProtocolModels.Position(0, 0),
+                },
+            });
+        }
+
+        return locations;
     }
 
-    private Document? DecompileDocument(string fullName, string documentPath, MetadataReference? metadataReference, IAssemblySymbol? assemblySymbol, Project metadataProject) {
+    private bool DecompileDocument(string fullName, string documentPath, MetadataReference? metadataReference, IAssemblySymbol? assemblySymbol) {
         var assemblyLocation = (metadataReference as PortableExecutableReference)?.FilePath;
         if (assemblyLocation == null || metadataReference == null)
-            return null;
+            return false;
 
         var module = new PEFile(assemblyLocation, PEStreamOptions.PrefetchEntireImage);
         var resolver = new UniversalAssemblyResolver(module.FullName, false, module.Metadata.DetectTargetFrameworkId());
@@ -82,7 +97,7 @@ public class DecompilationService {
         assemblyInfoBuilder.Append(decompiler.DecompileTypeAsString(fullTypeName));
 
         File.WriteAllText(documentPath, assemblyInfoBuilder.ToString());
-        return metadataProject.AddDocument(Path.GetFileName(documentPath), SourceText.From(assemblyInfoBuilder.ToString()), null, documentPath);
+        return true;
     }
 
     private string GetDecompiledDocumentPath(string fullName) {
@@ -97,3 +112,5 @@ public class DecompilationService {
         return Path.Combine(targetDirectory, $"{typeName}.cs");
     }
 }
+
+
