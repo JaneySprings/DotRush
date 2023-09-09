@@ -55,9 +55,9 @@ public class CompilationService {
             .Where(x => x != null)!;
     }
 
-    public void DiagnoseAsync(string currentDocumentPath, ITextDocumentLanguageServer proxy) {
+    public void StartDiagnostic(string currentDocumentPath, ITextDocumentLanguageServer proxy) {
         var cancellationToken = DiagnosticsCancellationToken;
-        ServerExtensions.SafeCancellation(async () => {
+        ServerExtensions.StartOperationWithSafeCancellation(async () => {
             foreach (var documentPath in this.documents) {
                 Diagnostics[documentPath].ClearSyntaxDiagnostics();
                 
@@ -93,9 +93,9 @@ public class CompilationService {
         });
     }
 
-    public void AnalyzerDiagnoseAsync(string documentPath, ITextDocumentLanguageServer proxy) {
+    public void StartAnalyzerDiagnostic(string documentPath, ITextDocumentLanguageServer proxy) {
         var cancellationToken = AnalyzerDiagnosticsCancellationToken;
-        ServerExtensions.SafeCancellation(async () => {
+        ServerExtensions.StartOperationWithSafeCancellation(async () => {
             await Task.Delay(750, cancellationToken); //TODO: Wait for completionHandler. Maybe there is a better way to do this?
 
             var projectId = this.solutionService.Solution?.GetProjectIdsWithDocumentFilePath(documentPath).FirstOrDefault();

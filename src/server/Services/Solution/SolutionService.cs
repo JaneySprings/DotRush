@@ -5,13 +5,10 @@ using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
-using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 
 namespace DotRush.Server.Services;
 
 public class SolutionService: ProjectService {
-    private const int MAX_WORKSPACE_ERRORS = 15;
-
     // TODO: Make private set;
     public Solution? Solution { get; set; }
 
@@ -21,29 +18,27 @@ public class SolutionService: ProjectService {
     public SolutionService(ConfigurationService configurationService, ILanguageServerFacade serverFacade) {
         this.configurationService = configurationService;
         this.serverFacade = serverFacade;
+        Notifications.SetLanguageServerFacade(serverFacade);
         MSBuildLocator.RegisterDefaults();
         WorkspaceUpdated = s => Solution = s;
     }
 
-    public async void ReloadSolutionAsync(IWorkDoneObserver? observer = null) {
+    public async void StartSolutionReloading(IWorkDoneObserver? observer = null) {
         await ReloadAsync(observer);
     }
-    public async void LoadSolutionAsync(IWorkDoneObserver? observer = null) {
+    public async void StartSolutionLoading(IWorkDoneObserver? observer = null) {
         await LoadAsync(observer);
     }
     public void InitializeWorkspace() {
         CancelWorkspaceReloading();
-        var workspaceErrors = 0;
         var options = this.configurationService.AdditionalWorkspaceArguments();
+        if (Workspace != null)
+            Workspace.WorkspaceFailed -= Notifications.NotifyWorkspaceFailed;
+
         Workspace = MSBuildWorkspace.Create(options);
         Workspace.LoadMetadataForReferencedProjects = true;
         Workspace.SkipUnrecognizedProjects = true;
-        Workspace.WorkspaceFailed += (s, e) => {
-            if (configurationService.IsWorkspaceDiagnosticsEnabled() && workspaceErrors < MAX_WORKSPACE_ERRORS) {
-                serverFacade.Window.ShowWarning(e.Diagnostic.Message);
-                workspaceErrors++;
-            }
-        };
+        Workspace.WorkspaceFailed += Notifications.NotifyWorkspaceFailed;
     }
     public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
         CancelWorkspaceReloading();
