@@ -3,11 +3,9 @@ using DotRush.Server.Extensions;
 using DotRush.Server.Services;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
-using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Server.Handlers;
 
@@ -59,16 +57,9 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
         }
 
         if (result.IsEmpty && document != null && typeSymbol != null) {
-            var decompiledDocument = await this.decompilationService.DecompileAsync(typeSymbol, document.Project, cancellationToken);
-            if (decompiledDocument != null)
-                // TODO
-                result.Add(new ProtocolModels.Location() {
-                    Uri = DocumentUri.From(decompiledDocument.FilePath!),
-                    Range = new ProtocolModels.Range() {
-                        Start = new ProtocolModels.Position(0, 0),
-                        End = new ProtocolModels.Position(0, 0),
-                    },
-                });
+            var locations = await this.decompilationService.DecompileAsync(typeSymbol, document.Project, cancellationToken);
+            if (locations != null) 
+                result.AddRange(locations);
         }
 
         return result.ToLocationOrLocationLinks();
