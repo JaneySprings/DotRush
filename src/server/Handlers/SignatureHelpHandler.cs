@@ -22,7 +22,7 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
     }
 
     public override Task<SignatureHelp?> Handle(SignatureHelpParams request, CancellationToken cancellationToken) {
-        return ServerExtensions.SafeHandlerAsync<SignatureHelp?>(async () => {
+        return ServerExtensions.SafeHandlerAsync<SignatureHelp?>(() => {
             // var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
             // if (documentIds == null)
             //      return null;
@@ -55,7 +55,7 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
             //         ActiveParameter = 0
             //     };
             // }
-            return null;
+            return Task.FromResult<SignatureHelp?>(null);
         });
     }
 }

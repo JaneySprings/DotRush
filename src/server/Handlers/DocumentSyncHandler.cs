@@ -46,10 +46,10 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         }
 
         this.compilationService.AddDocument(filePath);
-        this.compilationService.DiagnoseAsync(filePath, serverFacade.TextDocument);
+        this.compilationService.StartDiagnostic(filePath, serverFacade.TextDocument);
         
         if (this.configurationService.IsRoslynAnalyzersEnabled())
-            this.compilationService.AnalyzerDiagnoseAsync(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument);
+            this.compilationService.StartAnalyzerDiagnostic(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument);
 
         return Unit.Task;
     }
@@ -57,10 +57,10 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
 
         this.compilationService.AddDocument(filePath);
-        this.compilationService.DiagnoseAsync(filePath, serverFacade.TextDocument);
+        this.compilationService.StartDiagnostic(filePath, serverFacade.TextDocument);
 
         if (this.configurationService.IsRoslynAnalyzersEnabled())
-            this.compilationService.AnalyzerDiagnoseAsync(filePath, serverFacade.TextDocument);
+            this.compilationService.StartAnalyzerDiagnostic(filePath, serverFacade.TextDocument);
         
         return Unit.Task;
     }

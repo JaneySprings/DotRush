@@ -92,6 +92,6 @@ public class LanguageServer {
 
         solutionService.InitializeWorkspace();
         solutionService.AddWorkspaceFolders(workspaceFolders);
-        solutionService.ReloadSolutionAsync(workDoneProgress);
+        solutionService.StartSolutionReloading(workDoneProgress);
     }
 }

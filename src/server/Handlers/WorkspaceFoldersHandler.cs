@@ -31,13 +31,13 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
 
         if (removed.Any()) {
             this.solutionService.RemoveWorkspaceFolders(removed);
-            this.solutionService.ReloadSolutionAsync(observer);
+            this.solutionService.StartSolutionReloading(observer);
             return Unit.Value;
         }
 
         if (added.Any()) {
             this.solutionService.AddWorkspaceFolders(added);
-            this.solutionService.LoadSolutionAsync(observer);
+            this.solutionService.StartSolutionLoading(observer);
         }
         
         return Unit.Value;

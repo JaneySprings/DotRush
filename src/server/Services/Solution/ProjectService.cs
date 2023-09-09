@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using DotRush.Server.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -8,42 +9,44 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 namespace DotRush.Server.Services;
 
 public abstract class ProjectService {
+    protected WorkspaceNotifications Notifications { get; private set; }
+    protected HashSet<string> ProjectsPaths { get; private set; }
     protected Action<Solution?>? WorkspaceUpdated { get; set; }
     protected MSBuildWorkspace? Workspace { get; set; }
-
-    protected HashSet<string> projects;
 
     private CancellationTokenSource? reloadCancellationTokenSource;
     private CancellationToken CancellationToken {
         get {
             CancelWorkspaceReloading();
-            this.reloadCancellationTokenSource = new CancellationTokenSource();
-            return this.reloadCancellationTokenSource.Token;
+            reloadCancellationTokenSource = new CancellationTokenSource();
+            return reloadCancellationTokenSource.Token;
         }
     }
 
     protected ProjectService() {
-        this.projects = new HashSet<string>();
+        Notifications = new WorkspaceNotifications();
+        ProjectsPaths = new HashSet<string>();
     }
 
-    protected void AddProjects(IEnumerable<string> projects) {
-        var projectGroups = projects.GroupBy(p => Path.GetDirectoryName(p));
+    protected void AddProjects(IEnumerable<string> projectsPaths) {
+        var projectGroups = projectsPaths.GroupBy(p => Path.GetDirectoryName(p));
         foreach (var group in projectGroups) {
             var orderedGroup = group
                 .OrderByDescending(p => p.Length)
                 .ThenByDescending(p => Path.GetFileNameWithoutExtension(p));
 
-            this.projects.Add(orderedGroup.First());
+            ProjectsPaths.Add(orderedGroup.First());
         }
     }
-    protected void RemoveProjects(IEnumerable<string> projects) {
-        foreach (var project in projects)
-            this.projects.Remove(project);
+    protected void RemoveProjects(IEnumerable<string> projectsPaths) {
+        foreach (var projectPath in projectsPaths)
+            ProjectsPaths.Remove(projectPath);
     }
 
     protected async Task LoadAsync(IWorkDoneObserver? observer = null) {
+        Notifications.SetWorkDoneObserver(observer);
         var cancellationToken = CancellationToken;
-        foreach (var projectFile in this.projects) {
+        foreach (var projectFile in ProjectsPaths) {
             if (cancellationToken.IsCancellationRequested)
                 break;
 
@@ -53,7 +56,7 @@ public abstract class ProjectService {
 
                 observer?.OnNext(new WorkDoneProgressReport { Message = $"Restoring {Path.GetFileNameWithoutExtension(projectFile)}" });
                 await RestoreProjectAsync(projectFile, cancellationToken);
-                await Workspace!.OpenProjectAsync(projectFile, new ProgressNotification(observer), cancellationToken);
+                await Workspace!.OpenProjectAsync(projectFile, Notifications, cancellationToken);
                 WorkspaceUpdated?.Invoke(Workspace.CurrentSolution);
             });
         }
@@ -61,6 +64,7 @@ public abstract class ProjectService {
         observer?.OnCompleted();
     }
     protected async Task ReloadAsync(IWorkDoneObserver? observer = null) {
+        Notifications.ResetWorkspaceErrors();
         WorkspaceUpdated?.Invoke(null);
         Workspace!.CloseSolution();
         await LoadAsync(observer);
@@ -82,7 +86,8 @@ public abstract class ProjectService {
         this.reloadCancellationTokenSource = null;
     }
 
-    private static async Task StartProcessAsync(string command, string args, CancellationToken cancellationToken) {
+    private async Task StartProcessAsync(string command, string args, CancellationToken cancellationToken) {
+        var errorMessage = new StringBuilder();
         var process = new Process {
             StartInfo = new ProcessStartInfo {
                 FileName = command,
@@ -95,7 +100,13 @@ public abstract class ProjectService {
             }
         };
 
+        process.ErrorDataReceived += (sender, e) => {
+            if (!string.IsNullOrEmpty(e.Data))
+                errorMessage.AppendLine(e.Data);
+        };
+
         process.Start();
         await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+        Notifications.NotifyWorkspaceFailed(errorMessage.ToString());
     }
 }

@@ -3,9 +3,9 @@ namespace DotRush.Server.Extensions;
 
 public static class ServerExtensions {
 
-    public static void SafeCancellation(Func<Task> action) {
+    public static async void StartOperationWithSafeCancellation(Func<Task> action) {
         try {
-            action.Invoke();
+            await action.Invoke();
         } catch (OperationCanceledException) {
             // ignore
         }
