@@ -36,6 +36,39 @@
         "path": "./themes/vs2022_light.json"
       }
     ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "dotrush.build",
+          "group": "z_dotnet@1",
+          "when": "explorerResourceIsFolder"
+        },
+        {
+          "command": "dotrush.restore",
+          "group": "z_dotnet@2",
+          "when": "explorerResourceIsFolder"
+        },
+        {
+          "command": "dotrush.clean",
+          "group": "z_dotnet@3",
+          "when": "explorerResourceIsFolder"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "dotrush.build",
+        "title": "Build"
+      },
+      {
+        "command": "dotrush.restore",
+        "title": "Restore"
+      },
+      {
+        "command": "dotrush.clean",
+        "title": "Clean"
+      }
+    ],
     "configuration":[
       {
         "title": "DotRush",
