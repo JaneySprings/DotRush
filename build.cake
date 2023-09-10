@@ -18,7 +18,7 @@ Setup(context => {
 	var major = DateTime.Now.ToString("yy");
 	var minor = DateTime.Now.Month < 7 ? "1" : "2";
 	var build = DateTime.Now.DayOfYear;
-	version = $"{major}.{minor}.{major}{build:000}";
+	version = $"{major}.{minor}.{build:000}";
 	EnsureDirectoryExists(ArtifactsDirectory);
 });
 
