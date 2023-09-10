@@ -1,3 +1,4 @@
+import { CommandsController } from './commands';
 import { RuntimeController } from './selector';
 import { ClientController } from './client';
 import * as res from './resources';
@@ -10,8 +11,10 @@ export function activate(context: vscode.ExtensionContext) {
 		return;
 	}
 
-	if (RuntimeController.activate(context))
+	if (RuntimeController.activate(context)) {
+		CommandsController.activate(context);
 		ClientController.activate(context);
+	}
 }
 
 export function deactivate() {
