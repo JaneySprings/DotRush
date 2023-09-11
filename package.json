@@ -41,17 +41,17 @@
         {
           "command": "dotrush.build",
           "group": "z_dotnet@1",
-          "when": "explorerResourceIsFolder"
+          "when": "explorerResourceIsFolder || resourceFilename =~ /.*\\.csproj$/"
         },
         {
           "command": "dotrush.restore",
           "group": "z_dotnet@2",
-          "when": "explorerResourceIsFolder"
+          "when": "explorerResourceIsFolder || resourceFilename =~ /.*\\.csproj$/"
         },
         {
           "command": "dotrush.clean",
           "group": "z_dotnet@3",
-          "when": "explorerResourceIsFolder"
+          "when": "explorerResourceIsFolder || resourceFilename =~ /.*\\.csproj$/"
         }
       ]
     },
