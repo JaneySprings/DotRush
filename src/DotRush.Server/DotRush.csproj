@@ -2,14 +2,15 @@
 	<PropertyGroup>
 		<CodeAnalysisVersion>4.7.0</CodeAnalysisVersion>
 	
-		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+		<TargetFrameworks>net8.0</TargetFrameworks>
 		<OutputType>Exe</OutputType>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<SelfContained>false</SelfContained>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-		<OutputPath>..\..\extension\bin</OutputPath>
+		<OutputPath>..\..\binaries</OutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<NoWarn>$(NoWarn);VSTHRD100</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>

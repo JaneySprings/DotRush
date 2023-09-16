@@ -1,7 +1,10 @@
 /**/[Bb]in
 /**/[Oo]bj
-tools
-extension
+/tools
+/binaries
+/artifacts
+/src/VSCode.Extension/extension
+
+package-lock.json
 node_modules
-artifacts
-/**/.DS_Store
+.DS_Store

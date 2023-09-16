@@ -22,17 +22,22 @@ public class LanguageServer {
     }
 
     public static async Task Main(string[] args) {
-        var ideProcess = Process.GetProcessById(int.Parse(args[0]));
-        ideProcess.EnableRaisingEvents = true;
-        ideProcess.Exited += (s, e) => Environment.Exit(0);
-
+        ObserveClientProcess(args);
         LogConfig.InitializeLog();
 
         var server = await OmniSharpLanguageServer.From(options => options
             .AddDefaultLoggingProvider()
             .WithInput(Console.OpenStandardInput())
             .WithOutput(Console.OpenStandardOutput())
-            .WithServices(s => ConfigureServices(s))
+            .WithServices(services => {
+                services.AddSingleton<ConfigurationService>();
+                services.AddSingleton<SolutionService>();
+                services.AddSingleton<CodeActionService>();
+                services.AddSingleton<CompilationService>();
+                services.AddSingleton<DecompilationService>();
+                //TODO: Temp
+                LoggingService.Initialize();
+            })
             .WithHandler<DocumentSyncHandler>()
             .WithHandler<WatchedFilesHandler>()
             .WithHandler<WorkspaceFoldersHandler>()
@@ -51,17 +56,6 @@ public class LanguageServer {
         ).ConfigureAwait(false);
 
         await server.WaitForExit.ConfigureAwait(false);
-    }
-
-
-    private static void ConfigureServices(IServiceCollection services) {
-        services.AddSingleton<ConfigurationService>();
-        services.AddSingleton<SolutionService>();
-        services.AddSingleton<CodeActionService>();
-        services.AddSingleton<CompilationService>();
-        services.AddSingleton<DecompilationService>();
-        //TODO: Temp
-        LoggingService.Initialize();
     }
 
     private static async Task StartedHandlerAsync(ILanguageServer server, CancellationToken cancellationToken) {
@@ -93,5 +87,14 @@ public class LanguageServer {
         solutionService.InitializeWorkspace();
         solutionService.AddWorkspaceFolders(workspaceFolders);
         solutionService.StartSolutionReloading(workDoneProgress);
+    }
+
+    private static void ObserveClientProcess(string[] args) {
+        if (args.Length == 0)
+            return;
+
+        var ideProcess = Process.GetProcessById(int.Parse(args[0]));
+        ideProcess.EnableRaisingEvents = true;
+        ideProcess.Exited += (s, e) => Environment.Exit(0);
     }
 }
