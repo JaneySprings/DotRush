@@ -1,7 +1,7 @@
 {
   "name": "dotrush",
   "publisher": "nromanov",
-  "version": "23.2.254",
+  "version": "23.2.259",
   "description": "Lightweight C# development environment for Visual Studio Code.",
   "displayName": "DotRush",
   "author": "Nikita Romanov",
@@ -23,7 +23,7 @@
     "onLanguage:csharp",
     "workspaceContains:**/*.csproj"
   ],
-  "main": "./extension/extension.js",
+  "main": "extension/extension.js",
   "contributes": {
     "themes": [
       {
@@ -91,7 +91,7 @@
   "scripts": {
     "vscode:prepublish": "npm run package",
     "compile": "webpack",
-    "watch": "tsc -watch -p ./src/VSCode.Extension/tsconfig.json",
+    "watch": "tsc -watch -p ./src/vscode/tsconfig.json",
     "package": "webpack --mode production"
   },
   "devDependencies": {

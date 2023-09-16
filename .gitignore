@@ -3,7 +3,7 @@
 /tools
 /binaries
 /artifacts
-/src/VSCode.Extension/extension
+/extension
 
 package-lock.json
 node_modules
