@@ -16,12 +16,12 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}/src/VSCode.Extension"
+				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
 			"outFiles": [
-				"${workspaceFolder}/src/VSCode.Extension/extension/**/*.js"
+				"${workspaceFolder}/extension/**/*.js"
 			],
-			"preLaunchTask": "${defaultBuildTask}"
+			"preLaunchTask": "tsc: watch"
 		}
 	]
 }

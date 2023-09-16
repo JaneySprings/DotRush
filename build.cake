@@ -10,10 +10,9 @@ string configuration = Argument<string>("configuration", "debug");
 
 public string RootDirectory => MakeAbsolute(Directory(".")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
-public string BinariesDirectory => _Path.Combine(RootDirectory, "binaries");
-public string ServerProjectFilePath => _Path.Combine(RootDirectory, "src", "DotRush.Server", "DotRush.csproj");
-public string ExtensionWorkingDirectory => _Path.Combine(RootDirectory, "src", "VSCode.Extension");
-public string ExtensionStagingDirectory => _Path.Combine(ExtensionWorkingDirectory, "extension");
+public string ServerProjectFilePath => _Path.Combine(RootDirectory, "src", "server", "DotRush.csproj");
+public string ExtensionStagingDirectory => _Path.Combine(RootDirectory, "extension");
+public string BinariesDirectory => _Path.Combine(ExtensionStagingDirectory, "bin");
 
 
 Setup(context => {
@@ -46,14 +45,8 @@ Task("vsix")
 		var options = System.Text.RegularExpressions.RegexOptions.Multiline;
 		ReplaceRegexInFiles(file.ToString(), regex, $"  $1\"{version}\"$3", options);
 	})
-	.Does(() => {
-		CopyDirectory(BinariesDirectory, _Path.Combine(ExtensionStagingDirectory, "bin"));
-		CopyFile(_Path.Combine(RootDirectory, "LICENSE"), _Path.Combine(ExtensionWorkingDirectory, "LICENSE"));
-		CopyFile(_Path.Combine(RootDirectory, "README.md"), _Path.Combine(ExtensionWorkingDirectory, "README.md"));
-	})
 	.Does(() => VscePackage(new VscePackageSettings {
-		OutputFilePath = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{runtime}.vsix"),
-		WorkingDirectory = ExtensionWorkingDirectory
+		OutputFilePath = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{runtime}.vsix")
 	}));
 
 

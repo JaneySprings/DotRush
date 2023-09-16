@@ -8,7 +8,7 @@
 		<Nullable>enable</Nullable>
 		<SelfContained>false</SelfContained>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-		<OutputPath>..\..\binaries</OutputPath>
+		<OutputPath>..\..\extension\bin</OutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 		<NoWarn>$(NoWarn);VSTHRD100</NoWarn>
 	</PropertyGroup>

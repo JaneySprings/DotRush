@@ -134,7 +134,7 @@ public class CompletionHandler : CompletionHandlerBase {
             .ToList();
 
         var currentLineTextEdit = changes
-            .Single(x => x.Span.IntersectsWith(completionItem.Span))
+            .First(x => x.Span.IntersectsWith(completionItem.Span))
             .ToTextEdit(sourceText);
 
         if (currentLineTextEdit != null) {

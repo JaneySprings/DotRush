@@ -5,7 +5,7 @@
 	"tasks": [
 		{
 			"type": "typescript",
-			"tsconfig": "src/VSCode.Extension/tsconfig.json",
+			"tsconfig": "src/vscode/tsconfig.json",
 			"option": "watch",
 			"problemMatcher": [
 				"$tsc-watch"
@@ -14,7 +14,7 @@
 				"kind": "build",
 				"isDefault": true
 			},
-			"label": "tsc: watch - src/VSCode.Extension/tsconfig.json"
+			"label": "tsc: watch"
 		}
 	]
 }
