@@ -27,11 +27,13 @@ stages:
           inputs:
             version: '8.x'
             includePreviewVersions: true
-        - script: npm install
-          displayName: 'Restore Node.js modules'
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
+        - script: npm install
+          workingDirectory: src/VSCode.Extension
+          displayName: 'Restore Node.js modules'
         - script: npm install -g vsce
+          workingDirectory: src/VSCode.Extension
           displayName: 'Install VSCode builder'
 
         - script: dotnet cake --target=vsix --configuration=release --arch=linux-x64
@@ -57,11 +59,13 @@ stages:
           inputs:
             version: '8.x'
             includePreviewVersions: true
-        - script: npm install
-          displayName: 'Restore Node.js modules'
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
+        - script: npm install
+          workingDirectory: src/VSCode.Extension
+          displayName: 'Restore Node.js modules'
         - script: npm install -g vsce
+          workingDirectory: src/VSCode.Extension
           displayName: 'Install VSCode builder'
 
         - script: dotnet cake --target=vsix --configuration=release --arch=osx-x64
@@ -87,11 +91,13 @@ stages:
           inputs:
             version: '8.x'
             includePreviewVersions: true
-        - script: npm install
-          displayName: 'Restore Node.js modules'
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
+        - script: npm install
+          workingDirectory: src/VSCode.Extension
+          displayName: 'Restore Node.js modules'
         - script: npm install -g vsce
+          workingDirectory: src/VSCode.Extension
           displayName: 'Install VSCode builder'
 
         - script: dotnet cake --target=vsix --configuration=release --arch=win-x64
