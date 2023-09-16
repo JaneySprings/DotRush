@@ -12,7 +12,7 @@ const extensionConfig = {
   target: 'node',
 	mode: 'none',
 
-  entry: './src/extension.ts',
+  entry: './extension.ts',
   output: {
     path: path.resolve(__dirname, 'extension'),
     filename: 'extension.js',
@@ -37,7 +37,7 @@ const extensionConfig = {
       }
     ]
   },
-  devtool: 'nosources-source-map',
+  devtool: false,
   infrastructureLogging: {
     level: "log",
   },

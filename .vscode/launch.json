@@ -19,7 +19,7 @@
 				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
 			"outFiles": [
-				"${workspaceFolder}/extension/**/*.js"
+				"${workspaceFolder}/src/VSCode.Extension/extension/**/*.js"
 			],
 			"preLaunchTask": "${defaultBuildTask}"
 		}
