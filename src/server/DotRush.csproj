@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<CodeAnalysisVersion>4.7.0</CodeAnalysisVersion>
+		<DecompilerVersion>8.1.1.7464</DecompilerVersion>
+		<MSBuildFrameworkVersion>17.7.2</MSBuildFrameworkVersion>
 	
 		<TargetFrameworks>net8.0</TargetFrameworks>
 		<OutputType>Exe</OutputType>
@@ -17,9 +19,9 @@
 		<PackageReference Include="NLog" Version="5.1.1" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.7" />
-		<PackageReference Include="ICSharpCode.Decompiler" Version="8.1.0.7455" />
-		<PackageReference Include="Microsoft.Build" Version="17.7.2" ExcludeAssets="runtime"/>
-		<PackageReference Include="Microsoft.Build.Framework" Version="17.7.2" ExcludeAssets="runtime"/>
+		<PackageReference Include="ICSharpCode.Decompiler" Version="$(DecompilerVersion)" />
+		<PackageReference Include="Microsoft.Build" Version="$(MSBuildFrameworkVersion)" ExcludeAssets="runtime"/>
+		<PackageReference Include="Microsoft.Build.Framework" Version="$(MSBuildFrameworkVersion)" ExcludeAssets="runtime"/>
 		<PackageReference Include="Microsoft.Build.Locator" Version="1.5.5" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(CodeAnalysisVersion)" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(CodeAnalysisVersion)" />

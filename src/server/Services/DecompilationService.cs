@@ -72,32 +72,34 @@ public class DecompilationService {
     }
 
     private bool DecompileDocument(string fullName, string documentPath, MetadataReference? metadataReference, IAssemblySymbol? assemblySymbol) {
-        var assemblyLocation = (metadataReference as PortableExecutableReference)?.FilePath;
-        if (assemblyLocation == null || metadataReference == null)
-            return false;
+        return ServerExtensions.SafeHandler<Boolean>(false, () => {
+            var assemblyLocation = (metadataReference as PortableExecutableReference)?.FilePath;
+            if (assemblyLocation == null || metadataReference == null)
+                return false;
 
-        var module = new PEFile(assemblyLocation, PEStreamOptions.PrefetchEntireImage);
-        var resolver = new UniversalAssemblyResolver(module.FullName, false, module.Metadata.DetectTargetFrameworkId());
-        var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings() {
-            ThrowOnAssemblyResolveErrors = false,
-            RemoveDeadCode = false,
-            RemoveDeadStores = false,
-            ShowXmlDocumentation = true,
-            UseSdkStyleProjectFormat = module.DetectTargetFrameworkId() != null,
-            UseNestedDirectoriesForNamespaces = false,
+            var module = new PEFile(assemblyLocation, PEStreamOptions.PrefetchEntireImage);
+            var resolver = new UniversalAssemblyResolver(module.FullName, false, module.Metadata.DetectTargetFrameworkId());
+            var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings() {
+                ThrowOnAssemblyResolveErrors = false,
+                RemoveDeadCode = false,
+                RemoveDeadStores = false,
+                ShowXmlDocumentation = true,
+                UseSdkStyleProjectFormat = module.DetectTargetFrameworkId() != null,
+                UseNestedDirectoriesForNamespaces = false,
+            });
+
+            var fullTypeName = new FullTypeName(fullName);
+            var assemblyInfoBuilder = new StringBuilder();
+
+            assemblyInfoBuilder.AppendLine($"#region Assembly {assemblySymbol}");
+            assemblyInfoBuilder.AppendLine($"// {assemblyLocation}");
+            assemblyInfoBuilder.AppendLine("#endregion");
+            assemblyInfoBuilder.AppendLine();
+            assemblyInfoBuilder.Append(decompiler.DecompileTypeAsString(fullTypeName));
+
+            File.WriteAllText(documentPath, assemblyInfoBuilder.ToString());
+            return true;
         });
-
-        var fullTypeName = new FullTypeName(fullName);
-        var assemblyInfoBuilder = new StringBuilder();
-
-        assemblyInfoBuilder.AppendLine($"#region Assembly {assemblySymbol}");
-        assemblyInfoBuilder.AppendLine($"// {assemblyLocation}");
-        assemblyInfoBuilder.AppendLine("#endregion");
-        assemblyInfoBuilder.AppendLine();
-        assemblyInfoBuilder.Append(decompiler.DecompileTypeAsString(fullTypeName));
-
-        File.WriteAllText(documentPath, assemblyInfoBuilder.ToString());
-        return true;
     }
 
     private string GetDecompiledDocumentPath(string fullName) {
