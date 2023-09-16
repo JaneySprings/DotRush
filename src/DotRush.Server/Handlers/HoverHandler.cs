@@ -11,12 +11,12 @@ namespace DotRush.Server.Handlers;
 
 public class HoverHandler : HoverHandlerBase {
     private readonly SolutionService solutionService;
-    private static readonly SymbolDisplayFormat DefaultFormat = SymbolDisplayFormat.FullyQualifiedFormat
+    public static readonly SymbolDisplayFormat DefaultFormat = SymbolDisplayFormat.FullyQualifiedFormat
         .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)
         .WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.None)
         .WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers);
 
-    private static readonly SymbolDisplayFormat MinimalFormat = SymbolDisplayFormat.MinimallyQualifiedFormat
+    public static readonly SymbolDisplayFormat MinimalFormat = SymbolDisplayFormat.MinimallyQualifiedFormat
         .WithMemberOptions(SymbolDisplayMemberOptions.IncludeParameters 
             | SymbolDisplayMemberOptions.IncludeType
             | SymbolDisplayMemberOptions.IncludeRef

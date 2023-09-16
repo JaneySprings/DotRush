@@ -42,7 +42,7 @@ public class LanguageServer {
             .WithHandler<WatchedFilesHandler>()
             .WithHandler<WorkspaceFoldersHandler>()
             .WithHandler<HoverHandler>()
-            // .WithHandler<SignatureHelpHandler>() WIP
+            .WithHandler<SignatureHelpHandler>()
             .WithHandler<FormattingHandler>()
             .WithHandler<RangeFormattingHandler>()
             .WithHandler<RenameHandler>()
