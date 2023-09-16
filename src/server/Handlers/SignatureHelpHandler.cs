@@ -49,23 +49,24 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
                     continue;
                 
                 var (invocation, argumentsCount) = invocationInfo.Value;
-                var methodGroup = semanticModel.GetMemberGroup(invocation, cancellationToken)
+                var signatures = new Container<SignatureInformation>(semanticModel
+                    .GetMemberGroup(invocation, cancellationToken)
                     .OfType<IMethodSymbol>()
-                    .Where(x => x.Parameters.Length >= argumentsCount);
+                    .Where(x => x.Parameters.Length >= argumentsCount)
+                    .Select(x => new SignatureInformation { 
+                        Label = x.ToDisplayString(HoverHandler.MinimalFormat),
+                        Parameters = new Container<ParameterInformation>(x.Parameters.Select(y => new ParameterInformation { 
+                            Label = y.ToDisplayString(HoverHandler.MinimalFormat)
+                        }))
+                    })
+                );
 
-                if (methodGroup == null)
-                    continue;
+                if (signatures.Count() == 1 && signatures.First().Parameters?.Count() == 0)
+                    return null;
 
                 return new SignatureHelp {
                     ActiveParameter = argumentsCount - 1,
-                    Signatures = new Container<SignatureInformation>(
-                        methodGroup.Select(x => new SignatureInformation { 
-                            Label = x.ToDisplayString(HoverHandler.MinimalFormat),
-                            Parameters = new Container<ParameterInformation>(x.Parameters.Select(y => new ParameterInformation { 
-                                Label = y.ToDisplayString(HoverHandler.MinimalFormat)
-                            }))
-                        })
-                    )
+                    Signatures = signatures
                 };
             }
 

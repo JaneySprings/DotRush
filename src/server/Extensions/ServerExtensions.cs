@@ -11,7 +11,7 @@ public static class ServerExtensions {
         }
     }
 
-    public static async Task<T> SafeHandlerAsync<T>(T fallback, Func<Task<T>> action) where T : class {
+    public static async Task<T> SafeHandlerAsync<T>(T fallback, Func<Task<T>> action) {
         try {
             return await action.Invoke();
         } catch (Exception) {
@@ -37,7 +37,7 @@ public static class ServerExtensions {
         }
     }
 
-    public static T SafeHandler<T>(T fallback, Func<T> action) where T : class {
+    public static T SafeHandler<T>(T fallback, Func<T> action) {
         try {
             return action.Invoke();
         } catch (Exception) {
