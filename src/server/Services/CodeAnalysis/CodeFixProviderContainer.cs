@@ -1,6 +1,6 @@
 using Microsoft.CodeAnalysis.CodeFixes;
 
-namespace DotRush.Server.Containers;
+namespace DotRush.Server.Services;
 
 public class CodeFixProviderContainer {
     public CodeFixProvider Provider { get; }

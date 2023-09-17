@@ -1,6 +1,6 @@
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Server.Containers;
+namespace DotRush.Server.Extensions;
 
 public class LocationCollection {
     private readonly List<Location> locations;

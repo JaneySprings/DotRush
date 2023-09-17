@@ -2,9 +2,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using OmniSharp.Extensions.LanguageServer.Protocol;
 
-namespace DotRush.Server.Extensions;
+namespace DotRush.Server.Services;
 
 public class PlainTextSymbolFinder : CSharpSyntaxWalker {
     public List<TextSpan> Locations { get; private set;}

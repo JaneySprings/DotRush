@@ -41,6 +41,9 @@ public static class WorkspaceExtensions {
             return null;
 
         var maxCommonFoldersCount = projects.Max(project => GetCommonFoldersCount(project, documentPath));
+        if (maxCommonFoldersCount < 0)
+            return null;
+    
         return projects
             .Where(project => GetCommonFoldersCount(project, documentPath) == maxCommonFoldersCount)
             .Select(project => project.Id);
@@ -69,8 +72,10 @@ public static class WorkspaceExtensions {
 
     private static int GetCommonFoldersCount(Project project, string documentPath) {
         var folders = project.GetFolders(documentPath);
-        var maxCounter = 0;
+        if (folders.Any(it => it.StartsWith(".")))
+            return -1;
 
+        var maxCounter = 0;
         foreach (var document in project.Documents) {
             var counter = 0;
             foreach (var folder in folders) {
