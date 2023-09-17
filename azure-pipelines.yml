@@ -34,10 +34,10 @@ stages:
         - script: npm install -g vsce
           displayName: 'Install VSCode builder'
 
-        - script: dotnet cake --target=vsix --configuration=release --arch=linux-x64
-          displayName: 'Build VSIX (linux-x64)'
-        - script: dotnet cake --target=vsix --configuration=release --arch=linux-arm64
-          displayName: 'Build VSIX (linux-arm64)'
+        - script: dotnet cake --target=bundle --configuration=release --arch=linux-x64
+          displayName: 'Build Bundle (linux-x64)'
+        - script: dotnet cake --target=bundle --configuration=release --arch=linux-arm64
+          displayName: 'Build Bundle (linux-arm64)'
 
         - publish: '$(System.DefaultWorkingDirectory)/artifacts'
           displayName: 'Publish Artifacts'
@@ -64,10 +64,10 @@ stages:
         - script: npm install -g vsce
           displayName: 'Install VSCode builder'
 
-        - script: dotnet cake --target=vsix --configuration=release --arch=osx-x64
-          displayName: 'Build VSIX (osx-x64)'
-        - script: dotnet cake --target=vsix --configuration=release --arch=osx-arm64
-          displayName: 'Build VSIX (osx-arm64)'
+        - script: dotnet cake --target=bundle --configuration=release --arch=osx-x64
+          displayName: 'Build Bundle (osx-x64)'
+        - script: dotnet cake --target=bundle --configuration=release --arch=osx-arm64
+          displayName: 'Build Bundle (osx-arm64)'
 
         - publish: '$(System.DefaultWorkingDirectory)/artifacts'
           displayName: 'Publish Artifacts'
@@ -94,10 +94,10 @@ stages:
         - script: npm install -g vsce
           displayName: 'Install VSCode builder'
 
-        - script: dotnet cake --target=vsix --configuration=release --arch=win-x64
-          displayName: 'Build VSIX (win-x64)'
-        - script: dotnet cake --target=vsix --configuration=release --arch=win-arm64
-          displayName: 'Build VSIX (win-arm64)'
+        - script: dotnet cake --target=bundle --configuration=release --arch=win-x64
+          displayName: 'Build Bundle (win-x64)'
+        - script: dotnet cake --target=bundle --configuration=release --arch=win-arm64
+          displayName: 'Build Bundle (win-arm64)'
 
         - publish: '$(System.DefaultWorkingDirectory)/artifacts'
           displayName: 'Publish Artifacts'

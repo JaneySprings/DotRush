@@ -36,7 +36,6 @@ Task("server").Does(() => DotNetBuild(ServerProjectFilePath, new DotNetBuildSett
 	},
 }));
 
-
 Task("vsix")
 	.IsDependentOn("clean")
 	.IsDependentOn("server")
@@ -49,5 +48,13 @@ Task("vsix")
 		OutputFilePath = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{runtime}.vsix")
 	}));
 
+Task("archive").Does(() => Zip(
+	_Path.Combine(ExtensionStagingDirectory, "bin"), 
+	_Path.Combine(ArtifactsDirectory, $"DotRush.Server.v{version}_{runtime}.zip")
+));
+
+Task("bundle")
+	.IsDependentOn("vsix")
+	.IsDependentOn("archive");
 
 RunTarget(target);
