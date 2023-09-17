@@ -1,6 +1,5 @@
 using DotRush.Server.Extensions;
 using DotRush.Server.Services;
-using DotRush.Server.Containers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;

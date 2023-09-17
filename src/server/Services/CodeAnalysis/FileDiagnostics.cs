@@ -2,7 +2,7 @@ using Microsoft.CodeAnalysis;
 using DotRush.Server.Extensions;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Server.Containers;
+namespace DotRush.Server.Services;
 
 public class FileDiagnostics {
     public IEnumerable<SourceDiagnostic> SyntaxDiagnostics { get; private set; }

@@ -1,4 +1,4 @@
-using DotRush.Server.Containers;
+using DotRush.Server.Services;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -6,26 +6,17 @@ using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Extensions;
 
 public static class DiagnosticsConverter {
-    public static List<ProtocolModels.Diagnostic> ToServerDiagnostics(this IEnumerable<SourceDiagnostic> diagnostics) {
-        var result = new List<ProtocolModels.Diagnostic>();
-        foreach (var diagnostic in diagnostics) {
-            if (diagnostic.InnerDiagnostic.Location.Kind != LocationKind.SourceFile)
-                continue;
-
-            var diagnosticSource = diagnostic.InnerDiagnostic.Location.SourceTree?.FilePath;
-            if (!File.Exists(diagnosticSource))
-                continue;
-
-            result.Add(new ProtocolModels.Diagnostic() {
-                Message = diagnostic.InnerDiagnostic.GetMessage(),
-                Range = diagnostic.InnerDiagnostic.Location.ToRange(),
-                Severity = diagnostic.InnerDiagnostic.Severity.ToServerSeverity(),
-                Source = diagnostic.SourceName ?? diagnosticSource,
-                Code = diagnostic.InnerDiagnostic.Id,
-            });
-        }
-
-        return result;
+    public static IEnumerable<ProtocolModels.Diagnostic> ToServerDiagnostics(this IEnumerable<SourceDiagnostic> diagnostics) {
+        return diagnostics.Select(it => {
+            var diagnosticSource = it.InnerDiagnostic.Location.SourceTree?.FilePath;
+            return new ProtocolModels.Diagnostic() {
+                Message = it.InnerDiagnostic.GetMessage(),
+                Range = it.InnerDiagnostic.Location.ToRange(),
+                Severity = it.InnerDiagnostic.Severity.ToServerSeverity(),
+                Source = it.SourceName ?? diagnosticSource,
+                Code = it.InnerDiagnostic.Id,
+            };
+        });
     }
 
     public static ProtocolModels.DiagnosticSeverity ToServerSeverity(this DiagnosticSeverity severity) {

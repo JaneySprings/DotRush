@@ -7,7 +7,6 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using CodeAnalysisCodeAction = Microsoft.CodeAnalysis.CodeActions.CodeAction;
-using DotRush.Server.Containers;
 
 namespace DotRush.Server.Handlers;
 

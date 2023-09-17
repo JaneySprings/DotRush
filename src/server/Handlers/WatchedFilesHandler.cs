@@ -1,7 +1,6 @@
 using DotRush.Server.Extensions;
 using DotRush.Server.Services;
 using MediatR;
-using Microsoft.CodeAnalysis;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
@@ -34,10 +33,6 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     public override async Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
         foreach (var change in request.Changes) {
             var path = change.Uri.GetFileSystemPath();
-            var pathSegments = path.Split(Path.DirectorySeparatorChar);
-            if (pathSegments.Any(it => it.StartsWith(".")))
-                continue; // TODO: Use relative paths instead of absolute paths
-
             switch (Path.GetExtension(path)) {
                 case ".cs":
                     if (change.Type == FileChangeType.Created)
