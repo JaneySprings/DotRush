@@ -25,7 +25,7 @@ public class WorkspaceNotifications : IProgress<ProjectLoadProgress> {
         NotifyWorkspaceFailed(e.Diagnostic.Message);
     }
     public void NotifyWorkspaceFailed(string message) {
-        if (workspaceErrors < MAX_WORKSPACE_ERRORS) {
+        if (workspaceErrors < MAX_WORKSPACE_ERRORS && !string.IsNullOrEmpty(message)) {
             serverFacade?.Window.ShowWarning(message);
             workspaceErrors++;
         }
