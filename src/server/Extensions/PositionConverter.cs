@@ -8,9 +8,10 @@ namespace DotRush.Server.Extensions;
 
 public static class PositionConverter {
     public static int ToOffset(this ProtocolModels.Position position, SourceText sourceText) {
-        return sourceText.Lines.GetPosition(
-            new LinePosition(position.Line, position.Character)
-        );
+        if (sourceText.Lines.Count < position.Line)
+            return 0;
+        
+        return sourceText.Lines.GetPosition(new LinePosition(position.Line, position.Character));
     }
 
     public static ProtocolModels.Position ToPosition(this int offset, SourceText sourceText) {

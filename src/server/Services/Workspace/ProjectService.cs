@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text;
 using DotRush.Server.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -53,7 +52,7 @@ public abstract class ProjectService {
                     return;
 
                 observer?.OnNext(new WorkDoneProgressReport { Message = $"Restoring {Path.GetFileNameWithoutExtension(projectFile)}" });
-                await StartProcessAsync("dotnet", $"restore \"{projectFile}\"", cancellationToken);
+                await RestoreProjectAsync(projectFile, cancellationToken);
                 await Workspace!.OpenProjectAsync(projectFile, Notifications, cancellationToken);
                 WorkspaceUpdated?.Invoke(Workspace.CurrentSolution);
             });
@@ -77,12 +76,12 @@ public abstract class ProjectService {
         this.reloadCancellationTokenSource = null;
     }
 
-    private async Task StartProcessAsync(string command, string args, CancellationToken cancellationToken) {
-        var errorMessage = new StringBuilder();
+    private async Task RestoreProjectAsync(string projectPath, CancellationToken cancellationToken) {
+        var projectName = Path.GetFileNameWithoutExtension(projectPath);
         var process = new Process {
             StartInfo = new ProcessStartInfo {
-                FileName = command,
-                Arguments = args,
+                FileName = "dotnet",
+                Arguments = $"restore \"{projectPath}\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
@@ -91,13 +90,9 @@ public abstract class ProjectService {
             }
         };
 
-        process.ErrorDataReceived += (sender, e) => {
-            if (!string.IsNullOrEmpty(e.Data))
-                errorMessage.AppendLine(e.Data);
-        };
-
         process.Start();
-        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-        Notifications.NotifyWorkspaceFailed(errorMessage.ToString());
+        await process.WaitForExitAsync(cancellationToken);
+        if (process.ExitCode != 0)
+            Notifications.NotifyWorkspaceFailed($"Failed to restore {projectName}. Error code {process.ExitCode}.");
     }
 }
