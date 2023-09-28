@@ -5,8 +5,6 @@ using Microsoft.CodeAnalysis.FindSymbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol;
 
 namespace DotRush.Server.Handlers;
 

@@ -6,7 +6,7 @@ export class CommandsController {
     public static activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand(res.taskCommandBuildId, async (path: vscode.Uri) => {
             const projectFile = await CommandsController.selectProjectFile(path);
-            const task = await DotNetTaskProvider.getTask("build", projectFile);
+            const task = await DotNetTaskProvider.getTask("build --no-restore", projectFile);
             if (task !== undefined) 
                 vscode.tasks.executeTask(task);
         }));
