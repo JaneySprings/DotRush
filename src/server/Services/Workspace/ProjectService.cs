@@ -30,9 +30,14 @@ public abstract class ProjectService {
     protected void AddProjects(IEnumerable<string> projectsPaths) {
         var projectGroups = projectsPaths.GroupBy(p => Path.GetDirectoryName(p));
         foreach (var group in projectGroups) {
-            ProjectsPaths.Add(group
-                .OrderBy(p => Path.GetFileNameWithoutExtension(p).Length)
-                .First());
+            // ProjectsPaths.Add(group
+            //     .OrderBy(p => Path.GetFileNameWithoutExtension(p).Length)
+            //     .First());
+            var orderedGroup = group
+                .OrderByDescending(p => p.Length)
+                .ThenByDescending(p => Path.GetFileNameWithoutExtension(p));
+
+            ProjectsPaths.Add(orderedGroup.First());
         }
     }
     protected void RemoveProjects(IEnumerable<string> projectsPaths) {
