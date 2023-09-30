@@ -62,8 +62,14 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
             foreach (var codeFixProvider in codeFixProviders) {
                 await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, fileDiagnostic.InnerDiagnostic, (a, _) => {
-                    codeActionsCollection.Add(a);
-                    result.Add(a.ToCodeAction());
+                    if (IsCodeActionBlacklisted(a))
+                        return;
+
+                    var codeActionsPair = a.ToCodeActionsPair();
+                    foreach (var codeActionPair in codeActionsPair) {
+                        codeActionsCollection.Add(codeActionPair.Item1);
+                        result.Add(codeActionPair.Item2);
+                    }
                 }, cancellationToken));
             }
 
@@ -102,4 +108,12 @@ public class CodeActionHandler : CodeActionHandlerBase {
             .GetTotalDiagnosticWrappers()
             .FirstOrDefault(x => x.InnerDiagnostic.Location.ToRange().Contains(range));
     }
+
+    private bool IsCodeActionBlacklisted(CodeAnalysisCodeAction codeAction) {
+        var actionName = codeAction.GetType().Name;
+        return actionName == "GenerateTypeCodeActionWithOption" ||
+            actionName == "ChangeSignatureCodeAction" ||
+            actionName == "PullMemberUpWithDialogCodeAction";
+    }
+
 }

@@ -1,5 +1,4 @@
 #addin nuget:?package=Cake.FileHelpers&version=6.1.2
-#addin nuget:?package=Cake.VsCode&version=0.11.1
 
 using _Path = System.IO.Path;
 
@@ -44,9 +43,10 @@ Task("vsix")
 		var options = System.Text.RegularExpressions.RegexOptions.Multiline;
 		ReplaceRegexInFiles(file.ToString(), regex, $"  $1\"{version}\"$3", options);
 	})
-	.Does(() => VscePackage(new VscePackageSettings {
-		OutputFilePath = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{runtime}.vsix")
-	}));
+	.Does(() => {
+		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{runtime}.vsix");
+		StartProcess("vsce", $"package --out {output}");
+	});
 
 Task("archive").Does(() => Zip(
 	_Path.Combine(ExtensionStagingDirectory, "bin"), 

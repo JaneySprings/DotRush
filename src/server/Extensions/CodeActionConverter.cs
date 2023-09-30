@@ -3,24 +3,38 @@ using DotRush.Server.Services;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using System.Collections.Immutable;
+using System.Reflection;
 
 namespace DotRush.Server.Extensions;
 
 public static class CodeActionConverter {
-    public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction) {
-        var textDocumentEdits = new List<ProtocolModels.WorkspaceEditDocumentChange>();
-        return new ProtocolModels.CodeAction() {
+    private static PropertyInfo? nestedCodeActionsProperty;
+
+    public static IEnumerable<Tuple<CodeAction, ProtocolModels.CodeAction>> ToCodeActionsPair(this CodeAction codeAction) {
+        var result = new List<Tuple<CodeAction, ProtocolModels.CodeAction>>();
+        
+        if (nestedCodeActionsProperty == null)
+            nestedCodeActionsProperty = typeof(CodeAction).GetProperty("NestedCodeActions", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        var nesteadCodeActionsObject = nestedCodeActionsProperty?.GetValue(codeAction);
+        if (nesteadCodeActionsObject != null && nesteadCodeActionsObject is ImmutableArray<CodeAction> nesteadCodeActions && nesteadCodeActions.Length > 0) {
+            result.AddRange(nesteadCodeActions.SelectMany(x => x.ToCodeActionsPair()));
+            return result;
+        }
+
+        result.Add(new Tuple<CodeAction, ProtocolModels.CodeAction>(codeAction, new ProtocolModels.CodeAction() {
             Kind = ProtocolModels.CodeActionKind.QuickFix,
             Data = codeAction.EquivalenceKey,
             Title = codeAction.Title,
-        };
+        }));
+
+        return result;
     }
 
     public static async Task<ProtocolModels.CodeAction?> ToCodeActionAsync(this CodeAction codeAction, SolutionService solutionService, CancellationToken cancellationToken) {
         if (solutionService.Solution == null)
             return null;
-        
-        var worspaceEdit = new ProtocolModels.WorkspaceEdit();
+
         var textDocumentEdits = new List<ProtocolModels.WorkspaceEditDocumentChange>();
         var operations = await codeAction.GetOperationsAsync(cancellationToken);
         foreach (var operation in operations) {
@@ -34,7 +48,6 @@ public static class CodeActionConverter {
                             continue;
 
                         var sourceText = await oldDocument.GetTextAsync(cancellationToken);
-                        var text = await newDocument.GetTextAsync(cancellationToken);
                         var textEdits = new List<ProtocolModels.TextEdit>();
                         var textChanges = await newDocument.GetTextChangesAsync(oldDocument, cancellationToken);
                         foreach (var textChange in textChanges) {
