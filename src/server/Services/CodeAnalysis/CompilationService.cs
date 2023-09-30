@@ -6,6 +6,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace DotRush.Server.Services;
 
@@ -47,7 +48,7 @@ public class CompilationService {
                 try {
                     return Activator.CreateInstance(x.AsType()) as DiagnosticAnalyzer;
                 } catch (Exception ex) {
-                    LoggingService.Instance.LogError($"Creating instance of analyzer '{x.AsType()}' failed, error: {ex}");
+                    Debug.WriteLine($"Creating instance of analyzer '{x.AsType()}' failed, error: {ex}");
                     return null;
                 }
             })

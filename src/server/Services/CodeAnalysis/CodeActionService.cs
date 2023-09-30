@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Reflection;
 using DotRush.Server.Extensions;
 using Microsoft.CodeAnalysis;
@@ -45,13 +46,13 @@ public class CodeActionService {
                     try {
                         var attribute = x.GetCustomAttribute<ExportCodeFixProviderAttribute>();
                         if (attribute == null) {
-                            LoggingService.Instance.LogMessage($"Skipping code fix provider '{x.AsType()}' because it is missing the ExportCodeFixProviderAttribute.");
+                            Debug.WriteLine($"Skipping code fix provider '{x.AsType()}' because it is missing the ExportCodeFixProviderAttribute.");
                             return null;
                         }
 
                         return Activator.CreateInstance(x.AsType()) as CodeFixProvider;
                     } catch (Exception ex) {
-                        LoggingService.Instance.LogError($"Creating instance of code fix provider '{x.AsType()}' failed, error: {ex}");
+                        Debug.WriteLine($"Creating instance of code fix provider '{x.AsType()}' failed, error: {ex}");
                         return null;
                     }
                 })
