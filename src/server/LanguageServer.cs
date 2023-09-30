@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using DotRush.Server.Handlers;
-using DotRush.Server.Logging;
 using DotRush.Server.Services;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +22,6 @@ public class LanguageServer {
 
     public static async Task Main(string[] args) {
         ObserveClientProcess(args);
-        LogConfig.InitializeLog();
 
         var server = await OmniSharpLanguageServer.From(options => options
             .AddDefaultLoggingProvider()
@@ -35,8 +33,6 @@ public class LanguageServer {
                 services.AddSingleton<CodeActionService>();
                 services.AddSingleton<CompilationService>();
                 services.AddSingleton<DecompilationService>();
-                //TODO: Temp
-                LoggingService.Initialize();
             })
             .WithHandler<DocumentSyncHandler>()
             .WithHandler<WatchedFilesHandler>()
