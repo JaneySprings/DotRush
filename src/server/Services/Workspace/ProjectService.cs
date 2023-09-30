@@ -8,80 +8,74 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 namespace DotRush.Server.Services;
 
 public abstract class ProjectService {
-    protected WorkspaceNotifications Notifications { get; private set; }
-    protected HashSet<string> ProjectsPaths { get; private set; }
-    protected Action<Solution?>? WorkspaceUpdated { get; set; }
-    protected MSBuildWorkspace? Workspace { get; set; }
-
     private CancellationTokenSource? reloadCancellationTokenSource;
-    private CancellationToken CancellationToken {
-        get {
-            CancelWorkspaceReloading();
-            reloadCancellationTokenSource = new CancellationTokenSource();
-            return reloadCancellationTokenSource.Token;
-        }
-    }
+    private readonly HashSet<string> projectsPaths;
 
     protected ProjectService() {
-        Notifications = new WorkspaceNotifications();
-        ProjectsPaths = new HashSet<string>();
+        projectsPaths = new HashSet<string>();
     }
 
+    protected abstract void ProjectFailed(object? sender, WorkspaceDiagnosticEventArgs e);
+    protected abstract void RestoreFailed(string message);
+
+
     protected void AddProjects(IEnumerable<string> projectsPaths) {
-        var projectGroups = projectsPaths.GroupBy(p => Path.GetDirectoryName(p));
+        var projectGroups = projectsPaths.GroupBy(Path.GetDirectoryName);
         foreach (var group in projectGroups) {
-            // ProjectsPaths.Add(group
+            // this.projectsPaths.Add(group
             //     .OrderBy(p => Path.GetFileNameWithoutExtension(p).Length)
             //     .First());
             var orderedGroup = group
                 .OrderByDescending(p => p.Length)
                 .ThenByDescending(p => Path.GetFileNameWithoutExtension(p));
 
-            ProjectsPaths.Add(orderedGroup.First());
+            this.projectsPaths.Add(orderedGroup.First());
         }
     }
     protected void RemoveProjects(IEnumerable<string> projectsPaths) {
         foreach (var projectPath in projectsPaths)
-            ProjectsPaths.Remove(projectPath);
+            this.projectsPaths.Remove(projectPath);
     }
 
-    protected async Task LoadAsync(IWorkDoneObserver? observer = null) {
-        Notifications.SetWorkDoneObserver(observer);
-        var cancellationToken = CancellationToken;
-        foreach (var projectFile in ProjectsPaths) {
-            if (cancellationToken.IsCancellationRequested)
-                break;
+    protected async Task LoadAsync(MSBuildWorkspace workspace, Action<Solution?> solutionChanged) {
+        CancelReloading();
+        workspace.WorkspaceFailed -= ProjectFailed;
+        workspace.WorkspaceFailed += ProjectFailed;
 
+        var observer = await LanguageServer.CreateWorkDoneObserverAsync();
+        var cancellationToken = reloadCancellationTokenSource?.Token ?? CancellationToken.None;
+        foreach (var projectFile in projectsPaths) {
             await ServerExtensions.SafeHandlerAsync(async () => {
-                if (Workspace.ContainsProjectsWithPath(projectFile))
+                if (workspace.ContainsProjectsWithPath(projectFile))
                     return;
 
-                observer?.OnNext(new WorkDoneProgressReport { Message = $"Restoring {Path.GetFileNameWithoutExtension(projectFile)}" });
-                await RestoreProjectAsync(projectFile, cancellationToken);
-                await Workspace!.OpenProjectAsync(projectFile, Notifications, cancellationToken);
-                WorkspaceUpdated?.Invoke(Workspace.CurrentSolution);
+                await RestoreProjectAsync(projectFile, observer, cancellationToken);
+                await workspace.OpenProjectAsync(projectFile, new Progress(observer), cancellationToken);
+                solutionChanged?.Invoke(workspace.CurrentSolution);
             });
+            if (cancellationToken.IsCancellationRequested)
+                break;
         }
 
         observer?.OnCompleted();
+        observer?.Dispose();
     }
-    protected async Task ReloadAsync(IWorkDoneObserver? observer = null) {
-        Notifications.ResetWorkspaceErrors();
-        WorkspaceUpdated?.Invoke(null);
-        Workspace!.CloseSolution();
-        await LoadAsync(observer);
-    }
-
-    protected void CancelWorkspaceReloading() {
-        if (this.reloadCancellationTokenSource == null)
-            return;
-
-        this.reloadCancellationTokenSource.Cancel();
-        this.reloadCancellationTokenSource.Dispose();
-        this.reloadCancellationTokenSource = null;
+    protected async Task ReloadAsync(MSBuildWorkspace workspace, Action<Solution?> solutionChanged) {
+        solutionChanged.Invoke(null);
+        workspace.CloseSolution();
+        await LoadAsync(workspace, solutionChanged);
     }
 
-    private async Task RestoreProjectAsync(string projectPath, CancellationToken cancellationToken) {
+    protected void CancelReloading() {
+        if (reloadCancellationTokenSource != null) {
+            reloadCancellationTokenSource.Cancel();
+            reloadCancellationTokenSource.Dispose();
+        }
+        reloadCancellationTokenSource = new CancellationTokenSource();
+    }
+
+
+    private async Task RestoreProjectAsync(string projectPath, IWorkDoneObserver? observer, CancellationToken cancellationToken) {
         var projectName = Path.GetFileNameWithoutExtension(projectPath);
         var process = new Process {
             StartInfo = new ProcessStartInfo {
@@ -95,9 +89,26 @@ public abstract class ProjectService {
             }
         };
 
+        observer?.OnNext(new WorkDoneProgressReport { Message = $"Restoring {projectName}" });
         process.Start();
+
         await process.WaitForExitAsync(cancellationToken);
         if (process.ExitCode != 0)
-            Notifications.NotifyWorkspaceFailed($"Failed to restore {projectName}. Error code {process.ExitCode}.");
+            RestoreFailed($"Failed to restore {projectName}. Error code {process.ExitCode}.");
+    }
+
+    
+
+    private class Progress: IProgress<ProjectLoadProgress> {
+        private IWorkDoneObserver? progressObserver;
+
+        public Progress(IWorkDoneObserver? progressObserver) {
+            this.progressObserver = progressObserver;
+        }
+
+        void IProgress<ProjectLoadProgress>.Report(ProjectLoadProgress value) {
+            var projectName = Path.GetFileNameWithoutExtension(value.FilePath);
+            progressObserver?.OnNext(new WorkDoneProgressReport { Message = $"Indexing {projectName}"});
+        }
     }
 }

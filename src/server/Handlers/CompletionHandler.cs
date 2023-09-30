@@ -13,14 +13,14 @@ using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Handlers;
 
 public class CompletionHandler : CompletionHandlerBase {
-    private readonly SolutionService solutionService;
+    private readonly WorkspaceService solutionService;
     private readonly CompilationService compilationService;
     private IEnumerable<RoslynCompletionItem>? codeAnalysisCompletionItems;
     private RoslynCompletionService? roslynCompletionService;
     private Document? targetDocument;
     private object? completionOptions;
 
-    public CompletionHandler(SolutionService solutionService, CompilationService compilationService) {
+    public CompletionHandler(WorkspaceService solutionService, CompilationService compilationService) {
         this.solutionService = solutionService;
         this.compilationService = compilationService;
         this.completionOptions = CompletionServiceExtensions.GetCompletionOptions();

@@ -9,12 +9,12 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
 namespace DotRush.Server.Handlers;
 
 public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
-    private readonly SolutionService solutionService;
+    private readonly WorkspaceService workspaceService;
     private readonly CompilationService compilationService;
     private readonly ILanguageServerFacade serverFacade;
 
-    public WatchedFilesHandler(ILanguageServerFacade serverFacade, SolutionService solutionService, CompilationService compilationService) {
-        this.solutionService = solutionService;
+    public WatchedFilesHandler(ILanguageServerFacade serverFacade, WorkspaceService workspaceService, CompilationService compilationService) {
+        this.workspaceService = workspaceService;
         this.compilationService = compilationService;
         this.serverFacade = serverFacade;
     }
@@ -30,21 +30,21 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         };
     }
 
-    public override async Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
+    public override Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
         foreach (var change in request.Changes) {
             var path = change.Uri.GetFileSystemPath();
             switch (Path.GetExtension(path)) {
                 case ".cs":
                     if (change.Type == FileChangeType.Created)
-                        this.solutionService.CreateCSharpDocument(path);
+                        this.workspaceService.CreateCSharpDocument(path);
                     if (change.Type == FileChangeType.Deleted)
-                        this.solutionService.DeleteCSharpDocument(path);
+                        this.workspaceService.DeleteCSharpDocument(path);
                     break;
                 case ".xaml":
                     if (change.Type == FileChangeType.Created)
-                        this.solutionService.CreateAdditionalDocument(path);
+                        this.workspaceService.CreateAdditionalDocument(path);
                     if (change.Type == FileChangeType.Deleted)
-                        this.solutionService.DeleteAdditionalDocument(path);
+                        this.workspaceService.DeleteAdditionalDocument(path);
                     break;
                 case "":
                     if (change.Type == FileChangeType.Created)
@@ -55,20 +55,19 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
                 case ".csproj":
                     if (change.Type != FileChangeType.Changed)
                         break;
-                    var observer = await LanguageServer.CreateWorkDoneObserverAsync();
-                    this.solutionService.StartSolutionReloading(observer);
-                    return Unit.Value;
+                    this.workspaceService.StartSolutionReloading();
+                    return Unit.Task;
             }
         }
 
-        return Unit.Value;
+        return Unit.Task;
     }
 
     private void DeleteFolder(string path) {
-        var csharpDocumentIds = this.solutionService.Solution?.GetDocumentIdsWithFolderPath(path);
-        var additionalDocumentIds = this.solutionService.Solution?.GetAdditionalDocumentIdsWithFolderPath(path);
-        this.solutionService.DeleteCSharpDocument(csharpDocumentIds);
-        this.solutionService.DeleteAdditionalDocument(additionalDocumentIds);
+        var csharpDocumentIds = this.workspaceService.Solution?.GetDocumentIdsWithFolderPath(path);
+        var additionalDocumentIds = this.workspaceService.Solution?.GetAdditionalDocumentIdsWithFolderPath(path);
+        this.workspaceService.DeleteCSharpDocument(csharpDocumentIds);
+        this.workspaceService.DeleteAdditionalDocument(additionalDocumentIds);
     }
     private void CreateFolder(string path) {
         if (!Directory.Exists(path))
@@ -78,8 +77,8 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         var additionalDocuments = WorkspaceExtensions.GetFilesFromVisibleFolders(path, "*.xaml");
 
         foreach (var file in csharpDocuments)
-            this.solutionService.CreateCSharpDocument(file);
+            this.workspaceService.CreateCSharpDocument(file);
         foreach (var file in additionalDocuments)
-            this.solutionService.CreateAdditionalDocument(file);
+            this.workspaceService.CreateAdditionalDocument(file);
     }
 }

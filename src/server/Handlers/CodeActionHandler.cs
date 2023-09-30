@@ -11,15 +11,14 @@ using CodeAnalysisCodeAction = Microsoft.CodeAnalysis.CodeActions.CodeAction;
 namespace DotRush.Server.Handlers;
 
 public class CodeActionHandler : CodeActionHandlerBase {
-    private readonly SolutionService solutionService;
+    private readonly WorkspaceService solutionService;
     private readonly CompilationService compilationService;
     private readonly ConfigurationService configurationService;
     private readonly CodeActionService codeActionService;
+    private readonly List<CodeAnalysisCodeAction> codeActionsCollection;
 
-    private List<CodeAnalysisCodeAction> codeActionsCollection;
 
-
-    public CodeActionHandler(SolutionService solutionService, CompilationService compilationService, CodeActionService codeActionService, ConfigurationService configurationService) {
+    public CodeActionHandler(WorkspaceService solutionService, CompilationService compilationService, CodeActionService codeActionService, ConfigurationService configurationService) {
         this.codeActionsCollection = new List<CodeAnalysisCodeAction>();
         this.solutionService = solutionService;
         this.compilationService = compilationService;

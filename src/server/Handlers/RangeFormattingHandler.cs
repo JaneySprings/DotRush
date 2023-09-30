@@ -9,9 +9,9 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Handlers;
 
 public class RangeFormattingHandler : DocumentRangeFormattingHandlerBase {
-    private SolutionService solutionService;
+    private WorkspaceService solutionService;
 
-    public RangeFormattingHandler(SolutionService solutionService) {
+    public RangeFormattingHandler(WorkspaceService solutionService) {
         this.solutionService = solutionService;
     }
 

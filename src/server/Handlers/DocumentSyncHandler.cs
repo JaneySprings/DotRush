@@ -10,13 +10,13 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 namespace DotRush.Server.Handlers;
 
 public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
-    private readonly SolutionService solutionService;
+    private readonly WorkspaceService solutionService;
     private readonly CompilationService compilationService;
     private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;
     
 
-    public DocumentSyncHandler(ILanguageServerFacade serverFacade, SolutionService solutionService, CompilationService compilationService, ConfigurationService configurationService) {
+    public DocumentSyncHandler(ILanguageServerFacade serverFacade, WorkspaceService solutionService, CompilationService compilationService, ConfigurationService configurationService) {
         this.solutionService = solutionService;
         this.compilationService = compilationService;
         this.configurationService = configurationService;

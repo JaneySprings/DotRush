@@ -8,9 +8,9 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Handlers;
 
 public class ReferencesHandler : ReferencesHandlerBase {
-    private SolutionService solutionService;
+    private WorkspaceService solutionService;
 
-    public ReferencesHandler(SolutionService solutionService) {
+    public ReferencesHandler(WorkspaceService solutionService) {
         this.solutionService = solutionService;
     }
 

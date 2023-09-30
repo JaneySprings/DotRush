@@ -11,7 +11,7 @@ namespace DotRush.Server.Services;
 
 public class CompilationService {
     private readonly HashSet<string> documents;
-    private readonly SolutionService solutionService;
+    private readonly WorkspaceService solutionService;
     private IEnumerable<DiagnosticAnalyzer> embeddedAnalyzers;
 
     public Dictionary<string, FileDiagnostics> Diagnostics { get; }
@@ -33,7 +33,7 @@ public class CompilationService {
         }
     }
 
-    public CompilationService(SolutionService solutionService) {
+    public CompilationService(WorkspaceService solutionService) {
         this.embeddedAnalyzers = Enumerable.Empty<DiagnosticAnalyzer>();
         this.solutionService = solutionService;
         this.documents = new HashSet<string>();
