@@ -9,12 +9,12 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
 namespace DotRush.Server.Handlers;
 
 public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
-    private SolutionService solutionService;
+    private WorkspaceService workspaceService;
     private readonly ILanguageServerFacade serverFacade;
 
-    public WorkspaceFoldersHandler(ILanguageServerFacade serverFacade, SolutionService solutionService) {
+    public WorkspaceFoldersHandler(ILanguageServerFacade serverFacade, WorkspaceService workspaceService) {
         this.serverFacade = serverFacade;
-        this.solutionService = solutionService;
+        this.workspaceService = workspaceService;
     }
 
     protected override DidChangeWorkspaceFolderRegistrationOptions CreateRegistrationOptions(ClientCapabilities clientCapabilities){
@@ -24,22 +24,21 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
         };
     }
 
-    public override async Task<Unit> Handle(DidChangeWorkspaceFoldersParams request, CancellationToken cancellationToken) {
+    public override Task<Unit> Handle(DidChangeWorkspaceFoldersParams request, CancellationToken cancellationToken) {
         var added = request.Event.Added.Select(folder => folder.Uri.GetFileSystemPath());
         var removed = request.Event.Removed.Select(folder => folder.Uri.GetFileSystemPath());
-        var observer = await LanguageServer.CreateWorkDoneObserverAsync();
 
         if (removed.Any()) {
-            this.solutionService.RemoveWorkspaceFolders(removed);
-            this.solutionService.StartSolutionReloading(observer);
-            return Unit.Value;
+            this.workspaceService.RemoveWorkspaceFolders(removed);
+            this.workspaceService.StartSolutionReloading();
+            return Unit.Task;
         }
 
         if (added.Any()) {
-            this.solutionService.AddWorkspaceFolders(added);
-            this.solutionService.StartSolutionLoading(observer);
+            this.workspaceService.AddWorkspaceFolders(added);
+            this.workspaceService.StartSolutionLoading();
         }
         
-        return Unit.Value;
+        return Unit.Task;
     }
 }

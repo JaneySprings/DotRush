@@ -9,10 +9,10 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Handlers;
 
 public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
-    private readonly SolutionService solutionService;
+    private readonly WorkspaceService solutionService;
     private readonly DecompilationService decompilationService;
 
-    public TypeDefinitionHandler(SolutionService solutionService, DecompilationService decompilationService) {
+    public TypeDefinitionHandler(WorkspaceService solutionService, DecompilationService decompilationService) {
         this.solutionService = solutionService;
         this.decompilationService = decompilationService;
     }

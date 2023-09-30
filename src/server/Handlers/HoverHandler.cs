@@ -10,7 +10,7 @@ using CodeAnalysis = Microsoft.CodeAnalysis;
 namespace DotRush.Server.Handlers;
 
 public class HoverHandler : HoverHandlerBase {
-    private readonly SolutionService solutionService;
+    private readonly WorkspaceService solutionService;
     public static readonly SymbolDisplayFormat DefaultFormat = SymbolDisplayFormat.FullyQualifiedFormat
         .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)
         .WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.None)
@@ -25,7 +25,7 @@ public class HoverHandler : HoverHandlerBase {
         );
 
 
-    public HoverHandler(SolutionService solutionService) {
+    public HoverHandler(WorkspaceService solutionService) {
         this.solutionService = solutionService;
     }
 

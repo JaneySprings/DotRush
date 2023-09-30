@@ -31,7 +31,7 @@ public class LanguageServer {
             .WithOutput(Console.OpenStandardOutput())
             .WithServices(services => {
                 services.AddSingleton<ConfigurationService>();
-                services.AddSingleton<SolutionService>();
+                services.AddSingleton<WorkspaceService>();
                 services.AddSingleton<CodeActionService>();
                 services.AddSingleton<CompilationService>();
                 services.AddSingleton<DecompilationService>();
@@ -58,35 +58,32 @@ public class LanguageServer {
         await server.WaitForExit.ConfigureAwait(false);
     }
 
-    private static async Task StartedHandlerAsync(ILanguageServer server, CancellationToken cancellationToken) {
+    private static Task StartedHandlerAsync(ILanguageServer server, CancellationToken cancellationToken) {
         var compilationService = server.Services.GetService<CompilationService>();
         var codeActionService = server.Services.GetService<CodeActionService>();
-        var decompilationService = server.Services.GetService<DecompilationService>();
 
         var configurationService = server.Services.GetService<ConfigurationService>();
-        var solutionService = server.Services.GetService<SolutionService>();
-        if (solutionService == null || configurationService == null)
-            return;
-
-        if (decompilationService?.DecompilationDirectory != null && Directory.Exists(decompilationService.DecompilationDirectory))
-            Directory.Delete(decompilationService.DecompilationDirectory, true);
+        var workspaceService = server.Services.GetService<WorkspaceService>();
+        if (workspaceService == null || configurationService == null)
+            return Task.CompletedTask;
 
         var workspaceFolders = server.Workspace.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
         if (workspaceFolders == null) {
             server.Window.ShowWarning("No workspace folders found.");
-            return;
+            return Task.CompletedTask;
         }
 
         workDoneManager = server.WorkDoneManager;
-        var workDoneProgress = await CreateWorkDoneObserverAsync();
 
         configurationService.Initialize(server.Configuration);
         if (configurationService.IsRoslynAnalyzersEnabled())
             compilationService?.InitializeEmbeddedAnalyzers();
 
-        solutionService.InitializeWorkspace();
-        solutionService.AddWorkspaceFolders(workspaceFolders);
-        solutionService.StartSolutionReloading(workDoneProgress);
+        workspaceService.InitializeWorkspace();
+        workspaceService.AddWorkspaceFolders(workspaceFolders);
+        workspaceService.StartSolutionReloading();
+
+        return Task.CompletedTask;
     }
 
     private static void ObserveClientProcess(string[] args) {

@@ -9,9 +9,9 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Handlers;
 
 public class FormattingHandler : DocumentFormattingHandlerBase {
-    private SolutionService solutionService;
+    private WorkspaceService solutionService;
 
-    public FormattingHandler(SolutionService solutionService) {
+    public FormattingHandler(WorkspaceService solutionService) {
         this.solutionService = solutionService;
     }
 

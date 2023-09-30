@@ -9,9 +9,9 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Handlers;
 
 public class ImplementationHandler : ImplementationHandlerBase {
-    private SolutionService solutionService;
+    private WorkspaceService solutionService;
 
-    public ImplementationHandler(SolutionService solutionService) {
+    public ImplementationHandler(WorkspaceService solutionService) {
         this.solutionService = solutionService;
     }
 

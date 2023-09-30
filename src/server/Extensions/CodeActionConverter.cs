@@ -31,7 +31,7 @@ public static class CodeActionConverter {
         return result;
     }
 
-    public static async Task<ProtocolModels.CodeAction?> ToCodeActionAsync(this CodeAction codeAction, SolutionService solutionService, CancellationToken cancellationToken) {
+    public static async Task<ProtocolModels.CodeAction?> ToCodeActionAsync(this CodeAction codeAction, WorkspaceService solutionService, CancellationToken cancellationToken) {
         if (solutionService.Solution == null)
             return null;
 

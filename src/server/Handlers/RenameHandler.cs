@@ -11,9 +11,9 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Handlers;
 
 public class RenameHandler : RenameHandlerBase {
-    private SolutionService solutionService;
+    private WorkspaceService solutionService;
 
-    public RenameHandler(SolutionService solutionService) {
+    public RenameHandler(WorkspaceService solutionService) {
         this.solutionService = solutionService;
     }
 

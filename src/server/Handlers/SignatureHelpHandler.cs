@@ -9,10 +9,10 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Handlers;
 
 public class SignatureHelpHandler : SignatureHelpHandlerBase {
-    private readonly SolutionService solutionService;
+    private readonly WorkspaceService solutionService;
 
 
-    public SignatureHelpHandler(SolutionService solutionService) {
+    public SignatureHelpHandler(WorkspaceService solutionService) {
         this.solutionService = solutionService;
     }
 
