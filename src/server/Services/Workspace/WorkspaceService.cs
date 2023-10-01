@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using DotRush.Server.Extensions;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
@@ -52,7 +53,16 @@ public class WorkspaceService: SolutionService {
         foreach (var folder in workspaceFolders) {
             if (!Directory.Exists(folder))
                 continue;
-            AddProjects(WorkspaceExtensions.GetFilesFromVisibleFolders(folder, "*.csproj"));
+
+            var projects = WorkspaceExtensions.GetFilesFromVisibleFolders(folder, "*.csproj");
+            var projectsBlacklistRegex = configurationService.ProjectsBlacklistRegex();
+            if (string.IsNullOrEmpty(projectsBlacklistRegex)) {
+                AddProjects(projects);
+                continue;
+            }
+
+            var filteredProjects = projects.Where(project => !Regex.IsMatch(Path.GetFileName(project), projectsBlacklistRegex));
+            AddProjects(filteredProjects);
         }
     }
     public void RemoveWorkspaceFolders(IEnumerable<string> workspaceFolders) {

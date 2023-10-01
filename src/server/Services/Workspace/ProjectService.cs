@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using DotRush.Server.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -20,17 +21,8 @@ public abstract class ProjectService {
 
 
     protected void AddProjects(IEnumerable<string> projectsPaths) {
-        var projectGroups = projectsPaths.GroupBy(Path.GetDirectoryName);
-        foreach (var group in projectGroups) {
-            // this.projectsPaths.Add(group
-            //     .OrderBy(p => Path.GetFileNameWithoutExtension(p).Length)
-            //     .First());
-            var orderedGroup = group
-                .OrderByDescending(p => p.Length)
-                .ThenByDescending(p => Path.GetFileNameWithoutExtension(p));
-
-            this.projectsPaths.Add(orderedGroup.First());
-        }
+        foreach (var projectPath in projectsPaths)
+            this.projectsPaths.Add(projectPath);
     }
     protected void RemoveProjects(IEnumerable<string> projectsPaths) {
         foreach (var projectPath in projectsPaths)

@@ -83,6 +83,11 @@
             "type": "boolean",
             "default": false,
             "description": "Enable Roslyn analyzers (may affect performance)."
+          },
+          "dotrush.projectsBlacklistRegex": {
+            "type": "string",
+            "default": "",
+            "description": "Regex string to exclude projects from the workspace."
           }
         }
       }
