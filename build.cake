@@ -44,8 +44,9 @@ Task("vsix")
 		ReplaceRegexInFiles(file.ToString(), regex, $"  $1\"{version}\"$3", options);
 	})
 	.Does(() => {
+		var vsce = new FilePath(_Path.Combine(RootDirectory, "node_modules", ".bin", "vsce"));
 		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{runtime}.vsix");
-		StartProcess("vsce", $"package --out {output}");
+		StartProcess(vsce, $"package --out {output}");
 	});
 
 Task("archive").Does(() => Zip(
