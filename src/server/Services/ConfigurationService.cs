@@ -12,7 +12,14 @@ public class ConfigurationService {
 
     private ILanguageServerConfiguration? configuration;
 
-    public void Initialize(ILanguageServerConfiguration configuration) {
+    public async Task InitializeAsync(ILanguageServerConfiguration configuration) {
+        var retryCount = 0;
+        await Task.Run(() => {
+            while (!configuration.AsEnumerable().Any() || retryCount > 25) {
+                Thread.Sleep(200);
+                retryCount++;
+            }
+        });
         this.configuration = configuration;
     }
 

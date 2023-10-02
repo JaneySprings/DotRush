@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using DotRush.Server.Extensions;
@@ -41,7 +42,7 @@ public abstract class ProjectService {
                 if (workspace.ContainsProjectsWithPath(projectFile))
                     return;
 
-                await RestoreProjectAsync(projectFile, observer, cancellationToken);
+                await RestoreProjectAsync(projectFile, workspace.Properties, observer, cancellationToken);
                 await workspace.OpenProjectAsync(projectFile, new Progress(observer), cancellationToken);
                 solutionChanged?.Invoke(workspace.CurrentSolution);
             });
@@ -67,7 +68,7 @@ public abstract class ProjectService {
     }
 
 
-    private async Task RestoreProjectAsync(string projectPath, IWorkDoneObserver? observer, CancellationToken cancellationToken) {
+    private async Task RestoreProjectAsync(string projectPath, ImmutableDictionary<string, string> properties, IWorkDoneObserver? observer, CancellationToken cancellationToken) {
         var projectName = Path.GetFileNameWithoutExtension(projectPath);
         var process = new Process {
             StartInfo = new ProcessStartInfo {
@@ -80,6 +81,10 @@ public abstract class ProjectService {
                 RedirectStandardInput = true,
             }
         };
+
+        var options = string.Join(" ", properties.Select(x => $"-p:{x.Key}={x.Value}"));
+        if (!string.IsNullOrEmpty(options))
+            process.StartInfo.Arguments += $" {options}";
 
         observer?.OnNext(new WorkDoneProgressReport { Message = $"Restoring {projectName}" });
         process.Start();

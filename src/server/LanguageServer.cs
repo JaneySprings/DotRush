@@ -54,32 +54,28 @@ public class LanguageServer {
         await server.WaitForExit.ConfigureAwait(false);
     }
 
-    private static Task StartedHandlerAsync(ILanguageServer server, CancellationToken cancellationToken) {
+    private static async Task StartedHandlerAsync(ILanguageServer server, CancellationToken cancellationToken) {
         var compilationService = server.Services.GetService<CompilationService>();
-        var codeActionService = server.Services.GetService<CodeActionService>();
-
         var configurationService = server.Services.GetService<ConfigurationService>();
         var workspaceService = server.Services.GetService<WorkspaceService>();
         if (workspaceService == null || configurationService == null)
-            return Task.CompletedTask;
+            return;
 
         var workspaceFolders = server.Workspace.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
         if (workspaceFolders == null) {
             server.Window.ShowWarning("No workspace folders found.");
-            return Task.CompletedTask;
+            return;
         }
 
         workDoneManager = server.WorkDoneManager;
 
-        configurationService.Initialize(server.Configuration);
+        await configurationService.InitializeAsync(server.Configuration);
         if (configurationService.IsRoslynAnalyzersEnabled())
             compilationService?.InitializeEmbeddedAnalyzers();
 
         workspaceService.InitializeWorkspace();
         workspaceService.AddWorkspaceFolders(workspaceFolders);
         workspaceService.StartSolutionReloading();
-
-        return Task.CompletedTask;
     }
 
     private static void ObserveClientProcess(string[] args) {
