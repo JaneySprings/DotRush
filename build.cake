@@ -1,6 +1,7 @@
 #addin nuget:?package=Cake.FileHelpers&version=6.1.2
 
 using _Path = System.IO.Path;
+using _Interop = System.Runtime.InteropServices;
 
 string version;
 string runtime = Argument<string>("arch", "osx-arm64");
@@ -45,6 +46,9 @@ Task("vsix")
 	})
 	.Does(() => {
 		var vsce = new FilePath(_Path.Combine(RootDirectory, "node_modules", ".bin", "vsce"));
+		if (_Interop.RuntimeInformation.IsOSPlatform(_Interop.OSPlatform.Windows))
+			vsce = vsce.AppendExtension(".cmd");
+
 		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{runtime}.vsix");
 		StartProcess(vsce, $"package --out {output}");
 	});
