@@ -31,6 +31,8 @@ stages:
           displayName: 'Restore .NET tools'
         - script: npm install
           displayName: 'Restore Node.js modules'
+        - script: npm install -g vsce
+          displayName: 'Install VSCode builder'
 
         - script: dotnet cake --target=bundle --configuration=release --arch=linux-x64
           displayName: 'Build Bundle (linux-x64)'
@@ -59,6 +61,8 @@ stages:
           displayName: 'Restore .NET tools'
         - script: npm install
           displayName: 'Restore Node.js modules'
+        - script: npm install -g vsce
+          displayName: 'Install VSCode builder'
 
         - script: dotnet cake --target=bundle --configuration=release --arch=osx-x64
           displayName: 'Build Bundle (osx-x64)'
@@ -87,6 +91,8 @@ stages:
           displayName: 'Restore .NET tools'
         - script: npm install
           displayName: 'Restore Node.js modules'
+        - script: npm install -g vsce
+          displayName: 'Install VSCode builder'
 
         - script: dotnet cake --target=bundle --configuration=release --arch=win-x64
           displayName: 'Build Bundle (win-x64)'
