@@ -45,7 +45,7 @@ Task("vsix")
 	})
 	.Does(() => {
 		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{runtime}.vsix");
-		StartProcess("vsce", $"package --out {output}");
+		ExecuteCommand("vsce", $"package --out {output}");
 	});
 
 Task("archive").Does(() => Zip(
@@ -58,3 +58,11 @@ Task("bundle")
 	.IsDependentOn("archive");
 
 RunTarget(target);
+
+void ExecuteCommand(string command, string arguments) {
+	if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
+		arguments = $"/c \"{command} {arguments}\"";
+		command = "cmd";
+	}
+	StartProcess(command, arguments);
+}
