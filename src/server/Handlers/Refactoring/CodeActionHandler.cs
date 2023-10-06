@@ -64,15 +64,13 @@ public class CodeActionHandler : CodeActionHandlerBase {
                     if (IsCodeActionBlacklisted(a))
                         return;
 
-                    var codeActionsPair = a.ToCodeActionsPair();
-                    foreach (var codeActionPair in codeActionsPair) {
-                        codeActionsCollection.Add(codeActionPair.Item1);
-                        result.Add(codeActionPair.Item2);
-                    }
+                    var singleCodeActions = a.ToSingleCodeActions();
+                    codeActionsCollection.AddRange(singleCodeActions);
+                    result.AddRange(singleCodeActions.Select(x => x.ToCodeAction()));
                 }, cancellationToken));
             }
 
-            return new CommandOrCodeActionContainer(result.Select(x => new CommandOrCodeAction(x!)));
+            return new CommandOrCodeActionContainer(result.Select(x => new CommandOrCodeAction(x)));
         });
     }
     public override async Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken) {

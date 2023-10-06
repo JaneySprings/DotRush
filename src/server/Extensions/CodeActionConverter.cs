@@ -10,25 +10,29 @@ namespace DotRush.Server.Extensions;
 public static class CodeActionConverter {
     private static PropertyInfo? nestedCodeActionsProperty;
 
-    public static IEnumerable<Tuple<CodeAction, ProtocolModels.CodeAction>> ToCodeActionsPair(this CodeAction codeAction) {
-        var result = new List<Tuple<CodeAction, ProtocolModels.CodeAction>>();
+    public static IEnumerable<CodeAction> ToSingleCodeActions(this CodeAction codeAction) {
+        var result = new List<CodeAction>();
         
         if (nestedCodeActionsProperty == null)
             nestedCodeActionsProperty = typeof(CodeAction).GetProperty("NestedCodeActions", BindingFlags.Instance | BindingFlags.NonPublic);
 
         var nesteadCodeActionsObject = nestedCodeActionsProperty?.GetValue(codeAction);
         if (nesteadCodeActionsObject != null && nesteadCodeActionsObject is ImmutableArray<CodeAction> nesteadCodeActions && nesteadCodeActions.Length > 0) {
-            result.AddRange(nesteadCodeActions.SelectMany(x => x.ToCodeActionsPair()));
+            result.AddRange(nesteadCodeActions.SelectMany(x => x.ToSingleCodeActions()));
             return result;
         }
 
-        result.Add(new Tuple<CodeAction, ProtocolModels.CodeAction>(codeAction, new ProtocolModels.CodeAction() {
+        result.Add(codeAction);
+        return result;
+    }
+
+    public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction) {
+        return new ProtocolModels.CodeAction() {
             Kind = ProtocolModels.CodeActionKind.QuickFix,
             Data = codeAction.EquivalenceKey,
             Title = codeAction.Title,
-        }));
-
-        return result;
+            IsPreferred = codeAction.GetType().Name == "ProjectSymbolReferenceCodeAction"
+        };
     }
 
     public static async Task<ProtocolModels.CodeAction?> ToCodeActionAsync(this CodeAction codeAction, WorkspaceService solutionService, CancellationToken cancellationToken) {
