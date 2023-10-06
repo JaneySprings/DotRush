@@ -1,7 +1,5 @@
 {
     "files.exclude": {
-        "**/obj": true,
-        "**/bin": true,
         "tools": true,
         ".config": true,
         "node_modules": true,
