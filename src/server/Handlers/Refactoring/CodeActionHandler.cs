@@ -61,10 +61,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
             foreach (var codeFixProvider in codeFixProviders) {
                 await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, fileDiagnostic.InnerDiagnostic, (a, _) => {
-                    if (IsCodeActionBlacklisted(a))
-                        return;
-
-                    var singleCodeActions = a.ToSingleCodeActions();
+                    var singleCodeActions = a.ToSingleCodeActions().Where(x => !IsCodeActionBlacklisted(x));
                     codeActionsCollection.AddRange(singleCodeActions);
                     result.AddRange(singleCodeActions.Select(x => x.ToCodeAction()));
                 }, cancellationToken));
@@ -96,8 +93,6 @@ public class CodeActionHandler : CodeActionHandlerBase {
             .Where(x => x.FixableDiagnosticIds.ContainsWithMapping(diagnosticId));
     }
     private SourceDiagnostic? GetDiagnosticByRange(ProtocolModels.Range range, string documentPath) {
-        if (documentPath == null)
-            return null;
         if (!this.compilationService.Diagnostics.ContainsKey(documentPath))
             return null;
 
