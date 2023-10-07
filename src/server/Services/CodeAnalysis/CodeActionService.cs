@@ -8,35 +8,36 @@ using Microsoft.CodeAnalysis.CodeFixes;
 namespace DotRush.Server.Services;
 
 public class CodeActionService {
-    private HashSet<CodeFixProviderContainer> codeFixProviders;
+    private IEnumerable<CodeFixProvider> embeddedCodeFixProviders;
+    private Dictionary<ProjectId, IEnumerable<CodeFixProvider>> projectCodeFixProviders;
 
     public CodeActionService() {
-        this.codeFixProviders = new HashSet<CodeFixProviderContainer>();
-
-        var embeddedProviders = CreateCodeFixProviders(Assembly.Load(LanguageServer.EmbeddedCodeFixAssembly));
-        foreach (var provider in embeddedProviders)
-            this.codeFixProviders.Add(new CodeFixProviderContainer(provider, LanguageServer.EmbeddedCodeFixAssembly));
+        embeddedCodeFixProviders = Enumerable.Empty<CodeFixProvider>();
+        projectCodeFixProviders = new Dictionary<ProjectId, IEnumerable<CodeFixProvider>>();
     }
 
-    public void AddCodeFixProviders(Project project) {
+
+    public void InitializeEmbeddedProviders() {
+        var codeAnalysisAssembly = Assembly.Load(LanguageServer.CodeAnalysisFeaturesAssembly);
+        embeddedCodeFixProviders = CreateCodeFixProviders(codeAnalysisAssembly);
+    }
+    public void AddProjectProviders(Project project) {
+        if (projectCodeFixProviders.ContainsKey(project.Id))
+            return;
+
         var analyzerReferenceAssemblies = project.AnalyzerReferences
-            .Select(x => x.FullPath ?? "")
-            .Where(x => !string.IsNullOrEmpty(x));
+            .Where(x => !string.IsNullOrEmpty(x.FullPath) && File.Exists(x.FullPath))
+            .Select(x => x.FullPath);
 
         foreach (var assemblyPath in analyzerReferenceAssemblies) {
-            if (this.codeFixProviders.Any(x => x.AssemblyPath == assemblyPath))
-                continue;
-
-            var assembly = Assembly.LoadFrom(assemblyPath);
-            var providers = CreateCodeFixProviders(assembly);
-            foreach (var provider in providers)
-                this.codeFixProviders.Add(new CodeFixProviderContainer(provider, assemblyPath, project.FilePath));
+            var assembly = Assembly.LoadFrom(assemblyPath!);
+            projectCodeFixProviders.Add(project.Id, CreateCodeFixProviders(assembly));
         }
     }
-
-    public ImmutableArray<CodeFixProvider> GetCodeFixProviders() {
-        return this.codeFixProviders.Select(x => x.Provider).ToImmutableArray();
+    public ImmutableArray<CodeFixProvider> GetCodeFixProviders(ProjectId projectId) {
+        return embeddedCodeFixProviders.Concat(projectCodeFixProviders[projectId]).ToImmutableArray();
     }
+
 
     private IEnumerable<CodeFixProvider> CreateCodeFixProviders(Assembly assembly) {
         return ServerExtensions.SafeHandler<IEnumerable<CodeFixProvider>>(Enumerable.Empty<CodeFixProvider>(), () => {

@@ -53,9 +53,9 @@ public class CodeActionHandler : CodeActionHandlerBase {
                 return new CommandOrCodeActionContainer();
 
             if (this.configurationService.IsRoslynAnalyzersEnabled())
-                this.codeActionService.AddCodeFixProviders(project);
+                this.codeActionService.AddProjectProviders(project);
 
-            var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic.InnerDiagnostic.Id);
+            var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic.InnerDiagnostic.Id, project.Id);
             if (codeFixProviders == null)
                 return new CommandOrCodeActionContainer();
 
@@ -84,12 +84,12 @@ public class CodeActionHandler : CodeActionHandlerBase {
         });
     }
 
-    private IEnumerable<CodeFixProvider>? GetProvidersForDiagnosticId(string? diagnosticId) {
+    private IEnumerable<CodeFixProvider>? GetProvidersForDiagnosticId(string? diagnosticId, ProjectId projectId) {
         if (diagnosticId == null)
             return null;
 
         return this.codeActionService
-            .GetCodeFixProviders()
+            .GetCodeFixProviders(projectId)
             .Where(x => x.FixableDiagnosticIds.ContainsWithMapping(diagnosticId));
     }
     private SourceDiagnostic? GetDiagnosticByRange(ProtocolModels.Range range, string documentPath) {
