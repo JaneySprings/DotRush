@@ -19,7 +19,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
 
     public CodeActionHandler(WorkspaceService solutionService, CompilationService compilationService, CodeActionService codeActionService, ConfigurationService configurationService) {
-        this.codeActionsCollection = new List<CodeAnalysisCodeAction>();
+        codeActionsCollection = new List<CodeAnalysisCodeAction>();
         this.solutionService = solutionService;
         this.compilationService = compilationService;
         this.configurationService = configurationService;
@@ -36,24 +36,23 @@ public class CodeActionHandler : CodeActionHandlerBase {
     public override async Task<CommandOrCodeActionContainer> Handle(CodeActionParams request, CancellationToken cancellationToken) {
         return await ServerExtensions.SafeHandlerAsync<CommandOrCodeActionContainer>(new CommandOrCodeActionContainer(), async () => {
             var filePath = request.TextDocument.Uri.GetFileSystemPath();         
-            this.codeActionsCollection.Clear();
+            codeActionsCollection.Clear();
 
-            var result = new List<CodeAction>();
             var fileDiagnostic = GetDiagnosticByRange(request.Range, filePath);
             if (fileDiagnostic == null)
                 return new CommandOrCodeActionContainer();
 
-            var project = this.solutionService.Solution?.GetProject(fileDiagnostic.SourceId);
+            var project = solutionService.Solution?.GetProject(fileDiagnostic.SourceId);
             if (project == null)
                 return new CommandOrCodeActionContainer();
 
-            var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(filePath).FirstOrDefault(x => x.ProjectId == project.Id);
-            var document = this.solutionService.Solution?.GetDocument(documentId);
+            var documentId = solutionService.Solution?.GetDocumentIdsWithFilePath(filePath).FirstOrDefault(x => x.ProjectId == project.Id);
+            var document = solutionService.Solution?.GetDocument(documentId);
             if (document == null)
                 return new CommandOrCodeActionContainer();
 
-            if (this.configurationService.IsRoslynAnalyzersEnabled())
-                this.codeActionService.AddProjectProviders(project);
+            if (configurationService.IsRoslynAnalyzersEnabled())
+                codeActionService.AddProjectProviders(project);
 
             var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic.InnerDiagnostic.Id, project.Id);
             if (codeFixProviders == null)
@@ -61,13 +60,12 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
             foreach (var codeFixProvider in codeFixProviders) {
                 await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, fileDiagnostic.InnerDiagnostic, (a, _) => {
-                    var singleCodeActions = a.ToSingleCodeActions().Where(x => !IsCodeActionBlacklisted(x));
+                    var singleCodeActions = a.ToSingleCodeActions().Where(x => !x.IsBlacklisted());
                     codeActionsCollection.AddRange(singleCodeActions);
-                    result.AddRange(singleCodeActions.Select(x => x.ToCodeAction()));
                 }, cancellationToken));
             }
 
-            return new CommandOrCodeActionContainer(result.Select(x => new CommandOrCodeAction(x)));
+            return new CommandOrCodeActionContainer(codeActionsCollection.Select(x => new CommandOrCodeAction(x.ToCodeAction())));
         });
     }
     public override async Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken) {
@@ -75,11 +73,11 @@ public class CodeActionHandler : CodeActionHandlerBase {
             if (request.Data == null)
                 return request;
 
-            var codeAction = this.codeActionsCollection.FirstOrDefault(x => x.EquivalenceKey == request.Data.ToObject<string>());
+            var codeAction = codeActionsCollection.FirstOrDefault(x => x.EquivalenceKey == request.Data.ToObject<string>());
             if (codeAction == null)
                 return request;
 
-            var result = await codeAction.ToCodeActionAsync(this.solutionService, cancellationToken);
+            var result = await codeAction.ToCodeActionAsync(solutionService, cancellationToken);
             return result ?? request;
         });
     }
@@ -88,7 +86,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
         if (diagnosticId == null)
             return null;
 
-        return this.codeActionService
+        return codeActionService
             .GetCodeFixProviders(projectId)
             .Where(x => x.FixableDiagnosticIds.ContainsWithMapping(diagnosticId));
     }
@@ -96,16 +94,8 @@ public class CodeActionHandler : CodeActionHandlerBase {
         if (!this.compilationService.Diagnostics.ContainsKey(documentPath))
             return null;
 
-        return this.compilationService.Diagnostics[documentPath]
+        return compilationService.Diagnostics[documentPath]
             .GetTotalDiagnosticWrappers()
             .FirstOrDefault(x => x.InnerDiagnostic.Location.ToRange().Contains(range));
     }
-
-    private bool IsCodeActionBlacklisted(CodeAnalysisCodeAction codeAction) {
-        var actionName = codeAction.GetType().Name;
-        return actionName == "GenerateTypeCodeActionWithOption" ||
-            actionName == "ChangeSignatureCodeAction" ||
-            actionName == "PullMemberUpWithDialogCodeAction";
-    }
-
 }
