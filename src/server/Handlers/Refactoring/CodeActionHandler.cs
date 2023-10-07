@@ -13,16 +13,14 @@ namespace DotRush.Server.Handlers;
 public class CodeActionHandler : CodeActionHandlerBase {
     private readonly WorkspaceService solutionService;
     private readonly CompilationService compilationService;
-    private readonly ConfigurationService configurationService;
     private readonly CodeActionService codeActionService;
     private readonly List<CodeAnalysisCodeAction> codeActionsCollection;
 
 
-    public CodeActionHandler(WorkspaceService solutionService, CompilationService compilationService, CodeActionService codeActionService, ConfigurationService configurationService) {
+    public CodeActionHandler(WorkspaceService solutionService, CompilationService compilationService, CodeActionService codeActionService) {
         codeActionsCollection = new List<CodeAnalysisCodeAction>();
         this.solutionService = solutionService;
         this.compilationService = compilationService;
-        this.configurationService = configurationService;
         this.codeActionService = codeActionService;
     }
 
@@ -51,8 +49,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
             if (document == null)
                 return new CommandOrCodeActionContainer();
 
-            if (configurationService.IsRoslynAnalyzersEnabled())
-                codeActionService.AddProjectProviders(project);
+            codeActionService.AddProjectProviders(project);
 
             var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic.InnerDiagnostic.Id, project.Id);
             if (codeFixProviders == null)
