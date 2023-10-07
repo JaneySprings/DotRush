@@ -9,6 +9,7 @@ namespace DotRush.Server.Extensions;
 
 public static class CodeActionConverter {
     private static PropertyInfo? nestedCodeActionsProperty;
+    private static FieldInfo? inNewFileField;
 
     public static IEnumerable<CodeAction> ToSingleCodeActions(this CodeAction codeAction) {
         var result = new List<CodeAction>();
@@ -79,6 +80,26 @@ public static class CodeActionConverter {
             },
         };
     }
+
+    public static bool IsBlacklisted(this CodeAction codeAction) {
+        var actionType = codeAction.GetType();
+        var actionName = actionType.Name;
+        if (actionName == "GenerateTypeCodeActionWithOption" || actionName == "ChangeSignatureCodeAction" || actionName == "PullMemberUpWithDialogCodeAction")
+            return true;
+
+        if (actionName != "GenerateTypeCodeAction")
+            return false;
+
+        if (inNewFileField == null)
+            inNewFileField = actionType.GetField("_inNewFile", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        var isNewFile = inNewFileField?.GetValue(codeAction);
+        if (isNewFile != null && (bool)isNewFile)
+            return true;
+
+        return false;
+    }
+
 
     public static bool ContainsWithMapping(this ImmutableArray<string> array, string item) {
         if (item == "CS8019")
