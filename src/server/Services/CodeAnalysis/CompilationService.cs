@@ -42,7 +42,7 @@ public class CompilationService {
     }
 
     public void InitializeEmbeddedAnalyzers() {
-        this.embeddedAnalyzers = Assembly.Load(LanguageServer.EmbeddedCodeFixAssembly).DefinedTypes
+        this.embeddedAnalyzers = Assembly.Load(LanguageServer.CodeAnalysisFeaturesAssembly).DefinedTypes
             .Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(DiagnosticAnalyzer)))
             .Select(x => {
                 try {

@@ -13,7 +13,7 @@ using OmniSharpLanguageServer = OmniSharp.Extensions.LanguageServer.Server.Langu
 namespace DotRush.Server;
 
 public class LanguageServer {
-    public const string EmbeddedCodeFixAssembly = "Microsoft.CodeAnalysis.CSharp.Features";
+    public const string CodeAnalysisFeaturesAssembly = "Microsoft.CodeAnalysis.CSharp.Features";
     private static IServerWorkDoneManager? workDoneManager;
 
     public static async Task<IWorkDoneObserver> CreateWorkDoneObserverAsync() {
@@ -55,11 +55,10 @@ public class LanguageServer {
     }
 
     private static async Task StartedHandlerAsync(ILanguageServer server, CancellationToken cancellationToken) {
-        var compilationService = server.Services.GetService<CompilationService>();
-        var configurationService = server.Services.GetService<ConfigurationService>();
-        var workspaceService = server.Services.GetService<WorkspaceService>();
-        if (workspaceService == null || configurationService == null)
-            return;
+        var compilationService = server.Services.GetService<CompilationService>()!;
+        var configurationService = server.Services.GetService<ConfigurationService>()!;
+        var codeActionService = server.Services.GetService<CodeActionService>()!;
+        var workspaceService = server.Services.GetService<WorkspaceService>()!;
 
         var workspaceFolders = server.Workspace.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
         if (workspaceFolders == null) {
@@ -68,10 +67,11 @@ public class LanguageServer {
         }
 
         workDoneManager = server.WorkDoneManager;
-
         await configurationService.InitializeAsync(server.Configuration);
+
+        codeActionService.InitializeEmbeddedProviders();
         if (configurationService.IsRoslynAnalyzersEnabled())
-            compilationService?.InitializeEmbeddedAnalyzers();
+            compilationService.InitializeEmbeddedAnalyzers();
 
         workspaceService.InitializeWorkspace();
         workspaceService.AddWorkspaceFolders(workspaceFolders);
