@@ -27,6 +27,10 @@ DotRush is a VSCode extension for `.NET C#` developers designed to unlock a plet
 <img src="assets/image4.png" />
 
 
+### Quick Fixes
+&emsp;Activate error quick fixes with the handy "..." shortcut or by right-clicking on problematic code:
+
+<img src="assets/image5.png"/>
 
 ### Prerequisites
 - Framework: `.NET 6/7/8`
