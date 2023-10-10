@@ -3,28 +3,43 @@
 <img align="right" width="60%" src="assets/image1.png" style="padding: 2% 0% 0% 4%"/>
 
 ### C# Development Environment for Visual Studio Code
-DotRush is a lightweight VSCode extension that has basic IDE functions for working with C# language. You can navigate through your code, view errors in files, and apply code fixes.
+DotRush is a VSCode extension for .NET C# developers designed to unlock a plethora of IDE capabilities. DotRush helps you organize multiple projects and includes features for code editing, refactoring and error detection. Even in the most extensive projects, DotRush is a resource-friendly companion, ensuring you stay productive and focused.
 
 <br clear="right"/>
 
 ## Features
 
-* **Multitargeting Support**
-</br>
-Readme in progress...
+### IntelliSense in Multi-Target Projects
+&emsp;DotRush offers IntelliSense for multiple Target Frameworks. For example, when you're working on a cross-platform application and your current target framework is Android, DotRush provides text autocomplete suggestions for iOS, too.
 
-* **Unity Support**
-</br>
-Readme in progress...
+<img src="assets/image2.jpg" style="padding: 0% 0% 4% 0%"/>
 
-* **Everything is `.code-workspace`**
-</br>
-Readme in progress...
 
-* **Roslyn Analyzers Support**
-</br>
-Readme in progress...
+### Cross-Platform Error Detection
+&emsp;DotRush highlights errors and displays descriptions in all Target Frameworks used in your project.
+
+<img src="assets/image3.jpg" style="padding: 0% 0% 4% 0%"/>
 
 
 
 
+
+### Project Context Menu Actions
+&emsp;Execute `Build`, `Restore`, or `Clean` commands with a simple right-click on a project folder in the VSCode Explorer:
+
+<img src="assets/image4.jpg" style="padding: 0% 0% 4% 0%"/>
+
+
+### Quick Fixes
+&emsp;Activate error quick fixes with the handy "..." shortcut or by right-clicking on problematic code:
+
+<img src="assets/image5.jpg" style="padding: 0% 0% 4% 0%"/>
+
+
+### Prerequisites
+- Framework: `.NET 6/7/8`
+- Operating System: `Windows`, `Linux`, `MacOS`
+- Architecture: `x64`, `ARM64`
+
+## More for VSCode Developers
+&emsp;Check out [.NET Meteor](https://github.com/JaneySprings/DotNet.Meteor) – a cross-platform VSCode extension to build, debug .NET apps and deploy them to devices or emulators.
