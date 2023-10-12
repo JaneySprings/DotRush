@@ -3,7 +3,7 @@
 <img align="right" width="64%" src="https://github.com/JaneySprings/DotRush/raw/main/assets/image1.png" style="padding: 2% 0% 0% 2%"/>
 
 ### C# Development Environment for Visual Studio Code
-DotRush is a VSCode extension for `.NET` `C#` developers designed to unlock a plethora of IDE capabilities. DotRush helps you organize multiple projects and includes features for `code editing`, `refactoring` and `error detection`. Even in the most extensive projects, DotRush is a resource-friendly companion, ensuring you stay productive and focused.
+&emsp;DotRush is a VSCode extension for `.NET` `C#` developers designed to unlock a lot of IDE capabilities. DotRush helps you organize multiple projects and includes features for `code editing`, `refactoring` and `error detection`. Even in the most extensive projects, DotRush is a resource-friendly companion, ensuring you stay productive and focused.
 
 <br clear="right"/>
 
@@ -13,12 +13,16 @@ DotRush is a VSCode extension for `.NET` `C#` developers designed to unlock a pl
 &emsp;DotRush simplifies code navigation and refactoring with these quick actions:
 
 - **Go To Definition**</br>
+Find all the symbol definitions in your project.
 
 - **Go To Type Definition**</br>
+Find all the symbol type definitions in your project.
 
 - **Go To Implementation**</br>
+Find all implementations of your virtual method or interface.
 
 - **Go To References**</br>
+Find all usages of the symbol in your project.
 
 - **Renaming**</br>
 Rename a class or variable by placing a cursor on it and pressing `F2` (by default).
@@ -45,13 +49,20 @@ You can format the entire document or selected code blocs.
 
 
 ### Quick Fixes
-&emsp;Activate error quick fixes with the handy "..." shortcut or by right-clicking on problematic code:
+&emsp;Activate error quick fixes by hovering over an error or clicking on the lamp icon:
 
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image5.png)
 
 
 ### Code Decompiling
 &emsp;When navigating to a class not included in your project, DotRush will decompile it with [ICSharpCode Decompiler](https://github.com/icsharpcode/ILSpy/), allowing you to explore external libraries.
+
+![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image6.png)
+
+### Code Quality Analysis
+&emsp;Integrate code quality analyzers into your project, and DotRush will highlight suggestions from these analyzers. This is disabled by default, but you can enable the `Enable Roslyn Analyzers` option in the settings of the Extension.
+
+![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image7.png)
 
 
 ### Optimized Performance
@@ -68,3 +79,5 @@ You can format the entire document or selected code blocs.
 &emsp;Check out [.NET Meteor](https://github.com/JaneySprings/DotNet.Meteor) – a cross-platform VSCode extension to build, debug .NET apps and deploy them to devices or emulators.
 
 
+## About the Author
+&emsp;I'm Nikita Romanov, a passionate programming enthusiast with a focus on .NET MAUI. I work with an amazing team at `DevExpress` to make the lives of developers around us easier. Our team is dedicated to creating a comprehensive [mobile component suite](https://www.devexpress.com/maui) for .NET MAUI which is currently available `free-of-charge`. In my free time, I work on my hobby projects, `DotNet.Meteor` and `DotRush`, which are always open to feedback and contributions. Feel free to share your thoughts with me, and **let's make the .NET community even better together!**
