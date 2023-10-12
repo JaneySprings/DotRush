@@ -60,13 +60,9 @@ You can format the entire document or selected code blocs.
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image6.png)
 
 ### Code Quality Analysis
-&emsp;Integrate code quality analyzers into your project, and DotRush will highlight suggestions from these analyzers. This is disabled by default, but you can enable the `Enable Roslyn Analyzers` option in the settings of the Extension.
+&emsp;Integrate code quality analyzers into your project, and DotRush will highlight suggestions from these analyzers. This is disabled by default, but you can enable the `Enable Roslyn Analyzers` option in the settings of the extension.
 
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image7.png)
-
-
-### Optimized Performance
-&emsp;Even with large VSCode projects, DotRush remains highly effective in terms of memory and CPU usage.
 
 
 ## Prerequisites
