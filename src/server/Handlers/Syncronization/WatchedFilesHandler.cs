@@ -1,9 +1,9 @@
-using DotRush.Server.Extensions;
 using DotRush.Server.Services;
 using MediatR;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
+using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
 
 namespace DotRush.Server.Handlers;
@@ -53,10 +53,8 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
                         this.workspaceService.DeleteFolder(path);
                     break;
                 case ".csproj":
-                    if (change.Type != FileChangeType.Changed)
-                        break;
-                    this.workspaceService.StartSolutionReloading();
-                    return Unit.Task;
+                    serverFacade.Window.ShowWarning(string.Format(Resources.MessageProjectChanged, Path.GetFileName(path)));
+                    break;
             }
         }
 

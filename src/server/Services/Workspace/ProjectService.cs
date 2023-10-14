@@ -52,11 +52,6 @@ public abstract class ProjectService {
         observer?.OnCompleted();
         observer?.Dispose();
     }
-    protected async Task ReloadAsync(MSBuildWorkspace workspace, Action<Solution?> solutionChanged) {
-        solutionChanged.Invoke(null);
-        workspace.CloseSolution();
-        await LoadAsync(workspace, solutionChanged);
-    }
 
     protected void CancelReloading() {
         if (reloadCancellationTokenSource != null) {
@@ -85,15 +80,14 @@ public abstract class ProjectService {
         if (!string.IsNullOrEmpty(options))
             process.StartInfo.Arguments += $" {options}";
 
-        observer?.OnNext(new WorkDoneProgressReport { Message = $"Restoring {projectName}" });
+        observer?.OnNext(new WorkDoneProgressReport { Message = string.Format(Resources.MessageProjectRestore, projectName) });
         process.Start();
 
         await process.WaitForExitAsync(cancellationToken);
         if (process.ExitCode != 0)
-            RestoreFailed($"Failed to restore {projectName}. Error code {process.ExitCode}.");
+            RestoreFailed(string.Format(Resources.MessageProjectRestoreFailed, projectName, process.ExitCode));
     }
 
-    
 
     private class Progress: IProgress<ProjectLoadProgress> {
         private IWorkDoneObserver? progressObserver;
@@ -104,7 +98,7 @@ public abstract class ProjectService {
 
         void IProgress<ProjectLoadProgress>.Report(ProjectLoadProgress value) {
             var projectName = Path.GetFileNameWithoutExtension(value.FilePath);
-            progressObserver?.OnNext(new WorkDoneProgressReport { Message = $"Indexing {projectName}"});
+            progressObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(Resources.MessageProjectIndex, projectName)});
         }
     }
 }
