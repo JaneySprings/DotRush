@@ -10,6 +10,8 @@ namespace DotRush.Server.Services;
 public class WorkspaceService: SolutionService {
     private const int MAX_WORKSPACE_ERRORS = 15;
 
+    public AutoResetEvent WaitHandle { get; }
+
     private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;
     private MSBuildWorkspace? workspace;
@@ -18,6 +20,7 @@ public class WorkspaceService: SolutionService {
     public WorkspaceService(ConfigurationService configurationService, ILanguageServerFacade serverFacade) {
         this.configurationService = configurationService;
         this.serverFacade = serverFacade;
+        WaitHandle = new AutoResetEvent(false);
         MSBuildLocator.RegisterDefaults();
     }
 
@@ -38,33 +41,17 @@ public class WorkspaceService: SolutionService {
         workspace.LoadMetadataForReferencedProjects = true;
         workspace.SkipUnrecognizedProjects = true;
     }
-    public async void StartSolutionReloading() {
-        ArgumentNullException.ThrowIfNull(workspace);
-        await ReloadSolutionAsync(workspace);
-    }
     public async void StartSolutionLoading() {
         ArgumentNullException.ThrowIfNull(workspace);
+        WaitHandle.Reset();
         await LoadSolutionAsync(workspace);
+        WaitHandle.Set();
     }
-    public async Task LoadSolutionAsync() {
-        ArgumentNullException.ThrowIfNull(workspace);
-        await LoadSolutionAsync(workspace);
-    }
-
     public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
-        CancelReloading();
         foreach (var folder in workspaceFolders) {
             if (!Directory.Exists(folder))
                 continue;
             AddProjects(WorkspaceExtensions.GetFilesFromVisibleFolders(folder, "*.csproj"));
-        }
-    }
-    public void RemoveWorkspaceFolders(IEnumerable<string> workspaceFolders) {
-        CancelReloading();
-        foreach (var folder in workspaceFolders) {
-            if (!Directory.Exists(folder))
-                continue;
-            RemoveProjects(WorkspaceExtensions.GetFilesFromVisibleFolders(folder, "*.csproj"));
         }
     }
 }

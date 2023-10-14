@@ -1,20 +1,30 @@
 {
   "name": "dotrush",
   "publisher": "nromanov",
-  "version": "23.2.259",
+  "version": "1.0.0",
   "description": "Lightweight C# development environment for Visual Studio Code.",
   "displayName": "DotRush",
   "author": "Nikita Romanov",
   "license": "MIT",
   "icon": "assets/icon.png",
   "preview": false,
+  "bugs": {
+    "url": "https://github.com/JaneySprings/DotRush/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/JaneySprings/DotRush"
   },
   "categories": [
     "Programming Languages",
-    "Other"
+    "Linters",
+    "Snippets"
+  ],
+  "keywords": [
+    "C#",
+    ".NET",
+    "csharp",
+    "dotnet"
   ],
   "engines": {
     "vscode": "^1.73.0"

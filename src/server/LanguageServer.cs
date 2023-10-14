@@ -62,7 +62,7 @@ public class LanguageServer {
 
         var workspaceFolders = server.Workspace.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
         if (workspaceFolders == null) {
-            server.Window.ShowWarning("No workspace folders found.");
+            server.Window.ShowWarning(Resources.MessageNoWorkspaceFolders);
             return;
         }
 
@@ -75,7 +75,7 @@ public class LanguageServer {
 
         workspaceService.InitializeWorkspace();
         workspaceService.AddWorkspaceFolders(workspaceFolders);
-        await workspaceService.LoadSolutionAsync();
+        workspaceService.StartSolutionLoading();
     }
 
     private static void ObserveClientProcess(string[] args) {
@@ -84,7 +84,7 @@ public class LanguageServer {
 
         var ideProcess = Process.GetProcessById(int.Parse(args[0]));
         ideProcess.EnableRaisingEvents = true;
-        ideProcess.Exited += (s, e) => Environment.Exit(0);
+        ideProcess.Exited += (_, _) => Environment.Exit(0);
     }
 }
 

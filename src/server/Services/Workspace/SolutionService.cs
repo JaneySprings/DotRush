@@ -8,9 +8,6 @@ namespace DotRush.Server.Services;
 public abstract class SolutionService: ProjectService {
     public Solution? Solution { get; private set; }
 
-    protected async Task ReloadSolutionAsync(MSBuildWorkspace workspace) {
-        await ReloadAsync(workspace, UpdateCurrentSolution);
-    }
     protected async Task LoadSolutionAsync(MSBuildWorkspace workspace) {
         await LoadAsync(workspace, UpdateCurrentSolution);
     }
