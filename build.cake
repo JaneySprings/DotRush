@@ -15,10 +15,8 @@ public string BinariesDirectory => _Path.Combine(ExtensionStagingDirectory, "bin
 
 
 Setup(context => {
-	var major = DateTime.Now.ToString("yy");
-	var minor = DateTime.Now.Month < 7 ? "1" : "2";
-	var build = DateTime.Now.DayOfYear;
-	version = $"{major}.{minor}.{build:000}";
+	var date = DateTime.Now;
+	version = $"{DateTime.Now.ToString("yy")}.{date.ToString("MM")}.{date.DayOfYear:000}";
 	EnsureDirectoryExists(ArtifactsDirectory);
 });
 
@@ -48,14 +46,6 @@ Task("vsix")
 		ExecuteCommand("vsce", $"package --out {output}");
 	});
 
-Task("archive").Does(() => Zip(
-	_Path.Combine(ExtensionStagingDirectory, "bin"), 
-	_Path.Combine(ArtifactsDirectory, $"DotRush.Server.v{version}_{runtime}.zip")
-));
-
-Task("bundle")
-	.IsDependentOn("vsix")
-	.IsDependentOn("archive");
 
 RunTarget(target);
 
