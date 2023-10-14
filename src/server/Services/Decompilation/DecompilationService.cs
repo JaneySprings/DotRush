@@ -17,7 +17,7 @@ namespace DotRush.Server.Services;
 public class DecompilationService {
     private const string DecompiledProjectName = "_decompilation_";
 
-    public string DecompilationDirectory { get; private set;}
+    public string DecompilationDirectory { get; private set; }
     
     private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;

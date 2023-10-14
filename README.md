@@ -3,7 +3,7 @@
 <img align="right" width="64%" src="https://github.com/JaneySprings/DotRush/raw/main/assets/image1.png" style="padding: 2% 0% 0% 2%"/>
 
 ### C# Development Environment for Visual Studio Code
-&emsp;DotRush is a VSCode extension for `.NET` `C#` developers designed to unlock a lot of IDE capabilities. DotRush helps you organize multiple projects and includes features for `code editing`, `refactoring` and `error detection`. Even in the most extensive projects, DotRush is a resource-friendly companion, ensuring you stay productive and focused.
+&emsp;DotRush is a VSCode extension for `.NET` `C#` developers designed to unlock various IDE capabilities. DotRush helps you organize multiple projects and includes features for `code editing`, `refactoring` and `error detection`. Even in the most extensive projects, DotRush is a resource-friendly companion, ensuring you stay productive and focused.
 
 <br clear="right"/>
 
