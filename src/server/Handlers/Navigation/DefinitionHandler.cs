@@ -21,10 +21,10 @@ public class DefinitionHandler : DefinitionHandlerBase {
         return new DefinitionRegistrationOptions();
     }
 
-    public override async Task<LocationOrLocationLinks> Handle(DefinitionParams request, CancellationToken cancellationToken) {
+    public override async Task<LocationOrLocationLinks?> Handle(DefinitionParams request, CancellationToken cancellationToken) {
         var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
         if (documentIds == null)
-            return new LocationOrLocationLinks();
+            return null;
 
         Document? document = null;
         ISymbol? symbol = null;

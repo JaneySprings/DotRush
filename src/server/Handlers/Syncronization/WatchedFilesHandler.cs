@@ -23,8 +23,8 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         return new DidChangeWatchedFilesRegistrationOptions() {
             Watchers = new[] {
                 new OmniSharp.Extensions.LanguageServer.Protocol.Models.FileSystemWatcher() {
-                    Kind = WatchKind.Create | WatchKind.Delete | WatchKind.Change,
-                    GlobPattern = "**/*"
+                    Kind = WatchKind.Create | WatchKind.Change | WatchKind.Delete,
+                    GlobPattern = new GlobPattern("**/*")
                 },
             }
         };
@@ -48,9 +48,9 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
                     break;
                 case "":
                     if (change.Type == FileChangeType.Created)
-                        CreateFolder(path);
+                        this.workspaceService.CreateFolder(path);
                     if (change.Type == FileChangeType.Deleted)
-                        DeleteFolder(path);
+                        this.workspaceService.DeleteFolder(path);
                     break;
                 case ".csproj":
                     if (change.Type != FileChangeType.Changed)
@@ -61,24 +61,5 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         }
 
         return Unit.Task;
-    }
-
-    private void DeleteFolder(string path) {
-        var csharpDocumentIds = this.workspaceService.Solution?.GetDocumentIdsWithFolderPath(path);
-        var additionalDocumentIds = this.workspaceService.Solution?.GetAdditionalDocumentIdsWithFolderPath(path);
-        this.workspaceService.DeleteCSharpDocument(csharpDocumentIds);
-        this.workspaceService.DeleteAdditionalDocument(additionalDocumentIds);
-    }
-    private void CreateFolder(string path) {
-        if (!Directory.Exists(path))
-            return;
-
-        var csharpDocuments = WorkspaceExtensions.GetFilesFromVisibleFolders(path, "*.cs");
-        var additionalDocuments = WorkspaceExtensions.GetFilesFromVisibleFolders(path, "*.xaml");
-
-        foreach (var file in csharpDocuments)
-            this.workspaceService.CreateCSharpDocument(file);
-        foreach (var file in additionalDocuments)
-            this.workspaceService.CreateAdditionalDocument(file);
     }
 }

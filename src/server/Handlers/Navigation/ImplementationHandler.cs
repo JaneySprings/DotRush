@@ -19,10 +19,10 @@ public class ImplementationHandler : ImplementationHandlerBase {
         return new ImplementationRegistrationOptions();
     }
 
-    public override async Task<LocationOrLocationLinks> Handle(ImplementationParams request, CancellationToken cancellationToken) {
+    public override async Task<LocationOrLocationLinks?> Handle(ImplementationParams request, CancellationToken cancellationToken) {
         var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
         if (documentIds == null)
-            return new LocationOrLocationLinks();
+            return null;
 
         var resultSymbols = new List<ISymbol>();
         foreach (var documentId in documentIds) {

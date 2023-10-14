@@ -18,16 +18,16 @@ public class ReferencesHandler : ReferencesHandlerBase {
         return new ReferenceRegistrationOptions();
     }
 
-    public override async Task<LocationContainer> Handle(ReferenceParams request, CancellationToken cancellationToken) {
+    public override async Task<LocationContainer?> Handle(ReferenceParams request, CancellationToken cancellationToken) {
         var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
         var document = this.solutionService.Solution?.GetDocument(documentId);
         if (document == null)
-            return new LocationContainer();
+            return null;
 
         var sourceText = await document.GetTextAsync(cancellationToken);
         var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
         if (symbol == null || this.solutionService.Solution == null) 
-            return new LocationContainer();
+            return null;
 
         var referenceSymbols = await SymbolFinder.FindReferencesAsync(symbol, this.solutionService.Solution, cancellationToken);
         var referenceLocations = referenceSymbols
