@@ -23,9 +23,9 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         this.serverFacade = serverFacade;
     }
 
-    protected override TextDocumentSyncRegistrationOptions CreateRegistrationOptions(SynchronizationCapability capability, ClientCapabilities clientCapabilities) {
+    protected override TextDocumentSyncRegistrationOptions CreateRegistrationOptions(TextSynchronizationCapability capability, ClientCapabilities clientCapabilities) {
         return new TextDocumentSyncRegistrationOptions {
-            DocumentSelector = DocumentSelector.ForLanguage("csharp", "xaml", "xml"),
+            DocumentSelector = TextDocumentSelector.ForLanguage("csharp", "xaml", "xml"),
             Change = TextDocumentSyncKind.Full
         };
     }

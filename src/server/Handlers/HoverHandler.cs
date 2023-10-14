@@ -31,7 +31,7 @@ public class HoverHandler : HoverHandlerBase {
 
     protected override HoverRegistrationOptions CreateRegistrationOptions(HoverCapability capability, ClientCapabilities clientCapabilities) {
         return new HoverRegistrationOptions {
-            DocumentSelector = DocumentSelector.ForLanguage("csharp")
+            DocumentSelector = TextDocumentSelector.ForLanguage("csharp")
         };
     }
 

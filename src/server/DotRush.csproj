@@ -16,8 +16,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-		<PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.7" />
+		<PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
 		<PackageReference Include="ICSharpCode.Decompiler" Version="$(DecompilerVersion)" />
 		<PackageReference Include="Microsoft.Build" Version="$(MSBuildFrameworkVersion)" ExcludeAssets="runtime"/>
 		<PackageReference Include="Microsoft.Build.Framework" Version="$(MSBuildFrameworkVersion)" ExcludeAssets="runtime"/>
