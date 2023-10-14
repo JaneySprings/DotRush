@@ -75,7 +75,7 @@ public class LanguageServer {
 
         workspaceService.InitializeWorkspace();
         workspaceService.AddWorkspaceFolders(workspaceFolders);
-        workspaceService.StartSolutionReloading();
+        await workspaceService.LoadSolutionAsync();
     }
 
     private static void ObserveClientProcess(string[] args) {
@@ -87,3 +87,10 @@ public class LanguageServer {
         ideProcess.Exited += (s, e) => Environment.Exit(0);
     }
 }
+
+// public static class Logger {
+//     public static void Write(string message) {
+//         var tempFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp.txt");
+//         File.AppendAllText(tempFile, message + Environment.NewLine);
+//     }
+// }

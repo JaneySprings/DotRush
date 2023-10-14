@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using DotRush.Server.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;

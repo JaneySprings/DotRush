@@ -31,8 +31,8 @@ public class CodeActionHandler : CodeActionHandlerBase {
         };
     }
 
-    public override async Task<CommandOrCodeActionContainer> Handle(CodeActionParams request, CancellationToken cancellationToken) {
-        return await ServerExtensions.SafeHandlerAsync<CommandOrCodeActionContainer>(new CommandOrCodeActionContainer(), async () => {
+    public override async Task<CommandOrCodeActionContainer?> Handle(CodeActionParams request, CancellationToken cancellationToken) {
+        return await ServerExtensions.SafeHandlerAsync<CommandOrCodeActionContainer>(async () => {
             var filePath = request.TextDocument.Uri.GetFileSystemPath();         
             codeActionsCollection.Clear();
 

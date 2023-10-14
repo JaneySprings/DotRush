@@ -14,7 +14,7 @@ public class ConfigurationService {
     public async Task InitializeAsync(ILanguageServerConfiguration configuration) {
         var retryCount = 0;
         await Task.Run(() => {
-            while (!configuration.AsEnumerable().Any() || retryCount > 25) {
+            while (!configuration.AsEnumerable().Any() && retryCount < 25) {
                 Thread.Sleep(200);
                 retryCount++;
             }

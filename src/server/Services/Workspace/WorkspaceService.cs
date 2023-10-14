@@ -22,7 +22,7 @@ public class WorkspaceService: SolutionService {
     }
 
     protected override void ProjectFailed(object? sender, WorkspaceDiagnosticEventArgs e) {
-        if (workspaceErrorsCount < MAX_WORKSPACE_ERRORS && !string.IsNullOrEmpty(e.Diagnostic.Message)) {
+        if ((workspaceErrorsCount < MAX_WORKSPACE_ERRORS) && !string.IsNullOrEmpty(e.Diagnostic.Message)) {
             serverFacade?.Window.ShowWarning(e.Diagnostic.Message);
             workspaceErrorsCount++;
         }
@@ -43,6 +43,10 @@ public class WorkspaceService: SolutionService {
         await ReloadSolutionAsync(workspace);
     }
     public async void StartSolutionLoading() {
+        ArgumentNullException.ThrowIfNull(workspace);
+        await LoadSolutionAsync(workspace);
+    }
+    public async Task LoadSolutionAsync() {
         ArgumentNullException.ThrowIfNull(workspace);
         await LoadSolutionAsync(workspace);
     }

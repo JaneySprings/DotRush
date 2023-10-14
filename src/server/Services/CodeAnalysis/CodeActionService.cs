@@ -29,10 +29,8 @@ public class CodeActionService {
             .Where(x => !string.IsNullOrEmpty(x.FullPath) && File.Exists(x.FullPath))
             .Select(x => x.FullPath);
 
-        foreach (var assemblyPath in analyzerReferenceAssemblies) {
-            var assembly = Assembly.LoadFrom(assemblyPath!);
-            projectCodeFixProviders.Add(project.Id, CreateCodeFixProviders(assembly));
-        }
+        var providers = analyzerReferenceAssemblies.SelectMany(x => CreateCodeFixProviders(Assembly.LoadFrom(x!)));
+        projectCodeFixProviders.Add(project.Id, providers);
     }
     public ImmutableArray<CodeFixProvider> GetCodeFixProviders(ProjectId projectId) {
         return embeddedCodeFixProviders.Concat(projectCodeFixProviders[projectId]).ToImmutableArray();

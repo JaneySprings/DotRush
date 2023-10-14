@@ -21,10 +21,10 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
         return new TypeDefinitionRegistrationOptions();
     }
 
-    public override async Task<LocationOrLocationLinks> Handle(TypeDefinitionParams request, CancellationToken cancellationToken) {
+    public override async Task<LocationOrLocationLinks?> Handle(TypeDefinitionParams request, CancellationToken cancellationToken) {
         var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
         if (documentIds == null)
-            return new LocationOrLocationLinks();
+            return null;
 
         Document? document = null;
         ITypeSymbol? typeSymbol = null;

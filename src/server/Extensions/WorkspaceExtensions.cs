@@ -58,6 +58,12 @@ public static class WorkspaceExtensions {
         var relativePath = documentDirectory.Replace(rootDirectory, string.Empty);
         return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
     }
+    public static string GetOutputPath(this Project project) {
+        return FirstFolderOrDefault(project.FilePath, project.OutputFilePath, $"bin{Path.DirectorySeparatorChar}");
+    }
+    public static string GetIntermediateOutputPath(this Project project) {
+        return FirstFolderOrDefault(project.FilePath, project.OutputRefFilePath, $"obj{Path.DirectorySeparatorChar}");
+    }
 
     public static bool ContainsProjectsWithPath(this Workspace? workspace, string projectPath) {
         return workspace?.CurrentSolution.Projects.Any(project => project.FilePath == projectPath) == true;
@@ -87,5 +93,16 @@ public static class WorkspaceExtensions {
         }
 
         return maxCounter;
+    }
+    private static string FirstFolderOrDefault(string? projectPath, string? targetPath, string fallbackFolder) {
+        var projectDirectory = Path.GetDirectoryName(projectPath) + Path.DirectorySeparatorChar;
+        if (targetPath == null || !targetPath.StartsWith(projectDirectory))
+            return Path.Combine(projectDirectory, fallbackFolder);
+
+        var relativePath = targetPath.Replace(projectDirectory, string.Empty);
+        if (string.IsNullOrEmpty(relativePath))
+            return Path.Combine(projectDirectory, fallbackFolder);
+
+        return projectDirectory + relativePath.Split(Path.DirectorySeparatorChar).First() + Path.DirectorySeparatorChar;
     }
 }

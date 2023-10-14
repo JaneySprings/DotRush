@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Server.Services;
 
-public abstract class SolutionService: ProjectService, ISolutionChangeHandler {
+public abstract class SolutionService: ProjectService {
     public Solution? Solution { get; private set; }
 
     protected async Task ReloadSolutionAsync(MSBuildWorkspace workspace) {
@@ -17,7 +17,23 @@ public abstract class SolutionService: ProjectService, ISolutionChangeHandler {
     private void UpdateCurrentSolution(Solution? solution) {
         Solution = solution;
     }
-    
+
+    public void DeleteFolder(string path) {
+        var csharpDocumentIds = Solution?.GetDocumentIdsWithFolderPath(path);
+        var additionalDocumentIds = Solution?.GetAdditionalDocumentIdsWithFolderPath(path);
+        DeleteCSharpDocument(csharpDocumentIds);
+        DeleteAdditionalDocument(additionalDocumentIds);
+    }
+    public void CreateFolder(string path) {
+        if (!Directory.Exists(path))
+            return;
+
+        foreach (var file in WorkspaceExtensions.GetFilesFromVisibleFolders(path, "*.cs"))
+            CreateCSharpDocument(file);
+        foreach (var file in WorkspaceExtensions.GetFilesFromVisibleFolders(path, "*.xaml"))
+            CreateAdditionalDocument(file);
+    }
+
     public void CreateCSharpDocument(string file) {
         var projectIds = Solution?.GetProjectIdsMayContainsFilePath(file);
         if (projectIds == null || Solution == null)
@@ -26,6 +42,10 @@ public abstract class SolutionService: ProjectService, ISolutionChangeHandler {
         foreach (var projectId in projectIds) {
             var project = Solution.GetProject(projectId);
             if (project == null || !File.Exists(file))
+                continue;
+
+            if (file.StartsWith(project.GetIntermediateOutputPath()) || 
+                file.StartsWith(project.GetOutputPath()))
                 continue;
 
             var documentIds = project.GetDocumentIdsWithFolderPath(file);
@@ -42,20 +62,6 @@ public abstract class SolutionService: ProjectService, ISolutionChangeHandler {
         var documentIds = Solution?.GetDocumentIdsWithFilePath(file);
         DeleteCSharpDocument(documentIds);
     }
-    public void DeleteCSharpDocument(IEnumerable<DocumentId>? documentIds) {
-        if (documentIds == null || Solution == null)
-            return;
-
-        foreach (var documentId in documentIds) {
-            var document = Solution.GetDocument(documentId);
-            var project = document?.Project;
-            if (project == null || document == null)
-                continue;
-
-            var updates = project.RemoveDocument(documentId);
-            Solution = updates.Solution;
-        }
-    }
     public void UpdateCSharpDocument(string file, string? text = null) {
         var documentIds = Solution?.GetDocumentIdsWithFilePath(file);
         if (documentIds == null || !File.Exists(file))
@@ -64,7 +70,11 @@ public abstract class SolutionService: ProjectService, ISolutionChangeHandler {
         var sourceText = SourceText.From(text ?? File.ReadAllText(file));
         foreach (var documentId in documentIds) {
             var document = Solution?.GetDocument(documentId);
-            if (document == null)
+            if (document == null || document.Project == null)
+                continue;
+
+            if (file.StartsWith(document.Project.GetIntermediateOutputPath()) || 
+                file.StartsWith(document.Project.GetOutputPath()))
                 continue;
 
             var updatedDocument = document.WithText(sourceText);
@@ -82,6 +92,10 @@ public abstract class SolutionService: ProjectService, ISolutionChangeHandler {
             if (project == null || !File.Exists(file))
                 continue;
 
+            if (file.StartsWith(project.GetIntermediateOutputPath()) || 
+                file.StartsWith(project.GetOutputPath()))
+                continue;
+
             var documentIds = project.GetAdditionalDocumentIdsWithFilePath(file);
             if (documentIds.Any())
                 continue;
@@ -96,20 +110,6 @@ public abstract class SolutionService: ProjectService, ISolutionChangeHandler {
         var documentIds = Solution?.GetAdditionalDocumentIdsWithFilePath(file);
         DeleteAdditionalDocument(documentIds);
     }
-    public void DeleteAdditionalDocument(IEnumerable<DocumentId>? documentIds) {
-        if (documentIds == null || Solution == null)
-            return;
-
-        foreach (var documentId in documentIds) {
-            var document = Solution.GetAdditionalDocument(documentId);
-            var project = document?.Project;
-            if (project == null || document == null)
-                continue;
-
-            var updates = project.RemoveAdditionalDocument(documentId);
-            Solution = updates.Solution;
-        }
-    }
     public void UpdateAdditionalDocument(string file, string? text = null) {
         var documentIds = Solution?.GetDocumentIdsWithFilePath(file);
         if (documentIds == null || !File.Exists(file))
@@ -117,11 +117,56 @@ public abstract class SolutionService: ProjectService, ISolutionChangeHandler {
 
         var sourceText = SourceText.From(text ?? File.ReadAllText(file));
         foreach (var documentId in documentIds) {
+            var project = Solution?.GetProject(documentId.ProjectId);
+            if (project == null)
+                continue;
+
+            if (file.StartsWith(project.GetIntermediateOutputPath()) || 
+                file.StartsWith(project.GetOutputPath()))
+                continue;
+
             var updates = Solution?.WithAdditionalDocumentText(documentId, sourceText);
             if (updates == null)
-                return;
+                continue;
 
             Solution = updates;
+        }
+    }
+
+    private void DeleteCSharpDocument(IEnumerable<DocumentId>? documentIds) {
+        if (documentIds == null || Solution == null)
+            return;
+
+        foreach (var documentId in documentIds) {
+            var document = Solution.GetDocument(documentId);
+            var project = document?.Project;
+            if (project == null || document?.FilePath == null)
+                continue;
+
+            if (document.FilePath.StartsWith(project.GetIntermediateOutputPath()) || 
+                document.FilePath.StartsWith(project.GetOutputPath()))
+                continue;
+
+            var updates = project.RemoveDocument(documentId);
+            Solution = updates.Solution;
+        }
+    }
+    private void DeleteAdditionalDocument(IEnumerable<DocumentId>? documentIds) {
+        if (documentIds == null || Solution == null)
+            return;
+
+        foreach (var documentId in documentIds) {
+            var document = Solution.GetAdditionalDocument(documentId);
+            var project = document?.Project;
+            if (project == null || document?.FilePath == null)
+                continue;
+
+            if (document.FilePath.StartsWith(project.GetIntermediateOutputPath()) || 
+                document.FilePath.StartsWith(project.GetOutputPath()))
+                continue;
+
+            var updates = project.RemoveAdditionalDocument(documentId);
+            Solution = updates.Solution;
         }
     }
 }
