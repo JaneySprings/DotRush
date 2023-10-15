@@ -18,8 +18,6 @@
 	<ItemGroup>
 		<PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
 		<PackageReference Include="ICSharpCode.Decompiler" Version="$(DecompilerVersion)" />
-		<PackageReference Include="Microsoft.Build" Version="$(MSBuildFrameworkVersion)" ExcludeAssets="runtime"/>
-		<PackageReference Include="Microsoft.Build.Framework" Version="$(MSBuildFrameworkVersion)" ExcludeAssets="runtime"/>
 		<PackageReference Include="Microsoft.Build.Locator" Version="1.5.5" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(CodeAnalysisVersion)" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(CodeAnalysisVersion)" />

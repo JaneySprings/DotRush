@@ -30,12 +30,17 @@ public abstract class ProjectService {
     }
 
     protected async Task LoadAsync(MSBuildWorkspace workspace, Action<Solution?> solutionChanged) {
-        CancelReloading();
+        if (reloadCancellationTokenSource != null) {
+            await reloadCancellationTokenSource.CancelAsync();
+            reloadCancellationTokenSource.Dispose();
+        }
+    
         workspace.WorkspaceFailed -= ProjectFailed;
         workspace.WorkspaceFailed += ProjectFailed;
+        reloadCancellationTokenSource = new CancellationTokenSource();
 
         var observer = await LanguageServer.CreateWorkDoneObserverAsync();
-        var cancellationToken = reloadCancellationTokenSource?.Token ?? CancellationToken.None;
+        var cancellationToken = reloadCancellationTokenSource.Token;
         foreach (var projectFile in projectsPaths) {
             await ServerExtensions.SafeHandlerAsync(async () => {
                 if (workspace.ContainsProjectsWithPath(projectFile))
@@ -52,15 +57,6 @@ public abstract class ProjectService {
         observer?.OnCompleted();
         observer?.Dispose();
     }
-
-    protected void CancelReloading() {
-        if (reloadCancellationTokenSource != null) {
-            reloadCancellationTokenSource.Cancel();
-            reloadCancellationTokenSource.Dispose();
-        }
-        reloadCancellationTokenSource = new CancellationTokenSource();
-    }
-
 
     private async Task RestoreProjectAsync(string projectPath, ImmutableDictionary<string, string> properties, IWorkDoneObserver? observer, CancellationToken cancellationToken) {
         var projectName = Path.GetFileNameWithoutExtension(projectPath);
