@@ -31,7 +31,7 @@ public abstract class ProjectService {
 
     protected async Task LoadAsync(MSBuildWorkspace workspace, Action<Solution?> solutionChanged) {
         if (reloadCancellationTokenSource != null) {
-            await reloadCancellationTokenSource.CancelAsync();
+            reloadCancellationTokenSource.Cancel();
             reloadCancellationTokenSource.Dispose();
         }
     
