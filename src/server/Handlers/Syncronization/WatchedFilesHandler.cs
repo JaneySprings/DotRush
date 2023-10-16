@@ -1,3 +1,4 @@
+using DotRush.Server.Extensions;
 using DotRush.Server.Services;
 using MediatR;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -33,31 +34,43 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     public override Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
         foreach (var change in request.Changes) {
             var path = change.Uri.GetFileSystemPath();
-            switch (Path.GetExtension(path)) {
-                case ".cs":
-                    if (change.Type == FileChangeType.Created)
-                        this.workspaceService.CreateCSharpDocument(path);
-                    if (change.Type == FileChangeType.Deleted)
-                        this.workspaceService.DeleteCSharpDocument(path);
-                    break;
-                case ".xaml":
-                    if (change.Type == FileChangeType.Created)
-                        this.workspaceService.CreateAdditionalDocument(path);
-                    if (change.Type == FileChangeType.Deleted)
-                        this.workspaceService.DeleteAdditionalDocument(path);
-                    break;
-                case "":
-                    if (change.Type == FileChangeType.Created)
-                        this.workspaceService.CreateFolder(path);
-                    if (change.Type == FileChangeType.Deleted)
-                        this.workspaceService.DeleteFolder(path);
-                    break;
-                case ".csproj":
-                    serverFacade.Window.ShowWarning(string.Format(Resources.MessageProjectChanged, Path.GetFileName(path)));
-                    break;
+            HandleFileChange(path, change.Type);
+
+            if (change.Type == FileChangeType.Created && Directory.Exists(path)) {
+                foreach (var filePath in WorkspaceExtensions.GetVisibleFiles(path, "*"))
+                    HandleFileChange(filePath, FileChangeType.Created);
             }
         }
 
         return Unit.Task;
+    }
+
+    private void HandleFileChange(string path, FileChangeType changeType) {
+        var extension = Path.GetExtension(path);
+        if (extension == ".csproj" && changeType == FileChangeType.Changed) {
+            serverFacade.Window.ShowWarning(string.Format(Resources.MessageProjectChanged, Path.GetFileName(path)));
+            return;
+        }
+
+        if (changeType == FileChangeType.Deleted) {
+            if (extension == ".cs") {
+                workspaceService.DeleteCSharpDocument(path);
+                return;
+            }
+            workspaceService.DeleteAdditionalDocument(path);
+            workspaceService.DeleteFolder(path);
+            return;
+        }
+
+        if (changeType == FileChangeType.Created && File.Exists(path)) {
+            if (extension == ".cs") {
+                this.workspaceService.CreateCSharpDocument(path);
+                return;
+            }
+            if (extension == ".xaml" /* add other supported ext*/) {
+                this.workspaceService.CreateAdditionalDocument(path);
+                return;
+            }
+        } 
     }
 }

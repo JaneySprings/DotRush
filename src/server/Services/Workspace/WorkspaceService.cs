@@ -51,7 +51,7 @@ public class WorkspaceService: SolutionService {
         foreach (var folder in workspaceFolders) {
             if (!Directory.Exists(folder))
                 continue;
-            AddProjects(WorkspaceExtensions.GetFilesFromVisibleFolders(folder, "*.csproj"));
+            AddProjects(WorkspaceExtensions.GetVisibleFiles(folder, "*.csproj"));
         }
     }
 }

@@ -36,14 +36,11 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
     public override Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
         var text = request.ContentChanges.First().Text;
-        switch (Path.GetExtension(filePath)) {
-            case ".cs":
-                this.solutionService.UpdateCSharpDocument(filePath, text);
-                break;
-            default:
-                this.solutionService.UpdateAdditionalDocument(filePath, text);
-                break;
-        }
+
+        if (Path.GetExtension(filePath) == ".cs")
+            this.solutionService.UpdateCSharpDocument(filePath, text);
+        else
+            this.solutionService.UpdateAdditionalDocument(filePath, text);
 
         this.compilationService.AddDocument(filePath);
         this.compilationService.StartDiagnostic(filePath, serverFacade.TextDocument);

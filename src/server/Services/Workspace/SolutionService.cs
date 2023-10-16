@@ -21,15 +21,6 @@ public abstract class SolutionService: ProjectService {
         DeleteCSharpDocument(csharpDocumentIds);
         DeleteAdditionalDocument(additionalDocumentIds);
     }
-    public void CreateFolder(string path) {
-        if (!Directory.Exists(path))
-            return;
-
-        foreach (var file in WorkspaceExtensions.GetFilesFromVisibleFolders(path, "*.cs"))
-            CreateCSharpDocument(file);
-        foreach (var file in WorkspaceExtensions.GetFilesFromVisibleFolders(path, "*.xaml"))
-            CreateAdditionalDocument(file);
-    }
 
     public void CreateCSharpDocument(string file) {
         var projectIds = Solution?.GetProjectIdsMayContainsFilePath(file);
@@ -38,15 +29,12 @@ public abstract class SolutionService: ProjectService {
 
         foreach (var projectId in projectIds) {
             var project = Solution.GetProject(projectId);
-            if (project == null || !File.Exists(file))
+            if (project?.FilePath == null || !File.Exists(file))
                 continue;
 
-            if (file.StartsWith(project.GetIntermediateOutputPath()) || 
-                file.StartsWith(project.GetOutputPath()))
+            if (!WorkspaceExtensions.IsFileVisible(file, Path.GetDirectoryName(project.FilePath)!))
                 continue;
-
-            var documentIds = project.GetDocumentIdsWithFolderPath(file);
-            if (documentIds.Any())
+            if (file.StartsWith(project.GetIntermediateOutputPath()) || file.StartsWith(project.GetOutputPath()))
                 continue;
 
             var sourceText = SourceText.From(File.ReadAllText(file));
@@ -86,15 +74,12 @@ public abstract class SolutionService: ProjectService {
 
         foreach (var projectId in projectIds) {
             var project = Solution.GetProject(projectId);
-            if (project == null || !File.Exists(file))
+            if (project?.FilePath == null || !File.Exists(file))
                 continue;
 
-            if (file.StartsWith(project.GetIntermediateOutputPath()) || 
-                file.StartsWith(project.GetOutputPath()))
+            if (!WorkspaceExtensions.IsFileVisible(file, Path.GetDirectoryName(project.FilePath)!))
                 continue;
-
-            var documentIds = project.GetAdditionalDocumentIdsWithFilePath(file);
-            if (documentIds.Any())
+            if (file.StartsWith(project.GetIntermediateOutputPath()) || file.StartsWith(project.GetOutputPath()))
                 continue;
 
             var sourceText = SourceText.From(File.ReadAllText(file));

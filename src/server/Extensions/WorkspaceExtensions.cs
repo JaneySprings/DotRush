@@ -11,8 +11,9 @@ public static class WorkspaceExtensions {
         return solution.Projects.SelectMany(project => project.GetDocumentIdsWithFolderPath(folderPath));
     }
     public static IEnumerable<DocumentId> GetDocumentIdsWithFolderPath(this Project project, string folderPath) {
+        var folderPathFixed = folderPath.EndsWith(Path.DirectorySeparatorChar) ? folderPath : folderPath + Path.DirectorySeparatorChar;
         return project.Documents
-            .Where(document => document.FilePath?.StartsWith(folderPath, StringComparison.OrdinalIgnoreCase) == true)
+            .Where(document => document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true)
             .Select(document => document.Id);
     }
 
@@ -20,32 +21,27 @@ public static class WorkspaceExtensions {
         return solution.Projects.SelectMany(project => project.GetAdditionalDocumentIdsWithFolderPath(folderPath));
     }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Project project, string folderPath) {
+        var folderPathFixed = folderPath.EndsWith(Path.DirectorySeparatorChar) ? folderPath : folderPath + Path.DirectorySeparatorChar;
         return project.AdditionalDocuments
-            .Where(document => document.FilePath?.StartsWith(folderPath, StringComparison.OrdinalIgnoreCase) == true)
+            .Where(document => document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true)
             .Select(document => document.Id);
     }
 
-    public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(this Project project, string filePath) {
-        return project.AdditionalDocuments
-            .Where(document => document.FilePath == filePath)
-            .Select(document => document.Id);
+    public static DocumentId GetAdditionalDocumentIdWithFilePath(this Project project, string filePath) {
+        return project.AdditionalDocuments.Single(document => document.FilePath == filePath).Id;
     }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(this Solution solution, string filePath) {
-        return solution.Projects.SelectMany(project => project.GetAdditionalDocumentIdsWithFilePath(filePath));
+        return solution.Projects.Select(project => project.GetAdditionalDocumentIdWithFilePath(filePath));
     }
 
     public static IEnumerable<ProjectId>? GetProjectIdsMayContainsFilePath(this Solution solution, string documentPath) {
         var projects = solution.Projects.Where(p => documentPath.StartsWith(Path.GetDirectoryName(p.FilePath) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
-
         if (!projects.Any())
             return null;
 
-        var maxCommonFoldersCount = projects.Max(project => GetCommonFoldersCount(project, documentPath));
-        if (maxCommonFoldersCount < 0)
-            return null;
-    
+        var maxCommonFoldersCount = projects.Max(project => GetMaxCommonFoldersCount(project, documentPath));
         return projects
-            .Where(project => GetCommonFoldersCount(project, documentPath) == maxCommonFoldersCount)
+            .Where(project => GetMaxCommonFoldersCount(project, documentPath) == maxCommonFoldersCount)
             .Select(project => project.Id);
     }
 
@@ -69,24 +65,38 @@ public static class WorkspaceExtensions {
         return workspace?.CurrentSolution.Projects.Any(project => project.FilePath == projectPath) == true;
     }
 
-    public static IEnumerable<string> GetFilesFromVisibleFolders(string folder, string mask) {
-        return new DirectoryInfo(folder)
-            .GetFiles(mask, SearchOption.AllDirectories)
-            .Where(it => !it.Attributes.HasFlag(FileAttributes.Hidden))
-            .Select(it => it.FullName);
+    public static IEnumerable<string> GetVisibleFiles(string folder, string mask) {
+        return Directory.EnumerateFiles(folder, mask, SearchOption.AllDirectories).Where(it => IsFileVisible(it, folder));
     }
 
-    private static int GetCommonFoldersCount(Project project, string documentPath) {
-        var folders = project.GetFolders(documentPath);
-        if (folders.Any(it => it.StartsWith(".")))
-            return -1;
+    public static bool IsFileVisible(string filePath, string baseDirectory) {
+        var directoryInfo = new DirectoryInfo(baseDirectory);
+        if (directoryInfo.Attributes.HasFlag(FileAttributes.Hidden))
+            return false;
+        
+        var directoryNames = filePath.Replace(baseDirectory, string.Empty).Split(Path.DirectorySeparatorChar);
+        var currentProcessingDirectory = baseDirectory;
+        foreach (var directoryName in directoryNames) {
+            currentProcessingDirectory = Path.Combine(currentProcessingDirectory, directoryName);
+            directoryInfo = new DirectoryInfo(currentProcessingDirectory);
+            if (directoryInfo.Attributes.HasFlag(FileAttributes.Hidden))
+                return false;
+        }
+        
+        var fileInfo = new FileInfo(filePath);
+        return !fileInfo.Attributes.HasFlag(FileAttributes.Hidden);
+    }
 
+    private static int GetMaxCommonFoldersCount(Project project, string documentPath) {
+        var folders = project.GetFolders(documentPath).ToList();
+        var documents = project.Documents.Where(it => it.Folders.Count <= folders.Count);
         var maxCounter = 0;
-        foreach (var document in project.Documents) {
+        foreach (var document in documents) {
             var counter = 0;
-            foreach (var folder in folders) {
-                if (document.Folders.Contains(folder))
-                    counter++;
+            for (int i = 0; i < document.Folders.Count; i++) {
+                if (folders[i] != document.Folders[i])
+                    break;
+                counter++;
             }
             if (counter > maxCounter)
                 maxCounter = counter;
