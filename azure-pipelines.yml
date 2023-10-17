@@ -118,13 +118,15 @@ stages:
             action: 'create'
             tagSource: 'gitTag'
             assets: '$(Pipeline.Workspace)/**/*.vsix'
+        - script: npm install -g vsce
+          displayName: 'Install VSCode builder'
         - task: Bash@3
           displayName: 'Publish VSIX'
           inputs:
             targetType: 'inline'
             script: |
               for filename in $(Pipeline.Workspace)/**/*.vsix; do
-                vsce publish "$filename" -p $VSMP_TOKEN
+                vsce publish --packagePath "$filename" -p $VSMP_TOKEN
               done
               
         
