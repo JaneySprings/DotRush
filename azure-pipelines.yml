@@ -122,11 +122,13 @@ stages:
           displayName: 'Install VSCode builder'
         - task: Bash@3
           displayName: 'Publish VSIX'
+          env:
+            VS_TOKEN: $(VSMP_TOKEN)
           inputs:
             targetType: 'inline'
             script: |
               for filename in $(Pipeline.Workspace)/**/*.vsix; do
-                vsce publish --packagePath "$filename" -p $VSMP_TOKEN
+                vsce publish --packagePath "$filename" -p $VS_TOKEN
               done
               
         
