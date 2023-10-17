@@ -101,6 +101,8 @@ stages:
         condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
         pool:
           vmImage: ubuntu-latest
+        variables:
+        - group: secrets
         timeoutInMinutes: 4 
         steps:
         - download: current
@@ -116,4 +118,13 @@ stages:
             action: 'create'
             tagSource: 'gitTag'
             assets: '$(Pipeline.Workspace)/**/*.vsix'
+        - task: Bash@3
+          displayName: 'Publish VSIX'
+          inputs:
+            targetType: 'inline'
+            script: |
+              for filename in $(Pipeline.Workspace)/**/*.vsix; do
+                vsce publish "$filename" -p $VSMP_TOKEN
+              done
+              
         
