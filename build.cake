@@ -42,8 +42,14 @@ Task("vsix")
 		ReplaceRegexInFiles(file.ToString(), regex, $"  $1\"{version}\"$3", options);
 	})
 	.Does(() => {
+		switch (runtime) {
+			case "win-x64": runtime = "win32-x64"; break;
+			case "win-arm64": runtime = "win32-arm64"; break;
+			case "osx-x64": runtime = "darwin-x64"; break;
+			case "osx-arm64": runtime = "darwin-arm64"; break;
+		}
 		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{runtime}.vsix");
-		ExecuteCommand("vsce", $"package --out {output}");
+		ExecuteCommand("vsce", $"package --target {runtime} --out {output}");
 	});
 
 
