@@ -47,10 +47,8 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
 
     private void HandleFileChange(string path, FileChangeType changeType) {
         var extension = Path.GetExtension(path);
-        if (extension == ".csproj" && changeType == FileChangeType.Changed) {
-            serverFacade.Window.ShowWarning(string.Format(Resources.MessageProjectChanged, Path.GetFileName(path)));
-            return;
-        }
+        if (extension == ".csproj" && changeType == FileChangeType.Changed)
+            return; // Handled from IDE
 
         if (changeType == FileChangeType.Deleted) {
             if (extension == ".cs") {
