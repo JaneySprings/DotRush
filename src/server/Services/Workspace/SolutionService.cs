@@ -36,6 +36,8 @@ public abstract class SolutionService: ProjectService {
                 continue;
             if (file.StartsWith(project.GetIntermediateOutputPath()) || file.StartsWith(project.GetOutputPath()))
                 continue;
+            if (project.GetDocumentIdWithFilePath(file) != null)
+                continue;
 
             var sourceText = SourceText.From(File.ReadAllText(file));
             var folders = project.GetFolders(file);
@@ -80,6 +82,8 @@ public abstract class SolutionService: ProjectService {
             if (!WorkspaceExtensions.IsFileVisible(file, Path.GetDirectoryName(project.FilePath)!))
                 continue;
             if (file.StartsWith(project.GetIntermediateOutputPath()) || file.StartsWith(project.GetOutputPath()))
+                continue;
+            if (project.GetAdditionalDocumentIdWithFilePath(file) != null)
                 continue;
 
             var sourceText = SourceText.From(File.ReadAllText(file));

@@ -16,6 +16,9 @@ public static class WorkspaceExtensions {
             .Where(document => document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true)
             .Select(document => document.Id);
     }
+    public static DocumentId? GetDocumentIdWithFilePath(this Project project, string filePath) {
+        return project.Documents.FirstOrDefault(document => document.FilePath == filePath)?.Id;
+    }
 
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Solution solution, string folderPath) {
         return solution.Projects.SelectMany(project => project.GetAdditionalDocumentIdsWithFolderPath(folderPath));
@@ -27,11 +30,11 @@ public static class WorkspaceExtensions {
             .Select(document => document.Id);
     }
 
-    public static DocumentId GetAdditionalDocumentIdWithFilePath(this Project project, string filePath) {
-        return project.AdditionalDocuments.Single(document => document.FilePath == filePath).Id;
+    public static DocumentId? GetAdditionalDocumentIdWithFilePath(this Project project, string filePath) {
+        return project.AdditionalDocuments.FirstOrDefault(document => document.FilePath == filePath)?.Id;
     }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(this Solution solution, string filePath) {
-        return solution.Projects.Select(project => project.GetAdditionalDocumentIdWithFilePath(filePath));
+        return solution.Projects.Select(project => project.GetAdditionalDocumentIdWithFilePath(filePath)).Where(it => it != null)!;
     }
 
     public static IEnumerable<ProjectId>? GetProjectIdsMayContainsFilePath(this Solution solution, string documentPath) {
