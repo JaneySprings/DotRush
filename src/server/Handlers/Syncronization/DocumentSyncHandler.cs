@@ -11,15 +11,11 @@ namespace DotRush.Server.Handlers;
 
 public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
     private readonly WorkspaceService solutionService;
-    private readonly CompilationService compilationService;
-    private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;
     
 
-    public DocumentSyncHandler(ILanguageServerFacade serverFacade, WorkspaceService solutionService, CompilationService compilationService, ConfigurationService configurationService) {
+    public DocumentSyncHandler(ILanguageServerFacade serverFacade, WorkspaceService solutionService) {
         this.solutionService = solutionService;
-        this.compilationService = compilationService;
-        this.configurationService = configurationService;
         this.serverFacade = serverFacade;
     }
 
@@ -42,31 +38,16 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         else
             this.solutionService.UpdateAdditionalDocument(filePath, text);
 
-        this.compilationService.AddDocument(filePath);
-        this.compilationService.StartDiagnostic(filePath, serverFacade.TextDocument);
-        
-        if (this.configurationService.IsRoslynAnalyzersEnabled())
-            this.compilationService.StartAnalyzerDiagnostic(request.TextDocument.Uri.GetFileSystemPath(), serverFacade.TextDocument);
-
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
-        var filePath = request.TextDocument.Uri.GetFileSystemPath();
-
-        this.compilationService.AddDocument(filePath);
-        this.compilationService.StartDiagnostic(filePath, serverFacade.TextDocument);
-
-        if (this.configurationService.IsRoslynAnalyzersEnabled())
-            this.compilationService.StartAnalyzerDiagnostic(filePath, serverFacade.TextDocument);
-        
         return Unit.Task;
     }
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
-        var filePath = request.TextDocument.Uri.GetFileSystemPath();
-
-        this.compilationService.CancelDiagnostics();
-        this.compilationService.CancelAnalyzerDiagnostics();
-        this.compilationService.RemoveDocument(filePath, serverFacade.TextDocument);
+        serverFacade.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
+            Uri = request.TextDocument.Uri,
+            Diagnostics = new Container<Diagnostic>()
+        });
         return Unit.Task;
     }
     public  override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {

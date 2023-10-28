@@ -10,17 +10,18 @@ namespace DotRush.Server.Services;
 public class WorkspaceService: SolutionService {
     private const int MAX_WORKSPACE_ERRORS = 15;
 
-    public AutoResetEvent WaitHandle { get; }
-
+    private TaskCompletionSource taskCompletionSource;
     private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;
     private MSBuildWorkspace? workspace;
     private int workspaceErrorsCount;
 
+    public Task WaitHandle => taskCompletionSource.Task;
+
     public WorkspaceService(ConfigurationService configurationService, ILanguageServerFacade serverFacade) {
         this.configurationService = configurationService;
         this.serverFacade = serverFacade;
-        WaitHandle = new AutoResetEvent(false);
+        taskCompletionSource = new TaskCompletionSource();
         MSBuildLocator.RegisterDefaults();
     }
 
@@ -43,9 +44,11 @@ public class WorkspaceService: SolutionService {
     }
     public async void StartSolutionLoading() {
         ArgumentNullException.ThrowIfNull(workspace);
-        WaitHandle.Reset();
+        if (taskCompletionSource.Task.IsCompleted)
+            taskCompletionSource = new TaskCompletionSource();
+
         await LoadSolutionAsync(workspace);
-        WaitHandle.Set();
+        taskCompletionSource.SetResult();
     }
     public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
         foreach (var folder in workspaceFolders) {

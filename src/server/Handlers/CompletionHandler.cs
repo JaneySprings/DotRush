@@ -34,7 +34,6 @@ public class CompletionHandler : CompletionHandlerBase {
     }
 
     public override async Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken) {
-        this.compilationService.CancelAnalyzerDiagnostics();
         return await ServerExtensions.SafeHandlerAsync<CompletionList>(new CompletionList(), async () => {
             var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
             this.targetDocument = this.solutionService.Solution?.GetDocument(documentId);

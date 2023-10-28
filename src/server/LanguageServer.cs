@@ -35,6 +35,7 @@ public class LanguageServer {
                 services.AddSingleton<DecompilationService>();
             })
             .WithHandler<DocumentSyncHandler>()
+            .WithHandler<DiagnosticsHandler>()
             .WithHandler<WatchedFilesHandler>()
             .WithHandler<WorkspaceFoldersHandler>()
             .WithHandler<HoverHandler>()
