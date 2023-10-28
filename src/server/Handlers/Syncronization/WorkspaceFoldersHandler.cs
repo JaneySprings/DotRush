@@ -21,16 +21,16 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
         };
     }
 
-    public override Task<Unit> Handle(DidChangeWorkspaceFoldersParams request, CancellationToken cancellationToken) {
+    public override async Task<Unit> Handle(DidChangeWorkspaceFoldersParams request, CancellationToken cancellationToken) {
         var added = request.Event.Added.Select(folder => folder.Uri.GetFileSystemPath());
         if (!added.Any())
-            return Unit.Task;
+            return Unit.Value;
         
-        workspaceService.WaitHandle.WaitOne();
+        await workspaceService.WaitHandle;
         workspaceService.AddWorkspaceFolders(added);
         workspaceService.StartSolutionLoading();
         // Automatically skip loaded projects
         
-        return Unit.Task;
+        return Unit.Value;
     }
 }
