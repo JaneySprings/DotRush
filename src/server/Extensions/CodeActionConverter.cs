@@ -48,7 +48,7 @@ public static class CodeActionConverter {
         if (solutionService.Solution == null)
             return null;
 
-        var textDocumentEdits = new List<ProtocolModels.WorkspaceEditDocumentChange>();
+        var textDocumentEdits = new List<ProtocolModels.TextDocumentEdit>();
         var operations = await codeAction.GetOperationsAsync(cancellationToken);
         foreach (var operation in operations) {
             if (operation is ApplyChangesOperation applyChangesOperation) {
@@ -58,6 +58,8 @@ public static class CodeActionConverter {
                         var newDocument = projectChanges.NewProject.GetDocument(documentChanges);
                         var oldDocument = solutionService.Solution?.GetDocument(newDocument?.Id);
                         if (oldDocument?.FilePath == null || newDocument?.FilePath == null)
+                            continue;
+                        if (textDocumentEdits.Any(x => x.TextDocument.Uri.GetFileSystemPath() == newDocument.FilePath))
                             continue;
 
                         var sourceText = await oldDocument.GetTextAsync(cancellationToken);
@@ -84,7 +86,9 @@ public static class CodeActionConverter {
             Kind = ProtocolModels.CodeActionKind.QuickFix,
             Title = codeAction.Title,
             Edit = new ProtocolModels.WorkspaceEdit() {
-                DocumentChanges = textDocumentEdits,
+                DocumentChanges = new ProtocolModels.Container<ProtocolModels.WorkspaceEditDocumentChange>(
+                    textDocumentEdits.Select(x => new ProtocolModels.WorkspaceEditDocumentChange(x))
+                ),
             },
         };
     }
