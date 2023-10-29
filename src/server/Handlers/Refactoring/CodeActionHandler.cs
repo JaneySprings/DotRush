@@ -70,7 +70,8 @@ public class CodeActionHandler : CodeActionHandlerBase {
             if (request.Data == null)
                 return request;
 
-            var codeAction = codeActionsCollection.FirstOrDefault(x => x.EquivalenceKey == request.Data.ToObject<string>());
+            var codeActionId = request.Data.ToObject<string>();
+            var codeAction = codeActionsCollection.FirstOrDefault(x => string.IsNullOrEmpty(x.EquivalenceKey) ? codeActionId == x.Title : codeActionId == x.EquivalenceKey);
             if (codeAction == null)
                 return request;
 

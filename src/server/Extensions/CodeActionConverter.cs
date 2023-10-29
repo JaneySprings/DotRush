@@ -32,14 +32,15 @@ public static class CodeActionConverter {
         if (priorityProperty == null)
             priorityProperty = typeof(CodeAction).GetProperty("Priority", BindingFlags.Instance | BindingFlags.NonPublic);
 
+        var data = string.IsNullOrEmpty(codeAction.EquivalenceKey) ? codeAction.Title : codeAction.EquivalenceKey;
         var priority = priorityProperty?.GetValue(codeAction);
-        var IsPreferred = priority != null && (int)priority == 3;
+        var isPreferred = priority != null && (int)priority == 3;
 
         return new ProtocolModels.CodeAction() {
             Kind = ProtocolModels.CodeActionKind.QuickFix,
-            Data = codeAction.EquivalenceKey,
             Title = codeAction.Title,
-            IsPreferred = IsPreferred,
+            IsPreferred = isPreferred,
+            Data = data,
         };
     }
 
