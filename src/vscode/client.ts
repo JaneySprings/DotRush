@@ -1,6 +1,5 @@
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
-import { ExtensionContext, extensions } from "vscode";
-import { RuntimeController } from "./selector";
+import * as vscode from "vscode";
 import * as res from './resources';
 import * as path from 'path';
 
@@ -8,10 +7,9 @@ import * as path from 'path';
 export class ClientController {
     private static client: LanguageClient;
 
-    private static initialize() {
-        const extensionPath = extensions.getExtension(`${res.extensionPublisher}.${res.extensionId}`)?.extensionPath ?? '';
-        const runtimeDirectory = RuntimeController.targetFolderName;
-        const serverExecutable = path.join(extensionPath, "extension", "bin", runtimeDirectory, "DotRush");
+    private static initialize(context: vscode.ExtensionContext) {
+        const extensionPath = context.extensionPath;
+        const serverExecutable = path.join(extensionPath, "extension", "bin", "DotRush");
         const serverExtension = process.platform === 'win32' ? '.exe' : '';
         const serverOptions: ServerOptions = {
             command: serverExecutable + serverExtension,
@@ -32,11 +30,21 @@ export class ClientController {
     }
 
 
-    public static async activate(context: ExtensionContext) {
+    public static async activate(context: vscode.ExtensionContext) {
         if (ClientController.client !== undefined && ClientController.client.isRunning())
             return;
-        ClientController.initialize();
+        ClientController.initialize(context);
         ClientController.client.start();
+
+        context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async ev => {
+            if (!ev.fileName.endsWith('.csproj'))
+                return;
+    
+            const message = res.messageProjectChanged.replace('{0}', path.basename(ev.fileName));
+            const result = await vscode.window.showWarningMessage(message, res.messageReload);
+            if (result !== undefined)
+                vscode.commands.executeCommand(res.commandIdReloadWindow);
+        }));
     }
     public static stop() {
         if (ClientController.client !== undefined && ClientController.client.isRunning())
