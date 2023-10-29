@@ -38,14 +38,20 @@ public class DiagnosticsHandler : DocumentDiagnosticHandlerBase {
             
             var documentPath = request.TextDocument.Uri.GetFileSystemPath();
             await compilationService.DiagnoseAsync(documentPath, cancellationToken);
-
-            if (configurationService.IsRoslynAnalyzersEnabled())
-                await compilationService.AnalyzerDiagnoseAsync(documentPath, cancellationToken);
-
-            var diagnostics = compilationService.Diagnostics[documentPath].GetTotalServerDiagnostics();
+            var syntaxDiagnostics = compilationService.Diagnostics[documentPath].GetSyntaxServerDiagnostics();
             serverFacade.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
                 Uri = DocumentUri.From(documentPath),
-                Diagnostics = new Container<Diagnostic>(diagnostics),
+                Diagnostics = new Container<Diagnostic>(syntaxDiagnostics),
+            });
+
+            if (!configurationService.IsRoslynAnalyzersEnabled())
+                return null;
+
+            await compilationService.AnalyzerDiagnoseAsync(documentPath, cancellationToken);
+            var totalDiagnostics = compilationService.Diagnostics[documentPath].GetTotalServerDiagnostics();
+            serverFacade.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
+                Uri = DocumentUri.From(documentPath),
+                Diagnostics = new Container<Diagnostic>(totalDiagnostics),
             });
             
             return null;
