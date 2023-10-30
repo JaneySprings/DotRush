@@ -11,13 +11,16 @@ namespace DotRush.Server.Handlers;
 
 public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
     private readonly WorkspaceService solutionService;
+    private readonly CompilationService compilationService;
     private readonly ILanguageServerFacade serverFacade;
     
 
-    public DocumentSyncHandler(ILanguageServerFacade serverFacade, WorkspaceService solutionService) {
+    public DocumentSyncHandler(ILanguageServerFacade serverFacade, WorkspaceService solutionService, CompilationService compilationService) {
+        this.compilationService = compilationService;
         this.solutionService = solutionService;
         this.serverFacade = serverFacade;
     }
+
 
     protected override TextDocumentSyncRegistrationOptions CreateRegistrationOptions(TextSynchronizationCapability capability, ClientCapabilities clientCapabilities) {
         return new TextDocumentSyncRegistrationOptions {
@@ -29,28 +32,46 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         return new TextDocumentAttributes(uri, "csharp");
     }
 
+
     public override Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
         var text = request.ContentChanges.First().Text;
+        if (Path.GetExtension(filePath) != ".cs") {
+            solutionService.UpdateAdditionalDocument(filePath, text);
+            return Unit.Task;
+        }
 
-        if (Path.GetExtension(filePath) == ".cs")
-            this.solutionService.UpdateCSharpDocument(filePath, text);
-        else
-            this.solutionService.UpdateAdditionalDocument(filePath, text);
-
+        solutionService.UpdateCSharpDocument(filePath, text);
+        compilationService.EnsureDocumentOpened(filePath);
+        compilationService.StartPushingDiagnostics(serverFacade, request.TextDocument.Version);
         return Unit.Task;
     }
-    public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
-        return Unit.Task;
+
+    public override async Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
+        var filePath = request.TextDocument.Uri.GetFileSystemPath();
+        if (Path.GetExtension(filePath) != ".cs")
+            return Unit.Value;
+        
+        compilationService.EnsureDocumentOpened(filePath);
+        await compilationService.PushDocumentDiagnosticsAsync(filePath, request.TextDocument.Version, serverFacade, cancellationToken);
+        return Unit.Value;
     }
+
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
+        var filePath = request.TextDocument.Uri.GetFileSystemPath();
+        if (Path.GetExtension(filePath) != ".cs")
+            return Unit.Task;
+    
+        compilationService.Diagnostics.Remove(filePath);
         serverFacade.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
             Uri = request.TextDocument.Uri,
             Diagnostics = new Container<Diagnostic>()
         });
+
         return Unit.Task;
     }
-    public  override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {
+
+    public override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken) {
         return Unit.Task;
     }
 }
