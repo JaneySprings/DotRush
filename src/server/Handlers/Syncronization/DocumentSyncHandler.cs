@@ -13,7 +13,6 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
     private readonly WorkspaceService solutionService;
     private readonly CompilationService compilationService;
     private readonly ILanguageServerFacade serverFacade;
-    
 
     public DocumentSyncHandler(ILanguageServerFacade serverFacade, WorkspaceService solutionService, CompilationService compilationService) {
         this.compilationService = compilationService;
@@ -42,19 +41,22 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
         }
 
         solutionService.UpdateCSharpDocument(filePath, text);
+
+        compilationService.ResetCancellationToken();
         compilationService.EnsureDocumentOpened(filePath);
-        compilationService.StartPushingDiagnostics(serverFacade, request.TextDocument.Version);
+        _ = compilationService.PushTotalDiagnosticsAsync(filePath, request.TextDocument.Version, serverFacade, compilationService.CompilationTokenSource.Token);
         return Unit.Task;
     }
 
-    public override async Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
+    public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
         if (Path.GetExtension(filePath) != ".cs")
-            return Unit.Value;
-        
+            return Unit.Task;
+
+        compilationService.ResetCancellationToken();
         compilationService.EnsureDocumentOpened(filePath);
-        await compilationService.PushDocumentDiagnosticsAsync(filePath, request.TextDocument.Version, serverFacade, cancellationToken);
-        return Unit.Value;
+        _ = compilationService.PushTotalDiagnosticsAsync(filePath, request.TextDocument.Version, serverFacade, compilationService.CompilationTokenSource.Token);
+        return Unit.Task;
     }
 
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {

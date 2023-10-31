@@ -3,21 +3,15 @@ using DotRush.Server.Services;
 using MediatR;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
 
 namespace DotRush.Server.Handlers;
 
 public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     private readonly WorkspaceService workspaceService;
-    private readonly CompilationService compilationService;
-    private readonly ILanguageServerFacade serverFacade;
 
-    public WatchedFilesHandler(ILanguageServerFacade serverFacade, WorkspaceService workspaceService, CompilationService compilationService) {
+    public WatchedFilesHandler(WorkspaceService workspaceService) {
         this.workspaceService = workspaceService;
-        this.compilationService = compilationService;
-        this.serverFacade = serverFacade;
     }
 
     protected override DidChangeWatchedFilesRegistrationOptions CreateRegistrationOptions(DidChangeWatchedFilesCapability capability, ClientCapabilities clientCapabilities) {

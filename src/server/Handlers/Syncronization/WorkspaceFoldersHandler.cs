@@ -8,7 +8,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
 namespace DotRush.Server.Handlers;
 
 public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
-    private WorkspaceService workspaceService;
+    private readonly WorkspaceService workspaceService;
 
     public WorkspaceFoldersHandler(WorkspaceService workspaceService) {
         this.workspaceService = workspaceService;
