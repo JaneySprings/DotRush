@@ -40,12 +40,11 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     }
 
     private void HandleFileChange(string path, FileChangeType changeType) {
-        var extension = Path.GetExtension(path);
-        if (extension == ".csproj" && changeType == FileChangeType.Changed)
+        if (path.IsSupportedProject() && changeType == FileChangeType.Changed)
             return; // Handled from IDE
 
         if (changeType == FileChangeType.Deleted) {
-            if (extension == ".cs") {
+            if (path.IsSupportedDocument()) {
                 workspaceService.DeleteCSharpDocument(path);
                 return;
             }
@@ -54,15 +53,24 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
             return;
         }
 
+        if (changeType == FileChangeType.Changed) {
+            if (path.IsSupportedDocument())
+                workspaceService.UpdateCSharpDocument(path);
+
+            if (path.IsSupportedAdditionalDocument())
+                workspaceService.UpdateAdditionalDocument(path);
+            
+            return;
+        }
+
         if (changeType == FileChangeType.Created && File.Exists(path)) {
-            if (extension == ".cs") {
-                this.workspaceService.CreateCSharpDocument(path);
-                return;
-            }
-            if (extension == ".xaml" /* add other supported ext*/) {
-                this.workspaceService.CreateAdditionalDocument(path);
-                return;
-            }
+            if (path.IsSupportedDocument())
+                workspaceService.CreateCSharpDocument(path);
+
+            if (path.IsSupportedAdditionalDocument())
+                workspaceService.CreateAdditionalDocument(path);
+            
+            return;
         } 
     }
 }
