@@ -1,3 +1,4 @@
+using DotRush.Server.Extensions;
 using DotRush.Server.Services;
 using MediatR;
 using OmniSharp.Extensions.LanguageServer.Protocol;
@@ -35,7 +36,7 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
     public override Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
         var text = request.ContentChanges.First().Text;
-        if (Path.GetExtension(filePath) != ".cs") {
+        if (filePath.IsSupportedAdditionalDocument()) {
             solutionService.UpdateAdditionalDocument(filePath, text);
             return Unit.Task;
         }
@@ -50,7 +51,7 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
 
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
-        if (Path.GetExtension(filePath) != ".cs")
+        if (filePath.IsSupportedAdditionalDocument())
             return Unit.Task;
 
         compilationService.ResetCancellationToken();
@@ -61,7 +62,7 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
 
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
-        if (Path.GetExtension(filePath) != ".cs")
+        if (filePath.IsSupportedAdditionalDocument())
             return Unit.Task;
     
         compilationService.Diagnostics.Remove(filePath);

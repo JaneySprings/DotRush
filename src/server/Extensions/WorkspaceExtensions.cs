@@ -3,6 +3,18 @@ using Microsoft.CodeAnalysis;
 namespace DotRush.Server.Extensions;
 
 public static class WorkspaceExtensions {
+    public static bool IsSupportedDocument(this string filePath) {
+        return filePath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase);
+    }
+    public static bool IsSupportedAdditionalDocument(this string filePath) {
+        var allowedExtensions = new[] { ".xaml", /* maybe '.razor' ? */};
+        return allowedExtensions.Any(it => filePath.EndsWith(it, StringComparison.OrdinalIgnoreCase));
+    }
+    public static bool IsSupportedProject(this string filePath) {
+        return filePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase);
+    }
+
+
     public static IEnumerable<ProjectId> GetProjectIdsWithDocumentFilePath(this Solution solution, string filePath) {
         return solution.GetDocumentIdsWithFilePath(filePath).Select(id => id.ProjectId);
     }
