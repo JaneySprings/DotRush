@@ -42,7 +42,7 @@ public class CompilationService {
     }
 
     public void EnsureDocumentOpened(string documentPath) {
-        if (!Diagnostics.ContainsKey(documentPath))
+        if (!Diagnostics.ContainsKey(documentPath) && documentPath.IsSupportedDocument())
             Diagnostics.Add(documentPath, new FileDiagnostics());
     }
     public void ResetCancellationToken() {
@@ -65,7 +65,7 @@ public class CompilationService {
 
     private async Task PushDiagnosticsAsync(string documentPath, int? version, ILanguageServerFacade serverFacade, CancellationToken cancellationToken) {
         await ServerExtensions.SafeHandlerAsync(async () => {
-            if (Path.GetExtension(documentPath) != ".cs")
+            if (!Diagnostics.ContainsKey(documentPath))
                 return;
 
             await DiagnoseAsync(documentPath, cancellationToken);
@@ -81,7 +81,10 @@ public class CompilationService {
         await ServerExtensions.SafeHandlerAsync(async () => {
             await AnalyzerDiagnoseAsync(targetDocumentPath, documentPaths, cancellationToken);
             foreach (var documentPath in documentPaths) {
-                var analyzerDiagnostics = Diagnostics[documentPath].GetTotalServerDiagnostics();
+                var analyzerDiagnostics = Enumerable.Empty<Diagnostic>();
+                if (Diagnostics.ContainsKey(documentPath))
+                    analyzerDiagnostics = Diagnostics[documentPath].GetTotalServerDiagnostics();
+
                 serverFacade.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
                     Uri = DocumentUri.From(documentPath),
                     Diagnostics = new Container<Diagnostic>(analyzerDiagnostics),
