@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using DotRush.Server.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -63,14 +64,17 @@ public abstract class ProjectService {
         var process = new Process {
             StartInfo = new ProcessStartInfo {
                 FileName = "dotnet",
-                Arguments = $"restore \"{projectPath}\"",
+                Arguments = $"restore \"{projectPath}\" --verbosity quiet",
                 UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                RedirectStandardInput = true,
+                CreateNoWindow = true
             }
         };
+
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardInput = true;
+        }
 
         var options = string.Join(" ", properties.Select(x => $"-p:{x.Key}={x.Value}"));
         if (!string.IsNullOrEmpty(options))
