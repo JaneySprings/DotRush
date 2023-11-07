@@ -2,19 +2,21 @@ using DotRush.Server.Extensions;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
+using OmniSharp.Extensions.LanguageServer.Protocol;
+using OmniSharp.Extensions.LanguageServer.Protocol.Document;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using OmniSharp.Extensions.LanguageServer.Protocol.Window;
+using Protocol = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Server.Services;
 
 public class WorkspaceService: SolutionService {
-    private const int MAX_WORKSPACE_ERRORS = 15;
-
-    private TaskCompletionSource taskCompletionSource;
     private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;
+    private readonly List<Protocol.Diagnostic> worksapceDiagnostics;
+
+    private TaskCompletionSource taskCompletionSource;
     private MSBuildWorkspace? workspace;
-    private int workspaceErrorsCount;
 
     public Task WaitHandle => taskCompletionSource.Task;
 
@@ -22,25 +24,32 @@ public class WorkspaceService: SolutionService {
         this.configurationService = configurationService;
         this.serverFacade = serverFacade;
         taskCompletionSource = new TaskCompletionSource();
+        worksapceDiagnostics = new List<Protocol.Diagnostic>();
         MSBuildLocator.RegisterDefaults();
     }
 
-    protected override void ProjectFailed(object? sender, WorkspaceDiagnosticEventArgs e) {
-        if ((workspaceErrorsCount < MAX_WORKSPACE_ERRORS) && !string.IsNullOrEmpty(e.Diagnostic.Message)) {
-            serverFacade?.Window.ShowWarning(e.Diagnostic.Message);
-            workspaceErrorsCount++;
-        }
+
+    protected override void ClearDiagnostics() {
+        worksapceDiagnostics.Clear();
     }
-    protected override void RestoreFailed(string message) {
-        if (!string.IsNullOrEmpty(message))
-            serverFacade.Window.ShowWarning(message);
+    protected override void ProjectDiagnosticReceived(Protocol.Diagnostic diagnostic) {
+        worksapceDiagnostics.Add(diagnostic);
     }
+    protected override void PushDiagnostics(string projectFilePath) {
+        var updatedDiagnostics = worksapceDiagnostics.Select(it => it.UpdateSource(projectFilePath));
+        serverFacade?.TextDocument?.PublishDiagnostics(new PublishDiagnosticsParams() {
+            Uri = DocumentUri.From(projectFilePath),
+            Diagnostics = new Container<Protocol.Diagnostic>(updatedDiagnostics),
+        });
+    }
+
 
     public void InitializeWorkspace() {
         var options = configurationService.AdditionalWorkspaceArguments();
         workspace = MSBuildWorkspace.Create(options);
         workspace.LoadMetadataForReferencedProjects = true;
         workspace.SkipUnrecognizedProjects = true;
+        workspace.WorkspaceFailed += (_, d) => ProjectDiagnosticReceived(d.Diagnostic.ToServerDiagnostic());
     }
     public async void StartSolutionLoading() {
         ArgumentNullException.ThrowIfNull(workspace);
