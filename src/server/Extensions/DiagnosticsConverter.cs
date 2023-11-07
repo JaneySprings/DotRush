@@ -1,15 +1,14 @@
 using DotRush.Server.Services;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.MSBuild;
-using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using Protocol = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Server.Extensions;
 
 public static class DiagnosticsConverter {
-    public static IEnumerable<ProtocolModels.Diagnostic> ToServerDiagnostics(this IEnumerable<SourceDiagnostic> diagnostics) {
+    public static IEnumerable<Protocol.Diagnostic> ToServerDiagnostics(this IEnumerable<SourceDiagnostic> diagnostics) {
         return diagnostics.Select(it => {
             var diagnosticSource = it.InnerDiagnostic.Location.SourceTree?.FilePath;
-            return new ProtocolModels.Diagnostic() {
+            return new Protocol.Diagnostic() {
                 Message = it.InnerDiagnostic.GetMessage(),
                 Range = it.InnerDiagnostic.Location.ToRange(),
                 Severity = it.InnerDiagnostic.Severity.ToServerSeverity(),
@@ -19,29 +18,47 @@ public static class DiagnosticsConverter {
         });
     }
 
-    public static ProtocolModels.DiagnosticSeverity ToServerSeverity(this DiagnosticSeverity severity) {
+    public static Protocol.DiagnosticSeverity ToServerSeverity(this DiagnosticSeverity severity) {
         switch (severity) {
             case DiagnosticSeverity.Error:
-                return ProtocolModels.DiagnosticSeverity.Error;
+                return Protocol.DiagnosticSeverity.Error;
             case DiagnosticSeverity.Warning:
-                return ProtocolModels.DiagnosticSeverity.Warning;
+                return Protocol.DiagnosticSeverity.Warning;
             case DiagnosticSeverity.Info:
-                return ProtocolModels.DiagnosticSeverity.Information;
+                return Protocol.DiagnosticSeverity.Information;
             default:
-                return ProtocolModels.DiagnosticSeverity.Hint;
+                return Protocol.DiagnosticSeverity.Hint;
+        }
+    }
+    public static Protocol.DiagnosticSeverity ToServerSeverity(this WorkspaceDiagnosticKind kind) {
+        switch (kind) {
+            case WorkspaceDiagnosticKind.Failure:
+                return Protocol.DiagnosticSeverity.Error;
+            case WorkspaceDiagnosticKind.Warning:
+                return Protocol.DiagnosticSeverity.Warning;
+            default:
+                return Protocol.DiagnosticSeverity.Information;
         }
     }
 
-    public static string ToOperationString(this ProjectLoadOperation operation) {
-        switch (operation) {
-            case ProjectLoadOperation.Evaluate:
-                return "Evaluating";
-            case ProjectLoadOperation.Build:
-                return "Building";
-            case ProjectLoadOperation.Resolve:
-                return "Resolving";
-        }
+    public static Protocol.Diagnostic UpdateSource(this Protocol.Diagnostic diagnostic, string path) {
+        return new Protocol.Diagnostic() {
+            Message = diagnostic.Message,
+            Range = diagnostic.Range,
+            Severity = diagnostic.Severity,
+            Source = path,
+            Code = diagnostic.Code,
+        };
+    }
 
-        return "Loading";
+    public static Protocol.Diagnostic ToServerDiagnostic(this WorkspaceDiagnostic diagnostic) {        
+        return new Protocol.Diagnostic() {
+            Message = diagnostic.Message,
+            Severity = diagnostic.Kind.ToServerSeverity(),
+            Range = new Protocol.Range() {
+                Start = new Protocol.Position(0, 0),
+                End = new Protocol.Position(0, 0)
+            },
+        };
     }
 }
