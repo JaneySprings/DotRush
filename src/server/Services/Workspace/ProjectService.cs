@@ -45,7 +45,7 @@ public abstract class ProjectService {
             if (cancellationToken.IsCancellationRequested)
                 break;
             if (workspace.ContainsProjectsWithPath(projectFile))
-                return;
+                continue;
 
             await ServerExtensions.SafeHandlerAsync(async () => {
                 await workspace.RestoreProjectAsync(projectFile, ProjectDiagnosticReceived, observer, cancellationToken);
