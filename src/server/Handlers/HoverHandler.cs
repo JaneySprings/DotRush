@@ -53,6 +53,9 @@ public class HoverHandler : HoverHandlerBase {
                 if (symbol == null || semanticModel == null)
                     continue;
 
+                if (symbol is IAliasSymbol aliasSymbol)
+                    symbol = aliasSymbol.Target;
+
                 var displayString = symbol.Kind == CodeAnalysis.SymbolKind.NamedType 
                     ? symbol.ToDisplayString(DefaultFormat) 
                     : symbol.ToMinimalDisplayString(semanticModel, offset, MinimalFormat);
