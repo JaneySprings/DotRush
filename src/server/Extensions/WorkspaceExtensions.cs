@@ -102,6 +102,14 @@ public static class WorkspaceExtensions {
         return !fileInfo.Attributes.HasFlag(FileAttributes.Hidden);
     }
 
+    public static string GetTargetFramework(this Project project) {
+        var frameworkStartIndex = project.Name.LastIndexOf('(');
+        if (frameworkStartIndex == -1)
+            return string.Empty;
+
+        return project.Name.Substring(frameworkStartIndex + 1, project.Name.Length - frameworkStartIndex - 2);
+    }
+
     private static int GetMaxCommonFoldersCount(Project project, string documentPath) {
         var folders = project.GetFolders(documentPath).ToList();
         var documents = project.Documents.Where(it => it.Folders.Count <= folders.Count);
