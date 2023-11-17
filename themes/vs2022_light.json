@@ -35,6 +35,8 @@
         "statusBar.foreground": "#ffffff",  // onPrimary
         "statusBar.debuggingBackground": "#9e430a", // customContainer(#BC5922)
         "statusBar.debuggingForeground": "#ffffff", // onCustomContainer(#BC5922)
+        "statusBar.noFolderBackground": "#1c5eab",  // primary
+        "statusBar.noFolderForeground": "#ffffff",  // onPrimary
 
         // Picker area
         "pickerGroup.foreground": "#1c5eab",    // primary

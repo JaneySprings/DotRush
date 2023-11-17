@@ -1,3 +1,4 @@
+using System.Text;
 using DotRush.Server.Extensions;
 using DotRush.Server.Services;
 using Microsoft.CodeAnalysis;
@@ -41,6 +42,7 @@ public class HoverHandler : HoverHandlerBase {
             if (documentIds == null)
                 return null;
             
+            var displayStrings = new Dictionary<string, List<string>>();
             foreach (var documentId in documentIds) {
                 var document = this.solutionService.Solution?.GetDocument(documentId);
                 if (document == null)
@@ -56,14 +58,33 @@ public class HoverHandler : HoverHandlerBase {
                 if (symbol is IAliasSymbol aliasSymbol)
                     symbol = aliasSymbol.Target;
 
-                var displayString = symbol.Kind == CodeAnalysis.SymbolKind.NamedType 
+                var displayString = symbol.Kind == CodeAnalysis.SymbolKind.NamedType || symbol.Kind == CodeAnalysis.SymbolKind.Namespace
                     ? symbol.ToDisplayString(DefaultFormat) 
                     : symbol.ToMinimalDisplayString(semanticModel, offset, MinimalFormat);
+
+                if (!displayStrings.ContainsKey(displayString))
+                    displayStrings.Add(displayString, new List<string>());
+
+                displayStrings[displayString].Add(document.Project.GetTargetFramework());  
+            }
+ 
+            if (displayStrings.Count == 1) {
+                return new Hover {
+                    Contents = new MarkedStringsOrMarkupContent(new MarkedString("csharp", displayStrings.Keys.First()))
+                };
+            }
+
+            if (displayStrings.Count > 1) {
+                var builder = new StringBuilder();
+                foreach (var pair in displayStrings) {
+                    var frameworks = string.Join(", ", pair.Value);
+                    builder.AppendLine($"```csharp\n{pair.Key}  ({frameworks})\n```");
+                }
 
                 return new Hover {
                     Contents = new MarkedStringsOrMarkupContent(new MarkupContent {
                         Kind = MarkupKind.Markdown,
-                        Value = $"```csharp\n{displayString}\n```"
+                        Value = builder.ToString()
                     })
                 };
             }
