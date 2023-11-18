@@ -50,7 +50,7 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
 
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
-        if (filePath.IsSupportedAdditionalDocument())
+        if (!filePath.IsSupportedDocument())
             return Unit.Task;
 
         compilationService.ResetCancellationToken();
@@ -61,7 +61,7 @@ public class DocumentSyncHandler : TextDocumentSyncHandlerBase {
 
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
-        if (filePath.IsSupportedAdditionalDocument())
+        if (!filePath.IsSupportedDocument())
             return Unit.Task;
     
         compilationService.Diagnostics.Remove(filePath);
