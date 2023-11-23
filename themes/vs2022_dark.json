@@ -65,7 +65,9 @@
         "activityBarBadge.foreground": "#e5deff",   // onPrimaryContainer
         
         // Other
-        "focusBorder": "#47445961" // secondaryContainer(38%)
+        "focusBorder": "#47445961", // secondaryContainer(38%)
+        "panelTitle.activeBorder": "#453a8e", // primaryContainer
+        "panelSectionHeader.background": "#1c1b1f" // surface
     },
     "semanticHighlighting": true,
     // https://github.com/microsoft/vscode/blob/master/extensions/theme-defaults/themes/dark_vs.json
