@@ -65,7 +65,9 @@
         "activityBarBadge.foreground": "#001b3c",   // onPrimaryContainer
         
         // Other
-        "focusBorder": "#c4c6cf" // outlineVariant
+        "focusBorder": "#c4c6cf", // outlineVariant
+        "panelTitle.activeBorder": "#1c5eab", // primary
+        "panelSectionHeader.background": "#fdfbff" // surface
     },
     "semanticHighlighting": true,
     // https://github.com/microsoft/vscode/blob/master/extensions/theme-defaults/themes/light_vs.json
