@@ -90,6 +90,8 @@ public static class WorkspaceExtensions {
             return false;
         
         var directoryNames = filePath.Replace(baseDirectory, string.Empty).Split(Path.DirectorySeparatorChar);
+        if (directoryNames.Any(it => it.StartsWith('.')))
+            return false;
         var currentProcessingDirectory = baseDirectory;
         foreach (var directoryName in directoryNames) {
             currentProcessingDirectory = Path.Combine(currentProcessingDirectory, directoryName);

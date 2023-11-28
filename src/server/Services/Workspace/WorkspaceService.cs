@@ -60,10 +60,18 @@ public class WorkspaceService: SolutionService {
         taskCompletionSource.SetResult();
     }
     public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
-        foreach (var folder in workspaceFolders) {
-            if (!Directory.Exists(folder))
+        foreach (var workspaceFolder in workspaceFolders) {
+            if (!WorkspaceExtensions.GetVisibleFiles(workspaceFolder, "*.csproj").Any())
                 continue;
-            AddProjects(WorkspaceExtensions.GetVisibleFiles(folder, "*.csproj"));
+            
+            var projectFilePaths = Directory.GetFiles(workspaceFolder, "*.csproj");
+            if (projectFilePaths != null && projectFilePaths.Length > 0) {
+                AddProjects(projectFilePaths);
+                continue;
+            }
+
+            var subDirectories = Directory.GetDirectories(workspaceFolder);
+            AddWorkspaceFolders(subDirectories);
         }
     }
 }
