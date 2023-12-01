@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<CodeAnalysisVersion>4.7.0</CodeAnalysisVersion>
+		<CodeAnalysisVersion>4.8.0</CodeAnalysisVersion>
 		<DecompilerVersion>8.2.0.7535</DecompilerVersion>
 	
 		<TargetFrameworks>net8.0</TargetFrameworks>
