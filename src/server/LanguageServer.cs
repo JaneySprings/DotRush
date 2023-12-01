@@ -33,6 +33,7 @@ public class LanguageServer {
                 services.AddSingleton<CodeActionService>();
                 services.AddSingleton<CompilationService>();
                 services.AddSingleton<DecompilationService>();
+                services.AddSingleton<CommandsService>();
             })
             .WithHandler<DocumentSyncHandler>()
             .WithHandler<WatchedFilesHandler>()

@@ -9,9 +9,11 @@ namespace DotRush.Server.Handlers;
 
 public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     private readonly WorkspaceService workspaceService;
+    private readonly CommandsService commandsService;
 
-    public WatchedFilesHandler(WorkspaceService workspaceService) {
+    public WatchedFilesHandler(WorkspaceService workspaceService, CommandsService commandsService) {
         this.workspaceService = workspaceService;
+        this.commandsService = commandsService;
     }
 
     protected override DidChangeWatchedFilesRegistrationOptions CreateRegistrationOptions(DidChangeWatchedFilesCapability capability, ClientCapabilities clientCapabilities) {
@@ -44,11 +46,15 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
             return; // Handled from IDE
 
         if (changeType == FileChangeType.Deleted) {
-            if (path.IsSupportedDocument()) {
+            if (path.IsSupportedDocument())
                 workspaceService.DeleteCSharpDocument(path);
-                return;
-            }
-            workspaceService.DeleteAdditionalDocument(path);
+
+            if (path.IsSupportedAdditionalDocument())
+                workspaceService.DeleteAdditionalDocument(path);
+
+            if (path.IsSupportedCommand())
+                commandsService.ResolveCancellation();
+
             workspaceService.DeleteFolder(path);
             return;
         }
@@ -59,6 +65,9 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
 
             if (path.IsSupportedAdditionalDocument())
                 workspaceService.UpdateAdditionalDocument(path);
+
+            if (path.IsSupportedCommand())
+                commandsService.ResolveCommand(path);
             
             return;
         }
@@ -69,6 +78,9 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
 
             if (path.IsSupportedAdditionalDocument())
                 workspaceService.CreateAdditionalDocument(path);
+
+            if (path.IsSupportedCommand())
+                commandsService.ResolveCommand(path);
             
             return;
         } 
