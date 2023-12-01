@@ -13,6 +13,9 @@ public static class WorkspaceExtensions {
     public static bool IsSupportedProject(this string filePath) {
         return filePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase);
     }
+    public static bool IsSupportedCommand(this string filePath) {
+        return Path.GetFileName(filePath) == "resolve.drc";
+    }
 
 
     public static IEnumerable<ProjectId> GetProjectIdsWithDocumentFilePath(this Solution solution, string filePath) {
