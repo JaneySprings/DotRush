@@ -135,10 +135,10 @@ public class CompilationService {
         if (compilation == null)
             return;
 
-        var compilationWithAnalyzers = compilation.WithAnalyzers(diagnosticAnalyzers, project.AnalyzerOptions, cancellationToken);
+        var compilationWithAnalyzers = compilation.WithAnalyzers(diagnosticAnalyzers, project.AnalyzerOptions);
         var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
         foreach (var documentPath in documentPaths) {
-            var fileDiagnostics = diagnostics.Where(d => d.Location.SourceTree?.FilePath == documentPath);
+            var fileDiagnostics = diagnostics.Where(d => documentPath.Equals(d.Location.SourceTree?.FilePath, StringComparison.OrdinalIgnoreCase));
             Diagnostics[documentPath].SetAnalyzerDiagnostics(fileDiagnostics, project);
         }
     }

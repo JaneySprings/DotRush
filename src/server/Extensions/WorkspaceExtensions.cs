@@ -32,7 +32,7 @@ public static class WorkspaceExtensions {
             .Select(document => document.Id);
     }
     public static DocumentId? GetDocumentIdWithFilePath(this Project project, string filePath) {
-        return project.Documents.FirstOrDefault(document => document.FilePath == filePath)?.Id;
+        return project.Documents.FirstOrDefault(document => filePath.Equals(document.FilePath, StringComparison.OrdinalIgnoreCase))?.Id;
     }
 
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Solution solution, string folderPath) {
@@ -46,7 +46,7 @@ public static class WorkspaceExtensions {
     }
 
     public static DocumentId? GetAdditionalDocumentIdWithFilePath(this Project project, string filePath) {
-        return project.AdditionalDocuments.FirstOrDefault(document => document.FilePath == filePath)?.Id;
+        return project.AdditionalDocuments.FirstOrDefault(document => filePath.Equals(document.FilePath, StringComparison.OrdinalIgnoreCase))?.Id;
     }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(this Solution solution, string filePath) {
         return solution.Projects.Select(project => project.GetAdditionalDocumentIdWithFilePath(filePath)).Where(it => it != null)!;
@@ -80,7 +80,7 @@ public static class WorkspaceExtensions {
     }
 
     public static bool ContainsProjectsWithPath(this Workspace? workspace, string projectPath) {
-        return workspace?.CurrentSolution.Projects.Any(project => project.FilePath == projectPath) == true;
+        return workspace?.CurrentSolution.Projects.Any(project => projectPath.Equals(project.FilePath, StringComparison.OrdinalIgnoreCase)) == true;
     }
 
     public static IEnumerable<string> GetVisibleFiles(string folder, string mask) {
