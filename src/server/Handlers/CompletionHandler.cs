@@ -26,7 +26,7 @@ public class CompletionHandler : CompletionHandlerBase {
 
     protected override CompletionRegistrationOptions CreateRegistrationOptions(CompletionCapability capability, ClientCapabilities clientCapabilities) {
         return new CompletionRegistrationOptions {
-            TriggerCharacters = new[] { ".", ":", " ", "(", "$", "<" },
+            TriggerCharacters = new[] { ".", ",", " ", "(", "$", "<" },
             ResolveProvider = true,
         };
     }

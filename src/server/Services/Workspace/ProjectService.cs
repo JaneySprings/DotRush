@@ -56,7 +56,22 @@ public abstract class ProjectService {
             PushDiagnostics(projectFile);
         }
 
+        solutionChanged?.Invoke(RemoveDuplicateProjects(workspace.CurrentSolution));
         observer?.OnCompleted();
         observer?.Dispose();
+    }
+
+    public Solution RemoveDuplicateProjects(Solution solution) {
+        var records = new List<string>();
+        foreach (var project in solution.Projects) {
+            var record = $"{project.Name} {project.FilePath}";
+            if (records.FirstOrDefault(x => x.Equals(record, StringComparison.OrdinalIgnoreCase)) != null) {
+                solution = solution.RemoveProject(project.Id);
+                continue;
+            }
+            records.Add(record);
+        }
+
+        return solution;
     }
 }
