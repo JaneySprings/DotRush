@@ -30,6 +30,17 @@ Rename a class or variable by placing a cursor on it and pressing `F2` (by defau
 - **Code Formatting**</br>
 You can format the entire document or selected code blocs.
 
+### DotRush vs C# Dev Kit
+ 
+&emsp;DotRush works indepdendanly of C# Dev Kit and may conflict in certain usage scenarios. That's why you need to disable C# Dev Kit to use DotRush. Here are a few advantigures offered by DotRush:
+- Efficient Resource Utilization. Experience significantly reduced resource consumption, with minimal CPU and memory usage even in large projects.
+- Enhanced Multi-Targeting Support. See the following sections for additional information: IntelliSense in Multi-Target Projects, Cross-Platform Error Detection.
+- Integration with .NET Meteor features. For example, .NET Meteor may pass additional information to the Watch window enhancing debugging capabilities.
+ 
+&emsp;It's essential to note some limitations when compared to the C# Dev Kit:
+- Blazor projects are not supported.
+- Built-in .NET Core debugger is not supporeted, but I'm working on it.
+
 ### IntelliSense in Multi-Target Projects
 &emsp;DotRush offers IntelliSense for multiple Target Frameworks. For example, when you're working on a cross-platform application and your current target framework is Android, DotRush provides IntelliSense capabilities for iOS, too.
 
