@@ -70,6 +70,7 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
 
             var endRange = endDirectiveSyntax.Span.ToRange(sourceText);
             result.Add(new FoldingRange {
+                Kind = FoldingRangeKind.Region,
                 StartLine = startRange.Start.Line,
                 EndLine = endRange.End.Line
             });
