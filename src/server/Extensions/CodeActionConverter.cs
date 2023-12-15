@@ -9,7 +9,6 @@ namespace DotRush.Server.Extensions;
 
 public static class CodeActionConverter {
     private static PropertyInfo? nestedCodeActionsProperty;
-    private static PropertyInfo? priorityProperty;
     private static FieldInfo? inNewFileField;
 
     public static IEnumerable<CodeAction> ToSingleCodeActions(this CodeAction codeAction) {
@@ -29,17 +28,11 @@ public static class CodeActionConverter {
     }
 
     public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction) {
-        if (priorityProperty == null)
-            priorityProperty = typeof(CodeAction).GetProperty("Priority", BindingFlags.Instance | BindingFlags.NonPublic);
-
         var data = string.IsNullOrEmpty(codeAction.EquivalenceKey) ? codeAction.Title : codeAction.EquivalenceKey;
-        var priority = priorityProperty?.GetValue(codeAction);
-        var isPreferred = priority != null && (int)priority == 3;
-
         return new ProtocolModels.CodeAction() {
+            IsPreferred = codeAction.Priority == CodeActionPriority.High,
             Kind = ProtocolModels.CodeActionKind.QuickFix,
             Title = codeAction.Title,
-            IsPreferred = isPreferred,
             Data = data,
         };
     }
