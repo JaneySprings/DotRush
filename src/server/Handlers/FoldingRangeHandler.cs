@@ -29,34 +29,41 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
         if (document == null)
             return null;
 
-        var sourceText = await document.GetTextAsync(cancellationToken);
-        var syntaxTree = await document.GetSyntaxTreeAsync(cancellationToken);
-        if (syntaxTree == null)
-            return null;
-    
-        var result = new List<FoldingRange>();
-        var root = await syntaxTree.GetRootAsync(cancellationToken);
+        return await ServerExtensions.SafeHandlerAsync<Container<FoldingRange>?>(async() => {
+            var sourceText = await document.GetTextAsync(cancellationToken);
+            var syntaxTree = await document.GetSyntaxTreeAsync(cancellationToken);
+            if (syntaxTree == null)
+                return null;
         
-        var commonNodes = root.DescendantNodes().Where(node => 
-            node is BaseTypeDeclarationSyntax 
-            || node is BaseNamespaceDeclarationSyntax 
-            || node is StatementSyntax
-        );
-        foreach (var node in commonNodes) {
-            var range = node.Span.ToRange(sourceText);
-            result.Add(new FoldingRange {
-                StartLine = range.Start.Line,
-                EndLine = range.End.Line
-            });
-        }
+            var result = new List<FoldingRange>();
+            var root = await syntaxTree.GetRootAsync(cancellationToken);
+            
+            var commonNodes = root.DescendantNodes().Where(node => 
+                node is BaseTypeDeclarationSyntax 
+                || node is BaseMethodDeclarationSyntax
+                || node is BasePropertyDeclarationSyntax
+                || node is BaseNamespaceDeclarationSyntax 
+                || node is StatementSyntax
+            );
+            foreach (var node in commonNodes) {
+                if (node is BlockSyntax blockSyntax && blockSyntax.Parent is BaseMethodDeclarationSyntax)
+                    continue;
 
-        var directiveNodes = root.DescendantTrivia().Where(it => it.IsDirective).Select(it => it.GetStructure());
-        result.AddRange(GetFoldingDirectivesOfType<IfDirectiveTriviaSyntax, EndIfDirectiveTriviaSyntax>(directiveNodes, sourceText));
-        result.AddRange(GetFoldingDirectivesOfType<ElseDirectiveTriviaSyntax, EndIfDirectiveTriviaSyntax>(directiveNodes, sourceText));
-        result.AddRange(GetFoldingDirectivesOfType<ElifDirectiveTriviaSyntax, EndIfDirectiveTriviaSyntax>(directiveNodes, sourceText));
-        result.AddRange(GetFoldingDirectivesOfType<RegionDirectiveTriviaSyntax, EndRegionDirectiveTriviaSyntax>(directiveNodes, sourceText));
+                var range = node.Span.ToRange(sourceText);
+                result.Add(new FoldingRange {
+                    StartLine = range.Start.Line,
+                    EndLine = range.End.Line
+                });
+            }
 
-        return new Container<FoldingRange>(result);
+            var directiveNodes = root.DescendantTrivia().Where(it => it.IsDirective).Select(it => it.GetStructure());
+            result.AddRange(GetFoldingDirectivesOfType<IfDirectiveTriviaSyntax, EndIfDirectiveTriviaSyntax>(directiveNodes, sourceText));
+            result.AddRange(GetFoldingDirectivesOfType<ElseDirectiveTriviaSyntax, EndIfDirectiveTriviaSyntax>(directiveNodes, sourceText));
+            result.AddRange(GetFoldingDirectivesOfType<ElifDirectiveTriviaSyntax, EndIfDirectiveTriviaSyntax>(directiveNodes, sourceText));
+            result.AddRange(GetFoldingDirectivesOfType<RegionDirectiveTriviaSyntax, EndRegionDirectiveTriviaSyntax>(directiveNodes, sourceText));
+
+            return new Container<FoldingRange>(result);
+        });
     }
 
     private IEnumerable<FoldingRange> GetFoldingDirectivesOfType<TStart, TEnd>(IEnumerable<SyntaxNode?> nodes, SourceText sourceText) where TStart : DirectiveTriviaSyntax where TEnd : DirectiveTriviaSyntax {

@@ -5,7 +5,7 @@
     "colors": {
         // Window area
         "titleBar.activeBackground": "#1c1b1f", // surface
-        "titleBar.activeForeground": "#e5e1e661",   // onSurface(38%)
+        "titleBar.activeForeground": "#e5e1e6",   // onSurface
     
         // Editor area
         "editor.background": "#1c1b1f", // surface
@@ -16,7 +16,8 @@
         "editorGroupHeader.tabsBackground": "#1c1b1f",  // surface
         "tab.activeBackground": "#313034",  // neutral20
         "tab.activeForeground": "#e5e1e6",  // onSurface
-        "tab.inactiveBackground": "#1c1b1f",    // surface
+        "tab.inactiveBackground": "#1c1b1f",    // surface 313034
+        "tab.inactiveForeground": "#e5e1e661",   // onSurface(38%)
         "tab.activeBorder": "#453a8e",  // primaryContainer
         "tab.border": "#47464f61",  // outlineVariant(38%)
 
