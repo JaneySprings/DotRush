@@ -26,7 +26,7 @@ public class CompletionHandler : CompletionHandlerBase {
 
     protected override CompletionRegistrationOptions CreateRegistrationOptions(CompletionCapability capability, ClientCapabilities clientCapabilities) {
         return new CompletionRegistrationOptions {
-            TriggerCharacters = new[] { ".", ",", " ", "(", "$", "<" },
+            TriggerCharacters = new[] { ".", " ", "(", "$", "<" },
             ResolveProvider = true,
         };
     }
@@ -68,7 +68,6 @@ public class CompletionHandler : CompletionHandlerBase {
             return new CompletionList(completionItems);
         });
     }
-
     public override async Task<CompletionItem> Handle(CompletionItem request, CancellationToken cancellationToken) {
         if (this.targetDocument == null || request.Data == null || this.roslynCompletionService == null)
             return request;
@@ -123,7 +122,6 @@ public class CompletionHandler : CompletionHandlerBase {
         // This textEdit removes the text that was already typed by the user
         return new TextEdit { NewText = string.Empty };
     }
-
     private IEnumerable<TextEdit> ArrangeAdditionalTextEdits(IEnumerable<TextChange> changes, RoslynCompletionItem completionItem, SourceText sourceText) {
         var additionalTextEdits = changes
             .Where(x => !x.Span.IntersectsWith(completionItem.Span))

@@ -16,7 +16,7 @@
         "editorGroupHeader.tabsBackground": "#1c1b1f",  // surface
         "tab.activeBackground": "#313034",  // neutral20
         "tab.activeForeground": "#e5e1e6",  // onSurface
-        "tab.inactiveBackground": "#1c1b1f",    // surface 313034
+        "tab.inactiveBackground": "#1c1b1f",    // surface
         "tab.inactiveForeground": "#e5e1e661",   // onSurface(38%)
         "tab.activeBorder": "#453a8e",  // primaryContainer
         "tab.border": "#47464f61",  // outlineVariant(38%)
