@@ -50,10 +50,13 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
                     continue;
 
                 var range = node.Span.ToRange(sourceText);
-                result.Add(new FoldingRange {
-                    StartLine = range.Start.Line,
-                    EndLine = range.End.Line
-                });
+                var startLine = range.Start.Line;
+                var endLine = range.End.Line;
+
+                if (node is MemberDeclarationSyntax memberDeclarationSyntax && memberDeclarationSyntax.AttributeLists.Count > 0)
+                    startLine = memberDeclarationSyntax.AttributeLists.FullSpan.ToRange(sourceText).End.Line;
+                
+                result.Add(new FoldingRange { StartLine = startLine, EndLine = endLine });
             }
 
             var directiveNodes = root.DescendantTrivia().Where(it => it.IsDirective).Select(it => it.GetStructure());
