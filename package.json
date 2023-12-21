@@ -93,6 +93,17 @@
             "type": "boolean",
             "default": false,
             "description": "Enable Roslyn analyzers (may affect performance)."
+          },
+
+          "dotrush.roslyn.skipUnrecognizedProjects": {
+            "type": "boolean",
+            "default": true,
+            "description": "Determines if unrecognized projects are skipped when projects are opened."
+          },
+          "dotrush.roslyn.loadMetadataForReferencedProjects": {
+            "type": "boolean",
+            "default": false,
+            "description": "Determines if metadata from existing output assemblies is loaded instead of opening referenced projects."
           }
         }
       }

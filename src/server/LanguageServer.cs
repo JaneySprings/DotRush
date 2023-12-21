@@ -72,7 +72,7 @@ public class LanguageServer {
         await configurationService.InitializeAsync(server.Configuration);
 
         codeActionService.InitializeEmbeddedProviders();
-        if (configurationService.IsRoslynAnalyzersEnabled())
+        if (configurationService.EnableRoslynAnalyzers())
             compilationService.InitializeEmbeddedAnalyzers();
 
         workspaceService.InitializeWorkspace();

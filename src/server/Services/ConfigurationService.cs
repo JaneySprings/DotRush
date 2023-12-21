@@ -5,9 +5,12 @@ namespace DotRush.Server;
 
 public class ConfigurationService {
     private const string ExtensionId = "dotrush";
+    private const string RoslynId = "roslyn";
 
     private const string EnableRoslynAnalyzersId = $"{ExtensionId}:enableRoslynAnalyzers";
     private const string AdditionalWorkspaceArgumentsId = $"{ExtensionId}:additionalWorkspaceArguments";
+    private const string SkipUnrecognizedProjectsId = $"{ExtensionId}:{RoslynId}:skipUnrecognizedProjects";
+    private const string LoadMetadataForReferencedProjectsId = $"{ExtensionId}:{RoslynId}:loadMetadataForReferencedProjects";
 
     private ILanguageServerConfiguration? configuration;
 
@@ -23,7 +26,9 @@ public class ConfigurationService {
     }
 
     public Dictionary<string, string> AdditionalWorkspaceArguments() => ConfigurationService.ToWorkspaceOptions(configuration?.GetValue<string>(AdditionalWorkspaceArgumentsId));
-    public bool IsRoslynAnalyzersEnabled() => configuration?.GetValue<bool>(EnableRoslynAnalyzersId) ?? false;
+    public bool EnableRoslynAnalyzers() => configuration?.GetValue<bool>(EnableRoslynAnalyzersId) ?? false;
+    public bool SkipUnrecognizedProjects() => configuration?.GetValue<bool>(SkipUnrecognizedProjectsId) ?? true;
+    public bool LoadMetadataForReferencedProjects() => configuration?.GetValue<bool>(LoadMetadataForReferencedProjectsId) ?? true;
 
     private static Dictionary<string, string> ToWorkspaceOptions(string? options) {
         if (string.IsNullOrEmpty(options))
