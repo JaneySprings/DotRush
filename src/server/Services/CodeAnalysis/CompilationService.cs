@@ -56,7 +56,7 @@ public class CompilationService {
         var tasks = documentPaths.Select(it => PushDiagnosticsAsync(it, version, serverFacade, cancellationToken));
         await Task.WhenAll(tasks).ConfigureAwait(false);
 
-        if (!configurationService.IsRoslynAnalyzersEnabled())
+        if (!configurationService.EnableRoslynAnalyzers())
             return;
 
         await PushAnalyzerDiagnosticsAsync(targetDocumentPath, documentPaths, version, serverFacade, cancellationToken);

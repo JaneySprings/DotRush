@@ -45,10 +45,9 @@ public class WorkspaceService: SolutionService {
 
 
     public void InitializeWorkspace() {
-        var options = configurationService.AdditionalWorkspaceArguments();
-        workspace = MSBuildWorkspace.Create(options);
-        workspace.LoadMetadataForReferencedProjects = true;
-        workspace.SkipUnrecognizedProjects = true;
+        workspace = MSBuildWorkspace.Create(configurationService.AdditionalWorkspaceArguments());
+        workspace.LoadMetadataForReferencedProjects = configurationService.LoadMetadataForReferencedProjects();
+        workspace.SkipUnrecognizedProjects = configurationService.SkipUnrecognizedProjects();
         workspace.WorkspaceFailed += (_, d) => ProjectDiagnosticReceived(d.Diagnostic.ToServerDiagnostic());
     }
     public async void StartSolutionLoading() {
