@@ -3,13 +3,14 @@
 		<CodeAnalysisVersion>4.8.0</CodeAnalysisVersion>
 		<DecompilerVersion>8.2.0.7535</DecompilerVersion>
 	
-		<TargetFrameworks>net8.0</TargetFrameworks>
+		<TargetFramework>net8.0</TargetFramework>
 		<OutputType>Exe</OutputType>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<SelfContained>true</SelfContained>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 		<OutputPath>..\..\extension\bin</OutputPath>
+		<PublishDir>$(OutputPath)</PublishDir>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 		<NoWarn>$(NoWarn);VSTHRD100</NoWarn>
