@@ -57,6 +57,9 @@ public class LanguageServer {
     }
 
     private static async Task StartedHandlerAsync(ILanguageServer server, CancellationToken cancellationToken) {
+        // while (!System.Diagnostics.Debugger.IsAttached)
+        //     await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+        
         var compilationService = server.Services.GetService<CompilationService>()!;
         var configurationService = server.Services.GetService<ConfigurationService>()!;
         var codeActionService = server.Services.GetService<CodeActionService>()!;

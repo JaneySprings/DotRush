@@ -9,7 +9,7 @@ string configuration = Argument<string>("configuration", "debug");
 
 public string RootDirectory => MakeAbsolute(Directory(".")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
-public string ServerProjectFilePath => _Path.Combine(RootDirectory, "src", "server", "DotRush.csproj");
+public string ServerProjectFilePath => _Path.Combine(RootDirectory, "src", "DotRush.Server", "DotRush.csproj");
 public string ExtensionStagingDirectory => _Path.Combine(RootDirectory, "extension");
 public string BinariesDirectory => _Path.Combine(ExtensionStagingDirectory, "bin");
 
@@ -25,12 +25,10 @@ Task("clean")
 	.Does(() => CleanDirectories(_Path.Combine(RootDirectory, "src", "**", "bin")))
 	.Does(() => CleanDirectories(_Path.Combine(RootDirectory, "src", "**", "obj")));
 
-Task("server").Does(() => DotNetBuild(ServerProjectFilePath, new DotNetBuildSettings {
-	Runtime = runtime,
+Task("server").Does(() => DotNetPublish(ServerProjectFilePath, new DotNetPublishSettings {
+	MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 	Configuration = configuration,
-	MSBuildSettings = new DotNetMSBuildSettings {
-		AssemblyVersion = version,
-	},
+	Runtime = runtime
 }));
 
 Task("vsix")

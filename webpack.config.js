@@ -12,7 +12,7 @@ const extensionConfig = {
   target: 'node',
 	mode: 'none',
 
-  entry: './src/vscode/extension.ts',
+  entry: './src/VSCode.Extension/extension.ts',
   output: {
     path: path.resolve(__dirname, 'extension'),
     filename: 'extension.js',
