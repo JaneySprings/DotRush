@@ -8,5 +8,6 @@
 !extension
 !themes
 !package.json
+!package.nls*.json
 !README.md
 !LICENSE
