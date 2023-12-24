@@ -34,6 +34,22 @@
     "workspaceContains:**/*.csproj"
   ],
   "main": "extension/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "watch": "tsc -watch -p ./src/VSCode.Extension/tsconfig.json",
+    "package": "webpack --mode production"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.73.0",
+    "ts-loader": "^9.4.1",
+    "typescript": "^4.8.4",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  },
   "contributes": {
     "themes": [
       {
@@ -50,17 +66,17 @@
     "menus": {
       "explorer/context": [
         {
-          "command": "dotrush.build",
+          "command": "%command.id.build%",
           "group": "z_dotnet@1",
           "when": "explorerResourceIsFolder || resourceFilename =~ /.*\\.csproj$/"
         },
         {
-          "command": "dotrush.restore",
+          "command": "%command.id.restore%",
           "group": "z_dotnet@2",
           "when": "explorerResourceIsFolder || resourceFilename =~ /.*\\.csproj$/"
         },
         {
-          "command": "dotrush.clean",
+          "command": "%command.id.clean%",
           "group": "z_dotnet@3",
           "when": "explorerResourceIsFolder || resourceFilename =~ /.*\\.csproj$/"
         }
@@ -68,62 +84,45 @@
     },
     "commands": [
       {
-        "command": "dotrush.build",
-        "title": "Build"
+        "command": "%command.id.build%",
+        "title": "%command.title.build%"
       },
       {
-        "command": "dotrush.restore",
-        "title": "Restore"
+        "command": "%command.id.restore%",
+        "title": "%command.title.restore%"
       },
       {
-        "command": "dotrush.clean",
-        "title": "Clean"
+        "command": "%command.id.clean%",
+        "title": "%command.title.clean%"
       }
     ],
     "configuration": [
       {
-        "title": "DotRush",
+        "title": "%extension.displayName%",
         "properties": {
           "dotrush.additionalWorkspaceArguments": {
             "type": "string",
             "default": "",
-            "description": "Additional MSBuild arguments to pass to the workspace."
+            "description": "%configuration.description.additionalWorkspaceArguments%"
           },
           "dotrush.enableRoslynAnalyzers": {
             "type": "boolean",
             "default": false,
-            "description": "Enable Roslyn analyzers (may affect performance)."
+            "description": "%configuration.description.enableRoslynAnalyzers%"
           },
 
           "dotrush.roslyn.skipUnrecognizedProjects": {
             "type": "boolean",
             "default": true,
-            "description": "Determines if unrecognized projects are skipped when projects are opened."
+            "description": "%configuration.description.roslyn.skipUnrecognizedProjects%"
           },
           "dotrush.roslyn.loadMetadataForReferencedProjects": {
             "type": "boolean",
             "default": false,
-            "description": "Determines if metadata from existing output assemblies is loaded instead of opening referenced projects."
+            "description": "%configuration.description.roslyn.loadMetadataForReferencedProjects%"
           }
         }
       }
     ]
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "tsc -watch -p ./src/vscode/tsconfig.json",
-    "package": "webpack --mode production"
-  },
-  "devDependencies": {
-    "@types/node": "16.x",
-    "@types/vscode": "^1.73.0",
-    "ts-loader": "^9.4.1",
-    "typescript": "^4.8.4",
-    "webpack": "^5.74.0",
-    "webpack-cli": "^4.10.0"
-  },
-  "dependencies": {
-    "vscode-languageclient": "^8.1.0"
   }
 }
