@@ -30,7 +30,6 @@
     "vscode": "^1.73.0"
   },
   "activationEvents": [
-    "onLanguage:csharp",
     "workspaceContains:**/*.csproj"
   ],
   "main": "extension/extension.js",
@@ -66,34 +65,43 @@
     "menus": {
       "explorer/context": [
         {
-          "command": "%command.id.build%",
+          "command": "dotrush.build",
           "group": "z_dotnet@1",
-          "when": "explorerResourceIsFolder || resourceFilename =~ /.*\\.csproj$/"
+          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
         },
         {
-          "command": "%command.id.restore%",
+          "command": "dotrush.restore",
           "group": "z_dotnet@2",
-          "when": "explorerResourceIsFolder || resourceFilename =~ /.*\\.csproj$/"
+          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
         },
         {
-          "command": "%command.id.clean%",
+          "command": "dotrush.clean",
           "group": "z_dotnet@3",
-          "when": "explorerResourceIsFolder || resourceFilename =~ /.*\\.csproj$/"
+          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
+        },
+        {
+          "command": "dotrush.createItemTemplate",
+          "group": "navigation@10",
+          "when": "dotrush.contextMenuEnabled && explorerResourceIsFolder"
         }
       ]
     },
     "commands": [
       {
-        "command": "%command.id.build%",
+        "command": "dotrush.build",
         "title": "%command.title.build%"
       },
       {
-        "command": "%command.id.restore%",
+        "command": "dotrush.restore",
         "title": "%command.title.restore%"
       },
       {
-        "command": "%command.id.clean%",
+        "command": "dotrush.clean",
         "title": "%command.title.clean%"
+      },
+      {
+        "command": "dotrush.createItemTemplate",
+        "title": "%command.title.createItemTemplate%"
       }
     ],
     "configuration": [

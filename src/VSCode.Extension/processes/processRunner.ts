@@ -10,15 +10,15 @@ export class ProcessRunner {
         }
         return result.stdout.toString().trimEnd();
     }
-    public static async runAsync<TModel>(builder: ProcessArgumentBuilder): Promise<TModel> {
-        return new Promise<TModel>((resolve, reject) => {
+    public static async runAsync(builder: ProcessArgumentBuilder): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
             exec(builder.build(), (error, stdout, stderr) => {
                 if (error) {
                     console.error(stderr);
                     reject(stderr);
                 }
 
-                resolve(JSON.parse(stdout.toString()));
+                resolve(stdout.toString());
             })
         });
     }
