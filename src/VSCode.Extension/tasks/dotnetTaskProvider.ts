@@ -3,17 +3,17 @@ import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 
 export class DotNetTaskProvider {
-    public static async getBuildTask(projectFile: vscode.Uri, ...args: string[]): Promise<vscode.Task> {
-        return await DotNetTaskProvider.getTask(projectFile, 'build', ...args);
+    public static async getBuildTaskAsync(projectFile: vscode.Uri, ...args: string[]): Promise<vscode.Task> {
+        return await DotNetTaskProvider.getTaskAsync(projectFile, 'build', ...args);
     }
-    public static async getRestoreTask(projectFile: vscode.Uri, ...args: string[]): Promise<vscode.Task> {
-        return await DotNetTaskProvider.getTask(projectFile, 'restore', ...args);
+    public static async getRestoreTaskAsync(projectFile: vscode.Uri, ...args: string[]): Promise<vscode.Task> {
+        return await DotNetTaskProvider.getTaskAsync(projectFile, 'restore', ...args);
     }
-    public static async getCleanTask(projectFile: vscode.Uri, ...args: string[]): Promise<vscode.Task> {
-        return await DotNetTaskProvider.getTask(projectFile, 'clean', ...args);
+    public static async getCleanTaskAsync(projectFile: vscode.Uri, ...args: string[]): Promise<vscode.Task> {
+        return await DotNetTaskProvider.getTaskAsync(projectFile, 'clean', ...args);
     }
 
-    private static async getTask(projectFile: vscode.Uri, target: string, ...args: string[]): Promise<vscode.Task> {
+    private static async getTaskAsync(projectFile: vscode.Uri, target: string, ...args: string[]): Promise<vscode.Task> {
         const builder = new ProcessArgumentBuilder('dotnet')
             .append(target)
             .appendQuoted(projectFile.fsPath)

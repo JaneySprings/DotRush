@@ -16,14 +16,11 @@ public string BinariesDirectory => _Path.Combine(ExtensionStagingDirectory, "bin
 
 Setup(context => {
 	var date = DateTime.Now;
-	version = $"{DateTime.Now.ToString("yy")}.{date.ToString("MM")}.{date.DayOfYear:000}";
+	version = $"{DateTime.Now.ToString("yy")}.{date.ToString("%M")}.{date.DayOfYear}";
 	EnsureDirectoryExists(ArtifactsDirectory);
 });
 
-Task("clean")
-	.Does(() => CleanDirectory(ExtensionStagingDirectory))
-	.Does(() => CleanDirectories(_Path.Combine(RootDirectory, "src", "**", "bin")))
-	.Does(() => CleanDirectories(_Path.Combine(RootDirectory, "src", "**", "obj")));
+Task("clean").Does(() => CleanDirectory(ExtensionStagingDirectory));
 
 Task("server").Does(() => DotNetPublish(ServerProjectFilePath, new DotNetPublishSettings {
 	MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },

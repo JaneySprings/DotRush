@@ -2,13 +2,9 @@
 	"extension.displayName": "DotRush",
 
 	"command.title.build": "Build",
-	"command.id.build": "dotrush.build",
-
 	"command.title.restore": "Restore",
-	"command.id.restore": "dotrush.restore",
-
 	"command.title.clean": "Clean",
-	"command.id.clean": "dotrush.clean",
+	"command.title.createItemTemplate": "New Item...",
 
 	"configuration.description.additionalWorkspaceArguments": "Additional MSBuild arguments to pass to the workspace.",
 	"configuration.description.enableRoslynAnalyzers": "Enable Roslyn analyzers (may affect performance).",

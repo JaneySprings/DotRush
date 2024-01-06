@@ -7,6 +7,8 @@ export const extensionMeteorId = "nromanov.dotnet-meteor";
 export const microsoftProblemMatcherId = "msCompile";
 
 export const commandIdReloadWindow = "workbench.action.reloadWindow";
+export const commandIdContextMenuEnabled = "dotrush.contextMenuEnabled";
+export const commandIdCreateItemTemplate = "dotrush.createItemTemplate";
 
 export const taskDefinitionType = "dotrush.task";
 export const taskCommandBuildId = "dotrush.build";
@@ -20,3 +22,5 @@ export const messageProjectChanged = "Project {0} has changed. Please reload the
 export const messageSelectProjectFile = "Select a project file";
 export const messageReload = "Reload";
 export const messageLoadAll = "Load All";
+export const messageTemplateNameInput = "Enter template name"
+export const messageTemplateSelect = "Select template"

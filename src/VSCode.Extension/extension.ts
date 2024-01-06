@@ -1,4 +1,5 @@
 import { ContextMenuController } from './contextMenuController';
+import { WizardController } from './wizards/wizardController';
 import { ServerController } from './serverController';
 import * as res from './resources/constants';
 import * as vscode from 'vscode';
@@ -20,6 +21,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	ContextMenuController.activate(context);
+	WizardController.activate(context);
 	ServerController.activate(context);
 }
 export function deactivate() {

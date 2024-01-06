@@ -6,26 +6,28 @@ import * as vscode from 'vscode';
 export class ContextMenuController {
     public static activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand(res.taskCommandBuildId, async (path: vscode.Uri) => {
-            const projectFile = await ContextMenuController.selectProjectFile(path);
+            const projectFile = await ContextMenuController.selectProjectFileAsync(path);
             if (projectFile === undefined)
                 return;
-            vscode.tasks.executeTask(await DotNetTaskProvider.getBuildTask(projectFile, '--no-restore'));
+            vscode.tasks.executeTask(await DotNetTaskProvider.getBuildTaskAsync(projectFile, '--no-restore'));
         }));
         context.subscriptions.push(vscode.commands.registerCommand(res.taskCommandRestoreId, async (path: vscode.Uri) => {
-            const projectFile = await ContextMenuController.selectProjectFile(path);
+            const projectFile = await ContextMenuController.selectProjectFileAsync(path);
             if (projectFile === undefined)
                 return;
-            vscode.tasks.executeTask(await DotNetTaskProvider.getRestoreTask(projectFile));
+            vscode.tasks.executeTask(await DotNetTaskProvider.getRestoreTaskAsync(projectFile));
         }));
         context.subscriptions.push(vscode.commands.registerCommand(res.taskCommandCleanId, async (path: vscode.Uri) => {
-            const projectFile = await ContextMenuController.selectProjectFile(path);
+            const projectFile = await ContextMenuController.selectProjectFileAsync(path);
             if (projectFile === undefined)
                 return;
-            vscode.tasks.executeTask(await DotNetTaskProvider.getCleanTask(projectFile));
+            vscode.tasks.executeTask(await DotNetTaskProvider.getCleanTaskAsync(projectFile));
         }));
+
+        vscode.commands.executeCommand('setContext', res.commandIdContextMenuEnabled, true);
     }
 
-    private static async selectProjectFile(targetUri: vscode.Uri): Promise<vscode.Uri | undefined> {
+    private static async selectProjectFileAsync(targetUri: vscode.Uri): Promise<vscode.Uri | undefined> {
         if (targetUri.fsPath.endsWith(".csproj"))
             return targetUri;
 
