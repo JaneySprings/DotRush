@@ -1,12 +1,10 @@
 ﻿using System.Diagnostics;
 using DotRush.Server.Handlers;
 using DotRush.Server.Services;
-using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
-using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 using OmniSharp.Extensions.LanguageServer.Server;
 using OmniSharpLanguageServer = OmniSharp.Extensions.LanguageServer.Server.LanguageServer;
 
@@ -21,8 +19,6 @@ public class LanguageServer {
     }
 
     public static async Task Main(string[] args) {
-        ObserveClientProcess(args);
-
         var server = await OmniSharpLanguageServer.From(options => options
             .AddDefaultLoggingProvider()
             .WithInput(Console.OpenStandardInput())
@@ -50,44 +46,37 @@ public class LanguageServer {
             .WithHandler<ImplementationHandler>()
             .WithHandler<DefinitionHandler>()
             .WithHandler<TypeDefinitionHandler>()
-            .OnStarted(StartedHandlerAsync)
+            .OnStarted((s, ct) => StartedHandlerAsync(s, args, ct))
         ).ConfigureAwait(false);
 
         await server.WaitForExit.ConfigureAwait(false);
     }
 
-    private static async Task StartedHandlerAsync(ILanguageServer server, CancellationToken cancellationToken) {
-        // while (!System.Diagnostics.Debugger.IsAttached)
-        //     await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-        
+    private static async Task StartedHandlerAsync(ILanguageServer server, string[] targets, CancellationToken cancellationToken) {
+        var clientSettings = server.Workspace.ClientSettings;
         var compilationService = server.Services.GetService<CompilationService>()!;
         var configurationService = server.Services.GetService<ConfigurationService>()!;
         var codeActionService = server.Services.GetService<CodeActionService>()!;
         var workspaceService = server.Services.GetService<WorkspaceService>()!;
 
-        var workspaceFolders = server.Workspace.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
-        if (workspaceFolders == null) {
-            server.Window.ShowWarning(Resources.MessageNoWorkspaceFolders);
-            return;
-        }
-
+        ObserveClientProcess(clientSettings.ProcessId);
         workDoneManager = server.WorkDoneManager;
-        await configurationService.InitializeAsync(server.Configuration);
 
+        await configurationService.InitializeAsync(server.Configuration);    
+        workspaceService.InitializeWorkspace();
         codeActionService.InitializeEmbeddedProviders();
         if (configurationService.EnableRoslynAnalyzers())
             compilationService.InitializeEmbeddedAnalyzers();
 
-        workspaceService.InitializeWorkspace();
-        workspaceService.AddWorkspaceFolders(workspaceFolders);
+        workspaceService.AddProjectFiles(targets);
         workspaceService.StartSolutionLoading();
     }
 
-    private static void ObserveClientProcess(string[] args) {
-        if (args.Length == 0)
+    private static void ObserveClientProcess(long? pid) {
+        if (pid == null || pid <= 0)
             return;
 
-        var ideProcess = Process.GetProcessById(int.Parse(args[0]));
+        var ideProcess = Process.GetProcessById((int)pid.Value);
         ideProcess.EnableRaisingEvents = true;
         ideProcess.Exited += (_, _) => Environment.Exit(0);
     }
@@ -95,7 +84,7 @@ public class LanguageServer {
 
 // public static class Logger {
 //     public static void Write(string message) {
-//         var tempFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp.txt");
+//         var tempFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log.txt");
 //         File.AppendAllText(tempFile, message + Environment.NewLine);
 //     }
 // }

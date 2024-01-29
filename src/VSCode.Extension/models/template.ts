@@ -1,6 +1,6 @@
 
 export interface Template {
-    name: string;
+    title: string;
     type: string;
     invocation: string[];
 }

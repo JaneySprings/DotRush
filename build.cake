@@ -20,7 +20,12 @@ Setup(context => {
 	EnsureDirectoryExists(ArtifactsDirectory);
 });
 
-Task("clean").Does(() => CleanDirectory(ExtensionStagingDirectory));
+Task("clean").Does(() => {
+	EnsureDirectoryExists(ArtifactsDirectory);
+	CleanDirectory(ExtensionStagingDirectory);
+	CleanDirectories(_Path.Combine(RootDirectory, "src", "**", "bin"));
+	CleanDirectories(_Path.Combine(RootDirectory, "src", "**", "obj"));
+});
 
 Task("server").Does(() => DotNetPublish(ServerProjectFilePath, new DotNetPublishSettings {
 	MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },

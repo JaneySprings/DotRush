@@ -26,6 +26,8 @@
         "sideBar.foreground": "#1a1c1e",    // onSurface
         "sideBar.border": "#c4c6cf",    // outlineVariant
         "sideBarTitle.foreground": "#1a1c1e61",   // onSurface(38%)
+        "sideBarSectionHeader.background": "#fdfbff", // surface
+        "sideBarSectionHeader.foreground": "#1a1c1e", // onSurface
         "scrollbarSlider.background": "#c4c6cf",    // outlineVariant 
         "scrollbar.shadow": "#0000",
         "list.activeSelectionBackground": "#1c5eab85",  // primary(48%)
@@ -44,6 +46,7 @@
         "pickerGroup.border": "#c4c6cf",    // outlineVariant
         "quickInput.background": "#f1f0f4", // neutral95
         "quickInput.foreground": "#1a1c1e", // onSurface
+        "quickInputTitle.background": "#f1f0f4", // neutral95
         "list.highlightForeground": "#1c5eab",  // primary
         "list.focusHighlightForeground": "#1c5eab", // primary
         "input.placeholderForeground": "#1a1c1e61", // onSurface(38%)
