@@ -8,16 +8,16 @@ import * as vscode from 'vscode';
 
 export class ItemTemplateWizard {
     public static async createTemplateAsync(targetPath: vscode.Uri) {
-        const selectedTemplate = await this.selectTemplateAsync();
-        if (!selectedTemplate)
+        const template = await this.selectTemplateAsync();
+        if (!template)
             return;
 
-        const templateName = await this.getTemplateNameAsync();
+        const templateName = await this.getTemplateNameAsync(template.title);
         if (templateName === undefined)
             return;
 
         await ProcessRunner.runAsync(new ProcessArgumentBuilder('dotnet')
-            .append('new', selectedTemplate.invocation[0])
+            .append('new', template.invocation[0])
             .append('-o').appendQuoted(targetPath.fsPath)
             .conditional(`-n "${templateName}"`, () => templateName !== '')
         );
@@ -34,9 +34,10 @@ export class ItemTemplateWizard {
         });
         return selectedItem?.item;
     }
-    private static async getTemplateNameAsync(): Promise<string | undefined> {
+    private static async getTemplateNameAsync(title: string | undefined): Promise<string | undefined> {
         return await vscode.window.showInputBox({
-            placeHolder: res.messageTemplateNameInput
+            placeHolder: res.messageTemplateNameInput,
+            title: title
         });
     }
 }

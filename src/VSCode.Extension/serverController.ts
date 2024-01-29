@@ -1,38 +1,24 @@
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
+import { WorkspaceController } from "./workspaceController";
 import * as res from './resources/constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
 
 export class ServerController {
     private static client: LanguageClient;
+    private static command: string;
 
-    public static isRunning(): boolean {
-        return ServerController.client !== undefined && ServerController.client.isRunning();
-    }
-
-    public static async activate(context: vscode.ExtensionContext) {
-        if (ServerController.client !== undefined && ServerController.client.isRunning())
-            return;
-        
-        ServerController.initialize(context);
-        ServerController.client.start();
-
-        context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async ev => {
-            if (!ev.fileName.endsWith('.csproj'))
-                return;
-            const message = res.messageProjectChanged.replace('{0}', path.basename(ev.fileName));
-            const result = await vscode.window.showWarningMessage(message, res.messageReload);
-            if (result !== undefined)
-                vscode.commands.executeCommand(res.commandIdReloadWindow);
-        }));
-    }
-    private static initialize(context: vscode.ExtensionContext) {
+    public static activate(context: vscode.ExtensionContext) {
         const extensionPath = context.extensionPath;
         const serverExecutable = path.join(extensionPath, "extension", "bin", "DotRush");
         const serverExtension = process.platform === 'win32' ? '.exe' : '';
+        ServerController.command = serverExecutable + serverExtension;
+    }
+
+    public static initialize() {
         const serverOptions: ServerOptions = {
-            command: serverExecutable + serverExtension,
-            args: [ process.pid.toString() ]
+            command: ServerController.command,
+            args: WorkspaceController.targets.flatMap(t => t.projects),
         };
 
         ServerController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
@@ -43,12 +29,20 @@ export class ServerController {
                 configurationSection: res.extensionId,
             },
             connectionOptions: {
-                maxRestartCount: 0,
+                maxRestartCount: 2,
             }
         });
     }
+    public static start() {
+        ServerController.initialize();
+        ServerController.client.start();
+    }
     public static stop() {
-        if (ServerController.client !== undefined && ServerController.client.isRunning())
-            ServerController.client.stop();
+        ServerController.client.stop();
+        ServerController.client.dispose();
+    }
+    public static restart() {
+        ServerController.stop();
+        ServerController.start();
     }
 }

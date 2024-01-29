@@ -27,7 +27,7 @@ export class DotNetTemplateProvider {
             if (pair.length < 3)
                 continue;
 
-            templates.push({ name: pair[0], type: pair[2], invocation: pair[1].split(',') });
+            templates.push({ title: pair[0], type: pair[2], invocation: pair[1].split(',') });
         }
 
         if (templates.length !== 0)

@@ -6,7 +6,7 @@ export class TemplateItem implements QuickPickItem {
     item: Template;
 
     constructor(template: Template) {
-        this.label = template.name;
+        this.label = template.title;
         this.item = template;
     }
 }

@@ -1,6 +1,5 @@
 using DotRush.Server.Services;
 using MediatR;
-using Microsoft.CodeAnalysis;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
@@ -16,21 +15,21 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
 
     protected override DidChangeWorkspaceFolderRegistrationOptions CreateRegistrationOptions(ClientCapabilities clientCapabilities) {
         return new DidChangeWorkspaceFolderRegistrationOptions() {
-            ChangeNotifications = true,
-            Supported = true,
+            // ChangeNotifications = true,
+            Supported = false,
         };
     }
 
-    public override async Task<Unit> Handle(DidChangeWorkspaceFoldersParams request, CancellationToken cancellationToken) {
-        var added = request.Event.Added.Select(folder => folder.Uri.GetFileSystemPath());
-        if (!added.Any())
-            return Unit.Value;
+    public override Task<Unit> Handle(DidChangeWorkspaceFoldersParams request, CancellationToken cancellationToken) {
+        // var added = request.Event.Added.Select(folder => folder.Uri.GetFileSystemPath());
+        // if (!added.Any())
+        //     return Unit.Value;
         
-        await workspaceService.WaitHandle;
-        workspaceService.AddWorkspaceFolders(added);
-        workspaceService.StartSolutionLoading();
-        // Automatically skip loaded projects
+        // await workspaceService.WaitHandle;
+        // workspaceService.AddWorkspaceFolders(added);
+        // workspaceService.StartSolutionLoading();
+        // // Automatically skip loaded projects
         
-        return Unit.Value;
+        return Unit.Task;
     }
 }

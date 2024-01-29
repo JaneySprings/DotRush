@@ -14,20 +14,14 @@ public class WorkspaceService: SolutionService {
     private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;
     private readonly List<Protocol.Diagnostic> worksapceDiagnostics;
-
-    private TaskCompletionSource taskCompletionSource;
     private MSBuildWorkspace? workspace;
-
-    public Task WaitHandle => taskCompletionSource.Task;
 
     public WorkspaceService(ConfigurationService configurationService, ILanguageServerFacade serverFacade) {
         this.configurationService = configurationService;
         this.serverFacade = serverFacade;
-        taskCompletionSource = new TaskCompletionSource();
         worksapceDiagnostics = new List<Protocol.Diagnostic>();
         MSBuildLocator.RegisterDefaults();
     }
-
 
     protected override void ClearDiagnostics() {
         worksapceDiagnostics.Clear();
@@ -43,7 +37,6 @@ public class WorkspaceService: SolutionService {
         });
     }
 
-
     public void InitializeWorkspace() {
         workspace = MSBuildWorkspace.Create(configurationService.AdditionalWorkspaceArguments());
         workspace.LoadMetadataForReferencedProjects = configurationService.LoadMetadataForReferencedProjects();
@@ -51,26 +44,6 @@ public class WorkspaceService: SolutionService {
         workspace.WorkspaceFailed += (_, d) => ProjectDiagnosticReceived(d.Diagnostic.ToServerDiagnostic());
     }
     public async void StartSolutionLoading() {
-        ArgumentNullException.ThrowIfNull(workspace);
-        if (taskCompletionSource.Task.IsCompleted)
-            taskCompletionSource = new TaskCompletionSource();
-
-        await LoadSolutionAsync(workspace);
-        taskCompletionSource.SetResult();
-    }
-    public void AddWorkspaceFolders(IEnumerable<string> workspaceFolders) {
-        foreach (var workspaceFolder in workspaceFolders) {
-            if (!WorkspaceExtensions.GetVisibleFiles(workspaceFolder, "*.csproj").Any())
-                continue;
-            
-            var projectFilePaths = Directory.GetFiles(workspaceFolder, "*.csproj");
-            if (projectFilePaths != null && projectFilePaths.Length > 0) {
-                AddProjects(projectFilePaths);
-                continue;
-            }
-
-            var subDirectories = Directory.GetDirectories(workspaceFolder);
-            AddWorkspaceFolders(subDirectories);
-        }
+        await LoadSolutionAsync(workspace!);
     }
 }

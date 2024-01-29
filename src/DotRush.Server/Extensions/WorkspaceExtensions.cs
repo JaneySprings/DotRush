@@ -1,4 +1,7 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.MSBuild;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 
 namespace DotRush.Server.Extensions;
 
@@ -76,6 +79,13 @@ public static class WorkspaceExtensions {
     public static bool ContainsProjectsWithPath(this Workspace? workspace, string projectPath) {
         return workspace?.CurrentSolution.Projects.Any(project => projectPath.Equals(project.FilePath, StringComparison.OrdinalIgnoreCase)) == true;
     }
+
+    public static async Task CompileProjectAsync(this MSBuildWorkspace workspace, Project project, IWorkDoneObserver? observer, CancellationToken cancellationToken) {
+        var projectName = Path.GetFileNameWithoutExtension(project.FilePath);
+        observer?.OnNext(new WorkDoneProgressReport { Message = string.Format(Resources.MessageProjectCompile, projectName) });
+        _ = await project.GetCompilationAsync(cancellationToken);
+    }
+
 
     public static IEnumerable<string> GetVisibleFiles(string folder, string mask) {
         return Directory.EnumerateFiles(folder, mask, SearchOption.AllDirectories).Where(it => IsFileVisible(it, folder));

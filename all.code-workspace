@@ -5,6 +5,10 @@
         },
         {
             "path": "src/VSCode.Extension"
+        },
+        {
+            "path": "themes",
+            "name": "Themes"
         }
     ],
     "launch": {

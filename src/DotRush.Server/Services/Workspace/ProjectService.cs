@@ -6,7 +6,6 @@ using Protocol = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Services;
 
 public abstract class ProjectService {
-    private CancellationTokenSource? reloadCancellationTokenSource;
     private readonly HashSet<string> projectFilePaths;
 
     protected ProjectService() {
@@ -18,38 +17,29 @@ public abstract class ProjectService {
     protected abstract void ProjectDiagnosticReceived(Protocol.Diagnostic diagnostic);
 
 
-    protected void AddProjects(IEnumerable<string> projectsPaths) {
-        foreach (var projectPath in projectsPaths)
-            this.projectFilePaths.Add(projectPath);
+    public void AddProjectFiles(IEnumerable<string> projectPaths) {
+        foreach (var projectPath in projectPaths)
+            projectFilePaths.Add(projectPath);
     }
-    protected void RemoveProjects(IEnumerable<string> projectsPaths) {
-        foreach (var projectPath in projectsPaths)
-            this.projectFilePaths.Remove(projectPath);
+    public void RemoveProjectFiles(IEnumerable<string> projectPaths) {
+        foreach (var projectPath in projectPaths)
+            projectFilePaths.Remove(projectPath);
     }
 
     protected async Task LoadAsync(MSBuildWorkspace workspace, Action<Solution?> solutionChanged) {
-        if (reloadCancellationTokenSource != null) {
-            reloadCancellationTokenSource.Cancel();
-            reloadCancellationTokenSource.Dispose();
-        }
-    
-        reloadCancellationTokenSource = new CancellationTokenSource();
-
         var observer = await LanguageServer.CreateWorkDoneObserverAsync();
-        var progressObserver = new ProgressObserver(Resources.MessageProjectIndex, observer);
-        var cancellationToken = reloadCancellationTokenSource.Token;
+        var progressObserver = new ProgressObserver(observer);
 
         foreach (var projectFile in projectFilePaths) {
             ClearDiagnostics();
 
-            if (cancellationToken.IsCancellationRequested)
-                break;
             if (workspace.ContainsProjectsWithPath(projectFile))
                 continue;
 
             await ServerExtensions.SafeHandlerAsync(async () => {
-                await workspace.RestoreProjectAsync(projectFile, ProjectDiagnosticReceived, observer, cancellationToken);
-                await workspace.OpenProjectAsync(projectFile, progressObserver, cancellationToken);
+                await workspace.RestoreProjectAsync(projectFile, ProjectDiagnosticReceived, observer, CancellationToken.None);
+                var project = await workspace.OpenProjectAsync(projectFile, progressObserver, CancellationToken.None);
+                await workspace.CompileProjectAsync(project, observer, CancellationToken.None);
             });
 
             solutionChanged?.Invoke(workspace.CurrentSolution);
