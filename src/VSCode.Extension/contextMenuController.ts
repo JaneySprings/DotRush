@@ -5,19 +5,19 @@ import * as vscode from 'vscode';
 
 export class ContextMenuController {
     public static activate(context: vscode.ExtensionContext) {
-        context.subscriptions.push(vscode.commands.registerCommand(res.taskCommandBuildId, async (path: vscode.Uri) => {
+        context.subscriptions.push(vscode.commands.registerCommand(res.taskCommandIdBuild, async (path: vscode.Uri) => {
             const projectFile = await ContextMenuController.selectProjectFileAsync(path);
             if (projectFile === undefined)
                 return;
             vscode.tasks.executeTask(await DotNetTaskProvider.getBuildTaskAsync(projectFile, '--no-restore'));
         }));
-        context.subscriptions.push(vscode.commands.registerCommand(res.taskCommandRestoreId, async (path: vscode.Uri) => {
+        context.subscriptions.push(vscode.commands.registerCommand(res.taskCommandIdRestore, async (path: vscode.Uri) => {
             const projectFile = await ContextMenuController.selectProjectFileAsync(path);
             if (projectFile === undefined)
                 return;
             vscode.tasks.executeTask(await DotNetTaskProvider.getRestoreTaskAsync(projectFile));
         }));
-        context.subscriptions.push(vscode.commands.registerCommand(res.taskCommandCleanId, async (path: vscode.Uri) => {
+        context.subscriptions.push(vscode.commands.registerCommand(res.taskCommandIdClean, async (path: vscode.Uri) => {
             const projectFile = await ContextMenuController.selectProjectFileAsync(path);
             if (projectFile === undefined)
                 return;
