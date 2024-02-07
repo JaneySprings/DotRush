@@ -12,7 +12,7 @@ export class WorkspaceController {
         await WorkspaceController.updateWorkspaceAsync();
 
         context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async e => {
-            if (path.extname(e.fileName) === '.csproj')
+            if (path.extname(e.fileName) === '.csproj' && WorkspaceController.targets.find(it => it.projects.includes(e.fileName)))
                 WorkspaceController.showReloadDialogAsync(res.messageProjectChanged);
         }));
         context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(async e => {
