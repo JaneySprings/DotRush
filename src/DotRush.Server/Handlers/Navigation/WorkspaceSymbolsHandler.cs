@@ -20,8 +20,8 @@ public class WorkspaceSymbolsHandler : WorkspaceSymbolsHandlerBase {
 
     public override async Task<Container<WorkspaceSymbol>?> Handle(WorkspaceSymbolParams request, CancellationToken cancellationToken) {
         return await ServerExtensions.SafeHandlerAsync<Container<WorkspaceSymbol>?>(async () => {
-            var symbols = new List<WorkspaceSymbol>();
-            if (solutionService.Solution == null)
+            var workspaceSymbols = new HashSet<WorkspaceSymbol>();
+            if (solutionService.Solution == null || string.IsNullOrEmpty(request.Query))
                 return null;
 
             foreach (var project in solutionService.Solution.Projects) {
@@ -29,13 +29,14 @@ public class WorkspaceSymbolsHandler : WorkspaceSymbolsHandlerBase {
                 if (compilation == null)
                     continue;
 
-                foreach (var symbol in compilation.GetSymbolsWithName((s) => s.Contains(request.Query), SymbolFilter.TypeAndMember, cancellationToken)) {
+                var symbols = compilation.GetSymbolsWithName((s) => WorkspaceSymbolFilter(s, request.Query), SymbolFilter.TypeAndMember, cancellationToken);
+                foreach (var symbol in symbols) {
                     foreach (var location in symbol.Locations) {
                         var lspLocation = location.ToLocation();
                         if (lspLocation == null)
                             continue;
 
-                        symbols.Add(new WorkspaceSymbol {
+                        workspaceSymbols.Add(new WorkspaceSymbol {
                             Kind = symbol.Kind.ToSymbolKind(),
                             Name = symbol.Name,
                             Location = lspLocation,
@@ -44,7 +45,11 @@ public class WorkspaceSymbolsHandler : WorkspaceSymbolsHandlerBase {
                 }
             }
 
-            return new Container<WorkspaceSymbol>(symbols);
+            return new Container<WorkspaceSymbol>(workspaceSymbols);
         });
+    }
+
+    private bool WorkspaceSymbolFilter(string symbolName, string query) {
+        return symbolName.Contains(query, StringComparison.OrdinalIgnoreCase);
     }
 }
