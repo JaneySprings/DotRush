@@ -27,5 +27,5 @@ export const messageTemplateItemNameInput = "Enter template name (if required)"
 export const messageTemplateProjectNameInput = "Project name"
 export const messageTemplateLocationLabel = "Select";
 export const messageSelectItemTemplate = "Select template";
-export const messageSelectProjectTemplate = "Select template for a new .NET project";
+export const messageSelectProjectTemplate = "Select a template for a new .NET project";
 export const messageSelectProjects = "Select projects to load in the '$' folder";
