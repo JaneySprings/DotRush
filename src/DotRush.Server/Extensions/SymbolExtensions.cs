@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Server.Extensions;
 
@@ -36,4 +37,19 @@ public static class SymbolExtensions {
         return (INamedTypeSymbol)topLevelNamedType;
     }
 
+    public static ProtocolModels.SymbolKind ToSymbolKind(this SymbolKind kind) {
+        return kind switch {
+            SymbolKind.Method => ProtocolModels.SymbolKind.Method,
+            SymbolKind.Property => ProtocolModels.SymbolKind.Property,
+            SymbolKind.Field => ProtocolModels.SymbolKind.Field,
+            SymbolKind.Event => ProtocolModels.SymbolKind.Event,
+            SymbolKind.NamedType => ProtocolModels.SymbolKind.Class,
+            SymbolKind.Namespace => ProtocolModels.SymbolKind.Namespace,
+            SymbolKind.Parameter => ProtocolModels.SymbolKind.Variable,
+            SymbolKind.Local => ProtocolModels.SymbolKind.Variable,
+            SymbolKind.TypeParameter => ProtocolModels.SymbolKind.TypeParameter,
+            SymbolKind.Alias => ProtocolModels.SymbolKind.TypeParameter,
+            _ => ProtocolModels.SymbolKind.String
+        };
+    }
 }
