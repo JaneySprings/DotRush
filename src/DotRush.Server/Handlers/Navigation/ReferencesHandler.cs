@@ -15,7 +15,9 @@ public class ReferencesHandler : ReferencesHandlerBase {
     }
 
     protected override ReferenceRegistrationOptions CreateRegistrationOptions(ReferenceCapability capability, ClientCapabilities clientCapabilities) {
-        return new ReferenceRegistrationOptions();
+        return new ReferenceRegistrationOptions() {
+            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments
+        };
     }
 
     public override async Task<LocationContainer?> Handle(ReferenceParams request, CancellationToken cancellationToken) {

@@ -6,23 +6,11 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 namespace DotRush.Server.Extensions;
 
 public static class WorkspaceExtensions {
-    public static bool IsSupportedDocument(this string filePath) {
-        return filePath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase);
-    }
-    public static bool IsSupportedAdditionalDocument(this string filePath) {
-        var allowedExtensions = new[] { ".xaml", /* maybe '.razor' ? */};
-        return allowedExtensions.Any(it => filePath.EndsWith(it, StringComparison.OrdinalIgnoreCase));
-    }
-    public static bool IsSupportedProject(this string filePath) {
-        return filePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase);
-    }
-    public static bool IsSupportedCommand(this string filePath) {
-        return Path.GetFileName(filePath) == "resolve.drc";
-    }
-
-
     public static IEnumerable<ProjectId> GetProjectIdsWithDocumentFilePath(this Solution solution, string filePath) {
         return solution.GetDocumentIdsWithFilePath(filePath).Select(id => id.ProjectId);
+    }
+    public static IEnumerable<ProjectId> GetProjectIdsWithDocumentsFilePaths(this Solution solution, IEnumerable<string> filePaths) {
+        return filePaths.SelectMany(filePath => solution.GetProjectIdsWithDocumentFilePath(filePath)).Distinct();
     }
 
     public static IEnumerable<DocumentId> GetDocumentIdsWithFolderPath(this Solution solution, string folderPath) {

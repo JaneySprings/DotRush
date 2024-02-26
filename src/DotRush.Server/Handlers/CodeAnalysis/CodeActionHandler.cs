@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using CodeAnalysisCodeAction = Microsoft.CodeAnalysis.CodeActions.CodeAction;
 
 namespace DotRush.Server.Handlers;
@@ -16,7 +15,6 @@ public class CodeActionHandler : CodeActionHandlerBase {
     private readonly CodeActionService codeActionService;
     private readonly List<CodeAnalysisCodeAction> codeActionsCollection;
 
-
     public CodeActionHandler(WorkspaceService solutionService, CompilationService compilationService, CodeActionService codeActionService) {
         codeActionsCollection = new List<CodeAnalysisCodeAction>();
         this.solutionService = solutionService;
@@ -26,37 +24,39 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
     protected override CodeActionRegistrationOptions CreateRegistrationOptions(CodeActionCapability capability, ClientCapabilities clientCapabilities) {
         return new CodeActionRegistrationOptions() {
+            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments,
             CodeActionKinds = new Container<CodeActionKind>(CodeActionKind.QuickFix),
             ResolveProvider = true,
         };
     }
 
     public override async Task<CommandOrCodeActionContainer?> Handle(CodeActionParams request, CancellationToken cancellationToken) {
-        return await ServerExtensions.SafeHandlerAsync<CommandOrCodeActionContainer>(async () => {
+        return await ServerExtensions.SafeHandlerAsync<CommandOrCodeActionContainer?>(async () => {
             var filePath = request.TextDocument.Uri.GetFileSystemPath();         
             codeActionsCollection.Clear();
 
-            var fileDiagnostic = GetDiagnosticByRange(request.Range, filePath);
-            if (fileDiagnostic == null)
-                return new CommandOrCodeActionContainer();
+            var diagnosticId = request.Context.Diagnostics.FirstOrDefault()?.Data?.ToObject<int>();
+            if (diagnosticId == null)
+                return null;
+        
+            var diagnostic = GetDiagnosticById(filePath, diagnosticId.Value);
+            if (diagnostic == null)
+                return null;
 
-            var project = solutionService.Solution?.GetProject(fileDiagnostic.SourceId);
-            if (project == null)
-                return new CommandOrCodeActionContainer();
-
-            var documentId = solutionService.Solution?.GetDocumentIdsWithFilePath(filePath).FirstOrDefault(x => x.ProjectId == project.Id);
+            var project = solutionService.Solution?.GetProject(diagnostic.SourceId);
+            var documentId = solutionService.Solution?.GetDocumentIdsWithFilePath(filePath).FirstOrDefault(x => x.ProjectId == project?.Id);
             var document = solutionService.Solution?.GetDocument(documentId);
-            if (document == null)
-                return new CommandOrCodeActionContainer();
+            if (project == null || document == null)
+                return null;
 
             codeActionService.AddProjectProviders(project);
 
-            var codeFixProviders = GetProvidersForDiagnosticId(fileDiagnostic.InnerDiagnostic.Id, project.Id);
+            var codeFixProviders = GetProvidersForDiagnosticId(diagnostic.InnerDiagnostic.Id, project.Id);
             if (codeFixProviders == null)
-                return new CommandOrCodeActionContainer();
+                return null;
 
             foreach (var codeFixProvider in codeFixProviders) {
-                await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, fileDiagnostic.InnerDiagnostic, (a, _) => {
+                 await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, diagnostic.InnerDiagnostic, (a, _) => {
                     var singleCodeActions = a.ToSingleCodeActions().Where(x => !x.IsBlacklisted());
                     codeActionsCollection.AddRange(singleCodeActions);
                 }, cancellationToken));
@@ -88,12 +88,9 @@ public class CodeActionHandler : CodeActionHandlerBase {
             .GetCodeFixProviders(projectId)
             .Where(x => x.FixableDiagnosticIds.ContainsWithMapping(diagnosticId));
     }
-    private SourceDiagnostic? GetDiagnosticByRange(ProtocolModels.Range range, string documentPath) {
-        if (!this.compilationService.Diagnostics.ContainsKey(documentPath))
-            return null;
-
-        return compilationService.Diagnostics[documentPath]
-            .GetTotalDiagnosticWrappers()
-            .FirstOrDefault(x => x.InnerDiagnostic.Location.ToRange().Contains(range));
+    private ExtendedDiagnostic? GetDiagnosticById(string documentPath, int diagnosticId) {
+        return compilationService.Diagnostics
+            .GetDiagnostics(documentPath)?
+            .FirstOrDefault(x => x.InnerDiagnostic.GetHashCode() == diagnosticId);
     }
 }

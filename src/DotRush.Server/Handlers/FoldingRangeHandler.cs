@@ -18,7 +18,7 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
 
     protected override FoldingRangeRegistrationOptions CreateRegistrationOptions(FoldingRangeCapability capability, ClientCapabilities clientCapabilities) {
         return new FoldingRangeRegistrationOptions {
-            DocumentSelector = TextDocumentSelector.ForLanguage("csharp")
+            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments,
         };
     }
 

@@ -1,11 +1,10 @@
-using DotRush.Server.Services;
 using Microsoft.CodeAnalysis;
 using Protocol = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Server.Extensions;
 
-public static class DiagnosticsConverter {
-    public static IEnumerable<Protocol.Diagnostic> ToServerDiagnostics(this IEnumerable<SourceDiagnostic> diagnostics) {
+public static class DiagnosticsExtensions {
+    public static IEnumerable<Protocol.Diagnostic> ToServerDiagnostics(this IEnumerable<ExtendedDiagnostic> diagnostics) {
         return diagnostics.Select(it => {
             var diagnosticSource = it.InnerDiagnostic.Location.SourceTree?.FilePath;
             return new Protocol.Diagnostic() {
@@ -14,6 +13,7 @@ public static class DiagnosticsConverter {
                 Severity = it.InnerDiagnostic.Severity.ToServerSeverity(),
                 Source = it.SourceName ?? diagnosticSource,
                 Code = it.InnerDiagnostic.Id,
+                Data = it.InnerDiagnostic.GetHashCode(),
             };
         });
     }

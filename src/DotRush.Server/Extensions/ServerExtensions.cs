@@ -1,4 +1,3 @@
-
 namespace DotRush.Server.Extensions;
 
 public static class ServerExtensions {
@@ -19,7 +18,6 @@ public static class ServerExtensions {
             return fallback;
         }
     }
-
     public static async Task<T?> SafeHandlerAsync<T>(Func<Task<T>> action) {
         try {
             return await action.Invoke();
@@ -28,7 +26,6 @@ public static class ServerExtensions {
             return default(T);
         }
     }
-
     public static async Task SafeHandlerAsync(Func<Task> action) {
         try {
             await action.Invoke();
@@ -45,7 +42,6 @@ public static class ServerExtensions {
             return fallback;
         }
     }
-
     public static void SafeHandler(Action action) {
         try {
             action.Invoke();

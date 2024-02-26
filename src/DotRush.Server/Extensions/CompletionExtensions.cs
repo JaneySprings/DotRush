@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.Tags;
 
 namespace DotRush.Server.Extensions;
 
-public static class CompletionConverter {
+public static class CompletionExtensions {
     public static ProtocolModels.CompletionItemKind ToCompletionItemKind(this string tag) {
         switch (tag) {
             case WellKnownTags.Class: return ProtocolModels.CompletionItemKind.Class;

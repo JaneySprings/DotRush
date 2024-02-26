@@ -6,7 +6,7 @@ using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Server.Extensions;
 
-public static class PositionConverter {
+public static class PositionExtensions {
     public static int ToOffset(this ProtocolModels.Position position, SourceText sourceText) {
         if (sourceText.Lines.Count < position.Line)
             return 0;

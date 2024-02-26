@@ -22,7 +22,6 @@ export class ServerController {
         };
 
         ServerController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
-            documentSelector: [{ scheme: "file", language: "csharp" }],
             diagnosticCollectionName: res.microsoftProblemMatcherId,
             progressOnInitialization: true,
             synchronize: { 

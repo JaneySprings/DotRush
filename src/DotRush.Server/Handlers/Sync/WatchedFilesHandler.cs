@@ -42,46 +42,31 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     }
 
     private void HandleFileChange(string path, FileChangeType changeType) {
-        if (path.IsSupportedProject() && changeType == FileChangeType.Changed)
+        if (LanguageServer.IsProjectFile(path) && changeType == FileChangeType.Changed)
             return; // Handled from IDE
 
         if (changeType == FileChangeType.Deleted) {
-            if (path.IsSupportedDocument())
-                workspaceService.DeleteCSharpDocument(path);
-
-            if (path.IsSupportedAdditionalDocument())
-                workspaceService.DeleteAdditionalDocument(path);
-
-            if (path.IsSupportedCommand())
+            if (LanguageServer.IsInternalCommandFile(path))
                 commandsService.ResolveCancellation();
 
+            workspaceService.DeleteDocument(path);
             workspaceService.DeleteFolder(path);
             return;
         }
 
         if (changeType == FileChangeType.Changed) {
-            if (path.IsSupportedDocument())
-                workspaceService.UpdateCSharpDocument(path);
-
-            if (path.IsSupportedAdditionalDocument())
-                workspaceService.UpdateAdditionalDocument(path);
-
-            if (path.IsSupportedCommand())
+            if (LanguageServer.IsInternalCommandFile(path))
                 commandsService.ResolveCommand(path);
-            
+
+            workspaceService.UpdateDocument(path);
             return;
         }
 
         if (changeType == FileChangeType.Created && File.Exists(path)) {
-            if (path.IsSupportedDocument())
-                workspaceService.CreateCSharpDocument(path);
-
-            if (path.IsSupportedAdditionalDocument())
-                workspaceService.CreateAdditionalDocument(path);
-
-            if (path.IsSupportedCommand())
+            if (LanguageServer.IsInternalCommandFile(path))
                 commandsService.ResolveCommand(path);
-            
+
+            workspaceService.CreateDocument(path);
             return;
         } 
     }

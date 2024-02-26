@@ -27,7 +27,7 @@ public abstract class ProjectService {
     }
 
     protected async Task LoadAsync(MSBuildWorkspace workspace, Action<Solution?> solutionChanged) {
-        var observer = await LanguageServer.CreateWorkDoneObserverAsync();
+        var observer = LanguageServer.CreateWorkDoneObserver();
         var progressObserver = new ProgressObserver(observer);
 
         foreach (var projectFile in projectFilePaths) {

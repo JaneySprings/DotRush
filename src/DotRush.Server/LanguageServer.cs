@@ -12,10 +12,28 @@ namespace DotRush.Server;
 
 public class LanguageServer {
     public const string CodeAnalysisFeaturesAssembly = "Microsoft.CodeAnalysis.CSharp.Features";
-    private static IServerWorkDoneManager? workDoneManager;
+    public static TextDocumentSelector SelectorForAllDocuments => TextDocumentSelector.ForLanguage("csharp", "xml", "xaml", "XAML");
+    public static TextDocumentSelector SelectorForSourceCodeDocuments => TextDocumentSelector.ForLanguage("csharp");
 
-    public static async Task<IWorkDoneObserver> CreateWorkDoneObserverAsync() {
-        return await workDoneManager!.Create(new WorkDoneProgressBegin());
+    public static bool IsSourceCodeDocument(string filePath) {
+        return Path.GetExtension(filePath).Equals(".cs", StringComparison.OrdinalIgnoreCase);
+    }
+    public static bool IsAdditionalDocument(string filePath) {
+        var allowedExtensions = new[] { ".xaml", /* maybe '.razor' ? */};
+        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
+    }
+    public static bool IsProjectFile(string filePath) {
+        var allowedExtensions = new[] { ".csproj", /* fsproj vbproj */};
+        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
+    }
+    public static bool IsInternalCommandFile(string filePath) {
+        return Path.GetFileName(filePath) == "resolve.drc";
+    }
+
+    private static IServerWorkDoneManager? workDoneManager;
+    public static IWorkDoneObserver? CreateWorkDoneObserver() {
+        var task = workDoneManager?.Create(new WorkDoneProgressBegin());
+        return task?.Wait(TimeSpan.FromSeconds(2)) == true ? task.Result : null;
     }
 
     public static async Task Main(string[] args) {
@@ -31,7 +49,9 @@ public class LanguageServer {
                 services.AddSingleton<DecompilationService>();
                 services.AddSingleton<CommandsService>();
             })
-            .WithHandler<DocumentSyncHandler>()
+            .WithHandler<DidOpenTextDocumentHandler>()
+            .WithHandler<DidChangeTextDocumentHandler>()
+            .WithHandler<DidCloseTextDocumentHandler>()
             .WithHandler<WatchedFilesHandler>()
             .WithHandler<WorkspaceFoldersHandler>()
             .WithHandler<WorkspaceSymbolsHandler>()
@@ -52,7 +72,6 @@ public class LanguageServer {
 
         await server.WaitForExit.ConfigureAwait(false);
     }
-
     private static async Task StartedHandlerAsync(ILanguageServer server, string[] targets, CancellationToken cancellationToken) {
         var clientSettings = server.Workspace.ClientSettings;
         var compilationService = server.Services.GetService<CompilationService>()!;
@@ -72,7 +91,6 @@ public class LanguageServer {
         workspaceService.AddProjectFiles(targets);
         workspaceService.StartSolutionLoading();
     }
-
     private static void ObserveClientProcess(long? pid) {
         if (pid == null || pid <= 0)
             return;

@@ -18,7 +18,7 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
 
     protected override SignatureHelpRegistrationOptions CreateRegistrationOptions(SignatureHelpCapability capability, ClientCapabilities clientCapabilities) {
         return new SignatureHelpRegistrationOptions {
-            DocumentSelector = TextDocumentSelector.ForLanguage("csharp"),
+            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments,
             TriggerCharacters = new Container<string>("(", ",")
         };
     }

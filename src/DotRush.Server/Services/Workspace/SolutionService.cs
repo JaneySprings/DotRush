@@ -18,11 +18,11 @@ public abstract class SolutionService: ProjectService {
     public void DeleteFolder(string path) {
         var csharpDocumentIds = Solution?.GetDocumentIdsWithFolderPath(path);
         var additionalDocumentIds = Solution?.GetAdditionalDocumentIdsWithFolderPath(path);
-        DeleteCSharpDocument(csharpDocumentIds);
+        DeleteSourceCodeDocument(csharpDocumentIds);
         DeleteAdditionalDocument(additionalDocumentIds);
     }
 
-    public void CreateCSharpDocument(string file) {
+    public void CreateSourceCodeDocument(string file) {
         var projectIds = Solution?.GetProjectIdsMayContainsFilePath(file);
         if (projectIds == null || Solution == null)
             return;
@@ -45,11 +45,11 @@ public abstract class SolutionService: ProjectService {
             Solution = updates.Project.Solution;
         }
     }
-    public void DeleteCSharpDocument(string file) {
+    public void DeleteSourceCodeDocument(string file) {
         var documentIds = Solution?.GetDocumentIdsWithFilePath(file);
-        DeleteCSharpDocument(documentIds);
+        DeleteSourceCodeDocument(documentIds);
     }
-    public void UpdateCSharpDocument(string file, string? text = null) {
+    public void UpdateSourceCodeDocument(string file, string? text = null) {
         var documentIds = Solution?.GetDocumentIdsWithFilePath(file);
         if (documentIds == null || !File.Exists(file))
             return;
@@ -119,7 +119,26 @@ public abstract class SolutionService: ProjectService {
         }
     }
 
-    private void DeleteCSharpDocument(IEnumerable<DocumentId>? documentIds) {
+    public void CreateDocument(string file) {
+        if (LanguageServer.IsAdditionalDocument(file))
+            CreateAdditionalDocument(file);
+        if (LanguageServer.IsSourceCodeDocument(file))
+            CreateSourceCodeDocument(file);
+    }
+    public void DeleteDocument(string file) {
+        if (LanguageServer.IsAdditionalDocument(file))
+            DeleteAdditionalDocument(file);
+        if (LanguageServer.IsSourceCodeDocument(file))
+            DeleteSourceCodeDocument(file);
+    }
+    public void UpdateDocument(string file, string? text = null) {
+        if (LanguageServer.IsAdditionalDocument(file))
+            UpdateAdditionalDocument(file, text);
+        if (LanguageServer.IsSourceCodeDocument(file))
+            UpdateSourceCodeDocument(file, text);
+    }
+
+    private void DeleteSourceCodeDocument(IEnumerable<DocumentId>? documentIds) {
         if (documentIds == null || Solution == null)
             return;
 

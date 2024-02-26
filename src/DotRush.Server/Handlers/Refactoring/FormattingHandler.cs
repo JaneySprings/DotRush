@@ -16,7 +16,9 @@ public class FormattingHandler : DocumentFormattingHandlerBase {
     }
 
     protected override DocumentFormattingRegistrationOptions CreateRegistrationOptions(DocumentFormattingCapability capability, ClientCapabilities clientCapabilities) {
-        return new DocumentFormattingRegistrationOptions();
+        return new DocumentFormattingRegistrationOptions() {
+            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments
+        };
     }
 
     public override async Task<TextEditContainer?> Handle(DocumentFormattingParams request, CancellationToken cancellationToken) {
