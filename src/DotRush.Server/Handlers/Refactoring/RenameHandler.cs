@@ -18,7 +18,9 @@ public class RenameHandler : RenameHandlerBase {
     }
 
     protected override RenameRegistrationOptions CreateRegistrationOptions(RenameCapability capability, ClientCapabilities clientCapabilities) {
-        return new RenameRegistrationOptions();
+        return new RenameRegistrationOptions() {
+            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments
+        };
     }
 
     public override async Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken cancellationToken) {

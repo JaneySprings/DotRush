@@ -16,7 +16,9 @@ public class ImplementationHandler : ImplementationHandlerBase {
     }
 
     protected override ImplementationRegistrationOptions CreateRegistrationOptions(ImplementationCapability capability, ClientCapabilities clientCapabilities) {
-        return new ImplementationRegistrationOptions();
+        return new ImplementationRegistrationOptions() {
+            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments
+        };
     }
 
     public override async Task<LocationOrLocationLinks?> Handle(ImplementationParams request, CancellationToken cancellationToken) {

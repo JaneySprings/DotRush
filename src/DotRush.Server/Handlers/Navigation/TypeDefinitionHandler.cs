@@ -18,7 +18,9 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
     }
 
     protected override TypeDefinitionRegistrationOptions CreateRegistrationOptions(TypeDefinitionCapability capability, ClientCapabilities clientCapabilities) {
-        return new TypeDefinitionRegistrationOptions();
+        return new TypeDefinitionRegistrationOptions() {
+            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments
+        };
     }
 
     public override async Task<LocationOrLocationLinks?> Handle(TypeDefinitionParams request, CancellationToken cancellationToken) {

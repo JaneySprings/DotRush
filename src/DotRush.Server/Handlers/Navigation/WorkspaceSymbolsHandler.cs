@@ -37,7 +37,7 @@ public class WorkspaceSymbolsHandler : WorkspaceSymbolsHandlerBase {
                             continue;
 
                         workspaceSymbols.Add(new WorkspaceSymbol {
-                            Kind = symbol.Kind.ToSymbolKind(),
+                            Kind = symbol.ToSymbolKind(),
                             Name = symbol.Name,
                             Location = lspLocation,
                         });

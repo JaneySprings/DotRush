@@ -18,7 +18,9 @@ public class DefinitionHandler : DefinitionHandlerBase {
     }
 
     protected override DefinitionRegistrationOptions CreateRegistrationOptions(DefinitionCapability capability, ClientCapabilities clientCapabilities) {
-        return new DefinitionRegistrationOptions();
+        return new DefinitionRegistrationOptions() {
+            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments
+        };
     }
 
     public override async Task<LocationOrLocationLinks?> Handle(DefinitionParams request, CancellationToken cancellationToken) {

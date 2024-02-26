@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace DotRush.Server.Extensions;
 
-public static class CodeActionConverter {
+public static class CodeActionExtensions {
     private static PropertyInfo? nestedCodeActionsProperty;
     private static FieldInfo? inNewFileField;
 

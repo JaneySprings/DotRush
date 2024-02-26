@@ -16,7 +16,9 @@ public class RangeFormattingHandler : DocumentRangeFormattingHandlerBase {
     }
 
     protected override DocumentRangeFormattingRegistrationOptions CreateRegistrationOptions(DocumentRangeFormattingCapability capability, ClientCapabilities clientCapabilities) {
-        return new DocumentRangeFormattingRegistrationOptions();
+        return new DocumentRangeFormattingRegistrationOptions() {
+            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments
+        };
     }
 
     public override async Task<TextEditContainer> Handle(DocumentRangeFormattingParams request, CancellationToken cancellationToken) {
