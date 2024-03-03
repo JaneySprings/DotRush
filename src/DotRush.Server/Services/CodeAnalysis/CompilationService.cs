@@ -44,7 +44,7 @@ public class CompilationService {
             .Where(x => x != null)!;
     }
 
-    public async Task PublishDiagnosticsAsync(string targetDocumentPath) {
+    public async Task PublishDiagnosticsAsync() {
         ResetCancellationToken();
         var cancellationToken = compilationTokenSource.Token;
         var documentPaths = Diagnostics.GetOpenedDocuments();

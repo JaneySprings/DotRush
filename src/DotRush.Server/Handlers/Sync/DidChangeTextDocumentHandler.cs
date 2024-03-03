@@ -32,7 +32,7 @@ public class DidChangeTextDocumentHandler : DidChangeTextDocumentHandlerBase {
         
         solutionService.UpdateDocument(filePath, text);
         compilationService.Diagnostics.OpenDocument(filePath);
-        _ = compilationService.PublishDiagnosticsAsync(filePath);
+        _ = compilationService.PublishDiagnosticsAsync();
         return Unit.Task;
     }
 }

@@ -27,7 +27,7 @@ public class CompletionHandler : CompletionHandlerBase {
     protected override CompletionRegistrationOptions CreateRegistrationOptions(CompletionCapability capability, ClientCapabilities clientCapabilities) {
         return new CompletionRegistrationOptions {
             DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments,
-            TriggerCharacters = new[] { ".", " ", "(", "$", "<" },
+            TriggerCharacters = new[] { ".", " ", "(", "<" },
             ResolveProvider = true,
         };
     }
