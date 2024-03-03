@@ -16,7 +16,8 @@ public class LanguageServer {
     public static TextDocumentSelector SelectorForSourceCodeDocuments => TextDocumentSelector.ForLanguage("csharp");
 
     public static bool IsSourceCodeDocument(string filePath) {
-        return Path.GetExtension(filePath).Equals(".cs", StringComparison.OrdinalIgnoreCase);
+        var allowedExtensions = new[] { ".cs", /* .fs .vb */};
+        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
     }
     public static bool IsAdditionalDocument(string filePath) {
         var allowedExtensions = new[] { ".xaml", /* maybe '.razor' ? */};
@@ -83,7 +84,9 @@ public class LanguageServer {
         workDoneManager = server.WorkDoneManager;
 
         await configurationService.InitializeAsync(server.Configuration);    
-        workspaceService.InitializeWorkspace();
+        if (!workspaceService.TryInitializeWorkspace())
+            return;
+
         codeActionService.InitializeEmbeddedProviders();
         if (configurationService.EnableRoslynAnalyzers())
             compilationService.InitializeEmbeddedAnalyzers();
@@ -100,10 +103,3 @@ public class LanguageServer {
         ideProcess.Exited += (_, _) => Environment.Exit(0);
     }
 }
-
-// public static class Logger {
-//     public static void Write(string message) {
-//         var tempFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log.txt");
-//         File.AppendAllText(tempFile, message + Environment.NewLine);
-//     }
-// }

@@ -6,6 +6,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
+using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 using Protocol = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Server.Services;
@@ -20,7 +21,6 @@ public class WorkspaceService: SolutionService {
         this.configurationService = configurationService;
         this.serverFacade = serverFacade;
         worksapceDiagnostics = new List<Protocol.Diagnostic>();
-        MSBuildLocator.RegisterDefaults();
     }
 
     protected override void ClearDiagnostics() {
@@ -37,11 +37,15 @@ public class WorkspaceService: SolutionService {
         });
     }
 
-    public void InitializeWorkspace() {
+    public bool TryInitializeWorkspace() {
+        if (!LocatorExtensions.TryRegisterDefaults(() => serverFacade.Window.ShowError(Resources.MessageDotNetRegistrationFailed)))
+            return false;
+
         workspace = MSBuildWorkspace.Create(configurationService.AdditionalWorkspaceArguments());
         workspace.LoadMetadataForReferencedProjects = configurationService.LoadMetadataForReferencedProjects();
         workspace.SkipUnrecognizedProjects = configurationService.SkipUnrecognizedProjects();
         workspace.WorkspaceFailed += (_, d) => ProjectDiagnosticReceived(d.Diagnostic.ToServerDiagnostic());
+        return true;
     }
     public async void StartSolutionLoading() {
         await LoadSolutionAsync(workspace!);
