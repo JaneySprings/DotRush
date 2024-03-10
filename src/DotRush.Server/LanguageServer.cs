@@ -56,6 +56,7 @@ public class LanguageServer {
             .WithHandler<WatchedFilesHandler>()
             .WithHandler<WorkspaceFoldersHandler>()
             .WithHandler<WorkspaceSymbolsHandler>()
+            .WithHandler<DocumentSymbolHandler>()
             .WithHandler<HoverHandler>()
             .WithHandler<FoldingRangeHandler>()
             .WithHandler<SignatureHelpHandler>()
