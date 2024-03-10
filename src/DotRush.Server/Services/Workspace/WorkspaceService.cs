@@ -1,5 +1,4 @@
 using DotRush.Server.Extensions;
-using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using OmniSharp.Extensions.LanguageServer.Protocol;
@@ -41,9 +40,9 @@ public class WorkspaceService: SolutionService {
         if (!LocatorExtensions.TryRegisterDefaults(() => serverFacade.Window.ShowError(Resources.MessageDotNetRegistrationFailed)))
             return false;
 
-        workspace = MSBuildWorkspace.Create(configurationService.AdditionalWorkspaceArguments());
-        workspace.LoadMetadataForReferencedProjects = configurationService.LoadMetadataForReferencedProjects();
-        workspace.SkipUnrecognizedProjects = configurationService.SkipUnrecognizedProjects();
+        workspace = MSBuildWorkspace.Create(configurationService.WorkspaceProperties);
+        workspace.LoadMetadataForReferencedProjects = configurationService.LoadMetadataForReferencedProjects;
+        workspace.SkipUnrecognizedProjects = configurationService.SkipUnrecognizedProjects;
         workspace.WorkspaceFailed += (_, d) => ProjectDiagnosticReceived(d.Diagnostic.ToServerDiagnostic());
         return true;
     }

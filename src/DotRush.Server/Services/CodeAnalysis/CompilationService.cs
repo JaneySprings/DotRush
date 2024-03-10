@@ -50,7 +50,7 @@ public class CompilationService {
         var documentPaths = Diagnostics.GetOpenedDocuments();
         await ServerExtensions.SafeHandlerAsync(async () => {
             await Task.Delay(500, cancellationToken); // Input delay
-            if (!configurationService.EnableRoslynAnalyzers())
+            if (!configurationService.UseRoslynAnalyzers)
                 await DiagnoseAsync(documentPaths, cancellationToken);
             else
                 await AnalyzerDiagnoseAsync(documentPaths, cancellationToken);

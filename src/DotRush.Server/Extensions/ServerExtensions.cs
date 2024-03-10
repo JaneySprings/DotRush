@@ -51,7 +51,7 @@ public static class ServerExtensions {
     }
 
     private static void LogException(Exception e) {
-        if (e is TaskCanceledException) 
+        if (e is TaskCanceledException || e is OperationCanceledException) 
             return;
         logger.Error(e);
     }

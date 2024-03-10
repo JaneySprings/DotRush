@@ -83,12 +83,12 @@ public class LanguageServer {
         ObserveClientProcess(clientSettings.ProcessId);
         workDoneManager = server.WorkDoneManager;
 
-        await configurationService.InitializeAsync(server.Configuration);    
+        await configurationService.InitializeAsync();    
         if (!workspaceService.TryInitializeWorkspace())
             return;
 
         codeActionService.InitializeEmbeddedProviders();
-        if (configurationService.EnableRoslynAnalyzers())
+        if (configurationService.UseRoslynAnalyzers)
             compilationService.InitializeEmbeddedAnalyzers();
 
         workspaceService.AddProjectFiles(targets);
