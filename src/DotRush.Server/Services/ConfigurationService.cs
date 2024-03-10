@@ -4,17 +4,26 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 namespace DotRush.Server;
 
 public class ConfigurationService {
+    private ILanguageServerConfiguration configuration;
+
     private const string ExtensionId = "dotrush";
     private const string RoslynId = "roslyn";
 
-    private const string EnableRoslynAnalyzersId = $"{ExtensionId}:enableRoslynAnalyzers";
-    private const string AdditionalWorkspaceArgumentsId = $"{ExtensionId}:additionalWorkspaceArguments";
+    private const string WorkspacePropertiesId = $"{ExtensionId}:{RoslynId}:workspaceProperties";
+    private const string EnableRoslynAnalyzersId = $"{ExtensionId}:{RoslynId}:enableAnalyzers";
     private const string SkipUnrecognizedProjectsId = $"{ExtensionId}:{RoslynId}:skipUnrecognizedProjects";
     private const string LoadMetadataForReferencedProjectsId = $"{ExtensionId}:{RoslynId}:loadMetadataForReferencedProjects";
 
-    private ILanguageServerConfiguration? configuration;
+    public bool UseRoslynAnalyzers => configuration?.GetValue<bool>(EnableRoslynAnalyzersId) ?? false;
+    public bool SkipUnrecognizedProjects => configuration?.GetValue<bool>(SkipUnrecognizedProjectsId) ?? true;
+    public bool LoadMetadataForReferencedProjects => configuration?.GetValue<bool>(LoadMetadataForReferencedProjectsId) ?? true;
+    public Dictionary<string, string> WorkspaceProperties => GetWorkspaceOptions();
 
-    public async Task InitializeAsync(ILanguageServerConfiguration configuration) {
+    public ConfigurationService(ILanguageServerConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
+    public async Task InitializeAsync() {
         var retryCount = 0;
         await Task.Run(() => {
             while (!configuration.AsEnumerable().Any() && retryCount < 25) {
@@ -22,22 +31,15 @@ public class ConfigurationService {
                 retryCount++;
             }
         });
-        this.configuration = configuration;
     }
-
-    public Dictionary<string, string> AdditionalWorkspaceArguments() => ConfigurationService.ToWorkspaceOptions(configuration?.GetValue<string>(AdditionalWorkspaceArgumentsId));
-    public bool EnableRoslynAnalyzers() => configuration?.GetValue<bool>(EnableRoslynAnalyzersId) ?? false;
-    public bool SkipUnrecognizedProjects() => configuration?.GetValue<bool>(SkipUnrecognizedProjectsId) ?? true;
-    public bool LoadMetadataForReferencedProjects() => configuration?.GetValue<bool>(LoadMetadataForReferencedProjectsId) ?? true;
-
-    private static Dictionary<string, string> ToWorkspaceOptions(string? options) {
-        if (string.IsNullOrEmpty(options))
-            return new Dictionary<string, string>();
-
+    private Dictionary<string, string> GetWorkspaceOptions() {
         var result = new Dictionary<string, string>();
-        var pairs = options.Split(' ');
-        foreach (var pair in pairs) {
-            var keyValue = pair.Split('=');
+        for (byte i = 0; i < byte.MaxValue; i++) {
+            var option = configuration?.GetValue<string>($"{WorkspacePropertiesId}:{i}");
+            if (option == null)
+                break;
+            
+            var keyValue = option.Split('=');
             if (keyValue.Length != 2)
                 continue;
             result[keyValue[0]] = keyValue[1];

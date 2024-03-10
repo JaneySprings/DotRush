@@ -9,9 +9,8 @@
 
 	"view.title.createProjectTemplate": "[Open a folder](command:vscode.openFolder) that contains a .NET project or create a new project.\n[Create New Project](command:dotrush.createProjectTemplate)",
 
-	"configuration.description.additionalWorkspaceArguments": "Additional MSBuild arguments to pass to the workspace.",
-	"configuration.description.enableRoslynAnalyzers": "Enable Roslyn analyzers (may affect performance).",
-
+	"configuration.description.roslyn.workspaceProperties": "Additional MSBuild properties to pass to the workspace (e.g. Configuration=Debug).",
+	"configuration.description.roslyn.enableAnalyzers": "Enable Roslyn analyzers (may affect performance).",
 	"configuration.description.roslyn.skipUnrecognizedProjects": "Determines if unrecognized projects are skipped when projects are opened.",
 	"configuration.description.roslyn.loadMetadataForReferencedProjects": "Determines if metadata from existing output assemblies is loaded instead of opening referenced projects."
 }

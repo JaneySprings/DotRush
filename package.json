@@ -118,17 +118,19 @@
       {
         "title": "%extension.displayName%",
         "properties": {
-          "dotrush.additionalWorkspaceArguments": {
-            "type": "string",
-            "default": "",
-            "description": "%configuration.description.additionalWorkspaceArguments%"
+          "dotrush.roslyn.workspaceProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "%configuration.description.roslyn.workspaceProperties%"
           },
-          "dotrush.enableRoslynAnalyzers": {
+          "dotrush.roslyn.enableAnalyzers": {
             "type": "boolean",
             "default": false,
-            "description": "%configuration.description.enableRoslynAnalyzers%"
+            "description": "%configuration.description.roslyn.enableAnalyzers%"
           },
-
           "dotrush.roslyn.skipUnrecognizedProjects": {
             "type": "boolean",
             "default": true,
