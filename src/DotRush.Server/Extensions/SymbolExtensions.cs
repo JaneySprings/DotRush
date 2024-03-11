@@ -41,6 +41,13 @@ public static class SymbolExtensions {
         if (symbol is IAliasSymbol aliasSymbol)
             return aliasSymbol.Target.ToSymbolKind();
 
+        if (symbol is IFieldSymbol fieldSymbol) {
+            if (fieldSymbol.ContainingType?.TypeKind == TypeKind.Enum)
+                return ProtocolModels.SymbolKind.EnumMember;
+
+            return fieldSymbol.IsConst ? ProtocolModels.SymbolKind.Constant : ProtocolModels.SymbolKind.Field;
+        }
+
         if (symbol is INamedTypeSymbol namedType) {
             switch (namedType.TypeKind) {
                 case TypeKind.Unknown: return ProtocolModels.SymbolKind.Null;

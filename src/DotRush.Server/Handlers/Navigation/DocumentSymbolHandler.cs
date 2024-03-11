@@ -9,6 +9,20 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace DotRush.Server.Handlers;
 
 public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
+    public static readonly SymbolDisplayFormat MemberFormat = new SymbolDisplayFormat(
+        genericsOptions:
+            SymbolDisplayGenericsOptions.IncludeTypeParameters |
+            SymbolDisplayGenericsOptions.IncludeVariance,
+        memberOptions:
+            SymbolDisplayMemberOptions.IncludeParameters,
+        parameterOptions:
+            SymbolDisplayParameterOptions.IncludeExtensionThis |
+            SymbolDisplayParameterOptions.IncludeParamsRefOut |
+            SymbolDisplayParameterOptions.IncludeType,
+        miscellaneousOptions:
+            SymbolDisplayMiscellaneousOptions.UseSpecialTypes
+    );
+
     private readonly WorkspaceService solutionService;
 
     public DocumentSymbolHandler(WorkspaceService solutionService) {
@@ -50,12 +64,17 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
             if (node is not MemberDeclarationSyntax)
                 continue;
 
-            var symbol = semanticModel.GetDeclaredSymbol(node);
-            if (symbol == null)
+            ISymbol? symbol = null;
+            if (node is FieldDeclarationSyntax fieldDeclaration && fieldDeclaration.Declaration.Variables.Any())
+                symbol = semanticModel.GetDeclaredSymbol(fieldDeclaration.Declaration.Variables.First());
+            else
+                symbol = semanticModel.GetDeclaredSymbol(node);
+
+            if (string.IsNullOrEmpty(symbol?.Name))
                 continue;
 
             result.Add(new DocumentSymbol() {
-                Name = string.IsNullOrEmpty(symbol.Name) ? "<unnamed>" : symbol.Name,
+                Name = symbol.ToDisplayString(MemberFormat),
                 Kind = symbol.ToSymbolKind(),
                 Range = node.GetLocation().ToRange(),
                 SelectionRange = node.GetLocation().ToRange(),
