@@ -57,6 +57,15 @@ public class ExtendedDiagnostic {
         SourceName = source.Name;
         SourceId = source.Id;
     }
+
+    public override string ToString() {
+        var span = $"{InnerDiagnostic.Location.GetLineSpan().StartLinePosition.Line + 1}:{InnerDiagnostic.Location.GetLineSpan().StartLinePosition.Character + 1}";
+        var sourcePath = InnerDiagnostic.Location.SourceTree?.FilePath ?? string.Empty;
+        return $"{sourcePath}({span}): {InnerDiagnostic.Severity} {InnerDiagnostic.Id}: {InnerDiagnostic.GetMessage()}";
+    }
+    public override int GetHashCode() {
+        return this.ToString().GetHashCode();
+    }
 }
 
 public class DiagnosticsCollectionChangedEventArgs : EventArgs {

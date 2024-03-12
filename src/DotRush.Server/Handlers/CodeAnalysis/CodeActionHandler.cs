@@ -91,6 +91,6 @@ public class CodeActionHandler : CodeActionHandlerBase {
     private ExtendedDiagnostic? GetDiagnosticById(string documentPath, int diagnosticId) {
         return compilationService.Diagnostics
             .GetDiagnostics(documentPath)?
-            .FirstOrDefault(x => x.InnerDiagnostic.GetHashCode() == diagnosticId);
+            .FirstOrDefault(x => x.GetHashCode() == diagnosticId);
     }
 }
