@@ -13,7 +13,7 @@ public static class DiagnosticsExtensions {
                 Severity = it.InnerDiagnostic.Severity.ToServerSeverity(),
                 Source = it.SourceName ?? diagnosticSource,
                 Code = it.InnerDiagnostic.Id,
-                Data = it.InnerDiagnostic.GetHashCode(),
+                Data = it.GetHashCode(),
             };
         });
     }
