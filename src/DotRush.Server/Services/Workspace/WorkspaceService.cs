@@ -31,7 +31,7 @@ public class WorkspaceService: SolutionService {
     protected override void PushDiagnostics(string projectFilePath) {
         var updatedDiagnostics = worksapceDiagnostics.Select(it => it.UpdateSource(projectFilePath));
         serverFacade?.TextDocument?.PublishDiagnostics(new PublishDiagnosticsParams() {
-            Uri = DocumentUri.From(projectFilePath),
+            Uri = DocumentUri.FromFileSystemPath(projectFilePath),
             Diagnostics = new Container<Protocol.Diagnostic>(updatedDiagnostics),
         });
     }

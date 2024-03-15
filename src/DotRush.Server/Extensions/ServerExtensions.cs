@@ -1,14 +1,8 @@
 using DotRush.Server.Logging;
-using NLog;
 
 namespace DotRush.Server.Extensions;
 
 public static class ServerExtensions {
-    private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-
-    static ServerExtensions() {
-        LogConfig.InitializeLog();
-    }
 
     public static async Task<T> SafeHandlerAsync<T>(T fallback, Func<Task<T>> action) {
         try {
@@ -53,6 +47,6 @@ public static class ServerExtensions {
     private static void LogException(Exception e) {
         if (e is TaskCanceledException || e is OperationCanceledException) 
             return;
-        logger.Error(e);
+        SessionLogger.LogError(e);
     }
 }

@@ -67,7 +67,7 @@ public static class CodeActionExtensions {
                         textDocumentEdits.Add(new ProtocolModels.TextDocumentEdit() { 
                             Edits = textEdits,
                             TextDocument = new ProtocolModels.OptionalVersionedTextDocumentIdentifier() { 
-                                Uri = DocumentUri.From(newDocument.FilePath)
+                                Uri = DocumentUri.FromFileSystemPath(newDocument.FilePath)
                             }
                         });
                     }

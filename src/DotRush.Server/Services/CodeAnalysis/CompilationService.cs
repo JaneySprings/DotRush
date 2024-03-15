@@ -109,7 +109,7 @@ public class CompilationService {
 
     private void OnDiagnosticsCollectionChanged(object? sender, DiagnosticsCollectionChangedEventArgs e) {
         serverFacade.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
-            Uri = DocumentUri.From(e.DocumentPath),
+            Uri = DocumentUri.FromFileSystemPath(e.DocumentPath),
             Diagnostics = new Container<Diagnostic>(e.ServerDiagnostics),
             // Version = version,
         });

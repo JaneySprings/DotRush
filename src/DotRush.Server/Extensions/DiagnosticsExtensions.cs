@@ -8,7 +8,7 @@ public static class DiagnosticsExtensions {
         return diagnostics.Select(it => {
             var diagnosticSource = it.InnerDiagnostic.Location.SourceTree?.FilePath;
             return new Protocol.Diagnostic() {
-                Message = it.InnerDiagnostic.GetMessage(),
+                Message = it.InnerDiagnostic.GetSubject(),
                 Range = it.InnerDiagnostic.Location.ToRange(),
                 Severity = it.InnerDiagnostic.Severity.ToServerSeverity(),
                 Source = it.SourceName ?? diagnosticSource,
@@ -60,5 +60,13 @@ public static class DiagnosticsExtensions {
                 End = new Protocol.Position(0, 0)
             },
         };
+    }
+
+    public static string GetSubject(this Diagnostic diagnostic) {
+        var message = diagnostic.GetMessage();
+        if (string.IsNullOrEmpty(message))
+            return $"Missing subject for {diagnostic.Id}";
+
+        return message;
     }
 }
