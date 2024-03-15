@@ -54,13 +54,13 @@ public class DecompilationService {
 
         symbolFinder.Visit(root);
         locations.AddRange(symbolFinder.Locations.Select(loc => new ProtocolModels.Location() {
-            Uri = DocumentUri.From(documentPath),
+            Uri = DocumentUri.FromFileSystemPath(documentPath),
             Range = loc.ToRange(sourceText),
         }));
 
         if (locations.Count == 0) {
             locations.Add(new ProtocolModels.Location() {
-                Uri = DocumentUri.From(documentPath),
+                Uri = DocumentUri.FromFileSystemPath(documentPath),
                 Range = new ProtocolModels.Range() {
                     Start = new ProtocolModels.Position(0, 0),
                     End = new ProtocolModels.Position(0, 0),

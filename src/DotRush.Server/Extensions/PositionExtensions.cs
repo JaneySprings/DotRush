@@ -42,7 +42,7 @@ public static class PositionExtensions {
             return null;
 
         return new ProtocolModels.Location() {
-            Uri = DocumentUri.From(location.SourceTree.FilePath),
+            Uri = DocumentUri.FromFileSystemPath(location.SourceTree.FilePath),
             Range = location.SourceSpan.ToRange(location.SourceTree.GetText())
         };
     }
@@ -52,7 +52,7 @@ public static class PositionExtensions {
             return null;
 
         return new ProtocolModels.Location() {
-            Uri = DocumentUri.From(location.Document.FilePath),
+            Uri = DocumentUri.FromFileSystemPath(location.Document.FilePath),
             Range = location.Location.SourceSpan.ToRange(sourceText)
         };
     }

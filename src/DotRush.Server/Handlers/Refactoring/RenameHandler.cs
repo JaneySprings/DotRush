@@ -64,7 +64,7 @@ public class RenameHandler : RenameHandlerBase {
 
         var result = new Dictionary<DocumentUri, IEnumerable<TextEdit>>();
         foreach (var documentEdit in documentEdits) {
-            var documentUri = DocumentUri.From(documentEdit.Key);
+            var documentUri = DocumentUri.FromFileSystemPath(documentEdit.Key);
             if (!result.ContainsKey(documentUri))
                 result.Add(documentUri, documentEdit.Value);
         }
