@@ -15,7 +15,7 @@ public static class SessionLogger {
     public static void LogError(string message) {
         logger.Error(message);
     }
-    public static void LogMessage(string message) {
+    public static void LogDebug(string message) {
         logger.Debug(message);
     }
 }
