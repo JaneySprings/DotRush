@@ -7,6 +7,7 @@ export const microsoftProblemMatcherId = "msCompile";
 export const commandIdContextMenuEnabled = "dotrush.contextMenuEnabled";
 export const commandIdCreateItemTemplate = "dotrush.createItemTemplate";
 export const commandIdCreateProjectTemplate = "dotrush.createProjectTemplate";
+export const commandIdRestartServer = "dotrush.restartServer";
 
 export const taskDefinitionType = "dotrush.task";
 export const taskCommandIdBuild = "dotrush.build";
