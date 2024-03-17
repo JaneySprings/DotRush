@@ -112,6 +112,10 @@
       {
         "command": "dotrush.createProjectTemplate",
         "title": "%command.title.createProjectTemplate%"
+      },
+      {
+        "command": "dotrush.restartServer",
+        "title": "%command.title.restartServer%"
       }
     ],
     "configuration": [

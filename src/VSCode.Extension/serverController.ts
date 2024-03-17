@@ -13,6 +13,8 @@ export class ServerController {
         const serverExecutable = path.join(extensionPath, "extension", "bin", "DotRush");
         const serverExtension = process.platform === 'win32' ? '.exe' : '';
         ServerController.command = serverExecutable + serverExtension;
+
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRestartServer, () => ServerController.restart()));
     }
 
     public static initialize() {
