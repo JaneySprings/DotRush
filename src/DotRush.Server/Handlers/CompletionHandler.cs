@@ -30,7 +30,6 @@ public class CompletionHandler : CompletionHandlerBase {
         return new CompletionRegistrationOptions {
             DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments,
             TriggerCharacters = new[] { ".", " ", "(", "<" },
-            AllCommitCharacters = new[] { " ", ".", ",", "(", ")" },
             ResolveProvider = true,
         };
     }
