@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using DotRush.Server.Handlers;
+using DotRush.Server.Logging;
 using DotRush.Server.Services;
 using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -38,6 +39,7 @@ public class LanguageServer {
     }
 
     public static async Task Main(string[] args) {
+        SessionLogger.LogDebug($"Server created with targets: {string.Join(", ", args)}");
         var server = await OmniSharpLanguageServer.From(options => options
             .AddDefaultLoggingProvider()
             .WithInput(Console.OpenStandardInput())
@@ -102,5 +104,6 @@ public class LanguageServer {
         var ideProcess = Process.GetProcessById((int)pid.Value);
         ideProcess.EnableRaisingEvents = true;
         ideProcess.Exited += (_, _) => Environment.Exit(0);
+        SessionLogger.LogDebug($"Server is observing client process {ideProcess.ProcessName} (PID: {pid})");
     }
 }

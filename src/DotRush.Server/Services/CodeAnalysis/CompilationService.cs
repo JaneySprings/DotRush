@@ -7,6 +7,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
+using DotRush.Server.Logging;
 
 namespace DotRush.Server.Services;
 
@@ -42,6 +43,7 @@ public class CompilationService {
                 }
             })
             .Where(x => x != null)!;
+        SessionLogger.LogDebug($"Initialized {embeddedAnalyzers.Count()} embeded analyzers");
     }
 
     public async Task PublishDiagnosticsAsync() {

@@ -1,3 +1,4 @@
+using DotRush.Server.Logging;
 using Microsoft.Extensions.Configuration;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 
@@ -31,6 +32,7 @@ public class ConfigurationService {
                 retryCount++;
             }
         });
+        SessionLogger.LogDebug("ConfigurationService initialized");
     }
     private Dictionary<string, string> GetWorkspaceOptions() {
         var result = new Dictionary<string, string>();

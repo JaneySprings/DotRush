@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection;
 using DotRush.Server.Extensions;
+using DotRush.Server.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 
@@ -20,6 +21,7 @@ public class CodeActionService {
     public void InitializeEmbeddedProviders() {
         var codeAnalysisAssembly = Assembly.Load(LanguageServer.CodeAnalysisFeaturesAssembly);
         embeddedCodeFixProviders = CreateCodeFixProviders(codeAnalysisAssembly);
+        SessionLogger.LogDebug($"CodeActionService initialized with {embeddedCodeFixProviders.Count()} embedded code fix providers");
     }
     public void AddProjectProviders(Project project) {
         if (projectCodeFixProviders.ContainsKey(project.Id))

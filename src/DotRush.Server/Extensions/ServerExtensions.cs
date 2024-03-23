@@ -1,4 +1,7 @@
 using DotRush.Server.Logging;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol.Server;
+using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 
 namespace DotRush.Server.Extensions;
 
@@ -42,6 +45,21 @@ public static class ServerExtensions {
         } catch (Exception e) {
             LogException(e);
         }
+    }
+
+    public static void ShowError(this ILanguageServerFacade server, string message) {
+        server.Window.ShowMessage(new ShowMessageParams {
+            Type = MessageType.Error,
+            Message = message
+        });
+        SessionLogger.LogError(message);
+    }
+    public static void ShowInfo(this ILanguageServerFacade server, string message) {
+        server.Window.ShowMessage(new ShowMessageParams {
+            Type = MessageType.Info,
+            Message = message
+        });
+        SessionLogger.LogDebug(message);
     }
 
     private static void LogException(Exception e) {
