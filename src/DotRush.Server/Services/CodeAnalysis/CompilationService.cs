@@ -2,7 +2,6 @@ using DotRush.Server.Extensions;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Immutable;
 using System.Reflection;
-using System.Diagnostics;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -24,6 +23,7 @@ public class CompilationService {
         this.configurationService = configurationService;
         this.solutionService = solutionService;
         this.serverFacade = serverFacade;
+        
 
         embeddedAnalyzers = Enumerable.Empty<DiagnosticAnalyzer>();
         compilationTokenSource = new CancellationTokenSource();
@@ -38,7 +38,7 @@ public class CompilationService {
                 try {
                     return Activator.CreateInstance(x.AsType()) as DiagnosticAnalyzer;
                 } catch (Exception ex) {
-                    Debug.WriteLine($"Creating instance of analyzer '{x.AsType()}' failed, error: {ex}");
+                    SessionLogger.LogError($"Creating instance of analyzer '{x.AsType()}' failed, error: {ex}");
                     return null;
                 }
             })
@@ -110,6 +110,7 @@ public class CompilationService {
     }
 
     private void OnDiagnosticsCollectionChanged(object? sender, DiagnosticsCollectionChangedEventArgs e) {
+        SessionLogger.LogDebug($"Publishing diagnostics for document: {e.DocumentPath}");
         serverFacade.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
             Uri = DocumentUri.FromFileSystemPath(e.DocumentPath),
             Diagnostics = new Container<Diagnostic>(e.ServerDiagnostics),

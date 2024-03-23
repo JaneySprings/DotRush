@@ -47,13 +47,13 @@ public class CodeActionService {
                     try {
                         var attribute = x.GetCustomAttribute<ExportCodeFixProviderAttribute>();
                         if (attribute == null) {
-                            Debug.WriteLine($"Skipping code fix provider '{x.AsType()}' because it is missing the ExportCodeFixProviderAttribute.");
+                            SessionLogger.LogDebug($"Skipping code fix provider '{x.AsType()}' because it is missing the ExportCodeFixProviderAttribute.");
                             return null;
                         }
 
                         return Activator.CreateInstance(x.AsType()) as CodeFixProvider;
                     } catch (Exception ex) {
-                        Debug.WriteLine($"Creating instance of code fix provider '{x.AsType()}' failed, error: {ex}");
+                        SessionLogger.LogError($"Creating instance of code fix provider '{x.AsType()}' failed, error: {ex}");
                         return null;
                     }
                 })
