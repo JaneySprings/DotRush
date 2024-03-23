@@ -1,4 +1,5 @@
 using DotRush.Server.Extensions;
+using DotRush.Server.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using Protocol = OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -27,6 +28,7 @@ public abstract class ProjectService {
     }
 
     protected async Task LoadAsync(MSBuildWorkspace workspace, Action<Solution?> solutionChanged) {
+        SessionLogger.LogDebug("Projects loading started");
         var observer = LanguageServer.CreateWorkDoneObserver();
         var progressObserver = new ProgressObserver(observer);
 
@@ -48,5 +50,6 @@ public abstract class ProjectService {
 
         observer?.OnCompleted();
         observer?.Dispose();
+        SessionLogger.LogDebug($"Projects loading completed, loaded {workspace.CurrentSolution.ProjectIds.Count} projects");
     }
 }
