@@ -103,7 +103,10 @@ public class LanguageServer {
 
         var ideProcess = Process.GetProcessById((int)pid.Value);
         ideProcess.EnableRaisingEvents = true;
-        ideProcess.Exited += (_, _) => Environment.Exit(0);
+        ideProcess.Exited += (_, _) => {
+            SessionLogger.LogDebug($"Shutting down server because client process [{ideProcess.ProcessName}] has exited");
+            Environment.Exit(0);
+        };
         SessionLogger.LogDebug($"Server is observing client process {ideProcess.ProcessName} (PID: {pid})");
     }
 }
