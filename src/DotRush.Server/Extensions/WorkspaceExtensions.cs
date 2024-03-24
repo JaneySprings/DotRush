@@ -53,7 +53,6 @@ public static class WorkspaceExtensions {
             .Where(project => GetMaxCommonFoldersCount(project, documentPath) == maxCommonFoldersCount)
             .Select(project => project.Id);
     }
-
     public static IEnumerable<string> GetFolders(this Project project, string documentPath) {
         var rootDirectory = Path.GetDirectoryName(project.FilePath);
         var documentDirectory = Path.GetDirectoryName(documentPath);
@@ -63,40 +62,20 @@ public static class WorkspaceExtensions {
         var relativePath = documentDirectory.Replace(rootDirectory, string.Empty);
         return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
     }
+    public static IEnumerable<string> GetProjectFiles(IEnumerable<string>? directories) {
+        if (directories == null)
+            return Enumerable.Empty<string>();
 
-    public static bool ContainsProjectsWithPath(this Workspace? workspace, string projectPath) {
-        return workspace?.CurrentSolution.Projects.Any(project => projectPath.Equals(project.FilePath, StringComparison.OrdinalIgnoreCase)) == true;
-    }
-
-    public static async Task CompileProjectAsync(this MSBuildWorkspace workspace, Project project, IWorkDoneObserver? observer, CancellationToken cancellationToken) {
-        var projectName = Path.GetFileNameWithoutExtension(project.FilePath);
-        observer?.OnNext(new WorkDoneProgressReport { Message = string.Format(Resources.MessageProjectCompile, projectName) });
-        _ = await project.GetCompilationAsync(cancellationToken);
-    }
-
-
-    public static IEnumerable<string> GetVisibleFiles(string folder, string mask) {
-        return Directory.EnumerateFiles(folder, mask, SearchOption.AllDirectories).Where(it => IsFileVisible(it, folder));
-    }
-
-    public static bool IsFileVisible(string filePath, string baseDirectory) {
-        var directoryInfo = new DirectoryInfo(baseDirectory);
-        if (directoryInfo.Attributes.HasFlag(FileAttributes.Hidden))
-            return false;
-        
-        var directoryNames = filePath.Replace(baseDirectory, string.Empty).Split(Path.DirectorySeparatorChar);
-        if (directoryNames.Any(it => it.StartsWith('.')))
-            return false;
-        var currentProcessingDirectory = baseDirectory;
-        foreach (var directoryName in directoryNames) {
-            currentProcessingDirectory = Path.Combine(currentProcessingDirectory, directoryName);
-            directoryInfo = new DirectoryInfo(currentProcessingDirectory);
-            if (directoryInfo.Attributes.HasFlag(FileAttributes.Hidden))
-                return false;
+        var result = new List<string>();
+        foreach (var directory in directories) {
+            var directoryProjectFiles = FileSystemExtensions.GetVisibleFiles(directory).Where(it => LanguageServer.IsProjectFile(it));
+            if (directoryProjectFiles.Any()) {
+                result.AddRange(directoryProjectFiles);
+                continue;
+            }
+            result.AddRange(GetProjectFiles(FileSystemExtensions.GetVisibleDirectories(directory)));
         }
-        
-        var fileInfo = new FileInfo(filePath);
-        return !fileInfo.Attributes.HasFlag(FileAttributes.Hidden);
+        return result;
     }
 
     private static int GetMaxCommonFoldersCount(Project project, string documentPath) {

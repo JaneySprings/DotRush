@@ -33,7 +33,7 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
             HandleFileChange(path, change.Type);
 
             if (change.Type == FileChangeType.Created && Directory.Exists(path)) {
-                foreach (var filePath in WorkspaceExtensions.GetVisibleFiles(path, "*"))
+                foreach (var filePath in FileSystemExtensions.GetVisibleFilesRecursive(path))
                     HandleFileChange(filePath, FileChangeType.Created);
             }
         }

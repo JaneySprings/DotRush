@@ -2,6 +2,7 @@ using DotRush.Server.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
+using FileSystemExtensions = DotRush.Server.Extensions.FileSystemExtensions;
 
 namespace DotRush.Server.Services;
 
@@ -32,7 +33,7 @@ public abstract class SolutionService: ProjectService {
             if (project?.FilePath == null || !File.Exists(file))
                 continue;
 
-            if (!WorkspaceExtensions.IsFileVisible(file, Path.GetDirectoryName(project.FilePath)!))
+            if (!FileSystemExtensions.IsFileVisible(file, project))
                 continue;
             if (file.StartsWith(project.GetIntermediateOutputPath()) || file.StartsWith(project.GetOutputPath()))
                 continue;
@@ -79,7 +80,7 @@ public abstract class SolutionService: ProjectService {
             if (project?.FilePath == null || !File.Exists(file))
                 continue;
 
-            if (!WorkspaceExtensions.IsFileVisible(file, Path.GetDirectoryName(project.FilePath)!))
+            if (!FileSystemExtensions.IsFileVisible(file, project))
                 continue;
             if (file.StartsWith(project.GetIntermediateOutputPath()) || file.StartsWith(project.GetOutputPath()))
                 continue;
