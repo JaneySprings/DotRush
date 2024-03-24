@@ -1,4 +1,6 @@
 using Microsoft.CodeAnalysis;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 
 namespace DotRush.Server.Extensions;
 
@@ -16,6 +18,11 @@ public static class ProjectExtensions {
     }
     public static string GetIntermediateOutputPath(this Project project) {
         return FirstFolderOrDefault(project.FilePath, project.OutputRefFilePath, $"obj{Path.DirectorySeparatorChar}");
+    }
+    public static async Task CompileAsync(this Project project, IWorkDoneObserver? observer, CancellationToken cancellationToken) {
+        var projectName = Path.GetFileNameWithoutExtension(project.FilePath);
+        observer?.OnNext(new WorkDoneProgressReport { Message = string.Format(Resources.MessageProjectCompile, projectName) });
+        _ = await project.GetCompilationAsync(cancellationToken);
     }
 
     private static string FirstFolderOrDefault(string? projectPath, string? targetPath, string fallbackFolder) {

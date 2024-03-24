@@ -34,14 +34,10 @@ public abstract class ProjectService {
 
         foreach (var projectFile in projectFilePaths) {
             ClearDiagnostics();
-
-            if (workspace.ContainsProjectsWithPath(projectFile))
-                continue;
-
             await ServerExtensions.SafeHandlerAsync(async () => {
                 await workspace.RestoreProjectAsync(projectFile, ProjectDiagnosticReceived, observer, CancellationToken.None);
                 var project = await workspace.OpenProjectAsync(projectFile, progressObserver, CancellationToken.None);
-                await workspace.CompileProjectAsync(project, observer, CancellationToken.None);
+                await project.CompileAsync(observer, CancellationToken.None);
             });
 
             solutionChanged?.Invoke(workspace.CurrentSolution);

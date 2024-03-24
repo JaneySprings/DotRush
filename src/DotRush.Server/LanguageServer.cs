@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using DotRush.Server.Extensions;
 using DotRush.Server.Handlers;
 using DotRush.Server.Logging;
 using DotRush.Server.Services;
@@ -13,8 +14,13 @@ namespace DotRush.Server;
 
 public class LanguageServer {
     public const string CodeAnalysisFeaturesAssembly = "Microsoft.CodeAnalysis.CSharp.Features";
-    public static TextDocumentSelector SelectorForAllDocuments => TextDocumentSelector.ForLanguage("csharp", "xml", "xaml", "XAML");
-    public static TextDocumentSelector SelectorForSourceCodeDocuments => TextDocumentSelector.ForLanguage("csharp");
+    public static TextDocumentSelector SelectorForAllDocuments => TextDocumentSelector.ForPattern(
+        Path.Combine("**", "*.cs"), 
+        Path.Combine("**", "*.xaml")
+    );
+    public static TextDocumentSelector SelectorForSourceCodeDocuments => TextDocumentSelector.ForPattern(
+        Path.Combine("**", "*.cs")
+    );
 
     public static bool IsSourceCodeDocument(string filePath) {
         var allowedExtensions = new[] { ".cs", /* .fs .vb */};
@@ -76,7 +82,7 @@ public class LanguageServer {
 
         await server.WaitForExit.ConfigureAwait(false);
     }
-    private static async Task StartedHandlerAsync(ILanguageServer server, string[] targets, CancellationToken cancellationToken) {
+    private static async Task StartedHandlerAsync(ILanguageServer server, IEnumerable<string> targets, CancellationToken cancellationToken) {
         var clientSettings = server.Workspace.ClientSettings;
         var compilationService = server.Services.GetService<CompilationService>()!;
         var configurationService = server.Services.GetService<ConfigurationService>()!;
@@ -93,6 +99,12 @@ public class LanguageServer {
         codeActionService.InitializeEmbeddedProviders();
         if (configurationService.UseRoslynAnalyzers)
             compilationService.InitializeEmbeddedAnalyzers();
+
+        if (!targets.Any()) {
+            var workspaceFolders = server.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
+            targets = WorkspaceExtensions.GetProjectFiles(workspaceFolders);
+            SessionLogger.LogDebug($"No targets provided, used auto-detected targets: {string.Join(' ', targets)}");
+        }
 
         workspaceService.AddProjectFiles(targets);
         workspaceService.StartSolutionLoading();
