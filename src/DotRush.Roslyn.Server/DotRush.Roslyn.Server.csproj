@@ -7,7 +7,7 @@
 		<OutputType>Exe</OutputType>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<RootNamespace>DotRush.Server</RootNamespace>
+		<AssemblyName>DotRush</AssemblyName>
 		<SelfContained>true</SelfContained>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 		<OutputPath>..\..\extension\bin</OutputPath>
