@@ -149,7 +149,6 @@
             "type": "boolean",
             "default": false,
             "description": "%configuration.description.roslyn.showItemsFromUnimportedNamespaces%"
-          },
           }
         }
       }
