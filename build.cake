@@ -9,7 +9,7 @@ string configuration = Argument<string>("configuration", "debug");
 
 public string RootDirectory => MakeAbsolute(Directory(".")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
-public string ServerProjectFilePath => _Path.Combine(RootDirectory, "src", "DotRush.Server", "DotRush.csproj");
+public string ServerProjectFilePath => _Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server", "DotRush.Roslyn.Server.csproj");
 public string ExtensionStagingDirectory => _Path.Combine(RootDirectory, "extension");
 public string BinariesDirectory => _Path.Combine(ExtensionStagingDirectory, "bin");
 
