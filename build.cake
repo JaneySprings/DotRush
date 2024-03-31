@@ -3,7 +3,7 @@
 using _Path = System.IO.Path;
 
 string version;
-string runtime = Argument<string>("arch", "osx-arm64");
+string runtime = Argument<string>("arch", "linux-musl-arm64");
 string target = Argument<string>("target", "vsix");
 string configuration = Argument<string>("configuration", "debug");
 
