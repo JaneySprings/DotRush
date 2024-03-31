@@ -42,7 +42,7 @@ export class ProjectTemplateWizard extends BaseTemplateWizard {
         const result = await vscode.window.showInformationMessage(res.messageNewProjectOpenAction, { modal: true }, res.messageAddToWorkspace, res.messageOpen);
         if (result === res.messageAddToWorkspace)
             return vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders.length, undefined, { uri: templatePath });
-        
-        await vscode.commands.executeCommand(res.taskCommandIdOpenFolder, templatePath);
+        if (result === res.messageOpen)
+            return await vscode.commands.executeCommand(res.taskCommandIdOpenFolder, templatePath);
     }
 }

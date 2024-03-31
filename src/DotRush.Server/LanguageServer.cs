@@ -39,9 +39,8 @@ public class LanguageServer {
     }
 
     private static IServerWorkDoneManager? workDoneManager;
-    public static IWorkDoneObserver? CreateWorkDoneObserver() {
-        var task = workDoneManager?.Create(new WorkDoneProgressBegin());
-        return task?.Wait(TimeSpan.FromSeconds(2)) == true ? task.Result : null;
+    public static async Task<IWorkDoneObserver?> CreateWorkDoneObserverAsync() {
+        return workDoneManager == null ? null : await workDoneManager.Create(new WorkDoneProgressBegin());
     }
 
     public static async Task Main(string[] args) {
@@ -50,14 +49,13 @@ public class LanguageServer {
             .AddDefaultLoggingProvider()
             .WithInput(Console.OpenStandardInput())
             .WithOutput(Console.OpenStandardOutput())
-            .WithServices(services => {
-                services.AddSingleton<ConfigurationService>();
-                services.AddSingleton<WorkspaceService>();
-                services.AddSingleton<CodeActionService>();
-                services.AddSingleton<CompilationService>();
-                services.AddSingleton<DecompilationService>();
-                services.AddSingleton<CommandsService>();
-            })
+            .WithServices(services => services
+                .AddSingleton<ConfigurationService>()
+                .AddSingleton<WorkspaceService>()
+                .AddSingleton<CodeActionService>()
+                .AddSingleton<CompilationService>()
+                .AddSingleton<DecompilationService>()
+                .AddSingleton<CommandsService>())
             .WithHandler<DidOpenTextDocumentHandler>()
             .WithHandler<DidChangeTextDocumentHandler>()
             .WithHandler<DidCloseTextDocumentHandler>()
@@ -77,12 +75,12 @@ public class LanguageServer {
             .WithHandler<ImplementationHandler>()
             .WithHandler<DefinitionHandler>()
             .WithHandler<TypeDefinitionHandler>()
-            .OnStarted((s, ct) => StartedHandlerAsync(s, args, ct))
+            .OnStarted((s, _) => StartedHandlerAsync(s, args))
         ).ConfigureAwait(false);
 
         await server.WaitForExit.ConfigureAwait(false);
     }
-    private static async Task StartedHandlerAsync(ILanguageServer server, IEnumerable<string> targets, CancellationToken cancellationToken) {
+    private static async Task StartedHandlerAsync(ILanguageServer server, IEnumerable<string> targets) {
         var clientSettings = server.Workspace.ClientSettings;
         var compilationService = server.Services.GetService<CompilationService>()!;
         var configurationService = server.Services.GetService<ConfigurationService>()!;
@@ -92,7 +90,7 @@ public class LanguageServer {
         ObserveClientProcess(clientSettings.ProcessId);
         workDoneManager = server.WorkDoneManager;
 
-        await configurationService.InitializeAsync();    
+        await configurationService.InitializeAsync();
         if (!workspaceService.TryInitializeWorkspace())
             return;
 
@@ -107,7 +105,7 @@ public class LanguageServer {
         }
 
         workspaceService.AddProjectFiles(targets);
-        workspaceService.StartSolutionLoading();
+        _ = workspaceService.LoadSolutionAsync();
     }
     private static void ObserveClientProcess(long? pid) {
         if (pid == null || pid <= 0)

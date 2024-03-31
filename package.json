@@ -144,6 +144,12 @@
             "type": "boolean",
             "default": false,
             "description": "%configuration.description.roslyn.loadMetadataForReferencedProjects%"
+          },
+          "dotrush.roslyn.showItemsFromUnimportedNamespaces": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.roslyn.showItemsFromUnimportedNamespaces%"
+          },
           }
         }
       }

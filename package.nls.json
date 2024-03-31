@@ -13,5 +13,6 @@
 	"configuration.description.roslyn.workspaceProperties": "Additional MSBuild properties to pass to the workspace (e.g. Configuration=Debug).",
 	"configuration.description.roslyn.enableAnalyzers": "Enable Roslyn analyzers (may affect performance).",
 	"configuration.description.roslyn.skipUnrecognizedProjects": "Determines if unrecognized projects are skipped when projects are opened.",
-	"configuration.description.roslyn.loadMetadataForReferencedProjects": "Determines if metadata from existing output assemblies is loaded instead of opening referenced projects."
+	"configuration.description.roslyn.loadMetadataForReferencedProjects": "Determines if metadata from existing output assemblies is loaded instead of opening referenced projects.",
+	"configuration.description.roslyn.showItemsFromUnimportedNamespaces": "Determines if items from unimported namespaces are shown in completion lists."
 }

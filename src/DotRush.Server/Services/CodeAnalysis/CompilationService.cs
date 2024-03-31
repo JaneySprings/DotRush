@@ -7,6 +7,9 @@ using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using DotRush.Server.Logging;
+using Microsoft.CodeAnalysis;
+using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using FileSystemExtensions = DotRush.Server.Extensions.FileSystemExtensions;
 
 namespace DotRush.Server.Services;
 
@@ -16,7 +19,7 @@ public class CompilationService {
     private readonly ILanguageServerFacade serverFacade;
     private IEnumerable<DiagnosticAnalyzer> embeddedAnalyzers;
     private CancellationTokenSource compilationTokenSource;
-    
+
     public DiagnosticsCollection Diagnostics { get; private set; }
 
     public CompilationService(ILanguageServerFacade serverFacade, WorkspaceService solutionService, ConfigurationService configurationService) {
@@ -52,60 +55,51 @@ public class CompilationService {
         var documentPaths = Diagnostics.GetOpenedDocuments();
         await ServerExtensions.SafeHandlerAsync(async () => {
             await Task.Delay(500, cancellationToken); // Input delay
-            if (!configurationService.UseRoslynAnalyzers)
-                await DiagnoseAsync(documentPaths, cancellationToken);
-            else
-                await AnalyzerDiagnoseAsync(documentPaths, cancellationToken);
+            Diagnostics.ClearDocumentDiagnostics(documentPaths);
+
+            var projectIds = this.solutionService.Solution?.GetProjectIdsWithDocumentsFilePaths(documentPaths);
+            if (projectIds == null)
+                return;
+
+            foreach (var projectId in projectIds) {
+                var compilation = await DiagnoseAsync(projectId, documentPaths, cancellationToken);
+                if (configurationService.UseRoslynAnalyzers && compilation != null)
+                    await AnalyzerDiagnoseAsync(projectId, documentPaths, compilation, cancellationToken);
+            }
         });
     }
-    private async Task DiagnoseAsync(IEnumerable<string> documentPaths, CancellationToken cancellationToken) {
-        Diagnostics.ClearDocumentDiagnostics(documentPaths);
-        var projectIds = this.solutionService.Solution?.GetProjectIdsWithDocumentsFilePaths(documentPaths);
-        if (projectIds == null)
-            return;
+    private async Task<Compilation?> DiagnoseAsync(ProjectId projectId, IEnumerable<string> documentPaths, CancellationToken cancellationToken) {
+        var project = this.solutionService.Solution?.GetProject(projectId);
+        if (project == null)
+            return null;
 
-        foreach (var projectId in projectIds) {
-            var project = this.solutionService.Solution?.GetProject(projectId);
-            if (project == null)
-                return;
+        var compilation = await project.GetCompilationAsync(cancellationToken);
+        if (compilation == null)
+            return null;
 
-            var compilation = await project.GetCompilationAsync(cancellationToken);
-            if (compilation == null)
-                return;
-
-            var diagnostics = compilation.GetDiagnostics(cancellationToken);
-            foreach (var documentPath in documentPaths) {
-                var currentFileDiagnostic = diagnostics.Where(d => d.Location.SourceTree?.FilePath == documentPath);
-                Diagnostics.AppendDocumentDiagnostics(documentPath, currentFileDiagnostic, project);
-            }
+        var diagnostics = compilation.GetDiagnostics(cancellationToken);
+        foreach (var documentPath in documentPaths) {
+            var currentFileDiagnostic = diagnostics.Where(d => FileSystemExtensions.PathEquals(d.Location.SourceTree?.FilePath, documentPath));
+            Diagnostics.AppendDocumentDiagnostics(documentPath, currentFileDiagnostic, project);
         }
+
+        return compilation;
     }
-    private async Task AnalyzerDiagnoseAsync(IEnumerable<string> documentPaths, CancellationToken cancellationToken) {
-        Diagnostics.ClearDocumentDiagnostics(documentPaths);
-        var projectIds = this.solutionService.Solution?.GetProjectIdsWithDocumentsFilePaths(documentPaths);
-        if (projectIds == null)
+    private async Task AnalyzerDiagnoseAsync(ProjectId projectId, IEnumerable<string> documentPaths, Compilation compilation, CancellationToken cancellationToken) {
+        var project = this.solutionService.Solution?.GetProject(projectId);
+        if (project == null)
             return;
 
-        foreach (var projectId in projectIds) {
-            var project = this.solutionService.Solution?.GetProject(projectId);
-            if (project == null)
-                return;
+        var diagnosticAnalyzers = project.AnalyzerReferences
+            .SelectMany(x => x.GetAnalyzers(project.Language))
+            .Concat(this.embeddedAnalyzers)
+            .ToImmutableArray();
 
-            var diagnosticAnalyzers = project.AnalyzerReferences
-                .SelectMany(x => x.GetAnalyzers(project.Language))
-                .Concat(this.embeddedAnalyzers)
-                .ToImmutableArray();
-
-            var compilation = await project.GetCompilationAsync(cancellationToken);
-            if (compilation == null)
-                return;
-
-            var compilationWithAnalyzers = compilation.WithAnalyzers(diagnosticAnalyzers, project.AnalyzerOptions);
-            var diagnostics = await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken);
-            foreach (var documentPath in documentPaths) {
-                var currentFileDiagnostic = diagnostics.Where(d => d.Location.SourceTree?.FilePath == documentPath);
-                Diagnostics.AppendDocumentDiagnostics(documentPath, currentFileDiagnostic, project);
-            }
+        var compilationWithAnalyzers = compilation.WithAnalyzers(diagnosticAnalyzers, project.AnalyzerOptions);
+        var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
+        foreach (var documentPath in documentPaths) {
+            var currentFileDiagnostic = diagnostics.Where(d => FileSystemExtensions.PathEquals(d.Location.SourceTree?.FilePath, documentPath));
+            Diagnostics.AppendDocumentDiagnostics(documentPath, currentFileDiagnostic, project);
         }
     }
 
@@ -113,7 +107,7 @@ public class CompilationService {
         SessionLogger.LogDebug($"Publishing diagnostics for document: {e.DocumentPath}");
         serverFacade.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
             Uri = DocumentUri.FromFileSystemPath(e.DocumentPath),
-            Diagnostics = new Container<Diagnostic>(e.ServerDiagnostics),
+            Diagnostics = new Container<ProtocolModels.Diagnostic>(e.ServerDiagnostics),
             // Version = version,
         });
     }

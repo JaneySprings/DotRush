@@ -5,7 +5,7 @@ using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Server.Extensions;
 
 public class DiagnosticsCollection {
-    private Dictionary<string, List<ExtendedDiagnostic>> diagnostics;
+    private readonly Dictionary<string, List<ExtendedDiagnostic>> diagnostics;
 
     public event EventHandler<DiagnosticsCollectionChangedEventArgs>? DiagnosticsChanged;
 
@@ -15,10 +15,10 @@ public class DiagnosticsCollection {
 
     public void OpenDocument(string documentPath) {
         if (!LanguageServer.IsSourceCodeDocument(documentPath))
-            return;
-        
-        diagnostics.TryAdd(documentPath, new List<ExtendedDiagnostic>());
-        SessionLogger.LogDebug($"Open document: {documentPath}");
+            return;  
+        var result = diagnostics.TryAdd(documentPath, new List<ExtendedDiagnostic>());
+        if (result)
+            SessionLogger.LogDebug($"Open document: {documentPath}");
     }
     public void CloseDocument(string documentPath) {
         diagnostics.Remove(documentPath);
@@ -29,7 +29,7 @@ public class DiagnosticsCollection {
     public void AppendDocumentDiagnostics(string? documentPath, IEnumerable<Diagnostic> newDiagnostics, Project source) {
         if (string.IsNullOrEmpty(documentPath))
             return;
-    
+
         diagnostics[documentPath].AddRange(newDiagnostics.Select(d => new ExtendedDiagnostic(d, source)));
         var eventArgs = new DiagnosticsCollectionChangedEventArgs(documentPath, diagnostics[documentPath].ToServerDiagnostics());
         DiagnosticsChanged?.Invoke(this, eventArgs);
