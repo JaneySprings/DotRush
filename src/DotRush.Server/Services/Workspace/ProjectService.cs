@@ -29,7 +29,7 @@ public abstract class ProjectService {
 
     protected async Task LoadAsync(MSBuildWorkspace workspace, Action<Solution?> solutionChanged) {
         SessionLogger.LogDebug("Projects loading started");
-        var observer = LanguageServer.CreateWorkDoneObserver();
+        var observer = await LanguageServer.CreateWorkDoneObserverAsync();
         var progressObserver = new ProgressObserver(observer);
 
         foreach (var projectFile in projectFilePaths) {

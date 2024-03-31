@@ -1,4 +1,5 @@
 using DotRush.Server.Logging;
+using Microsoft.Extensions.Configuration;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Window;
@@ -60,6 +61,22 @@ public static class ServerExtensions {
             Message = message
         });
         SessionLogger.LogDebug(message);
+    }
+
+    public static Dictionary<string, string> GetKeyValuePairs(this ILanguageServerConfiguration configuration, string key) {
+        var result = new Dictionary<string, string>();
+        for (byte i = 0; i < byte.MaxValue; i++) {
+            var option = configuration?.GetValue<string>($"{key}:{i}");
+            if (option == null)
+                break;
+
+            var keyValue = option.Split('=');
+            if (keyValue.Length != 2)
+                continue;
+            result[keyValue[0]] = keyValue[1];
+        }
+
+        return result;
     }
 
     private static void LogException(Exception e) {

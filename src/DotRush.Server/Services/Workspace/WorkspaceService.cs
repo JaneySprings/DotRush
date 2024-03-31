@@ -48,7 +48,7 @@ public class WorkspaceService: SolutionService {
         SessionLogger.LogDebug("WorkspaceService initialized");
         return true;
     }
-    public async void StartSolutionLoading() {
+    public async Task LoadSolutionAsync() {
         await LoadSolutionAsync(workspace!);
     }
 }

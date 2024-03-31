@@ -7,13 +7,14 @@
 		<OutputType>Exe</OutputType>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<RootNamespace>DotRush.Server</RootNamespace>
 		<SelfContained>true</SelfContained>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 		<OutputPath>..\..\extension\bin</OutputPath>
 		<PublishDir>$(OutputPath)</PublishDir>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-		<NoWarn>$(NoWarn);VSTHRD100</NoWarn>
+		<NoWarn>$(NoWarn);MSB3277</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>

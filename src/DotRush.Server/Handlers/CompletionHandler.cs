@@ -16,13 +16,15 @@ namespace DotRush.Server.Handlers;
 
 public class CompletionHandler : CompletionHandlerBase {
     private readonly WorkspaceService solutionService;
+    private readonly ConfigurationService configurationService;
     private IEnumerable<RoslynCompletionItem>? codeAnalysisCompletionItems;
     private RoslynCompletionService? roslynCompletionService;
     private Document? targetDocument;
     private readonly object? completionOptions;
 
-    public CompletionHandler(WorkspaceService solutionService) {
+    public CompletionHandler(WorkspaceService solutionService, ConfigurationService configurationService) {
         this.solutionService = solutionService;
+        this.configurationService = configurationService;
         this.completionOptions = CompletionServiceExtensions.GetCompletionOptions();
     }
 
@@ -36,17 +38,17 @@ public class CompletionHandler : CompletionHandlerBase {
 
     public override async Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken) {
         return await ServerExtensions.SafeHandlerAsync<CompletionList>(new CompletionList(), async () => {
-            var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
-            this.targetDocument = this.solutionService.Solution?.GetDocument(documentId);
+            var documentId = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
+            this.targetDocument = solutionService.Solution?.GetDocument(documentId);
             this.roslynCompletionService = RoslynCompletionService.GetService(targetDocument);
-            if (this.roslynCompletionService == null || this.targetDocument == null)
+            if (this.roslynCompletionService == null || targetDocument == null)
                 return new CompletionList(Enumerable.Empty<CompletionItem>());
 
-            var sourceText = await this.targetDocument.GetTextAsync(cancellationToken);
+            var sourceText = await targetDocument.GetTextAsync(cancellationToken);
             var offset = request.Position.ToOffset(sourceText);
-            var completions = completionOptions == null 
-                ? await this.roslynCompletionService.GetCompletionsAsync(this.targetDocument, offset, cancellationToken: cancellationToken)
-                : await this.roslynCompletionService.GetCompletionsAsync(this.targetDocument, offset, completionOptions, cancellationToken);
+            var completions = (completionOptions == null || configurationService.ShowItemsFromUnimportedNamespaces)
+                ? await roslynCompletionService.GetCompletionsAsync(targetDocument, offset, cancellationToken: cancellationToken)
+                : await roslynCompletionService.GetCompletionsAsync(targetDocument, offset, completionOptions, cancellationToken);
             
             if (completions == null)
                 return new CompletionList(Enumerable.Empty<CompletionItem>());

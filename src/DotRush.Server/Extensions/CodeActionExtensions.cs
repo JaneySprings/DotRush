@@ -49,10 +49,10 @@ public static class CodeActionExtensions {
                 foreach (var projectChanges in solutionChanges.GetProjectChanges()) {
                     foreach (var documentChanges in projectChanges.GetChangedDocuments()) {
                         var newDocument = projectChanges.NewProject.GetDocument(documentChanges);
-                        var oldDocument = solutionService.Solution?.GetDocument(newDocument?.Id);
+                        var oldDocument = solutionService.Solution.GetDocument(newDocument?.Id);
                         if (oldDocument?.FilePath == null || newDocument?.FilePath == null)
                             continue;
-                        if (textDocumentEdits.Any(x => x.TextDocument.Uri.GetFileSystemPath() == newDocument.FilePath))
+                        if (textDocumentEdits.Any(x => FileSystemExtensions.PathEquals(x.TextDocument.Uri.GetFileSystemPath(), newDocument.FilePath)))
                             continue;
 
                         var sourceText = await oldDocument.GetTextAsync(cancellationToken);

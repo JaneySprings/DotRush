@@ -43,4 +43,13 @@ public static class FileSystemExtensions {
 
         return true;
     }
+
+    public static bool PathEquals(string? path1, string? path2) {
+        if (string.IsNullOrEmpty(path1) || string.IsNullOrEmpty(path2))
+            return false;
+
+        path1 = Path.GetFullPath(path1);
+        path2 = Path.GetFullPath(path2);
+        return string.Equals(path1, path2, StringComparison.OrdinalIgnoreCase);
+    }
 }
