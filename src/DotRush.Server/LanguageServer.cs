@@ -14,13 +14,8 @@ namespace DotRush.Server;
 
 public class LanguageServer {
     public const string CodeAnalysisFeaturesAssembly = "Microsoft.CodeAnalysis.CSharp.Features";
-    public static TextDocumentSelector SelectorForAllDocuments => TextDocumentSelector.ForPattern(
-        Path.Combine("**", "*.cs"), 
-        Path.Combine("**", "*.xaml")
-    );
-    public static TextDocumentSelector SelectorForSourceCodeDocuments => TextDocumentSelector.ForPattern(
-        Path.Combine("**", "*.cs")
-    );
+    public static TextDocumentSelector SelectorForAllDocuments => TextDocumentSelector.ForPattern("**/*.cs", "**/*.xaml");
+    public static TextDocumentSelector SelectorForSourceCodeDocuments => TextDocumentSelector.ForPattern("**/*.cs");
 
     public static bool IsSourceCodeDocument(string filePath) {
         var allowedExtensions = new[] { ".cs", /* .fs .vb */};
