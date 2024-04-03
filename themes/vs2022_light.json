@@ -5,8 +5,8 @@
     "colors": {
         // Window area
         "titleBar.activeBackground": "#fdfbff", // surface
-        "titleBar.activeForeground": "#1a1c1e",   // onSurface
-    
+        "titleBar.activeForeground": "#1a1c1e", // onSurface
+        "titleBar.inactiveBackground": "#fdfbff", // surface
         // Editor area
         "editor.background": "#fdfbff", // surface
         "editorIndentGuide.background1": "#c4c6cf", // outlineVariant
@@ -74,6 +74,11 @@
         "panelSectionHeader.background": "#fdfbff" // surface
     },
     "semanticHighlighting": true,
+    "semanticTokenColors": {
+        "*.deprecated": {
+            "strikethrough": true
+        }
+    },
     // https://github.com/microsoft/vscode/blob/master/extensions/theme-defaults/themes/light_vs.json
     "tokenColors": [
         {
@@ -482,7 +487,6 @@
                 "support.class",
                 "support.type",
                 "entity.name.type",
-                "entity.name.namespace",
                 "entity.other.attribute",
                 "entity.name.scope-resolution",
                 "entity.name.class",
@@ -541,7 +545,7 @@
                 "entity.name.operator"
             ],
             "settings": {
-                "foreground": "#0000FF"
+                "foreground": "#AF00DB"
             }
         },
         {
@@ -685,7 +689,10 @@
         },
         {
             "name": "Namespace",
-            "scope": "entity.name.namespace",
+            "scope": [
+                "entity.name.namespace",
+                "entity.name.type.namespace"
+            ],
             "settings": {
                 "foreground": "#222222"
             }
@@ -733,8 +740,8 @@
             }
         },
         {
-            "name": "Paramter",
-            "scope": "entity.name.type.parameter",
+            "name": "Type Parameter",
+            "scope": "entity.name.type.type-parameter",
             "settings": {
                 "foreground": "#267f99"
             }
