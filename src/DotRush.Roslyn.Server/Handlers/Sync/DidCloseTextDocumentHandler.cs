@@ -1,11 +1,11 @@
-using DotRush.Server.Services;
+using DotRush.Roslyn.Server.Services;
 using MediatR;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 
-namespace DotRush.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers;
 
 public class DidCloseTextDocumentHandler : DidCloseTextDocumentHandlerBase {
     private readonly WorkspaceService solutionService;

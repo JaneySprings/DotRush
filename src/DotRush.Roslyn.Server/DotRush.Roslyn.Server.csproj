@@ -20,9 +20,8 @@
 	<ItemGroup>
 		<PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
 		<PackageReference Include="ICSharpCode.Decompiler" Version="$(DecompilerVersion)" />
-		<PackageReference Include="Microsoft.Build.Locator" Version="1.5.5" />
-		<PackageReference Include="NLog" Version="5.2.4" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(CodeAnalysisVersion)" />
-		<PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(CodeAnalysisVersion)" />
+
+		<ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
 	</ItemGroup>
 </Project>

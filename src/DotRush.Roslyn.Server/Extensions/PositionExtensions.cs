@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.Text;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Server.Extensions;
+namespace DotRush.Roslyn.Server.Extensions;
 
 public static class PositionExtensions {
     public static int ToOffset(this ProtocolModels.Position position, SourceText sourceText) {

@@ -1,5 +1,5 @@
-using DotRush.Server.Extensions;
-using DotRush.Server.Services;
+using DotRush.Roslyn.Server.Extensions;
+using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Rename;
@@ -8,7 +8,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers;
 
 public class RenameHandler : RenameHandlerBase {
     private WorkspaceService solutionService;

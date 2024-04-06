@@ -1,7 +1,7 @@
 
 using Microsoft.CodeAnalysis;
 
-namespace DotRush.Server.Extensions;
+namespace DotRush.Roslyn.Server.Extensions;
 
 public static class FileSystemExtensions {
     public static IEnumerable<string> GetVisibleDirectories(string directoryPath) {

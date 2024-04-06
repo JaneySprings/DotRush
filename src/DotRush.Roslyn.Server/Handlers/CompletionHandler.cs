@@ -1,6 +1,6 @@
 using System.Text;
-using DotRush.Server.Extensions;
-using DotRush.Server.Services;
+using DotRush.Roslyn.Server.Extensions;
+using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -9,10 +9,10 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using RoslynCompletionItem = Microsoft.CodeAnalysis.Completion.CompletionItem;
 using RoslynCompletionService = Microsoft.CodeAnalysis.Completion.CompletionService;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using DotRush.Server.Logging;
+using DotRush.Roslyn.Server.Logging;
 using Microsoft.CodeAnalysis.Tags;
 
-namespace DotRush.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers;
 
 public class CompletionHandler : CompletionHandlerBase {
     private readonly WorkspaceService solutionService;

@@ -1,10 +1,10 @@
-using DotRush.Server.Services;
+using DotRush.Roslyn.Server.Services;
 using MediatR;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
 
-namespace DotRush.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers;
 
 public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
     private readonly WorkspaceService workspaceService;

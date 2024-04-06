@@ -1,8 +1,8 @@
-using DotRush.Server.Logging;
+using DotRush.Roslyn.Server.Logging;
 using Microsoft.CodeAnalysis;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Server.Extensions;
+namespace DotRush.Roslyn.Server.Extensions;
 
 public class DiagnosticsCollection {
     private readonly Dictionary<string, List<ExtendedDiagnostic>> diagnostics;

@@ -6,13 +6,13 @@ using Microsoft.CodeAnalysis.Text;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using FullTypeName = ICSharpCode.Decompiler.TypeSystem.FullTypeName;
 using System.Reflection.PortableExecutable;
-using DotRush.Server.Extensions;
+using DotRush.Roslyn.Server.Extensions;
 using System.Text;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Microsoft.CodeAnalysis.CSharp;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 
-namespace DotRush.Server.Services;
+namespace DotRush.Roslyn.Server.Services;
 
 public class DecompilationService {
     private const string DecompiledProjectName = "_decompilation_";

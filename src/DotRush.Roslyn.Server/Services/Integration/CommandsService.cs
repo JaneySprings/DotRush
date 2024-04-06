@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
-using DotRush.Server.Extensions;
+using DotRush.Roslyn.Server.Extensions;
 
-namespace DotRush.Server.Services;
+namespace DotRush.Roslyn.Server.Services;
 
 public class CommandsService {
     private readonly WorkspaceService workspaceService;

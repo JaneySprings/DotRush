@@ -6,7 +6,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 using Protocol = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Server.Extensions;
+namespace DotRush.Roslyn.Server.Extensions;
 
 public static class NugetExtensions {
     public static async Task RestoreProjectAsync(this MSBuildWorkspace workspace, string projectPath, Action<Protocol.Diagnostic> errorHandler, IWorkDoneObserver? observer, CancellationToken cancellationToken) {

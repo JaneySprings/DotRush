@@ -1,4 +1,4 @@
-using DotRush.Server.Extensions;
+using DotRush.Roslyn.Server.Extensions;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Immutable;
 using System.Reflection;
@@ -6,12 +6,12 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using DotRush.Server.Logging;
+using DotRush.Roslyn.Server.Logging;
 using Microsoft.CodeAnalysis;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using FileSystemExtensions = DotRush.Server.Extensions.FileSystemExtensions;
+using FileSystemExtensions = DotRush.Roslyn.Server.Extensions.FileSystemExtensions;
 
-namespace DotRush.Server.Services;
+namespace DotRush.Roslyn.Server.Services;
 
 public class CompilationService {
     private readonly WorkspaceService solutionService;

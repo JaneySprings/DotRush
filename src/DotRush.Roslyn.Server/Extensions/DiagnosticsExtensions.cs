@@ -1,7 +1,7 @@
 using Microsoft.CodeAnalysis;
 using Protocol = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Server.Extensions;
+namespace DotRush.Roslyn.Server.Extensions;
 
 public static class DiagnosticsExtensions {
     public static IEnumerable<Protocol.Diagnostic> ToServerDiagnostics(this IEnumerable<ExtendedDiagnostic> diagnostics) {

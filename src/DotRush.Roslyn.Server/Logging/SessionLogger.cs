@@ -1,6 +1,6 @@
 using NLog;
 
-namespace DotRush.Server.Logging;
+namespace DotRush.Roslyn.Server.Logging;
 
 public static class SessionLogger {
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();

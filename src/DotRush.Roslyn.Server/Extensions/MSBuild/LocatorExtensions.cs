@@ -1,5 +1,5 @@
 
-namespace DotRush.Server.Extensions;
+namespace DotRush.Roslyn.Server.Extensions;
 
 public static class LocatorExtensions {
     public static bool TryRegisterDefaults(Action? onError = null) {

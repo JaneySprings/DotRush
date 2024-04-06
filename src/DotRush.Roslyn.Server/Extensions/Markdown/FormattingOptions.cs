@@ -1,4 +1,4 @@
-namespace DotRush.Server.Extensions;
+namespace DotRush.Roslyn.Server.Extensions;
 
 public class FormattingOptions {
     public FormattingOptions() {

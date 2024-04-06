@@ -1,4 +1,7 @@
+using DotRush.Roslyn.Common.External;
+using DotRush.Roslyn.Common.Logging;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.MSBuild;
 using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Workspaces.Extensions;
@@ -59,6 +62,16 @@ public static class WorkspaceExtensions {
 
         var relativePath = documentDirectory.Replace(rootDirectory, string.Empty);
         return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
+    }
+
+    public static async Task<ProcessResult> RestoreProjectAsync(this MSBuildWorkspace workspace, string projectPath, CancellationToken cancellationToken) {
+        var processInfo = ProcessRunner.CreateProcess("dotnet", $"restore \"{projectPath}\"", captureOutput: true, displayWindow: false, cancellationToken: cancellationToken);
+        var restoreResult = await processInfo.Result;
+
+        if (restoreResult.ExitCode != 0)
+            CurrentSessionLogger.Error(string.Join(Environment.NewLine, restoreResult.OutputLines));
+
+        return restoreResult;
     } 
 
     private static int GetMaxCommonFoldersCount(Project project, string documentPath) {

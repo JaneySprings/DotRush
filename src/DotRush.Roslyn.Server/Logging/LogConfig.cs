@@ -5,7 +5,7 @@ using NLog.Config;
 using NLog.Targets;
 using NLog.Targets.Wrappers;
 
-namespace DotRush.Server.Logging;
+namespace DotRush.Roslyn.Server.Logging;
 
 public static class LogConfig {
     private static readonly string _logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");

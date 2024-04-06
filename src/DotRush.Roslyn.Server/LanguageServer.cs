@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
-using DotRush.Server.Extensions;
-using DotRush.Server.Handlers;
-using DotRush.Server.Logging;
-using DotRush.Server.Services;
+using DotRush.Roslyn.Server.Extensions;
+using DotRush.Roslyn.Server.Handlers;
+using DotRush.Roslyn.Server.Logging;
+using DotRush.Roslyn.Server.Services;
 using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
@@ -10,25 +10,13 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 using OmniSharp.Extensions.LanguageServer.Server;
 using OmniSharpLanguageServer = OmniSharp.Extensions.LanguageServer.Server.LanguageServer;
 
-namespace DotRush.Server;
+namespace DotRush.Roslyn.Server;
 
 public class LanguageServer {
     public const string CodeAnalysisFeaturesAssembly = "Microsoft.CodeAnalysis.CSharp.Features";
     public static TextDocumentSelector SelectorForAllDocuments => TextDocumentSelector.ForPattern("**/*.cs", "**/*.xaml");
     public static TextDocumentSelector SelectorForSourceCodeDocuments => TextDocumentSelector.ForPattern("**/*.cs");
 
-    public static bool IsSourceCodeDocument(string filePath) {
-        var allowedExtensions = new[] { ".cs", /* .fs .vb */};
-        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
-    }
-    public static bool IsAdditionalDocument(string filePath) {
-        var allowedExtensions = new[] { ".xaml", /* maybe '.razor' ? */};
-        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
-    }
-    public static bool IsProjectFile(string filePath) {
-        var allowedExtensions = new[] { ".csproj", /* fsproj vbproj */};
-        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
-    }
     public static bool IsInternalCommandFile(string filePath) {
         return Path.GetFileName(filePath) == "resolve.drc";
     }

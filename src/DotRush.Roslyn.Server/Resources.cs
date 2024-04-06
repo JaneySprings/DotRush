@@ -1,5 +1,5 @@
 
-namespace DotRush.Server;
+namespace DotRush.Roslyn.Server;
 
 public static class Resources {
     public const string MessageProjectRestore = "Restoring {0}";

@@ -1,10 +1,10 @@
-using DotRush.Server.Extensions;
+using DotRush.Roslyn.Server.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
-using FileSystemExtensions = DotRush.Server.Extensions.FileSystemExtensions;
+using FileSystemExtensions = DotRush.Roslyn.Server.Extensions.FileSystemExtensions;
 
-namespace DotRush.Server.Services;
+namespace DotRush.Roslyn.Server.Services;
 
 public abstract class SolutionService: ProjectService {
     public Solution? Solution { get; private set; }
