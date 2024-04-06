@@ -1,0 +1,14 @@
+<Project>
+    <PropertyGroup>
+        <CodeAnalysisVersion>4.9.2</CodeAnalysisVersion>
+		<DecompilerVersion>8.2.0.7535</DecompilerVersion>
+
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <PublishDir>$(OutputPath)</PublishDir>
+        <SelfContained>true</SelfContained>
+    </PropertyGroup>
+</Project>
