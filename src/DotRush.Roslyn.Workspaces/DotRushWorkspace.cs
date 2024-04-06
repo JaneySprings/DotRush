@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.MSBuild;
 
 namespace DotRush.Roslyn.Workspaces;
 
-public abstract class DotRushWorkspace: SolutionController {
+public abstract class DotRushWorkspace : SolutionController {
     private MSBuildWorkspace? workspace;
 
     protected abstract Dictionary<string, string> WorkspaceProperties { get; }
@@ -45,14 +45,13 @@ public abstract class DotRushWorkspace: SolutionController {
         }
     }
 
-    private bool TryRegisterDotNetEnvironment(Action<Exception>? errorHandler) {
-       try {
+    private static bool TryRegisterDotNetEnvironment(Action<Exception>? errorHandler) {
+        try {
             MSBuildLocator.RegisterDefaults();
             return true;
         } catch (Exception e) {
             errorHandler?.Invoke(e);
             return false;
         }
-
     }
 }

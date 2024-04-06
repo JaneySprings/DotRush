@@ -1,7 +1,13 @@
 {
     "folders": [
         {
-            "path": "src/DotRush.Server"
+            "path": "src/DotRush.Roslyn.Common"
+        },
+        {
+            "path": "src/DotRush.Roslyn.Workspaces"
+        },
+        {
+            "path": "src/DotRush.Roslyn.Server"
         },
         {
             "path": "src/VSCode.Extension"

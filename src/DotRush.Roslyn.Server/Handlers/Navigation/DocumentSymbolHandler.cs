@@ -1,12 +1,12 @@
-using DotRush.Server.Extensions;
-using DotRush.Server.Services;
+using DotRush.Roslyn.Server.Extensions;
+using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace DotRush.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers;
 
 public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
     public static readonly SymbolDisplayFormat MemberFormat = new SymbolDisplayFormat(

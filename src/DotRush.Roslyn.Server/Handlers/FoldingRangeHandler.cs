@@ -1,5 +1,5 @@
-using DotRush.Server.Services;
-using DotRush.Server.Extensions;
+using DotRush.Roslyn.Server.Services;
+using DotRush.Roslyn.Server.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
@@ -7,7 +7,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
-namespace DotRush.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers;
 
 public class FoldingRangeHandler : FoldingRangeHandlerBase {
     private readonly WorkspaceService workspaceService;

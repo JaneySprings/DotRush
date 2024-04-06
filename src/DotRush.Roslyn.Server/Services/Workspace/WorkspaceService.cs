@@ -1,5 +1,5 @@
-using DotRush.Server.Extensions;
-using DotRush.Server.Logging;
+using DotRush.Roslyn.Server.Extensions;
+using DotRush.Roslyn.Server.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using OmniSharp.Extensions.LanguageServer.Protocol;
@@ -9,9 +9,9 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 using Protocol = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Server.Services;
+namespace DotRush.Roslyn.Server.Services;
 
-public class WorkspaceService: SolutionService {
+public class WorkspaceService_old: SolutionService {
     private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;
     private readonly List<Protocol.Diagnostic> worksapceDiagnostics;

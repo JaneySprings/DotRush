@@ -1,7 +1,7 @@
 using Microsoft.CodeAnalysis;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Server.Extensions;
+namespace DotRush.Roslyn.Server.Extensions;
 
 //https://github.com/OmniSharp/omnisharp-roslyn/blob/master/src/OmniSharp.Roslyn/Extensions/SymbolExtensions.cs
 public static class SymbolExtensions {

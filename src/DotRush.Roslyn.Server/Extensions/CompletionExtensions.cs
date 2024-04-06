@@ -2,7 +2,7 @@ using Microsoft.CodeAnalysis.Text;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Microsoft.CodeAnalysis.Tags;
 
-namespace DotRush.Server.Extensions;
+namespace DotRush.Roslyn.Server.Extensions;
 
 public static class CompletionExtensions {
     public static ProtocolModels.CompletionItemKind ToCompletionItemKind(this string tag) {

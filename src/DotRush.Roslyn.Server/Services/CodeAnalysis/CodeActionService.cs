@@ -1,12 +1,12 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection;
-using DotRush.Server.Extensions;
-using DotRush.Server.Logging;
+using DotRush.Roslyn.Server.Extensions;
+using DotRush.Roslyn.Server.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 
-namespace DotRush.Server.Services;
+namespace DotRush.Roslyn.Server.Services;
 
 public class CodeActionService {
     private IEnumerable<CodeFixProvider> embeddedCodeFixProviders;

@@ -2,7 +2,7 @@ using Microsoft.CodeAnalysis.MSBuild;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 
-namespace DotRush.Server.Services;
+namespace DotRush.Roslyn.Server.Services;
 
 public class ProgressObserver: IProgress<ProjectLoadProgress> {
     private IWorkDoneObserver? progressObserver;

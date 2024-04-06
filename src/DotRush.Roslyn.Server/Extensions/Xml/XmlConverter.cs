@@ -2,7 +2,7 @@ using System.Text;
 using System.Xml;
 using Microsoft.CodeAnalysis;
 
-namespace DotRush.Server.Extensions;
+namespace DotRush.Roslyn.Server.Extensions;
 
 // https://github.com/OmniSharp/omnisharp-roslyn/blob/ed467d0ad2d877b837380a849f856dcd210d69f7/src/OmniSharp.Roslyn.CSharp/Services/DocumentationConverter.cs#L154
 public static class XmlConverter {

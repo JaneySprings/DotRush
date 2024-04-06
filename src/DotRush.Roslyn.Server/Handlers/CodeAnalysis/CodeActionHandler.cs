@@ -1,5 +1,5 @@
-using DotRush.Server.Extensions;
-using DotRush.Server.Services;
+using DotRush.Roslyn.Server.Extensions;
+using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -7,7 +7,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using CodeAnalysisCodeAction = Microsoft.CodeAnalysis.CodeActions.CodeAction;
 
-namespace DotRush.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers;
 
 public class CodeActionHandler : CodeActionHandlerBase {
     private readonly WorkspaceService solutionService;
@@ -35,7 +35,8 @@ public class CodeActionHandler : CodeActionHandlerBase {
             var filePath = request.TextDocument.Uri.GetFileSystemPath();         
             codeActionsCollection.Clear();
 
-            var diagnosticId = request.Context.Diagnostics.FirstOrDefault()?.Data?.ToObject<int>();
+            var diagnosticModel = request.Context.Diagnostics.FirstOrDefault(it => it.Data?.ToObject<int>() != null);
+            var diagnosticId = diagnosticModel?.Data?.ToObject<int>();
             if (diagnosticId == null)
                 return null;
         

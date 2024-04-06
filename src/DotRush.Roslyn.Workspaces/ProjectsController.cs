@@ -2,7 +2,6 @@ using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis.MSBuild;
-using WorkspaceDiagnostic = DotRush.Roslyn.Workspaces.Models.WorkspaceDiagnostic;
 
 namespace DotRush.Roslyn.Workspaces;
 
@@ -13,11 +12,11 @@ public abstract class ProjectsController {
     public virtual void OnLoadingCompleted() {}
     public virtual void OnProjectRestoreStarted(string documentPath) {}
     public virtual void OnProjectRestoreCompleted(string documentPath) {}
+    public virtual void OnProjectRestoreFailed(string documentPath, int exitCode) {}
     public virtual void OnProjectLoadStarted(string documentPath) {}
     public virtual void OnProjectLoadCompleted(string documentPath) {}
     public virtual void OnProjectCompilationStarted(string documentPath) {}
     public virtual void OnProjectCompilationCompleted(string documentPath) {}
-    public virtual void OnDiagnosticsReceived(string documentPath, IEnumerable<WorkspaceDiagnostic> diagnostics) {}
     protected abstract void OnWorkspaceStateChanged(MSBuildWorkspace workspace);
 
     public static bool IsSourceCodeDocument(string filePath) {
@@ -49,25 +48,23 @@ public abstract class ProjectsController {
         OnLoadingStarted();
 
         foreach (var projectFile in projectFilePaths) {
-            var diagnostics = new List<WorkspaceDiagnostic>();
             await SafeExtensions.InvokeAsync(async () => {
                 OnProjectRestoreStarted(projectFile);
                 var result = await workspace.RestoreProjectAsync(projectFile, cancellationToken);
-                diagnostics.Add(result);
+                if (result.ExitCode != 0)
+                    OnProjectRestoreFailed(projectFile, result.ExitCode);
                 OnProjectRestoreCompleted(projectFile);
                 
                 OnProjectLoadStarted(projectFile);
                 var project = await workspace.OpenProjectAsync(projectFile, null, cancellationToken);
-                //TODO: get all diags and filter it by targetSite
                 OnProjectLoadCompleted(projectFile);
-                
+
                 OnProjectCompilationStarted(projectFile);
                 _ = await project.GetCompilationAsync(cancellationToken);
                 OnProjectCompilationCompleted(projectFile);
             });
 
             OnWorkspaceStateChanged(workspace);
-            OnDiagnosticsReceived(projectFile, diagnostics);
         }
 
         OnLoadingCompleted();
