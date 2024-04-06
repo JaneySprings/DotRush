@@ -4,6 +4,7 @@ using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using System.Collections.Immutable;
 using System.Reflection;
+using DotRush.Roslyn.Common.Extensions;
 
 namespace DotRush.Roslyn.Server.Extensions;
 

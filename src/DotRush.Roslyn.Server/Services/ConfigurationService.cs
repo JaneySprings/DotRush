@@ -1,5 +1,5 @@
+using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
-using DotRush.Roslyn.Server.Logging;
 using Microsoft.Extensions.Configuration;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 
@@ -38,6 +38,6 @@ public class ConfigurationService {
                 retryCount++;
             }
         });
-        SessionLogger.LogDebug("ConfigurationService initialized");
+        CurrentSessionLogger.Debug("ConfigurationService initialized");
     }
 }

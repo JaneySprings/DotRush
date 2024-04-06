@@ -1,3 +1,5 @@
+using DotRush.Roslyn.Common.Logging;
+
 namespace DotRush.Roslyn.Common.Extensions;
 
 public static class SafeExtensions {
@@ -14,7 +16,7 @@ public static class SafeExtensions {
             return await action.Invoke();
         } catch (Exception e) {
             LogException(e);
-            return default(T);
+            return default;
         }
     }
     public static async Task InvokeAsync(Func<Task> action) {
@@ -43,6 +45,6 @@ public static class SafeExtensions {
     private static void LogException(Exception e) {
         if (e is TaskCanceledException || e is OperationCanceledException) 
             return;
-        SessionLogger.LogError(e);
+        CurrentSessionLogger.Error(e);
     }
 }

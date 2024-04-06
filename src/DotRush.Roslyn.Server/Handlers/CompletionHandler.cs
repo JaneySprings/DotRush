@@ -9,8 +9,8 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using RoslynCompletionItem = Microsoft.CodeAnalysis.Completion.CompletionItem;
 using RoslynCompletionService = Microsoft.CodeAnalysis.Completion.CompletionService;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using DotRush.Roslyn.Server.Logging;
-using Microsoft.CodeAnalysis.Tags;
+using DotRush.Roslyn.Common.Extensions;
+using DotRush.Roslyn.Common.Logging;
 
 namespace DotRush.Roslyn.Server.Handlers;
 
@@ -36,8 +36,8 @@ public class CompletionHandler : CompletionHandlerBase {
         };
     }
 
-    public override async Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken) {
-        return await ServerExtensions.SafeHandlerAsync<CompletionList>(new CompletionList(), async () => {
+    public override Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<CompletionList>(new CompletionList(), async () => {
             var documentId = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
             this.targetDocument = solutionService.Solution?.GetDocument(documentId);
             this.roslynCompletionService = RoslynCompletionService.GetService(targetDocument);
@@ -93,7 +93,7 @@ public class CompletionHandler : CompletionHandlerBase {
             var changes = await this.roslynCompletionService.GetChangeAsync(this.targetDocument, roslynCompletionItem, cancellationToken: cancellationToken);
             var sourceText = await this.targetDocument.GetTextAsync(cancellationToken);
             if (changes?.TextChanges == null) {
-                SessionLogger.LogDebug($"No text changes found for item:[{request.Label}]");
+                CurrentSessionLogger.Debug($"No text changes found for item:[{request.Label}]");
                 return request;
             }
             (currentLineTextEdit, additionalTextEdits) = ArrangeTextEdits(changes.TextChanges, roslynCompletionItem, sourceText);

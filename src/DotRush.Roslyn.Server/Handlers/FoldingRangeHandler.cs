@@ -6,6 +6,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
+using DotRush.Roslyn.Common.Extensions;
 
 namespace DotRush.Roslyn.Server.Handlers;
 
@@ -22,14 +23,14 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
         };
     }
 
-    public override async Task<Container<FoldingRange>?> Handle(FoldingRangeRequestParam request, CancellationToken cancellationToken) {
-        var documentIds = this.workspaceService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
-        var documentId = documentIds?.FirstOrDefault();
-        var document = this.workspaceService.Solution?.GetDocument(documentId);
-        if (document == null)
-            return null;
+    public override Task<Container<FoldingRange>?> Handle(FoldingRangeRequestParam request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<Container<FoldingRange>?>(async() => {
+            var documentIds = this.workspaceService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+            var documentId = documentIds?.FirstOrDefault();
+            var document = this.workspaceService.Solution?.GetDocument(documentId);
+            if (document == null)
+                return null;
 
-        return await ServerExtensions.SafeHandlerAsync<Container<FoldingRange>?>(async() => {
             var sourceText = await document.GetTextAsync(cancellationToken);
             var syntaxTree = await document.GetSyntaxTreeAsync(cancellationToken);
             if (syntaxTree == null)

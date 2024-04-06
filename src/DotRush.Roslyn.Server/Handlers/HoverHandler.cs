@@ -1,6 +1,8 @@
 using System.Text;
+using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
+using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -36,8 +38,8 @@ public class HoverHandler : HoverHandlerBase {
         };
     }
 
-    public override async Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken) {
-        return await ServerExtensions.SafeHandlerAsync<Hover?>(async () => {
+    public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<Hover?>(async () => {
             var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
             if (documentIds == null)
                 return null;

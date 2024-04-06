@@ -3,19 +3,14 @@ using MediatR;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 
 namespace DotRush.Roslyn.Server.Handlers;
 
 public class DidOpenTextDocumentHandler : DidOpenTextDocumentHandlerBase {
-    private readonly WorkspaceService solutionService;
     private readonly CompilationService compilationService;
-    private readonly ILanguageServerFacade serverFacade;
 
-    public DidOpenTextDocumentHandler(ILanguageServerFacade serverFacade, WorkspaceService solutionService, CompilationService compilationService) {
+    public DidOpenTextDocumentHandler(CompilationService compilationService) {
         this.compilationService = compilationService;
-        this.solutionService = solutionService;
-        this.serverFacade = serverFacade;
     }
 
     protected override TextDocumentOpenRegistrationOptions CreateRegistrationOptions(TextSynchronizationCapability capability, ClientCapabilities clientCapabilities) {

@@ -11,6 +11,7 @@ using System.Text;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Microsoft.CodeAnalysis.CSharp;
 using OmniSharp.Extensions.LanguageServer.Protocol;
+using DotRush.Roslyn.Common.Extensions;
 
 namespace DotRush.Roslyn.Server.Services;
 
@@ -72,7 +73,7 @@ public class DecompilationService {
     }
 
     private bool DecompileDocument(string fullName, string documentPath, MetadataReference? metadataReference, IAssemblySymbol? assemblySymbol) {
-        return ServerExtensions.SafeHandler<Boolean>(false, () => {
+        return SafeExtensions.Invoke<Boolean>(false, () => {
             var assemblyLocation = (metadataReference as PortableExecutableReference)?.FilePath;
             if (assemblyLocation == null || metadataReference == null)
                 return false;
