@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis;
@@ -30,16 +31,16 @@ public class CodeActionHandler : CodeActionHandlerBase {
         };
     }
 
-    public override async Task<CommandOrCodeActionContainer?> Handle(CodeActionParams request, CancellationToken cancellationToken) {
-        return await ServerExtensions.SafeHandlerAsync<CommandOrCodeActionContainer?>(async () => {
-            var filePath = request.TextDocument.Uri.GetFileSystemPath();         
+    public override Task<CommandOrCodeActionContainer?> Handle(CodeActionParams request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<CommandOrCodeActionContainer?>(async () => {
+            var filePath = request.TextDocument.Uri.GetFileSystemPath();      
             codeActionsCollection.Clear();
 
             var diagnosticModel = request.Context.Diagnostics.FirstOrDefault(it => it.Data?.ToObject<int>() != null);
             var diagnosticId = diagnosticModel?.Data?.ToObject<int>();
             if (diagnosticId == null)
                 return null;
-        
+
             var diagnostic = GetDiagnosticById(filePath, diagnosticId.Value);
             if (diagnostic == null)
                 return null;
@@ -66,8 +67,8 @@ public class CodeActionHandler : CodeActionHandlerBase {
             return new CommandOrCodeActionContainer(codeActionsCollection.Select(x => new CommandOrCodeAction(x.ToCodeAction())));
         });
     }
-    public override async Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken) {
-        return await ServerExtensions.SafeHandlerAsync<CodeAction>(request, async () => {
+    public override Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<CodeAction>(request, async () => {
             if (request.Data == null)
                 return request;
 

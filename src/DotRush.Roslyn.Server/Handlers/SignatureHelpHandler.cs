@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis;
@@ -11,7 +12,6 @@ namespace DotRush.Roslyn.Server.Handlers;
 public class SignatureHelpHandler : SignatureHelpHandlerBase {
     private readonly WorkspaceService solutionService;
 
-
     public SignatureHelpHandler(WorkspaceService solutionService) {
         this.solutionService = solutionService;
     }
@@ -24,7 +24,7 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
     }
 
     public override Task<SignatureHelp?> Handle(SignatureHelpParams request, CancellationToken cancellationToken) {
-        return ServerExtensions.SafeHandlerAsync<SignatureHelp?>(async () => {
+        return SafeExtensions.InvokeAsync<SignatureHelp?>(async () => {
             var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
             if (documentIds == null)
                  return null;

@@ -1,4 +1,4 @@
-using DotRush.Roslyn.Server.Extensions;
+using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Services;
 using MediatR;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -42,11 +42,11 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     }
 
     private void HandleFileChange(string path, FileChangeType changeType) {
-        if (LanguageServer.IsProjectFile(path) && changeType == FileChangeType.Changed)
+        if (WorkspaceService.IsProjectFile(path) && changeType == FileChangeType.Changed)
             return; // Handled from IDE
 
         if (changeType == FileChangeType.Deleted) {
-            if (LanguageServer.IsInternalCommandFile(path))
+            if (IsInternalCommandFile(path))
                 commandsService.ResolveCancellation();
 
             workspaceService.DeleteDocument(path);
@@ -55,7 +55,7 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         }
 
         if (changeType == FileChangeType.Changed) {
-            if (LanguageServer.IsInternalCommandFile(path))
+            if (IsInternalCommandFile(path))
                 commandsService.ResolveCommand(path);
 
             workspaceService.UpdateDocument(path);
@@ -63,11 +63,15 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         }
 
         if (changeType == FileChangeType.Created && File.Exists(path)) {
-            if (LanguageServer.IsInternalCommandFile(path))
+            if (IsInternalCommandFile(path))
                 commandsService.ResolveCommand(path);
 
             workspaceService.CreateDocument(path);
             return;
         } 
+    }
+
+    public static bool IsInternalCommandFile(string filePath) {
+        return Path.GetFileName(filePath) == "resolve.drc";
     }
 }

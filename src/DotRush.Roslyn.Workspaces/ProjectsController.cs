@@ -8,8 +8,8 @@ namespace DotRush.Roslyn.Workspaces;
 public abstract class ProjectsController {
     private readonly HashSet<string> projectFilePaths = new HashSet<string>();
 
-    public virtual void OnLoadingStarted() {}
-    public virtual void OnLoadingCompleted() {}
+    public virtual Task OnLoadingStartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    public virtual Task OnLoadingCompletedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     public virtual void OnProjectRestoreStarted(string documentPath) {}
     public virtual void OnProjectRestoreCompleted(string documentPath) {}
     public virtual void OnProjectRestoreFailed(string documentPath, int exitCode) {}
@@ -45,7 +45,7 @@ public abstract class ProjectsController {
     }
     protected async Task LoadAsync(MSBuildWorkspace workspace, CancellationToken cancellationToken) {
         CurrentSessionLogger.Debug($"Loading projects: {string.Join(';', projectFilePaths)}");
-        OnLoadingStarted();
+        await OnLoadingStartedAsync(cancellationToken);
 
         foreach (var projectFile in projectFilePaths) {
             await SafeExtensions.InvokeAsync(async () => {
@@ -67,7 +67,7 @@ public abstract class ProjectsController {
             OnWorkspaceStateChanged(workspace);
         }
 
-        OnLoadingCompleted();
+        await OnLoadingCompletedAsync(cancellationToken);
         CurrentSessionLogger.Debug($"Projects loading completed, loaded {workspace.CurrentSolution.ProjectIds.Count} projects");
     }
 }

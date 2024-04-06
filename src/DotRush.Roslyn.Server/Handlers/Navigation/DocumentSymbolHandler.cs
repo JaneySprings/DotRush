@@ -5,6 +5,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using DotRush.Roslyn.Common.Extensions;
 
 namespace DotRush.Roslyn.Server.Handlers;
 
@@ -34,8 +35,8 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
             DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments
         };
     }
-    public override async Task<SymbolInformationOrDocumentSymbolContainer?> Handle(DocumentSymbolParams request, CancellationToken cancellationToken) {
-        return await ServerExtensions.SafeHandlerAsync<SymbolInformationOrDocumentSymbolContainer?>(async () => {
+    public override Task<SymbolInformationOrDocumentSymbolContainer?> Handle(DocumentSymbolParams request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<SymbolInformationOrDocumentSymbolContainer?>(async () => {
             var documentPath = request.TextDocument.Uri.GetFileSystemPath();
             var documentId = solutionService?.Solution?.GetDocumentIdsWithFilePath(documentPath).FirstOrDefault();
             var document = solutionService?.Solution?.GetDocument(documentId);

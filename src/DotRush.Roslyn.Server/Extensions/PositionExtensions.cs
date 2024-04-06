@@ -63,4 +63,6 @@ public static class PositionExtensions {
             range.End.ToOffset(sourceText)
         );
     }
+
+    public static ProtocolModels.Range EmptyRange => new ProtocolModels.Range(new ProtocolModels.Position(0, 0), new ProtocolModels.Position(0, 0));
 }

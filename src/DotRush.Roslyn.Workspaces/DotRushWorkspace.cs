@@ -1,4 +1,5 @@
 using DotRush.Roslyn.Common.Extensions;
+using DotRush.Roslyn.Common.Logging;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis.MSBuild;
 
@@ -50,6 +51,7 @@ public abstract class DotRushWorkspace : SolutionController {
             MSBuildLocator.RegisterDefaults();
             return true;
         } catch (Exception e) {
+            CurrentSessionLogger.Error(e);
             errorHandler?.Invoke(e);
             return false;
         }

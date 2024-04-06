@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 
 namespace DotRush.Roslyn.Server.Services;
@@ -32,7 +33,7 @@ public class CommandsService {
     }
     
     private async void StartListening() {
-        await ServerExtensions.SafeHandlerAsync(async () => {
+        await SafeExtensions.InvokeAsync(async () => {
             using var client = await commandListener!.AcceptTcpClientAsync();
             using var stream = client.GetStream();
             using var reader = new StreamReader(stream);

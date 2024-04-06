@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis;
@@ -18,8 +19,8 @@ public class WorkspaceSymbolsHandler : WorkspaceSymbolsHandlerBase {
         return new WorkspaceSymbolRegistrationOptions();
     }
 
-    public override async Task<Container<WorkspaceSymbol>?> Handle(WorkspaceSymbolParams request, CancellationToken cancellationToken) {
-        return await ServerExtensions.SafeHandlerAsync<Container<WorkspaceSymbol>?>(async () => {
+    public override Task<Container<WorkspaceSymbol>?> Handle(WorkspaceSymbolParams request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<Container<WorkspaceSymbol>?>(async () => {
             var workspaceSymbols = new HashSet<WorkspaceSymbol>();
             if (solutionService.Solution == null || string.IsNullOrEmpty(request.Query))
                 return null;

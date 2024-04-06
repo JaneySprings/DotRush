@@ -1,12 +1,11 @@
 ﻿using System.Diagnostics;
+using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Handlers;
-using DotRush.Roslyn.Server.Logging;
 using DotRush.Roslyn.Server.Services;
 using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 using OmniSharp.Extensions.LanguageServer.Server;
 using OmniSharpLanguageServer = OmniSharp.Extensions.LanguageServer.Server.LanguageServer;
 
@@ -17,17 +16,7 @@ public class LanguageServer {
     public static TextDocumentSelector SelectorForAllDocuments => TextDocumentSelector.ForPattern("**/*.cs", "**/*.xaml");
     public static TextDocumentSelector SelectorForSourceCodeDocuments => TextDocumentSelector.ForPattern("**/*.cs");
 
-    public static bool IsInternalCommandFile(string filePath) {
-        return Path.GetFileName(filePath) == "resolve.drc";
-    }
-
-    private static IServerWorkDoneManager? workDoneManager;
-    public static async Task<IWorkDoneObserver?> CreateWorkDoneObserverAsync() {
-        return workDoneManager == null ? null : await workDoneManager.Create(new WorkDoneProgressBegin());
-    }
-
     public static async Task Main(string[] args) {
-        SessionLogger.LogDebug($"Server created with targets: {string.Join(", ", args)}");
         var server = await OmniSharpLanguageServer.From(options => options
             .AddDefaultLoggingProvider()
             .WithInput(Console.OpenStandardInput())
@@ -70,11 +59,11 @@ public class LanguageServer {
         var codeActionService = server.Services.GetService<CodeActionService>()!;
         var workspaceService = server.Services.GetService<WorkspaceService>()!;
 
+        CurrentSessionLogger.Debug($"Server created with targets: {string.Join(", ", targets)}");
         ObserveClientProcess(clientSettings.ProcessId);
-        workDoneManager = server.WorkDoneManager;
 
         await configurationService.InitializeAsync();
-        if (!workspaceService.TryInitializeWorkspace())
+        if (!workspaceService.TryInitializeWorkspace(targets, _ => server.ShowError(Resources.MessageDotNetRegistrationFailed)))
             return;
 
         codeActionService.InitializeEmbeddedProviders();
@@ -83,12 +72,10 @@ public class LanguageServer {
 
         if (!targets.Any()) {
             var workspaceFolders = server.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
-            targets = WorkspaceExtensions.GetProjectFiles(workspaceFolders);
-            SessionLogger.LogDebug($"No targets provided, used auto-detected targets: {string.Join(' ', targets)}");
+            workspaceService.AddProjectFilesFromFolders(workspaceFolders);
         }
 
-        workspaceService.AddProjectFiles(targets);
-        _ = workspaceService.LoadSolutionAsync();
+        _ = workspaceService.LoadSolutionAsync(CancellationToken.None);
     }
     private static void ObserveClientProcess(long? pid) {
         if (pid == null || pid <= 0)
@@ -97,9 +84,9 @@ public class LanguageServer {
         var ideProcess = Process.GetProcessById((int)pid.Value);
         ideProcess.EnableRaisingEvents = true;
         ideProcess.Exited += (_, _) => {
-            SessionLogger.LogDebug($"Shutting down server because client process [{ideProcess.ProcessName}] has exited");
+            CurrentSessionLogger.Debug($"Shutting down server because client process [{ideProcess.ProcessName}] has exited");
             Environment.Exit(0);
         };
-        SessionLogger.LogDebug($"Server is observing client process {ideProcess.ProcessName} (PID: {pid})");
+        CurrentSessionLogger.Debug($"Server is observing client process {ideProcess.ProcessName} (PID: {pid})");
     }
 }

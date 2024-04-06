@@ -6,10 +6,12 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using DotRush.Roslyn.Server.Logging;
 using Microsoft.CodeAnalysis;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using FileSystemExtensions = DotRush.Roslyn.Server.Extensions.FileSystemExtensions;
+using DotRush.Roslyn.Common.Logging;
+using DotRush.Roslyn.Common.Extensions;
+using DotRush.Roslyn.Workspaces.Extensions;
+using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Server.Services;
 
@@ -41,19 +43,19 @@ public class CompilationService {
                 try {
                     return Activator.CreateInstance(x.AsType()) as DiagnosticAnalyzer;
                 } catch (Exception ex) {
-                    SessionLogger.LogError($"Creating instance of analyzer '{x.AsType()}' failed, error: {ex}");
+                    CurrentSessionLogger.Error($"Creating instance of analyzer '{x.AsType()}' failed, error: {ex}");
                     return null;
                 }
             })
             .Where(x => x != null)!;
-        SessionLogger.LogDebug($"Initialized {embeddedAnalyzers.Count()} embeded analyzers");
+        CurrentSessionLogger.Debug($"Initialized {embeddedAnalyzers.Count()} embeded analyzers");
     }
 
     public async Task PublishDiagnosticsAsync() {
         ResetCancellationToken();
         var cancellationToken = compilationTokenSource.Token;
         var documentPaths = Diagnostics.GetOpenedDocuments();
-        await ServerExtensions.SafeHandlerAsync(async () => {
+        await SafeExtensions.InvokeAsync(async () => {
             await Task.Delay(500, cancellationToken); // Input delay
             Diagnostics.ClearDocumentDiagnostics(documentPaths);
 
@@ -104,7 +106,7 @@ public class CompilationService {
     }
 
     private void OnDiagnosticsCollectionChanged(object? sender, DiagnosticsCollectionChangedEventArgs e) {
-        SessionLogger.LogDebug($"Publishing diagnostics for document: {e.DocumentPath}");
+        CurrentSessionLogger.Debug($"Publishing diagnostics for document: {e.DocumentPath}");
         serverFacade.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
             Uri = DocumentUri.FromFileSystemPath(e.DocumentPath),
             Diagnostics = new Container<ProtocolModels.Diagnostic>(e.ServerDiagnostics),

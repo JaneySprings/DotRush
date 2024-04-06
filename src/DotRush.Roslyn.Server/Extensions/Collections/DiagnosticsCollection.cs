@@ -1,4 +1,5 @@
-using DotRush.Roslyn.Server.Logging;
+using DotRush.Roslyn.Common.Logging;
+using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
@@ -14,17 +15,17 @@ public class DiagnosticsCollection {
     }
 
     public void OpenDocument(string documentPath) {
-        if (!LanguageServer.IsSourceCodeDocument(documentPath))
+        if (!WorkspaceService.IsSourceCodeDocument(documentPath))
             return;  
-        var result = diagnostics.TryAdd(documentPath, new List<ExtendedDiagnostic>());
-        if (result)
-            SessionLogger.LogDebug($"Open document: {documentPath}");
+
+        if (diagnostics.TryAdd(documentPath, new List<ExtendedDiagnostic>()))
+            CurrentSessionLogger.Debug($"Open document: {documentPath}");
     }
     public void CloseDocument(string documentPath) {
         diagnostics.Remove(documentPath);
         var eventArgs = new DiagnosticsCollectionChangedEventArgs(documentPath, Enumerable.Empty<ProtocolModels.Diagnostic>());
         DiagnosticsChanged?.Invoke(this, eventArgs);
-        SessionLogger.LogDebug($"Close document: {documentPath}");
+        CurrentSessionLogger.Debug($"Close document: {documentPath}");
     }
     public void AppendDocumentDiagnostics(string? documentPath, IEnumerable<Diagnostic> newDiagnostics, Project source) {
         if (string.IsNullOrEmpty(documentPath))
