@@ -1,13 +1,11 @@
-using System;
-using System.IO;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
 using NLog.Targets.Wrappers;
 
-namespace DotRush.Server.Logging;
+namespace DotRush.Roslyn.Common.Logging;
 
-public static class LogConfig {
+internal static class LogConfig {
     private static readonly string _logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
     public static readonly string ErrorLogFile = Path.Combine(_logDir, "Error.log");
     public static readonly string DebugLogFile = Path.Combine(_logDir, "Debug.log");
