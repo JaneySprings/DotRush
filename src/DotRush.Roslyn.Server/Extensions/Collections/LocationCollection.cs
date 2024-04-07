@@ -5,14 +5,14 @@ namespace DotRush.Roslyn.Server.Extensions;
 public class LocationCollection {
     private readonly HashSet<Location> locations;
 
-    public bool IsEmpty => !this.locations.Any();
+    public bool IsEmpty => locations.Count == 0;
 
     public LocationCollection() {
-        this.locations = new HashSet<Location>();
+        locations = new HashSet<Location>();
     }
 
     public LocationCollection Add(Location location) {
-        this.locations.Add(location);
+        locations.Add(location);
         return this;
     }
     public LocationCollection AddRange(IEnumerable<Location?> locations) {
@@ -24,9 +24,9 @@ public class LocationCollection {
     }
 
     public LocationContainer ToLocationContainer() {
-        return new LocationContainer(this.locations);
+        return new LocationContainer(locations);
     }
     public LocationOrLocationLinks ToLocationOrLocationLinks() {
-        return new LocationOrLocationLinks(this.locations.Select(loc => new LocationOrLocationLink(loc)));
+        return new LocationOrLocationLinks(locations.Select(loc => new LocationOrLocationLink(loc)));
     }
 }

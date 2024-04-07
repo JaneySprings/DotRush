@@ -12,8 +12,7 @@ public readonly struct ProcessInfo {
 
     public int Id => Process.Id;
 
-    public ProcessInfo(Process process, ProcessStartInfo startInfo, Task<ProcessResult> result)
-    {
+    public ProcessInfo(Process process, ProcessStartInfo startInfo, Task<ProcessResult> result) {
         Process = process;
         StartInfo = startInfo;
         Result = result;

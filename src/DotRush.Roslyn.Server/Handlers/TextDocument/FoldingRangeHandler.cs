@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using DotRush.Roslyn.Common.Extensions;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class FoldingRangeHandler : FoldingRangeHandlerBase {
     private readonly WorkspaceService workspaceService;
@@ -24,10 +24,10 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
     }
 
     public override Task<Container<FoldingRange>?> Handle(FoldingRangeRequestParam request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync<Container<FoldingRange>?>(async() => {
-            var documentIds = this.workspaceService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        return SafeExtensions.InvokeAsync(async () => {
+            var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
             var documentId = documentIds?.FirstOrDefault();
-            var document = this.workspaceService.Solution?.GetDocument(documentId);
+            var document = workspaceService.Solution?.GetDocument(documentId);
             if (document == null)
                 return null;
 
@@ -35,15 +35,15 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
             var syntaxTree = await document.GetSyntaxTreeAsync(cancellationToken);
             if (syntaxTree == null)
                 return null;
-        
+
             var result = new List<FoldingRange>();
             var root = await syntaxTree.GetRootAsync(cancellationToken);
-            
-            var commonNodes = root.DescendantNodes().Where(node => 
-                node is BaseTypeDeclarationSyntax 
+
+            var commonNodes = root.DescendantNodes().Where(node =>
+                node is BaseTypeDeclarationSyntax
                 || node is BaseMethodDeclarationSyntax
                 || node is BasePropertyDeclarationSyntax
-                || node is BaseNamespaceDeclarationSyntax 
+                || node is BaseNamespaceDeclarationSyntax
                 || node is StatementSyntax
             );
             foreach (var node in commonNodes) {
@@ -56,7 +56,7 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
 
                 if (node is MemberDeclarationSyntax memberDeclarationSyntax && memberDeclarationSyntax.AttributeLists.Count > 0)
                     startLine = memberDeclarationSyntax.AttributeLists.FullSpan.ToRange(sourceText).End.Line;
-                
+
                 result.Add(new FoldingRange { StartLine = startLine, EndLine = endLine });
             }
 
@@ -70,7 +70,7 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
         });
     }
 
-    private IEnumerable<FoldingRange> GetFoldingDirectivesOfType<TStart, TEnd>(IEnumerable<SyntaxNode?> nodes, SourceText sourceText) where TStart : DirectiveTriviaSyntax where TEnd : DirectiveTriviaSyntax {
+    private static List<FoldingRange> GetFoldingDirectivesOfType<TStart, TEnd>(IEnumerable<SyntaxNode?> nodes, SourceText sourceText) where TStart : DirectiveTriviaSyntax where TEnd : DirectiveTriviaSyntax {
         var result = new List<FoldingRange>();
         var startDirectivesSyntax = nodes.OfType<TStart>();
         foreach (var startDirectiveSyntax in startDirectivesSyntax) {

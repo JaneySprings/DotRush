@@ -27,7 +27,7 @@ public class WorkspaceService : DotRushWorkspace {
     public override async Task OnLoadingStartedAsync(CancellationToken cancellationToken) {
         if (workDoneManager == null)
             return;
-        workDoneObserver = await workDoneManager.Create(new WorkDoneProgressBegin(), cancellationToken: cancellationToken);
+        workDoneObserver = await workDoneManager.Create(new WorkDoneProgressBegin(), cancellationToken: cancellationToken).ConfigureAwait(false);
     }
     public override Task OnLoadingCompletedAsync(CancellationToken cancellationToken) {
         workDoneObserver?.OnCompleted();
@@ -36,22 +36,22 @@ public class WorkspaceService : DotRushWorkspace {
     }
     public override void OnProjectRestoreStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(Resources.MessageProjectRestore, projectName)});
+        workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(null, Resources.ProjectRestoreCompositeFormat, projectName) });
     }
     public override void OnProjectLoadStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(Resources.MessageProjectIndex, projectName)});
+        workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(null, Resources.ProjectIndexCompositeFormat, projectName) });
     }
     public override void OnProjectCompilationStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(Resources.MessageProjectCompile, projectName)});
+        workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(null, Resources.ProjectCompileCompositeFormat, projectName) });
     }
     public override void OnProjectRestoreFailed(string documentPath, int exitCode) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
         serverFacade.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
             Uri = DocumentUri.FromFileSystemPath(documentPath),
             Diagnostics = new Container<Diagnostic>([new Diagnostic() {
-                Message = string.Format(Resources.MessageProjectRestoreFailed, projectName, exitCode),
+                Message = string.Format(null, Resources.ProjectRestoreFailedCompositeFormat, projectName, exitCode),
                 Range = PositionExtensions.EmptyRange,
                 Severity = DiagnosticSeverity.Error,
                 Source = projectName,

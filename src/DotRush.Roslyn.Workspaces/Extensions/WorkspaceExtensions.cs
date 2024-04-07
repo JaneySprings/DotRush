@@ -72,7 +72,7 @@ public static class WorkspaceExtensions {
             CurrentSessionLogger.Error(string.Join(Environment.NewLine, restoreResult.OutputLines));
 
         return restoreResult;
-    } 
+    }
 
     private static int GetMaxCommonFoldersCount(Project project, string documentPath) {
         var folders = project.GetFolders(documentPath).ToList();

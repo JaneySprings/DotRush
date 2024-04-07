@@ -10,7 +10,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using CodeAnalysis = Microsoft.CodeAnalysis;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class HoverHandler : HoverHandlerBase {
     private readonly WorkspaceService solutionService;
@@ -20,7 +20,7 @@ public class HoverHandler : HoverHandlerBase {
         .WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers);
 
     public static readonly SymbolDisplayFormat MinimalFormat = SymbolDisplayFormat.MinimallyQualifiedFormat
-        .WithMemberOptions(SymbolDisplayMemberOptions.IncludeParameters 
+        .WithMemberOptions(SymbolDisplayMemberOptions.IncludeParameters
             | SymbolDisplayMemberOptions.IncludeType
             | SymbolDisplayMemberOptions.IncludeRef
             | SymbolDisplayMemberOptions.IncludeContainingType
@@ -39,14 +39,14 @@ public class HoverHandler : HoverHandlerBase {
     }
 
     public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync<Hover?>(async () => {
-            var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        return SafeExtensions.InvokeAsync(async () => {
+            var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
             if (documentIds == null)
                 return null;
-            
+
             var displayStrings = new Dictionary<string, List<string>>();
             foreach (var documentId in documentIds) {
-                var document = this.solutionService.Solution?.GetDocument(documentId);
+                var document = solutionService.Solution?.GetDocument(documentId);
                 if (document == null)
                     continue;
 
@@ -61,15 +61,15 @@ public class HoverHandler : HoverHandlerBase {
                     symbol = aliasSymbol.Target;
 
                 var displayString = symbol.Kind == CodeAnalysis.SymbolKind.NamedType || symbol.Kind == CodeAnalysis.SymbolKind.Namespace
-                    ? symbol.ToDisplayString(DefaultFormat) 
+                    ? symbol.ToDisplayString(DefaultFormat)
                     : symbol.ToMinimalDisplayString(semanticModel, offset, MinimalFormat);
 
                 if (!displayStrings.ContainsKey(displayString))
                     displayStrings.Add(displayString, new List<string>());
 
-                displayStrings[displayString].Add(document.Project.GetTargetFramework());  
+                displayStrings[displayString].Add(document.Project.GetTargetFramework());
             }
- 
+
             if (displayStrings.Count == 1) {
                 return new Hover {
                     Contents = new MarkedStringsOrMarkupContent(new MarkedString("csharp", displayStrings.Keys.First()))

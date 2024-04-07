@@ -5,13 +5,13 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.Workspace;
 
-public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
+public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     private readonly WorkspaceService workspaceService;
     private readonly CommandsService commandsService;
 
-    public WatchedFilesHandler(WorkspaceService workspaceService, CommandsService commandsService) {
+    public DidChangeWatchedFilesHandler(WorkspaceService workspaceService, CommandsService commandsService) {
         this.workspaceService = workspaceService;
         this.commandsService = commandsService;
     }
@@ -68,7 +68,7 @@ public class WatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
 
             workspaceService.CreateDocument(path);
             return;
-        } 
+        }
     }
 
     public static bool IsInternalCommandFile(string filePath) {

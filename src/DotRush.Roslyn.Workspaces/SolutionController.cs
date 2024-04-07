@@ -6,7 +6,7 @@ using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensio
 
 namespace DotRush.Roslyn.Workspaces;
 
-public abstract class SolutionController: ProjectsController {
+public abstract class SolutionController : ProjectsController {
     public Solution? Solution { get; private set; }
 
     protected override void OnWorkspaceStateChanged(MSBuildWorkspace workspace) {
@@ -80,7 +80,7 @@ public abstract class SolutionController: ProjectsController {
             if (document == null || document.Project == null)
                 continue;
 
-            if (file.StartsWith(document.Project.GetIntermediateOutputPath()) || 
+            if (file.StartsWith(document.Project.GetIntermediateOutputPath()) ||
                 file.StartsWith(document.Project.GetOutputPath()))
                 continue;
 
@@ -126,7 +126,7 @@ public abstract class SolutionController: ProjectsController {
             if (project == null)
                 continue;
 
-            if (file.StartsWith(project.GetIntermediateOutputPath()) || 
+            if (file.StartsWith(project.GetIntermediateOutputPath()) ||
                 file.StartsWith(project.GetOutputPath()))
                 continue;
 
@@ -136,7 +136,7 @@ public abstract class SolutionController: ProjectsController {
 
             Solution = updates;
         }
-    } 
+    }
     private void DeleteSourceCodeDocument(IEnumerable<DocumentId>? documentIds) {
         if (documentIds == null || Solution == null)
             return;
@@ -147,7 +147,7 @@ public abstract class SolutionController: ProjectsController {
             if (project == null || document?.FilePath == null)
                 continue;
 
-            if (document.FilePath.StartsWith(project.GetIntermediateOutputPath()) || 
+            if (document.FilePath.StartsWith(project.GetIntermediateOutputPath()) ||
                 document.FilePath.StartsWith(project.GetOutputPath()))
                 continue;
 
@@ -165,7 +165,7 @@ public abstract class SolutionController: ProjectsController {
             if (project == null || document?.FilePath == null)
                 continue;
 
-            if (document.FilePath.StartsWith(project.GetIntermediateOutputPath()) || 
+            if (document.FilePath.StartsWith(project.GetIntermediateOutputPath()) ||
                 document.FilePath.StartsWith(project.GetOutputPath()))
                 continue;
 

@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace DotRush.Roslyn.Server.Services;
 
 public class PlainTextSymbolFinder : CSharpSyntaxWalker {
-    public List<TextSpan> Locations { get; private set;}
+    public List<TextSpan> Locations { get; private set; }
     private readonly ISymbol targetSymbol;
 
     public PlainTextSymbolFinder(ISymbol targetSymbol) {

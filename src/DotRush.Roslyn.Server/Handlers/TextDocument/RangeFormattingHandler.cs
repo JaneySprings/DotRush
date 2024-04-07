@@ -6,10 +6,10 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class RangeFormattingHandler : DocumentRangeFormattingHandlerBase {
-    private WorkspaceService solutionService;
+    private readonly WorkspaceService solutionService;
 
     public RangeFormattingHandler(WorkspaceService solutionService) {
         this.solutionService = solutionService;
@@ -23,9 +23,9 @@ public class RangeFormattingHandler : DocumentRangeFormattingHandlerBase {
 
     public override async Task<TextEditContainer> Handle(DocumentRangeFormattingParams request, CancellationToken cancellationToken) {
         var edits = new List<TextEdit>();
-        var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
-        var document = this.solutionService.Solution?.GetDocument(documentId);
-        if (document == null) 
+        var documentId = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
+        var document = solutionService.Solution?.GetDocument(documentId);
+        if (document == null)
             return new TextEditContainer();
 
         var sourceText = await document.GetTextAsync(cancellationToken);

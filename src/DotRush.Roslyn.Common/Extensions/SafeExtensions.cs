@@ -43,7 +43,7 @@ public static class SafeExtensions {
     }
 
     private static void LogException(Exception e) {
-        if (e is TaskCanceledException || e is OperationCanceledException) 
+        if (e is TaskCanceledException || e is OperationCanceledException)
             return;
         CurrentSessionLogger.Error(e);
     }

@@ -8,7 +8,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using CodeAnalysisCodeAction = Microsoft.CodeAnalysis.CodeActions.CodeAction;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class CodeActionHandler : CodeActionHandlerBase {
     private readonly WorkspaceService solutionService;
@@ -32,8 +32,8 @@ public class CodeActionHandler : CodeActionHandlerBase {
     }
 
     public override Task<CommandOrCodeActionContainer?> Handle(CodeActionParams request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync<CommandOrCodeActionContainer?>(async () => {
-            var filePath = request.TextDocument.Uri.GetFileSystemPath();      
+        return SafeExtensions.InvokeAsync(async () => {
+            var filePath = request.TextDocument.Uri.GetFileSystemPath();
             codeActionsCollection.Clear();
 
             var diagnosticModel = request.Context.Diagnostics.FirstOrDefault(it => it.Data?.ToObject<int>() != null);
@@ -58,7 +58,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
                 return null;
 
             foreach (var codeFixProvider in codeFixProviders) {
-                 await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, diagnostic.InnerDiagnostic, (a, _) => {
+                await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, diagnostic.InnerDiagnostic, (a, _) => {
                     var singleCodeActions = a.ToSingleCodeActions().Where(x => !x.IsBlacklisted());
                     codeActionsCollection.AddRange(singleCodeActions);
                 }, cancellationToken));
@@ -68,7 +68,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
         });
     }
     public override Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync<CodeAction>(request, async () => {
+        return SafeExtensions.InvokeAsync(request, async () => {
             if (request.Data == null)
                 return request;
 

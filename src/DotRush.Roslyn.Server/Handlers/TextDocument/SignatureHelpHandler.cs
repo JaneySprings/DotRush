@@ -7,7 +7,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class SignatureHelpHandler : SignatureHelpHandlerBase {
     private readonly WorkspaceService solutionService;
@@ -24,13 +24,13 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
     }
 
     public override Task<SignatureHelp?> Handle(SignatureHelpParams request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync<SignatureHelp?>(async () => {
-            var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        return SafeExtensions.InvokeAsync(async () => {
+            var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
             if (documentIds == null)
-                 return null;
+                return null;
 
             foreach (var documentId in documentIds) {
-                var document = this.solutionService.Solution?.GetDocument(documentId);
+                var document = solutionService.Solution?.GetDocument(documentId);
                 if (document == null)
                     continue;
 
@@ -47,15 +47,15 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
                 var invocationInfo = GetInvokationInfo(node, semanticModel, position, cancellationToken);
                 if (invocationInfo == null)
                     continue;
-                
+
                 var (invocation, argumentsCount) = invocationInfo.Value;
                 var signatures = new Container<SignatureInformation>(semanticModel
                     .GetMemberGroup(invocation, cancellationToken)
                     .OfType<IMethodSymbol>()
                     .Where(x => x.Parameters.Length >= argumentsCount)
-                    .Select(x => new SignatureInformation { 
+                    .Select(x => new SignatureInformation {
                         Label = x.ToDisplayString(HoverHandler.MinimalFormat),
-                        Parameters = new Container<ParameterInformation>(x.Parameters.Select(y => new ParameterInformation { 
+                        Parameters = new Container<ParameterInformation>(x.Parameters.Select(y => new ParameterInformation {
                             Label = y.ToDisplayString(HoverHandler.MinimalFormat)
                         }))
                     })
@@ -74,7 +74,7 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
         });
     }
 
-    private (SyntaxNode, int)? GetInvokationInfo(SyntaxNode? node, SemanticModel semanticModel, int position, CancellationToken cancellationToken) {
+    private static (SyntaxNode, int)? GetInvokationInfo(SyntaxNode? node, SemanticModel semanticModel, int position, CancellationToken cancellationToken) {
         while (node != null) {
             if (node is InvocationExpressionSyntax invocation && invocation.ArgumentList.Span.Contains(position))
                 return (invocation.Expression, invocation.ArgumentList.Arguments.Count);

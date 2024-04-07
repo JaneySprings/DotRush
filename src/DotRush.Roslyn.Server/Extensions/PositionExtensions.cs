@@ -10,7 +10,7 @@ public static class PositionExtensions {
     public static int ToOffset(this ProtocolModels.Position position, SourceText sourceText) {
         if (sourceText.Lines.Count < position.Line)
             return 0;
-        
+
         return sourceText.Lines.GetPosition(new LinePosition(position.Line, position.Character));
     }
 
@@ -59,7 +59,7 @@ public static class PositionExtensions {
 
     public static TextSpan ToTextSpan(this ProtocolModels.Range range, SourceText sourceText) {
         return TextSpan.FromBounds(
-            range.Start.ToOffset(sourceText), 
+            range.Start.ToOffset(sourceText),
             range.End.ToOffset(sourceText)
         );
     }

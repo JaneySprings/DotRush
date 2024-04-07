@@ -6,10 +6,10 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class ImplementationHandler : ImplementationHandlerBase {
-    private WorkspaceService solutionService;
+    private readonly WorkspaceService solutionService;
 
     public ImplementationHandler(WorkspaceService solutionService) {
         this.solutionService = solutionService;
@@ -22,36 +22,36 @@ public class ImplementationHandler : ImplementationHandlerBase {
     }
 
     public override async Task<LocationOrLocationLinks?> Handle(ImplementationParams request, CancellationToken cancellationToken) {
-        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
         if (documentIds == null)
             return null;
 
         var resultSymbols = new List<ISymbol>();
         foreach (var documentId in documentIds) {
-            var document = this.solutionService.Solution?.GetDocument(documentId);
+            var document = solutionService.Solution?.GetDocument(documentId);
             if (document == null)
                 continue;
 
             var sourceText = await document.GetTextAsync(cancellationToken);
             var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
-            if (symbol == null || this.solutionService.Solution == null) 
+            if (symbol == null || solutionService.Solution == null)
                 continue;
 
-            var symbols = await SymbolFinder.FindImplementationsAsync(symbol, this.solutionService.Solution, cancellationToken: cancellationToken);
+            var symbols = await SymbolFinder.FindImplementationsAsync(symbol, solutionService.Solution, cancellationToken: cancellationToken);
             if (symbols != null)
                 resultSymbols.AddRange(symbols);
 
             if (symbol is IMethodSymbol methodSymbol) {
-                symbols = await SymbolFinder.FindOverridesAsync(methodSymbol, this.solutionService.Solution, cancellationToken: cancellationToken);
+                symbols = await SymbolFinder.FindOverridesAsync(methodSymbol, solutionService.Solution, cancellationToken: cancellationToken);
                 if (symbols != null)
                     resultSymbols.AddRange(symbols);
             }
             if (symbol is INamedTypeSymbol namedTypeSymbol) {
-                symbols = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, this.solutionService.Solution, cancellationToken: cancellationToken);
+                symbols = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, solutionService.Solution, cancellationToken: cancellationToken);
                 if (symbols != null)
                     resultSymbols.AddRange(symbols);
-                
-                symbols = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, this.solutionService.Solution, cancellationToken: cancellationToken);
+
+                symbols = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, solutionService.Solution, cancellationToken: cancellationToken);
                 if (symbols != null)
                     resultSymbols.AddRange(symbols);
             }

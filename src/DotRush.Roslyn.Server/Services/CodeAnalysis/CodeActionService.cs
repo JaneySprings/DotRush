@@ -9,7 +9,7 @@ namespace DotRush.Roslyn.Server.Services;
 
 public class CodeActionService {
     private IEnumerable<CodeFixProvider> embeddedCodeFixProviders;
-    private Dictionary<ProjectId, IEnumerable<CodeFixProvider>> projectCodeFixProviders;
+    private readonly Dictionary<ProjectId, IEnumerable<CodeFixProvider>> projectCodeFixProviders;
 
     public CodeActionService() {
         embeddedCodeFixProviders = Enumerable.Empty<CodeFixProvider>();
@@ -38,7 +38,7 @@ public class CodeActionService {
     }
 
 
-    private IEnumerable<CodeFixProvider> CreateCodeFixProviders(Assembly assembly) {
+    private static IEnumerable<CodeFixProvider> CreateCodeFixProviders(Assembly assembly) {
         return SafeExtensions.Invoke<IEnumerable<CodeFixProvider>>(Enumerable.Empty<CodeFixProvider>(), () => {
             return assembly.DefinedTypes
                 .Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(CodeFixProvider)))

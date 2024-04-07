@@ -5,13 +5,13 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class ReferencesHandler : ReferencesHandlerBase {
-    private WorkspaceService workspaceService;
+    private readonly WorkspaceService workspaceService;
 
     public ReferencesHandler(WorkspaceService solutionService) {
-        this.workspaceService = solutionService;
+        workspaceService = solutionService;
     }
 
     protected override ReferenceRegistrationOptions CreateRegistrationOptions(ReferenceCapability capability, ClientCapabilities clientCapabilities) {
@@ -27,13 +27,13 @@ public class ReferencesHandler : ReferencesHandlerBase {
 
         var result = new LocationCollection();
         foreach (var documentId in documentIds) {
-            var document = this.workspaceService.Solution.GetDocument(documentId);
+            var document = workspaceService.Solution.GetDocument(documentId);
             if (document == null)
                 continue;
 
             var sourceText = await document.GetTextAsync(cancellationToken);
             var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
-            if (symbol == null || symbol.Locations == null) 
+            if (symbol == null || symbol.Locations == null)
                 continue;
 
             var referenceSymbols = await SymbolFinder.FindReferencesAsync(symbol, workspaceService.Solution, cancellationToken);
@@ -48,7 +48,7 @@ public class ReferencesHandler : ReferencesHandlerBase {
                     result.Add(referenceLocation);
             }
         }
-    
+
         return result.ToLocationContainer();
     }
 }
