@@ -1,7 +1,8 @@
 ﻿using System.Diagnostics;
 using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
-using DotRush.Roslyn.Server.Handlers;
+using DotRush.Roslyn.Server.Handlers.TextDocument;
+using DotRush.Roslyn.Server.Handlers.Workspace;
 using DotRush.Roslyn.Server.Services;
 using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -31,8 +32,8 @@ public class LanguageServer {
             .WithHandler<DidOpenTextDocumentHandler>()
             .WithHandler<DidChangeTextDocumentHandler>()
             .WithHandler<DidCloseTextDocumentHandler>()
-            .WithHandler<WatchedFilesHandler>()
-            .WithHandler<WorkspaceFoldersHandler>()
+            .WithHandler<DidChangeWatchedFilesHandler>()
+            .WithHandler<DidChangeWorkspaceFoldersHandler>()
             .WithHandler<WorkspaceSymbolsHandler>()
             .WithHandler<DocumentSymbolHandler>()
             .WithHandler<HoverHandler>()
@@ -63,7 +64,7 @@ public class LanguageServer {
         ObserveClientProcess(clientSettings.ProcessId);
 
         await configurationService.InitializeAsync();
-        if (!workspaceService.TryInitializeWorkspace(targets, _ => server.ShowError(Resources.MessageDotNetRegistrationFailed)))
+        if (!workspaceService.TryInitializeWorkspace(targets, _ => server.ShowError(Resources.DotNetRegistrationFailed)))
             return;
 
         codeActionService.InitializeEmbeddedProviders();

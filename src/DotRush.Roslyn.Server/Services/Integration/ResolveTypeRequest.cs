@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace DotRush.Roslyn.Server.Services;
 
 //https://github.com/mono/monodevelop/blob/ba01d2d6d3c84e92a6b5f360dac76ee821547529/main/src/addins/MonoDevelop.Debugger/MonoDevelop.Debugger/DebuggingService.cs#L1472
-internal class ResolveTypeRequest {
+public class ResolveTypeRequest {
     private readonly WorkspaceService workspaceService;
     private readonly SymbolDisplayFormat displayFormat = new SymbolDisplayFormat(
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,

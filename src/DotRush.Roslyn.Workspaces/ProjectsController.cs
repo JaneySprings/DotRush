@@ -54,7 +54,7 @@ public abstract class ProjectsController {
                 if (result.ExitCode != 0)
                     OnProjectRestoreFailed(projectFile, result.ExitCode);
                 OnProjectRestoreCompleted(projectFile);
-                
+
                 OnProjectLoadStarted(projectFile);
                 var project = await workspace.OpenProjectAsync(projectFile, null, cancellationToken);
                 OnProjectLoadCompleted(projectFile);

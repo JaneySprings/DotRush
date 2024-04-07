@@ -26,7 +26,7 @@ public static class SymbolExtensions {
 
         return symbol.ContainingType;
     }
-    
+
     public static INamedTypeSymbol GetTopLevelContainingNamedType(this ISymbol symbol) {
         // Traverse up until we find a named type that is parented by the namespace
         var topLevelNamedType = symbol;

@@ -4,12 +4,12 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.Workspace;
 
-public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
+public class DidChangeWorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
     private readonly WorkspaceService workspaceService;
 
-    public WorkspaceFoldersHandler(WorkspaceService workspaceService) {
+    public DidChangeWorkspaceFoldersHandler(WorkspaceService workspaceService) {
         this.workspaceService = workspaceService;
     }
 
@@ -24,12 +24,12 @@ public class WorkspaceFoldersHandler : DidChangeWorkspaceFoldersHandlerBase {
         // var added = request.Event.Added.Select(folder => folder.Uri.GetFileSystemPath());
         // if (!added.Any())
         //     return Unit.Value;
-        
+
         // await workspaceService.WaitHandle;
         // workspaceService.AddWorkspaceFolders(added);
         // workspaceService.StartSolutionLoading();
         // // Automatically skip loaded projects
-        
+
         return Unit.Task;
     }
 }

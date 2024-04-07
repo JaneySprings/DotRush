@@ -7,7 +7,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using DotRush.Roslyn.Common.Extensions;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
     public static readonly SymbolDisplayFormat MemberFormat = new SymbolDisplayFormat(
@@ -36,7 +36,7 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
         };
     }
     public override Task<SymbolInformationOrDocumentSymbolContainer?> Handle(DocumentSymbolParams request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync<SymbolInformationOrDocumentSymbolContainer?>(async () => {
+        return SafeExtensions.InvokeAsync(async () => {
             var documentPath = request.TextDocument.Uri.GetFileSystemPath();
             var documentId = solutionService?.Solution?.GetDocumentIdsWithFilePath(documentPath).FirstOrDefault();
             var document = solutionService?.Solution?.GetDocument(documentId);
@@ -46,7 +46,7 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
             var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
             if (semanticModel == null)
                 return null;
-            
+
             var root = await semanticModel.SyntaxTree.GetRootAsync(cancellationToken);
             if (root == null)
                 return null;
@@ -59,7 +59,7 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
         });
     }
 
-    private List<DocumentSymbol>? TraverseSyntaxTree(IEnumerable<SyntaxNode> nodes, SemanticModel semanticModel) {
+    private static List<DocumentSymbol>? TraverseSyntaxTree(IEnumerable<SyntaxNode> nodes, SemanticModel semanticModel) {
         var result = new List<DocumentSymbol>();
         foreach (var node in nodes) {
             if (node is not MemberDeclarationSyntax)

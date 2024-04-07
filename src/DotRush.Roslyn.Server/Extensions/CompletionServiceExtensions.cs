@@ -20,17 +20,17 @@ public static class CompletionServiceExtensions {
     public static Task<CompletionList> GetCompletionsAsync(this CompletionService completionService, Document document, int position, object completionOptions, CancellationToken cancellationToken) {
         if (getCompletionsAsyncMethod == null)
             getCompletionsAsyncMethod = completionService.GetType().GetMethod("GetCompletionsAsync", BindingFlags.Instance | BindingFlags.NonPublic);
-        
+
         var passThroughOptions = document.Project.Solution.Options;
         var completionTrigger = CompletionTrigger.Invoke;
 
         if (getCompletionsAsyncMethod == null)
             return Task.FromResult(CompletionList.Empty);
 
-        var result = getCompletionsAsyncMethod.Invoke(completionService, new object?[] { 
+        var result = getCompletionsAsyncMethod.Invoke(completionService, new object?[] {
             document, /// <param name="document">The document that completion is occurring within.</param>
             position, /// <param name="caretPosition">The position of the caret after the triggering action.</param>
-            completionOptions, 
+            completionOptions,
             passThroughOptions,/// <param name="options">The CompletionOptions that override the default options.</param>
             completionTrigger, /// <param name="trigger">The triggering action.</param>
             null,              /// <param name="roles">Optional set of roles associated with the editor state.</param>

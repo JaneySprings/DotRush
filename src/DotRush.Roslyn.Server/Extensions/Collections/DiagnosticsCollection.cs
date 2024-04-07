@@ -16,7 +16,7 @@ public class DiagnosticsCollection {
 
     public void OpenDocument(string documentPath) {
         if (!WorkspaceService.IsSourceCodeDocument(documentPath))
-            return;  
+            return;
 
         if (diagnostics.TryAdd(documentPath, new List<ExtendedDiagnostic>()))
             CurrentSessionLogger.Debug($"Open document: {documentPath}");
@@ -37,8 +37,8 @@ public class DiagnosticsCollection {
     }
     public void ClearDocumentDiagnostics(IEnumerable<string> documentPaths) {
         foreach (var documentPath in documentPaths) {
-            if (diagnostics.ContainsKey(documentPath))
-                diagnostics[documentPath].Clear();
+            if (diagnostics.TryGetValue(documentPath, out List<ExtendedDiagnostic>? value))
+                value.Clear();
         }
     }
 
@@ -46,10 +46,10 @@ public class DiagnosticsCollection {
         return diagnostics.Keys.ToArray();
     }
     public IEnumerable<ExtendedDiagnostic>? GetDiagnostics(string documentPath) {
-        if (!diagnostics.ContainsKey(documentPath))
+        if (!diagnostics.TryGetValue(documentPath, out List<ExtendedDiagnostic>? value))
             return null;
 
-        return diagnostics[documentPath];
+        return value;
     }
 }
 
@@ -70,7 +70,7 @@ public class ExtendedDiagnostic {
         return $"{sourcePath}({span}): {InnerDiagnostic.Severity} {InnerDiagnostic.Id}: {InnerDiagnostic.GetMessage()}";
     }
     public override int GetHashCode() {
-        return this.ToString().GetHashCode();
+        return ToString().GetHashCode();
     }
 }
 

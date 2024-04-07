@@ -21,7 +21,7 @@ public static class FileSystemExtensions {
 
         return result;
     }
-    
+
     public static bool IsFileVisible(string? baseDirectoryPath, IEnumerable<string> folders, string fileName) {
         if (string.IsNullOrEmpty(baseDirectoryPath))
             return false;
@@ -30,7 +30,7 @@ public static class FileSystemExtensions {
         var fileInfo = new FileInfo(filePath);
         if (fileInfo.Attributes.HasFlag(FileAttributes.Hidden))
             return false;
-        
+
         var directory = baseDirectoryPath;
         foreach (var folder in folders) {
             directory = Path.Combine(directory, folder);

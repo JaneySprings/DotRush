@@ -7,13 +7,11 @@ using Microsoft.CodeAnalysis;
 namespace DotRush.Roslyn.Server.Extensions;
 
 // https://github.com/OmniSharp/omnisharp-roslyn/blob/ed467d0ad2d877b837380a849f856dcd210d69f7/src/OmniSharp.Roslyn.CSharp/Helpers/MarkdownHelpers.cs#L42
-public static class MarkdownConverter {
-    private static Regex EscapeRegex = new Regex(@"([\\`\*_\{\}\[\]\(\)#+\-\.!])", RegexOptions.Compiled);
+public static partial class MarkdownConverter {
+    private static readonly Regex EscapeRegex = MyRegex();
 
     public static string? Escape(string? markdown) {
-        if (markdown == null)
-            return null;
-        return EscapeRegex.Replace(markdown, @"\$1");
+        return markdown == null ? null : EscapeRegex.Replace(markdown, @"\$1");
     }
 
     private const string ContainerStart = nameof(ContainerStart);
@@ -172,7 +170,11 @@ public static class MarkdownConverter {
             isInCodeBlock = false;
         }
 
-        bool indexIsTag(int i, params string[] tags)
-            => i < taggedParts.Length && tags.Contains(taggedParts[i].Tag);
+        bool indexIsTag(int i, params string[] tags) {
+            return i < taggedParts.Length && tags.Contains(taggedParts[i].Tag);
+        }
     }
+
+    [GeneratedRegex(@"([\\`\*_\{\}\[\]\(\)#+\-\.!])", RegexOptions.Compiled)]
+    private static partial Regex MyRegex();
 }

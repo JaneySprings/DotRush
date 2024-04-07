@@ -8,10 +8,10 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class RenameHandler : RenameHandlerBase {
-    private WorkspaceService solutionService;
+    private readonly WorkspaceService solutionService;
 
     public RenameHandler(WorkspaceService solutionService) {
         this.solutionService = solutionService;
@@ -25,14 +25,14 @@ public class RenameHandler : RenameHandlerBase {
 
     public override async Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken cancellationToken) {
         var documentEdits = new Dictionary<string, IEnumerable<TextEdit>>();
-        var documentId = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
-        var document = this.solutionService.Solution?.GetDocument(documentId);
-        if (document == null || this.solutionService.Solution == null)
+        var documentId = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
+        var document = solutionService.Solution?.GetDocument(documentId);
+        if (document == null || solutionService.Solution == null)
             return null;
-        
+
         var sourceText = await document.GetTextAsync(cancellationToken);
         var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
-        if (symbol == null) 
+        if (symbol == null)
             return new WorkspaceEdit();
 
         var renameOptions = new SymbolRenameOptions();
@@ -46,19 +46,18 @@ public class RenameHandler : RenameHandlerBase {
             foreach (var changedDocId in change.GetChangedDocuments()) {
                 var newDocument = change.NewProject.GetDocument(changedDocId);
                 var oldDocument = change.OldProject.GetDocument(changedDocId);
-                
+
                 if (newDocument?.FilePath == null || oldDocument?.FilePath == null)
                     continue;
 
                 var oldSourceText = await oldDocument.GetTextAsync(cancellationToken);
                 var textChanges = await newDocument.GetTextChangesAsync(oldDocument, cancellationToken);
                 var edits = textChanges.Select(x => x.ToTextEdit(oldSourceText));
- 
+
                 if (!edits.Any())
                     continue;
 
-                if (!documentEdits.ContainsKey(newDocument.FilePath))
-                    documentEdits.Add(newDocument.FilePath, edits);
+                documentEdits.TryAdd(newDocument.FilePath, edits);
             }
         }
 

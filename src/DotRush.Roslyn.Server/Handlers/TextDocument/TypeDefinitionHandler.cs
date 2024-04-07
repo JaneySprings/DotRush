@@ -6,7 +6,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
     private readonly WorkspaceService solutionService;
@@ -24,7 +24,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
     }
 
     public override async Task<LocationOrLocationLinks?> Handle(TypeDefinitionParams request, CancellationToken cancellationToken) {
-        var documentIds = this.solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
         if (documentIds == null)
             return null;
 
@@ -33,7 +33,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
 
         var result = new LocationCollection();
         foreach (var documentId in documentIds) {
-            document = this.solutionService.Solution?.GetDocument(documentId);
+            document = solutionService.Solution?.GetDocument(documentId);
             if (document == null)
                 continue;
 
@@ -42,7 +42,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
             if (symbol == null)
                 continue;
 
-            if (symbol is ILocalSymbol localSymbol) 
+            if (symbol is ILocalSymbol localSymbol)
                 typeSymbol = localSymbol.Type;
             else if (symbol is IFieldSymbol fieldSymbol)
                 typeSymbol = fieldSymbol.Type;
@@ -58,8 +58,8 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
         }
 
         if (result.IsEmpty && document != null && typeSymbol != null) {
-            var locations = await this.decompilationService.DecompileAsync(typeSymbol, document.Project, cancellationToken);
-            if (locations != null) 
+            var locations = await decompilationService.DecompileAsync(typeSymbol, document.Project, cancellationToken);
+            if (locations != null)
                 result.AddRange(locations);
         }
 

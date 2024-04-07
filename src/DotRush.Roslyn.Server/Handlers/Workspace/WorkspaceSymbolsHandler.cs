@@ -6,7 +6,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
 
-namespace DotRush.Roslyn.Server.Handlers;
+namespace DotRush.Roslyn.Server.Handlers.Workspace;
 
 public class WorkspaceSymbolsHandler : WorkspaceSymbolsHandlerBase {
     private readonly WorkspaceService solutionService;
@@ -20,7 +20,7 @@ public class WorkspaceSymbolsHandler : WorkspaceSymbolsHandlerBase {
     }
 
     public override Task<Container<WorkspaceSymbol>?> Handle(WorkspaceSymbolParams request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync<Container<WorkspaceSymbol>?>(async () => {
+        return SafeExtensions.InvokeAsync(async () => {
             var workspaceSymbols = new HashSet<WorkspaceSymbol>();
             if (solutionService.Solution == null || string.IsNullOrEmpty(request.Query))
                 return null;
@@ -50,7 +50,7 @@ public class WorkspaceSymbolsHandler : WorkspaceSymbolsHandlerBase {
         });
     }
 
-    private bool WorkspaceSymbolFilter(string symbolName, string query) {
+    private static bool WorkspaceSymbolFilter(string symbolName, string query) {
         return symbolName.Contains(query, StringComparison.OrdinalIgnoreCase);
     }
 }

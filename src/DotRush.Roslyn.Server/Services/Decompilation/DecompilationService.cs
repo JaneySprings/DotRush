@@ -19,7 +19,7 @@ public class DecompilationService {
     private const string DecompiledProjectName = "_decompilation_";
 
     public string DecompilationDirectory { get; private set; }
-    
+
     private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;
     private readonly WorkspaceService solutionService;
@@ -50,7 +50,7 @@ public class DecompilationService {
 
         var symbolFinder = new PlainTextSymbolFinder(symbol);
         var sourceText = SourceText.From(File.ReadAllText(documentPath));
-        var syntaxTree = CSharpSyntaxTree.ParseText(sourceText);
+        var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, cancellationToken: cancellationToken);
         var root = await syntaxTree.GetRootAsync(cancellationToken);
 
         symbolFinder.Visit(root);
@@ -72,8 +72,8 @@ public class DecompilationService {
         return locations;
     }
 
-    private bool DecompileDocument(string fullName, string documentPath, MetadataReference? metadataReference, IAssemblySymbol? assemblySymbol) {
-        return SafeExtensions.Invoke<Boolean>(false, () => {
+    private static bool DecompileDocument(string fullName, string documentPath, MetadataReference? metadataReference, IAssemblySymbol? assemblySymbol) {
+        return SafeExtensions.Invoke(false, () => {
             var assemblyLocation = (metadataReference as PortableExecutableReference)?.FilePath;
             if (assemblyLocation == null || metadataReference == null)
                 return false;

@@ -11,7 +11,7 @@ public abstract class DotRushWorkspace : SolutionController {
     protected abstract Dictionary<string, string> WorkspaceProperties { get; }
     protected abstract bool LoadMetadataForReferencedProjects { get; }
     protected abstract bool SkipUnrecognizedProjects { get; }
-    
+
     public bool TryInitializeWorkspace(IEnumerable<string>? projects, Action<Exception>? errorHandler = null) {
         if (!TryRegisterDotNetEnvironment(errorHandler))
             return false;
@@ -19,16 +19,16 @@ public abstract class DotRushWorkspace : SolutionController {
         workspace = MSBuildWorkspace.Create(WorkspaceProperties);
         workspace.LoadMetadataForReferencedProjects = LoadMetadataForReferencedProjects;
         workspace.SkipUnrecognizedProjects = SkipUnrecognizedProjects;
-        
+
         if (projects != null)
             AddProjectFiles(projects);
-        
+
         return true;
     }
     public async Task LoadSolutionAsync(CancellationToken cancellationToken) {
         if (workspace == null)
             throw new InvalidOperationException($"Workspace is not initialized. Call {nameof(TryInitializeWorkspace)} method.");
-        
+
         await LoadSolutionAsync(workspace, cancellationToken);
     }
     public void AddProjectFilesFromFolders(IEnumerable<string>? workspaceFolders) {

@@ -51,7 +51,7 @@ public static class DiagnosticsExtensions {
         };
     }
 
-    public static Protocol.Diagnostic ToServerDiagnostic(this WorkspaceDiagnostic diagnostic) {        
+    public static Protocol.Diagnostic ToServerDiagnostic(this WorkspaceDiagnostic diagnostic) {
         return new Protocol.Diagnostic() {
             Message = diagnostic.Message,
             Severity = diagnostic.Kind.ToServerSeverity(),

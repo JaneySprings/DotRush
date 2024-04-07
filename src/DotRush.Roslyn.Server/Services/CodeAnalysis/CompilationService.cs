@@ -28,7 +28,7 @@ public class CompilationService {
         this.configurationService = configurationService;
         this.solutionService = solutionService;
         this.serverFacade = serverFacade;
-        
+
 
         embeddedAnalyzers = Enumerable.Empty<DiagnosticAnalyzer>();
         compilationTokenSource = new CancellationTokenSource();
@@ -37,7 +37,7 @@ public class CompilationService {
         Diagnostics.DiagnosticsChanged += OnDiagnosticsCollectionChanged;
     }
     public void InitializeEmbeddedAnalyzers() {
-        this.embeddedAnalyzers = Assembly.Load(LanguageServer.CodeAnalysisFeaturesAssembly).DefinedTypes
+        embeddedAnalyzers = Assembly.Load(LanguageServer.CodeAnalysisFeaturesAssembly).DefinedTypes
             .Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(DiagnosticAnalyzer)))
             .Select(x => {
                 try {
@@ -59,7 +59,7 @@ public class CompilationService {
             await Task.Delay(500, cancellationToken); // Input delay
             Diagnostics.ClearDocumentDiagnostics(documentPaths);
 
-            var projectIds = this.solutionService.Solution?.GetProjectIdsWithDocumentsFilePaths(documentPaths);
+            var projectIds = solutionService.Solution?.GetProjectIdsWithDocumentsFilePaths(documentPaths);
             if (projectIds == null)
                 return;
 
@@ -71,7 +71,7 @@ public class CompilationService {
         });
     }
     private async Task<Compilation?> DiagnoseAsync(ProjectId projectId, IEnumerable<string> documentPaths, CancellationToken cancellationToken) {
-        var project = this.solutionService.Solution?.GetProject(projectId);
+        var project = solutionService.Solution?.GetProject(projectId);
         if (project == null)
             return null;
 
@@ -88,13 +88,13 @@ public class CompilationService {
         return compilation;
     }
     private async Task AnalyzerDiagnoseAsync(ProjectId projectId, IEnumerable<string> documentPaths, Compilation compilation, CancellationToken cancellationToken) {
-        var project = this.solutionService.Solution?.GetProject(projectId);
+        var project = solutionService.Solution?.GetProject(projectId);
         if (project == null)
             return;
 
         var diagnosticAnalyzers = project.AnalyzerReferences
             .SelectMany(x => x.GetAnalyzers(project.Language))
-            .Concat(this.embeddedAnalyzers)
+            .Concat(embeddedAnalyzers)
             .ToImmutableArray();
 
         var compilationWithAnalyzers = compilation.WithAnalyzers(diagnosticAnalyzers, project.AnalyzerOptions);

@@ -14,7 +14,7 @@ public static class CodeActionExtensions {
 
     public static IEnumerable<CodeAction> ToSingleCodeActions(this CodeAction codeAction) {
         var result = new List<CodeAction>();
-        
+
         if (nestedCodeActionsProperty == null)
             nestedCodeActionsProperty = typeof(CodeAction).GetProperty("NestedCodeActions", BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -65,9 +65,9 @@ public static class CodeActionExtensions {
                                 Range = textChange.Span.ToRange(sourceText),
                             });
                         }
-                        textDocumentEdits.Add(new ProtocolModels.TextDocumentEdit() { 
+                        textDocumentEdits.Add(new ProtocolModels.TextDocumentEdit() {
                             Edits = textEdits,
-                            TextDocument = new ProtocolModels.OptionalVersionedTextDocumentIdentifier() { 
+                            TextDocument = new ProtocolModels.OptionalVersionedTextDocumentIdentifier() {
                                 Uri = DocumentUri.FromFileSystemPath(newDocument.FilePath)
                             }
                         });
@@ -100,10 +100,7 @@ public static class CodeActionExtensions {
             inNewFileField = actionType.GetField("_inNewFile", BindingFlags.Instance | BindingFlags.NonPublic);
 
         var isNewFile = inNewFileField?.GetValue(codeAction);
-        if (isNewFile != null && (bool)isNewFile)
-            return true;
-
-        return false;
+        return isNewFile != null && (bool)isNewFile;
     }
 
 
