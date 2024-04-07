@@ -1,6 +1,7 @@
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
 using Protocol = OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using Diagnostic = DotRush.Roslyn.CodeAnalysis.Diagnostics.Diagnostic;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
@@ -27,16 +28,16 @@ public static class DiagnosticExtensions {
                 return Protocol.DiagnosticSeverity.Information;
         }
     }
-    public static Protocol.Diagnostic ToServerDiagnostic(this Diagnostic diagnostic, Project? project = null) {
-        var diagnosticSource = diagnostic.Location.SourceTree?.FilePath;
-        var sourceName = project?.Name ?? diagnosticSource;
+    public static Protocol.Diagnostic ToServerDiagnostic(this Diagnostic diagnostic) {
+        var diagnosticSource = diagnostic.InnerDiagnostic.Location.SourceTree?.FilePath;
+        var sourceName = diagnostic.Source.Name ?? diagnosticSource;
         return new Protocol.Diagnostic() {
             Source = sourceName,
-            Code = diagnostic.Id,
-            Message = diagnostic.GetSubject(),
-            Range = diagnostic.Location.ToRange(),
-            Severity = diagnostic.Severity.ToServerSeverity(),
-            Data = diagnostic.GetUniqueCode(),
+            Code = diagnostic.InnerDiagnostic.Id,
+            Message = diagnostic.InnerDiagnostic.GetSubject(),
+            Range = diagnostic.InnerDiagnostic.Location.ToRange(),
+            Severity = diagnostic.InnerDiagnostic.Severity.ToServerSeverity(),
+            Data = diagnostic.InnerDiagnostic.GetUniqueCode(),
         };
     }
     public static Protocol.Diagnostic ToServerDiagnostic(this WorkspaceDiagnostic diagnostic) {
