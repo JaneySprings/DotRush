@@ -7,6 +7,9 @@
             "path": "src/DotRush.Roslyn.Workspaces"
         },
         {
+            "path": "src/DotRush.Roslyn.CodeAnalysis"
+        },
+        {
             "path": "src/DotRush.Roslyn.Server"
         },
         {

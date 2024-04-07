@@ -3,20 +3,17 @@ using MediatR;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class DidChangeTextDocumentHandler : DidChangeTextDocumentHandlerBase {
     private readonly WorkspaceService solutionService;
-    private readonly CompilationService compilationService;
-    private readonly ILanguageServerFacade serverFacade;
+    private readonly DiagnosticService diagnosticService;
 
-    public DidChangeTextDocumentHandler(ILanguageServerFacade serverFacade, WorkspaceService solutionService, CompilationService compilationService) {
-        this.compilationService = compilationService;
+    public DidChangeTextDocumentHandler(WorkspaceService solutionService, DiagnosticService diagnosticService) {
+        this.diagnosticService = diagnosticService;
         this.solutionService = solutionService;
-        this.serverFacade = serverFacade;
     }
 
     protected override TextDocumentChangeRegistrationOptions CreateRegistrationOptions(TextSynchronizationCapability capability, ClientCapabilities clientCapabilities) {
@@ -31,8 +28,8 @@ public class DidChangeTextDocumentHandler : DidChangeTextDocumentHandlerBase {
         var text = request.ContentChanges.First().Text;
 
         solutionService.UpdateDocument(filePath, text);
-        compilationService.Diagnostics.OpenDocument(filePath);
-        _ = compilationService.PublishDiagnosticsAsync();
+        diagnosticService.OpenDocument(filePath);
+        _ = diagnosticService.PublishDiagnosticsAsync();
         return Unit.Task;
     }
 }

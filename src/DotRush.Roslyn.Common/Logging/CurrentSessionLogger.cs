@@ -10,7 +10,7 @@ public static class CurrentSessionLogger {
     }
 
     public static void Error(Exception e) {
-        logger.Error(e);
+        logger.Error(e.ToString());
     }
     public static void Error(string message) {
         logger.Error(message);

@@ -1,23 +1,10 @@
+using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
 using Protocol = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
-public static class DiagnosticsExtensions {
-    public static IEnumerable<Protocol.Diagnostic> ToServerDiagnostics(this IEnumerable<ExtendedDiagnostic> diagnostics) {
-        return diagnostics.Select(it => {
-            var diagnosticSource = it.InnerDiagnostic.Location.SourceTree?.FilePath;
-            return new Protocol.Diagnostic() {
-                Message = it.InnerDiagnostic.GetSubject(),
-                Range = it.InnerDiagnostic.Location.ToRange(),
-                Severity = it.InnerDiagnostic.Severity.ToServerSeverity(),
-                Source = it.SourceName ?? diagnosticSource,
-                Code = it.InnerDiagnostic.Id,
-                Data = it.GetHashCode(),
-            };
-        });
-    }
-
+public static class DiagnosticExtensions {
     public static Protocol.DiagnosticSeverity ToServerSeverity(this DiagnosticSeverity severity) {
         switch (severity) {
             case DiagnosticSeverity.Error:
@@ -40,17 +27,18 @@ public static class DiagnosticsExtensions {
                 return Protocol.DiagnosticSeverity.Information;
         }
     }
-
-    public static Protocol.Diagnostic UpdateSource(this Protocol.Diagnostic diagnostic, string path) {
+    public static Protocol.Diagnostic ToServerDiagnostic(this Diagnostic diagnostic, Project? project = null) {
+        var diagnosticSource = diagnostic.Location.SourceTree?.FilePath;
+        var sourceName = project?.Name ?? diagnosticSource;
         return new Protocol.Diagnostic() {
-            Message = diagnostic.Message,
-            Range = diagnostic.Range,
-            Severity = diagnostic.Severity,
-            Source = path,
-            Code = diagnostic.Code,
+            Source = sourceName,
+            Code = diagnostic.Id,
+            Message = diagnostic.GetSubject(),
+            Range = diagnostic.Location.ToRange(),
+            Severity = diagnostic.Severity.ToServerSeverity(),
+            Data = diagnostic.GetUniqueCode(),
         };
     }
-
     public static Protocol.Diagnostic ToServerDiagnostic(this WorkspaceDiagnostic diagnostic) {
         return new Protocol.Diagnostic() {
             Message = diagnostic.Message,
@@ -60,13 +48,5 @@ public static class DiagnosticsExtensions {
                 End = new Protocol.Position(0, 0)
             },
         };
-    }
-
-    public static string GetSubject(this Diagnostic diagnostic) {
-        var message = diagnostic.GetMessage();
-        if (string.IsNullOrEmpty(message))
-            return $"Missing subject for {diagnostic.Id}";
-
-        return message;
     }
 }

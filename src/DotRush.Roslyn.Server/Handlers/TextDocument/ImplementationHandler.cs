@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Server.Containers;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis;
@@ -26,7 +27,7 @@ public class ImplementationHandler : ImplementationHandlerBase {
         if (documentIds == null)
             return null;
 
-        var resultSymbols = new List<ISymbol>();
+        var result = new LocationsContainer();
         foreach (var documentId in documentIds) {
             var document = solutionService.Solution?.GetDocument(documentId);
             if (document == null)
@@ -39,28 +40,24 @@ public class ImplementationHandler : ImplementationHandlerBase {
 
             var symbols = await SymbolFinder.FindImplementationsAsync(symbol, solutionService.Solution, cancellationToken: cancellationToken);
             if (symbols != null)
-                resultSymbols.AddRange(symbols);
+                result.AddRange(symbols.SelectMany(it => it.Locations).Select(it => it.ToLocation()));
 
             if (symbol is IMethodSymbol methodSymbol) {
                 symbols = await SymbolFinder.FindOverridesAsync(methodSymbol, solutionService.Solution, cancellationToken: cancellationToken);
                 if (symbols != null)
-                    resultSymbols.AddRange(symbols);
+                    result.AddRange(symbols.SelectMany(it => it.Locations).Select(it => it.ToLocation()));
             }
             if (symbol is INamedTypeSymbol namedTypeSymbol) {
                 symbols = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, solutionService.Solution, cancellationToken: cancellationToken);
                 if (symbols != null)
-                    resultSymbols.AddRange(symbols);
+                    result.AddRange(symbols.SelectMany(it => it.Locations).Select(it => it.ToLocation()));
 
                 symbols = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, solutionService.Solution, cancellationToken: cancellationToken);
                 if (symbols != null)
-                    resultSymbols.AddRange(symbols);
+                    result.AddRange(symbols.SelectMany(it => it.Locations).Select(it => it.ToLocation()));
             }
         }
 
-        return new LocationCollection()
-            .AddRange(resultSymbols
-            .SelectMany(i => i.Locations)
-            .Select(loc => loc.ToLocation()))
-            .ToLocationOrLocationLinks();
+        return result.ToLocationOrLocationLinks();
     }
 }

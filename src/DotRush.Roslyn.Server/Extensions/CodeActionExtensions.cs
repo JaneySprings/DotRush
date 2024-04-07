@@ -2,48 +2,38 @@ using Microsoft.CodeAnalysis.CodeActions;
 using DotRush.Roslyn.Server.Services;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol;
-using System.Collections.Immutable;
 using System.Reflection;
 using DotRush.Roslyn.Common.Extensions;
+using Microsoft.CodeAnalysis;
+using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
 public static class CodeActionExtensions {
-    private static PropertyInfo? nestedCodeActionsProperty;
     private static FieldInfo? inNewFileField;
 
     public static IEnumerable<CodeAction> ToSingleCodeActions(this CodeAction codeAction) {
-        var result = new List<CodeAction>();
+        if (codeAction.NestedActions.IsEmpty)
+            return new[] { codeAction };
 
-        if (nestedCodeActionsProperty == null)
-            nestedCodeActionsProperty = typeof(CodeAction).GetProperty("NestedCodeActions", BindingFlags.Instance | BindingFlags.NonPublic);
-
-        var nesteadCodeActionsObject = nestedCodeActionsProperty?.GetValue(codeAction);
-        if (nesteadCodeActionsObject != null && nesteadCodeActionsObject is ImmutableArray<CodeAction> nesteadCodeActions && nesteadCodeActions.Length > 0) {
-            result.AddRange(nesteadCodeActions.SelectMany(x => x.ToSingleCodeActions()));
-            return result;
-        }
-
-        result.Add(codeAction);
-        return result;
+        return codeAction.NestedActions.SelectMany(it => it.ToSingleCodeActions());
     }
 
-    public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction) {
-        var data = string.IsNullOrEmpty(codeAction.EquivalenceKey) ? codeAction.Title : codeAction.EquivalenceKey;
+    public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction, int? uniqueId = null) {
         return new ProtocolModels.CodeAction() {
             IsPreferred = codeAction.Priority == CodeActionPriority.High,
             Kind = ProtocolModels.CodeActionKind.QuickFix,
             Title = codeAction.Title,
-            Data = data,
+            Data = uniqueId,
         };
     }
 
-    public static async Task<ProtocolModels.CodeAction?> ToCodeActionAsync(this CodeAction codeAction, WorkspaceService solutionService, CancellationToken cancellationToken) {
+    public static async Task<ProtocolModels.CodeAction?> ResolveCodeActionAsync(this CodeAction codeAction, WorkspaceService solutionService, CancellationToken cancellationToken) {
         if (solutionService.Solution == null)
             return null;
 
         var textDocumentEdits = new List<ProtocolModels.TextDocumentEdit>();
-        var operations = await codeAction.GetOperationsAsync(cancellationToken);
+        var operations = await codeAction.GetOperationsAsync(solutionService.Solution, new ProgreeMock(), cancellationToken);
         foreach (var operation in operations) {
             if (operation is ApplyChangesOperation applyChangesOperation) {
                 var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solutionService.Solution);
@@ -102,12 +92,9 @@ public static class CodeActionExtensions {
         var isNewFile = inNewFileField?.GetValue(codeAction);
         return isNewFile != null && (bool)isNewFile;
     }
+}
 
-
-    public static bool ContainsWithMapping(this ImmutableArray<string> array, string item) {
-        if (item == "CS8019")
-            return array.Contains("RemoveUnnecessaryImportsFixable");
-
-        return array.Contains(item);
+public class ProgreeMock : IProgress<CodeAnalysisProgress> {
+    public void Report(CodeAnalysisProgress value) {
     }
 }

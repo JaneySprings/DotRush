@@ -19,19 +19,6 @@ public abstract class ProjectsController {
     public virtual void OnProjectCompilationCompleted(string documentPath) {}
     protected abstract void OnWorkspaceStateChanged(MSBuildWorkspace workspace);
 
-    public static bool IsSourceCodeDocument(string filePath) {
-        var allowedExtensions = new[] { ".cs", /* .fs .vb */};
-        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
-    }
-    public static bool IsAdditionalDocument(string filePath) {
-        var allowedExtensions = new[] { ".xaml", /* maybe '.razor' ? */};
-        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
-    }
-    public static bool IsProjectFile(string filePath) {
-        var allowedExtensions = new[] { ".csproj", /* fsproj vbproj */};
-        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
-    }
-
     protected void AddProjectFiles(IEnumerable<string> projectPaths) {
         foreach (var projectPath in projectPaths)
             projectFilePaths.Add(projectPath);

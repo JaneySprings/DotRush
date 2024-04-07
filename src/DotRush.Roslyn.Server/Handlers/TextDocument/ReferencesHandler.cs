@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Server.Containers;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis.FindSymbols;
@@ -25,7 +26,7 @@ public class ReferencesHandler : ReferencesHandlerBase {
         if (documentIds == null || workspaceService.Solution == null)
             return null;
 
-        var result = new LocationCollection();
+        var result = new LocationsContainer();
         foreach (var documentId in documentIds) {
             var document = workspaceService.Solution.GetDocument(documentId);
             if (document == null)

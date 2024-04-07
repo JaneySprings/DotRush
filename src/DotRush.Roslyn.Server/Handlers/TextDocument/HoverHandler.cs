@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.FindSymbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using CodeAnalysis = Microsoft.CodeAnalysis;
+using SymbolKind = Microsoft.CodeAnalysis.SymbolKind;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -60,7 +60,7 @@ public class HoverHandler : HoverHandlerBase {
                 if (symbol is IAliasSymbol aliasSymbol)
                     symbol = aliasSymbol.Target;
 
-                var displayString = symbol.Kind == CodeAnalysis.SymbolKind.NamedType || symbol.Kind == CodeAnalysis.SymbolKind.Namespace
+                var displayString = symbol.Kind == SymbolKind.NamedType || symbol.Kind == SymbolKind.Namespace
                     ? symbol.ToDisplayString(DefaultFormat)
                     : symbol.ToMinimalDisplayString(semanticModel, offset, MinimalFormat);
 
