@@ -37,7 +37,7 @@ public class ConfigurationService {
                 Thread.Sleep(200);
                 retryCount++;
             }
-        });
+        }).ConfigureAwait(false);
         CurrentSessionLogger.Debug("ConfigurationService initialized");
     }
 }

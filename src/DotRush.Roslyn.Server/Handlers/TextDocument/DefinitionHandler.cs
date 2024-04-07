@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Server.Containers;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis;
@@ -31,7 +32,7 @@ public class DefinitionHandler : DefinitionHandlerBase {
         Document? document = null;
         ISymbol? symbol = null;
 
-        var result = new LocationCollection();
+        var result = new LocationsContainer();
         foreach (var documentId in documentIds) {
             document = solutionService.Solution?.GetDocument(documentId);
             if (document == null)

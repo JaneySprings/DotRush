@@ -1,12 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\Common.Build.props" />
+
 	<PropertyGroup>
-		<CodeAnalysisVersion>4.9.2</CodeAnalysisVersion>
-		<DecompilerVersion>8.2.0.7535</DecompilerVersion>
-	
-		<TargetFramework>net8.0</TargetFramework>
 		<OutputType>Exe</OutputType>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
 		<AssemblyName>DotRush</AssemblyName>
 		<SelfContained>true</SelfContained>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
@@ -20,8 +16,8 @@
 	<ItemGroup>
 		<PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
 		<PackageReference Include="ICSharpCode.Decompiler" Version="$(DecompilerVersion)" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(CodeAnalysisVersion)" />
 
 		<ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
+		<ProjectReference Include="..\DotRush.Roslyn.CodeAnalysis\DotRush.Roslyn.CodeAnalysis.csproj" />
 	</ItemGroup>
 </Project>

@@ -37,9 +37,6 @@ public static class CompletionServiceExtensions {
             cancellationToken  /// <param name="cancellationToken"></param>
         });
 
-        if (result == null)
-            return Task.FromResult(CompletionList.Empty);
-
-        return (Task<CompletionList>)result;
+        return result == null ? Task.FromResult(CompletionList.Empty) : (Task<CompletionList>)result;
     }
 }

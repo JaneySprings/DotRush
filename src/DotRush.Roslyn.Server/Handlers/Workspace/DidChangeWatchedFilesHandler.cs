@@ -42,7 +42,7 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     }
 
     private void HandleFileChange(string path, FileChangeType changeType) {
-        if (WorkspaceService.IsProjectFile(path) && changeType == FileChangeType.Changed)
+        if (LanguageExtensions.IsProjectFile(path) && changeType == FileChangeType.Changed)
             return; // Handled from IDE
 
         if (changeType == FileChangeType.Deleted) {

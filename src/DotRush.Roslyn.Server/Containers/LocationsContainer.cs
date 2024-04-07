@@ -1,21 +1,16 @@
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DotRush.Roslyn.Server.Extensions;
+namespace DotRush.Roslyn.Server.Containers;
 
-public class LocationCollection {
-    private readonly HashSet<Location> locations;
-
+public class LocationsContainer {
+    private readonly HashSet<Location> locations = new HashSet<Location>();
     public bool IsEmpty => locations.Count == 0;
 
-    public LocationCollection() {
-        locations = new HashSet<Location>();
-    }
-
-    public LocationCollection Add(Location location) {
+    public LocationsContainer Add(Location location) {
         locations.Add(location);
         return this;
     }
-    public LocationCollection AddRange(IEnumerable<Location?> locations) {
+    public LocationsContainer AddRange(IEnumerable<Location?> locations) {
         foreach (var location in locations)
             if (location != null)
                 Add(location);

@@ -12,7 +12,7 @@ public abstract class DotRushWorkspace : SolutionController {
     protected abstract bool LoadMetadataForReferencedProjects { get; }
     protected abstract bool SkipUnrecognizedProjects { get; }
 
-    public bool TryInitializeWorkspace(IEnumerable<string>? projects, Action<Exception>? errorHandler = null) {
+    public bool TryInitializeWorkspace(Action<Exception>? errorHandler = null) {
         if (!TryRegisterDotNetEnvironment(errorHandler))
             return false;
 
@@ -20,30 +20,28 @@ public abstract class DotRushWorkspace : SolutionController {
         workspace.LoadMetadataForReferencedProjects = LoadMetadataForReferencedProjects;
         workspace.SkipUnrecognizedProjects = SkipUnrecognizedProjects;
 
-        if (projects != null)
-            AddProjectFiles(projects);
-
         return true;
     }
     public async Task LoadSolutionAsync(CancellationToken cancellationToken) {
-        if (workspace == null)
-            throw new InvalidOperationException($"Workspace is not initialized. Call {nameof(TryInitializeWorkspace)} method.");
-
+        ArgumentNullException.ThrowIfNull(workspace);
         await LoadSolutionAsync(workspace, cancellationToken);
     }
-    public void AddProjectFilesFromFolders(IEnumerable<string>? workspaceFolders) {
+    public void FindTargetsInWorkspace(IEnumerable<string>? workspaceFolders) {
         ClearAllProjects();
         if (workspaceFolders == null)
             return;
 
         foreach (var workspaceFolder in workspaceFolders) {
-            var directoryProjectFiles = FileSystemExtensions.GetVisibleFiles(workspaceFolder).Where(it => ProjectsController.IsProjectFile(it));
+            var directoryProjectFiles = FileSystemExtensions.GetVisibleFiles(workspaceFolder).Where(LanguageExtensions.IsProjectFile);
             if (directoryProjectFiles.Any()) {
                 AddProjectFiles(directoryProjectFiles);
                 continue;
             }
             AddProjectFiles(FileSystemExtensions.GetVisibleDirectories(workspaceFolder));
         }
+    }
+    public void AddTargets(IEnumerable<string> projectFiles) {
+        AddProjectFiles(projectFiles);
     }
 
     private static bool TryRegisterDotNetEnvironment(Action<Exception>? errorHandler) {

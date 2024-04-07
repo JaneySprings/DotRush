@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -24,21 +25,21 @@ public abstract class SolutionController : ProjectsController {
         DeleteAdditionalDocument(additionalDocumentIds);
     }
     public void CreateDocument(string file) {
-        if (ProjectsController.IsAdditionalDocument(file))
+        if (LanguageExtensions.IsAdditionalDocument(file))
             CreateAdditionalDocument(file);
-        if (ProjectsController.IsSourceCodeDocument(file))
+        if (LanguageExtensions.IsSourceCodeDocument(file))
             CreateSourceCodeDocument(file);
     }
     public void DeleteDocument(string file) {
-        if (ProjectsController.IsAdditionalDocument(file))
+        if (LanguageExtensions.IsAdditionalDocument(file))
             DeleteAdditionalDocument(file);
-        if (ProjectsController.IsSourceCodeDocument(file))
+        if (LanguageExtensions.IsSourceCodeDocument(file))
             DeleteSourceCodeDocument(file);
     }
     public void UpdateDocument(string file, string? text = null) {
-        if (ProjectsController.IsAdditionalDocument(file))
+        if (LanguageExtensions.IsAdditionalDocument(file))
             UpdateAdditionalDocument(file, text);
-        if (ProjectsController.IsSourceCodeDocument(file))
+        if (LanguageExtensions.IsSourceCodeDocument(file))
             UpdateSourceCodeDocument(file, text);
     }
 

@@ -7,10 +7,10 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class DidOpenTextDocumentHandler : DidOpenTextDocumentHandlerBase {
-    private readonly CompilationService compilationService;
+    private readonly DiagnosticService diagnosticService;
 
-    public DidOpenTextDocumentHandler(CompilationService compilationService) {
-        this.compilationService = compilationService;
+    public DidOpenTextDocumentHandler(DiagnosticService diagnosticService) {
+        this.diagnosticService = diagnosticService;
     }
 
     protected override TextDocumentOpenRegistrationOptions CreateRegistrationOptions(TextSynchronizationCapability capability, ClientCapabilities clientCapabilities) {
@@ -21,8 +21,8 @@ public class DidOpenTextDocumentHandler : DidOpenTextDocumentHandlerBase {
 
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
-        compilationService.Diagnostics.OpenDocument(filePath);
-        _ = compilationService.PublishDiagnosticsAsync();
+        diagnosticService.OpenDocument(filePath);
+        _ = diagnosticService.PublishDiagnosticsAsync();
         return Unit.Task;
     }
 }
