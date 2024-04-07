@@ -4,6 +4,9 @@ using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
+using Microsoft.CodeAnalysis.Diagnostics;
+using CADiagnostic = Microsoft.CodeAnalysis.Diagnostic;
+using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.CodeAnalysis.Diagnostics;
 
@@ -22,29 +25,31 @@ public abstract class DiagnosticHost {
     }
     public virtual void CloseDocument(string documentPath) {
         workspaceDiagnostics.Remove(documentPath);
-        var eventArgs = new DiagnosticsCollectionChangedEventArgs(documentPath, Array.Empty<Diagnostic>(), null);
+        var eventArgs = new DiagnosticsCollectionChangedEventArgs(documentPath, Array.Empty<Diagnostic>());
         DiagnosticsChanged?.Invoke(this, eventArgs);
         CurrentSessionLogger.Debug($"Close document: {documentPath}");
     }
-    public void AppendDocumentDiagnostics(string? documentPath, IEnumerable<Diagnostic> newDiagnostics, Project source) {
+
+    protected void AppendDocumentDiagnostics(string? documentPath, IEnumerable<CADiagnostic> newDiagnostics, Project source) {
         if (string.IsNullOrEmpty(documentPath))
             return;
 
         foreach (var diagnostic in newDiagnostics)
-            workspaceDiagnostics[documentPath].TryAdd(diagnostic.GetUniqueCode(), diagnostic);
+            workspaceDiagnostics[documentPath].TryAdd(diagnostic.GetUniqueCode(), new Diagnostic(diagnostic, source));
 
-        var eventArgs = new DiagnosticsCollectionChangedEventArgs(documentPath, workspaceDiagnostics[documentPath].Values.ToArray(), source);
+        var eventArgs = new DiagnosticsCollectionChangedEventArgs(documentPath, workspaceDiagnostics[documentPath].Values.ToArray());
         DiagnosticsChanged?.Invoke(this, eventArgs);
     }
-    public void ClearDocumentDiagnostics(IEnumerable<string> documentPaths) {
+    protected void ClearDocumentDiagnostics(IEnumerable<string> documentPaths) {
         foreach (var documentPath in documentPaths) {
             if (workspaceDiagnostics.TryGetValue(documentPath, out Dictionary<int, Diagnostic>? value))
                 value.Clear();
         }
     }
-    public IEnumerable<string> GetOpenedDocuments() {
+    protected IEnumerable<string> GetOpenedDocuments() {
         return workspaceDiagnostics.Keys.ToArray();
     }
+
     public IEnumerable<Diagnostic>? GetDiagnostics(string documentPath) {
         if (!workspaceDiagnostics.TryGetValue(documentPath, out Dictionary<int, Diagnostic>? value))
             return null;
@@ -52,5 +57,45 @@ public abstract class DiagnosticHost {
     }
     public IEnumerable<CodeFixProvider> GetCodeFixProvidersForDiagnosticId(string diagnosticId, Project project) {
         return CodeFixProvidersLoader.GetComponents(project).Where(x => x.FixableDiagnosticIds.CanFixDiagnostic(diagnosticId));
+    }
+
+    protected async Task<Compilation?> DiagnoseAsync(Project project, IEnumerable<string> documentPaths, CancellationToken cancellationToken) {
+        var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
+        if (compilation == null)
+            return null;
+
+        var diagnostics = compilation.GetDiagnostics(cancellationToken);
+        foreach (var documentPath in documentPaths) {
+            var currentFileDiagnostic = diagnostics.Where(d => FileSystemExtensions.PathEquals(d.Location.SourceTree?.FilePath, documentPath));
+            AppendDocumentDiagnostics(documentPath, currentFileDiagnostic, project);
+        }
+
+        return compilation;
+    }
+    protected async Task<CompilationWithAnalyzers?> AnalyzerDiagnoseAsync(Project project, IEnumerable<string> documentPaths, Compilation? compilation, CancellationToken cancellationToken) {
+        if (compilation == null)
+            compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
+        if (compilation == null)
+            return null;
+
+        var diagnosticAnalyzers = DiagnosticAnalyzersLoader.GetComponents(project);
+        var compilationWithAnalyzers = compilation.WithAnalyzers(diagnosticAnalyzers, project.AnalyzerOptions);
+        var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var documentPath in documentPaths) {
+            var currentFileDiagnostic = diagnostics.Where(d => FileSystemExtensions.PathEquals(d.Location.SourceTree?.FilePath, documentPath));
+            AppendDocumentDiagnostics(documentPath, currentFileDiagnostic, project);
+        }
+
+        return compilationWithAnalyzers;
+    }
+}
+
+public class DiagnosticsCollectionChangedEventArgs : EventArgs {
+    public string DocumentPath { get; private set; }
+    public ReadOnlyCollection<Diagnostic> Diagnostics { get; private set; }
+
+    public DiagnosticsCollectionChangedEventArgs(string documentPath, IList<Diagnostic> diagnostics) {
+        DocumentPath = documentPath;
+        Diagnostics = new ReadOnlyCollection<Diagnostic>(diagnostics);
     }
 }
