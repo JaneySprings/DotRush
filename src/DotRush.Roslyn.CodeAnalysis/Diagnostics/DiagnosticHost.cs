@@ -35,7 +35,7 @@ public abstract class DiagnosticHost {
             return;
 
         foreach (var diagnostic in newDiagnostics)
-            workspaceDiagnostics[documentPath].TryAdd(diagnostic.GetUniqueCode(), new Diagnostic(diagnostic, source));
+            workspaceDiagnostics[documentPath].TryAdd(diagnostic.GetUniqueId(), new Diagnostic(diagnostic, source));
 
         var eventArgs = new DiagnosticsCollectionChangedEventArgs(documentPath, workspaceDiagnostics[documentPath].Values.ToArray());
         DiagnosticsChanged?.Invoke(this, eventArgs);
@@ -55,8 +55,13 @@ public abstract class DiagnosticHost {
             return null;
         return value.Values;
     }
-    public IEnumerable<CodeFixProvider> GetCodeFixProvidersForDiagnosticId(string diagnosticId, Project project) {
+    public IEnumerable<CodeFixProvider>? GetCodeFixProvidersForDiagnosticId(string? diagnosticId, Project project) {
+        if (diagnosticId == null)
+            return null;
         return CodeFixProvidersLoader.GetComponents(project).Where(x => x.FixableDiagnosticIds.CanFixDiagnostic(diagnosticId));
+    }
+    public Diagnostic? GetDiagnosticById(string documentPath, int diagnosticId) {
+        return GetDiagnostics(documentPath)?.FirstOrDefault(x => x.InnerDiagnostic.GetUniqueId() == diagnosticId);
     }
 
     protected async Task<Compilation?> DiagnoseAsync(Project project, IEnumerable<string> documentPaths, CancellationToken cancellationToken) {

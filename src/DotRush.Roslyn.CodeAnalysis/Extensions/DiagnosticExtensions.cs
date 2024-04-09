@@ -17,7 +17,7 @@ public static class DiagnosticsExtensions {
         var sourcePath = diagnostic.Location.SourceTree?.FilePath ?? string.Empty;
         return $"{sourcePath}({span}): {diagnostic.Severity} {diagnostic.Id}: {diagnostic.GetSubject()}";
     }
-    public static int GetUniqueCode(this Diagnostic diagnostic) {
+    public static int GetUniqueId(this Diagnostic diagnostic) {
         return diagnostic.ToDisplayString().GetHashCode();
     }
 
