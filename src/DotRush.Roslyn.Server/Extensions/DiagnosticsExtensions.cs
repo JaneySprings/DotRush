@@ -37,7 +37,7 @@ public static class DiagnosticExtensions {
             Message = diagnostic.InnerDiagnostic.GetSubject(),
             Range = diagnostic.InnerDiagnostic.Location.ToRange(),
             Severity = diagnostic.InnerDiagnostic.Severity.ToServerSeverity(),
-            Data = diagnostic.InnerDiagnostic.GetUniqueCode(),
+            Data = diagnostic.InnerDiagnostic.GetUniqueId(),
         };
     }
     public static Protocol.Diagnostic ToServerDiagnostic(this WorkspaceDiagnostic diagnostic) {

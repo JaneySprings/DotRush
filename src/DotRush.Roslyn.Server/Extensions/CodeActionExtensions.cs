@@ -19,12 +19,12 @@ public static class CodeActionExtensions {
         return codeAction.NestedActions.SelectMany(it => it.ToSingleCodeActions());
     }
 
-    public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction, int? uniqueId = null) {
+    public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction) {
         return new ProtocolModels.CodeAction() {
             IsPreferred = codeAction.Priority == CodeActionPriority.High,
             Kind = ProtocolModels.CodeActionKind.QuickFix,
             Title = codeAction.Title,
-            Data = uniqueId,
+            Data = codeAction.GetUniqueId(),
         };
     }
 
@@ -91,6 +91,10 @@ public static class CodeActionExtensions {
 
         var isNewFile = inNewFileField?.GetValue(codeAction);
         return isNewFile != null && (bool)isNewFile;
+    }
+    public static int GetUniqueId(this CodeAction codeAction) {
+        var id = codeAction.EquivalenceKey ?? codeAction.Title;
+        return id.GetHashCode();
     }
 }
 
