@@ -3,26 +3,19 @@ using DotRush.Roslyn.Server.Services;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using System.Reflection;
-using DotRush.Roslyn.Common.Extensions;
 using Microsoft.CodeAnalysis;
 using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
+using DotRush.Roslyn.CodeAnalysis.Extensions;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
 public static class CodeActionExtensions {
     private static FieldInfo? inNewFileField;
 
-    public static IEnumerable<CodeAction> ToSingleCodeActions(this CodeAction codeAction) {
-        if (codeAction.NestedActions.IsEmpty)
-            return new[] { codeAction };
-
-        return codeAction.NestedActions.SelectMany(it => it.ToSingleCodeActions());
-    }
-
-    public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction) {
+    public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction, ProtocolModels.CodeActionKind kind) {
         return new ProtocolModels.CodeAction() {
             IsPreferred = codeAction.Priority == CodeActionPriority.High,
-            Kind = ProtocolModels.CodeActionKind.QuickFix,
+            Kind = kind,
             Title = codeAction.Title,
             Data = codeAction.GetUniqueId(),
         };
@@ -33,7 +26,7 @@ public static class CodeActionExtensions {
             return null;
 
         var textDocumentEdits = new List<ProtocolModels.TextDocumentEdit>();
-        var operations = await codeAction.GetOperationsAsync(solutionService.Solution, new ProgreeMock(), cancellationToken);
+        var operations = await codeAction.GetOperationsAsync(cancellationToken);
         foreach (var operation in operations) {
             if (operation is ApplyChangesOperation applyChangesOperation) {
                 var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solutionService.Solution);
@@ -91,14 +84,5 @@ public static class CodeActionExtensions {
 
         var isNewFile = inNewFileField?.GetValue(codeAction);
         return isNewFile != null && (bool)isNewFile;
-    }
-    public static int GetUniqueId(this CodeAction codeAction) {
-        var id = codeAction.EquivalenceKey ?? codeAction.Title;
-        return id.GetHashCode();
-    }
-}
-
-public class ProgreeMock : IProgress<CodeAnalysisProgress> {
-    public void Report(CodeAnalysisProgress value) {
     }
 }
