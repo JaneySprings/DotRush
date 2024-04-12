@@ -6,13 +6,13 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Workspaces.Extensions;
-using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.Server.Extensions;
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using DotRush.Roslyn.CodeAnalysis;
 
 namespace DotRush.Roslyn.Server.Services;
 
-public class DiagnosticService : DiagnosticHost {
+public class CodeAnalysisService {
     private const int AnalysisFrequencyMs = 500;
 
     private readonly WorkspaceService workspaceService;
@@ -20,28 +20,28 @@ public class DiagnosticService : DiagnosticHost {
     private readonly ILanguageServerFacade serverFacade;
     private CancellationTokenSource compilationTokenSource;
 
-    public DiagnosticService(ILanguageServerFacade serverFacade, WorkspaceService workspaceService, ConfigurationService configurationService) {
+    public CompilationHost CompilationHost { get; }
+    public CodeActionHost CodeActionHost { get; }
+
+    public CodeAnalysisService(ILanguageServerFacade serverFacade, WorkspaceService workspaceService, ConfigurationService configurationService) {
         this.configurationService = configurationService;
         this.workspaceService = workspaceService;
         this.serverFacade = serverFacade;
 
-        DiagnosticsChanged += OnDiagnosticsCollectionChanged;
+        CompilationHost = new CompilationHost();
+        CodeActionHost = new CodeActionHost();
         compilationTokenSource = new CancellationTokenSource();
-    }
 
-    public override void Initialize() {
-        CodeFixProvidersLoader.InitializeEmbeddedComponents();
-        if (configurationService.UseRoslynAnalyzers)
-            DiagnosticAnalyzersLoader.InitializeEmbeddedComponents();
+        CompilationHost.DiagnosticsChanged += OnDiagnosticsCollectionChanged;
     }
 
     public Task PublishDiagnosticsAsync() {
         ResetCancellationToken();
         var cancellationToken = compilationTokenSource.Token;
-        var documentPaths = GetOpenedDocuments();
+        var documentPaths = CompilationHost.GetOpenedDocuments();
         return SafeExtensions.InvokeAsync(async () => {
-            await Task.Delay(AnalysisFrequencyMs, cancellationToken).ConfigureAwait(false); // Input delay
-            ClearDocumentDiagnostics(documentPaths);
+            await Task.Delay(AnalysisFrequencyMs, cancellationToken).ConfigureAwait(false);
+            CompilationHost.RemoveDocumentDiagnostics(documentPaths);
 
             var projectIds = workspaceService.Solution?.GetProjectIdsWithDocumentsFilePaths(documentPaths);
             if (projectIds == null)
@@ -52,9 +52,9 @@ public class DiagnosticService : DiagnosticHost {
                 if (project == null)
                     continue;
 
-                var compilation = await DiagnoseAsync(project, documentPaths, cancellationToken).ConfigureAwait(false);
+                var compilation = await CompilationHost.DiagnoseAsync(project, documentPaths, cancellationToken).ConfigureAwait(false);
                 if (configurationService.UseRoslynAnalyzers && compilation != null)
-                    await AnalyzerDiagnoseAsync(project, documentPaths, compilation, cancellationToken).ConfigureAwait(false);
+                    await CompilationHost.AnalyzerDiagnoseAsync(project, documentPaths, compilation, cancellationToken).ConfigureAwait(false);
             }
         });
     }

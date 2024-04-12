@@ -46,6 +46,9 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
         return new ReadOnlyCollection<CodeFixProvider>(result);
     }
     public ImmutableArray<CodeFixProvider> GetComponents(Project? project = null) {
+        if (codeFixProvidersCache.Count == 0)
+            InitializeEmbeddedComponents();
+
         if (project == null)
             return codeFixProvidersCache.Values.ToImmutableArray();
 

@@ -15,13 +15,15 @@ namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class CodeActionHandler : CodeActionHandlerBase {
     private readonly WorkspaceService solutionService;
-    private readonly DiagnosticService diagnosticService;
+    private readonly CodeAnalysisService codeAnalysisService;
+    private readonly ConfigurationService configurationService;
     private readonly Dictionary<int, CodeAnalysisCodeAction> codeActionsCache;
 
-    public CodeActionHandler(WorkspaceService solutionService, DiagnosticService diagnosticService) {
+    public CodeActionHandler(WorkspaceService solutionService, CodeAnalysisService codeAnalysisService, ConfigurationService configurationService) {
         codeActionsCache = new Dictionary<int, CodeAnalysisCodeAction>();
         this.solutionService = solutionService;
-        this.diagnosticService = diagnosticService;
+        this.codeAnalysisService = codeAnalysisService;
+        this.configurationService = configurationService;
     }
 
     protected override CodeActionRegistrationOptions CreateRegistrationOptions(CodeActionCapability capability, ClientCapabilities clientCapabilities) {
@@ -34,37 +36,15 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
     public override Task<CommandOrCodeActionContainer?> Handle(CodeActionParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
-            var filePath = request.TextDocument.Uri.GetFileSystemPath();
-            var serverDiagnostics = request.Context.Diagnostics.Where(it => it.Data?.ToObject<int>() != null);
-            var diagnosticIds = serverDiagnostics.Select(it => it.Data!.ToObject<int>());
             codeActionsCache.Clear();
 
-            var result = new List<CommandOrCodeAction>();
-            foreach (var diagnosticId in diagnosticIds) {
-                var diagnostic = diagnosticService.GetDiagnosticById(filePath, diagnosticId);
-                if (diagnostic == null)
-                    return null;
+            var filePath = request.TextDocument.Uri.GetFileSystemPath();
+            var serverDiagnostics = request.Context.Diagnostics?.Where(it => it.Data?.ToObject<int>() != null);
+            var diagnosticIds = serverDiagnostics?.Select(it => it.Data!.ToObject<int>());
 
-                var codeFixProviders = diagnosticService.GetCodeFixProvidersForDiagnosticId(diagnostic.InnerDiagnostic.Id, diagnostic.Source);
-                if (codeFixProviders == null)
-                    return null;
-
-                var document = diagnostic.Source.Documents.FirstOrDefault(it => FileSystemExtensions.PathEquals(it.FilePath, filePath));
-                if (document == null)
-                    return null;
-
-                foreach (var codeFixProvider in codeFixProviders) {
-                    await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, diagnostic.InnerDiagnostic, (action, _) => {
-                        var singleCodeActions = action.ToSingleCodeActions().Where(x => !x.IsBlacklisted());
-                        foreach (var singleCodeAction in singleCodeActions) {
-                            if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
-                                result.Add(singleCodeAction.ToCodeAction());
-                        }
-                    }, cancellationToken)).ConfigureAwait(false);
-                }
-            }
-
-            return new CommandOrCodeActionContainer(result);
+            return diagnosticIds == null || !diagnosticIds.Any()
+                ? await GetRefactoringsAsync(filePath, cancellationToken).ConfigureAwait(false)
+                : await GetQuickFixesAsync(filePath, diagnosticIds, cancellationToken).ConfigureAwait(false);
         });
     }
     public override Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken) {
@@ -88,5 +68,38 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
             return result;
         });
+    }
+
+    private async Task<CommandOrCodeActionContainer> GetQuickFixesAsync(string filePath, IEnumerable<int> diagnosticIds, CancellationToken cancellationToken) {
+        var result = new List<CommandOrCodeAction>();
+        foreach (var diagnosticId in diagnosticIds) {
+            var diagnostic = codeAnalysisService.CompilationHost.GetDiagnosticById(filePath, diagnosticId);
+            if (diagnostic == null)
+                return result;
+
+            var source = configurationService.UseRoslynAnalyzers ? diagnostic.Source : null;
+            var codeFixProviders = codeAnalysisService.CodeActionHost.GetCodeFixProvidersForDiagnosticId(diagnostic.InnerDiagnostic.Id, source);
+            if (codeFixProviders == null)
+                return result;
+
+            var document = diagnostic.Source.Documents.FirstOrDefault(it => FileSystemExtensions.PathEquals(it.FilePath, filePath));
+            if (document == null)
+                return result;
+
+            foreach (var codeFixProvider in codeFixProviders) {
+                await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, diagnostic.InnerDiagnostic, (action, _) => {
+                    var singleCodeActions = action.ToSingleCodeActions().Where(x => !x.IsBlacklisted());
+                    foreach (var singleCodeAction in singleCodeActions) {
+                        if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
+                            result.Add(singleCodeAction.ToCodeAction(CodeActionKind.QuickFix));
+                    }
+                }, cancellationToken)).ConfigureAwait(false);
+            }
+        }
+
+        return result;
+    }
+    private async Task<CommandOrCodeActionContainer> GetRefactoringsAsync(string filePath, CancellationToken cancellationToken) {
+        return new CommandOrCodeActionContainer();
     }
 }

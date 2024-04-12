@@ -9,10 +9,10 @@ namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class DidChangeTextDocumentHandler : DidChangeTextDocumentHandlerBase {
     private readonly WorkspaceService solutionService;
-    private readonly DiagnosticService diagnosticService;
+    private readonly CodeAnalysisService codeAnalysisService;
 
-    public DidChangeTextDocumentHandler(WorkspaceService solutionService, DiagnosticService diagnosticService) {
-        this.diagnosticService = diagnosticService;
+    public DidChangeTextDocumentHandler(WorkspaceService solutionService, CodeAnalysisService codeAnalysisService) {
+        this.codeAnalysisService = codeAnalysisService;
         this.solutionService = solutionService;
     }
 
@@ -28,8 +28,8 @@ public class DidChangeTextDocumentHandler : DidChangeTextDocumentHandlerBase {
         var text = request.ContentChanges.First().Text;
 
         solutionService.UpdateDocument(filePath, text);
-        diagnosticService.OpenDocument(filePath);
-        _ = diagnosticService.PublishDiagnosticsAsync();
+        codeAnalysisService.CompilationHost.OpenDocument(filePath);
+        _ = codeAnalysisService.PublishDiagnosticsAsync();
         return Unit.Task;
     }
 }

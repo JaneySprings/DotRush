@@ -42,6 +42,9 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
         return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
     }
     public ImmutableArray<DiagnosticAnalyzer> GetComponents(Project? project = null) {
+        if (diagnosticAnalyzersCache.Count == 0)
+            InitializeEmbeddedComponents();
+
         if (project == null)
             return diagnosticAnalyzersCache.Values.ToImmutableArray();
 

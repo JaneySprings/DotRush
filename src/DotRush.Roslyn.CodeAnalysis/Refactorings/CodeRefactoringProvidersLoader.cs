@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CodeRefactorings;
 
 namespace DotRush.Roslyn.CodeAnalysis.Refactorings;
 
-public class CodeRefactoringsLoader : IComponentLoader<CodeRefactoringProvider> {
+public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringProvider> {
     public void InitializeEmbeddedComponents() {
         throw new NotImplementedException();
     }

@@ -25,7 +25,7 @@ public class LanguageServer {
             .WithServices(services => services
                 .AddSingleton<ConfigurationService>()
                 .AddSingleton<WorkspaceService>()
-                .AddSingleton<DiagnosticService>()
+                .AddSingleton<CodeAnalysisService>()
                 .AddSingleton<DecompilationService>()
                 .AddSingleton<CommandsService>())
             .WithHandler<DidOpenTextDocumentHandler>()
@@ -54,7 +54,6 @@ public class LanguageServer {
     }
     private static async Task StartedHandlerAsync(ILanguageServer server, string[] targets) {
         var clientSettings = server.Workspace.ClientSettings;
-        var diagnosticService = server.Services.GetService<DiagnosticService>()!;
         var configurationService = server.Services.GetService<ConfigurationService>()!;
         var workspaceService = server.Services.GetService<WorkspaceService>()!;
 
@@ -65,7 +64,6 @@ public class LanguageServer {
         if (!workspaceService.TryInitializeWorkspace(_ => server.ShowError(Resources.DotNetRegistrationFailed)))
             return;
 
-        diagnosticService.Initialize();
         workspaceService.AddTargets(targets);
         if (targets.Length == 0) {
             var workspaceFolders = server.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
