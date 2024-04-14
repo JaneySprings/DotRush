@@ -3,6 +3,10 @@ using DotRush.Roslyn.Common.Logging;
 namespace DotRush.Roslyn.Common.Extensions;
 
 public static class SafeExtensions {
+#if DEBUG
+    public static bool ThrowOnExceptions { get; set; }
+#endif
+
     public static async Task<T> InvokeAsync<T>(T fallback, Func<Task<T>> action) {
         try {
             return await action.Invoke();
@@ -46,5 +50,9 @@ public static class SafeExtensions {
         if (e is TaskCanceledException || e is OperationCanceledException)
             return;
         CurrentSessionLogger.Error(e);
+#if DEBUG
+        if (ThrowOnExceptions)
+            throw e;
+#endif
     }
 }

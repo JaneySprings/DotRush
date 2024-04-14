@@ -8,6 +8,9 @@ namespace DotRush.Roslyn.Workspaces;
 public abstract class ProjectsController {
     private readonly HashSet<string> projectFilePaths = new HashSet<string>();
 
+    protected abstract bool RestoreProjectsBeforeLoading { get; }
+    protected abstract bool CompileProjectsAfterLoading { get; }
+
     public virtual Task OnLoadingStartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     public virtual Task OnLoadingCompletedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     public virtual void OnProjectRestoreStarted(string documentPath) {}
@@ -27,28 +30,29 @@ public abstract class ProjectsController {
         foreach (var projectPath in projectPaths)
             projectFilePaths.Remove(projectPath);
     }
-    protected void ClearAllProjects() {
-        projectFilePaths.Clear();
-    }
     protected async Task LoadAsync(MSBuildWorkspace workspace, CancellationToken cancellationToken) {
         CurrentSessionLogger.Debug($"Loading projects: {string.Join(';', projectFilePaths)}");
         await OnLoadingStartedAsync(cancellationToken);
 
         foreach (var projectFile in projectFilePaths) {
             await SafeExtensions.InvokeAsync(async () => {
-                OnProjectRestoreStarted(projectFile);
-                var result = await workspace.RestoreProjectAsync(projectFile, cancellationToken);
-                if (result.ExitCode != 0)
-                    OnProjectRestoreFailed(projectFile, result.ExitCode);
-                OnProjectRestoreCompleted(projectFile);
+                if (RestoreProjectsBeforeLoading) {
+                    OnProjectRestoreStarted(projectFile);
+                    var result = await workspace.RestoreProjectAsync(projectFile, cancellationToken);
+                    if (result.ExitCode != 0)
+                        OnProjectRestoreFailed(projectFile, result.ExitCode);
+                    OnProjectRestoreCompleted(projectFile);
+                }
 
                 OnProjectLoadStarted(projectFile);
                 var project = await workspace.OpenProjectAsync(projectFile, null, cancellationToken);
                 OnProjectLoadCompleted(projectFile);
 
-                OnProjectCompilationStarted(projectFile);
-                _ = await project.GetCompilationAsync(cancellationToken);
-                OnProjectCompilationCompleted(projectFile);
+                if (CompileProjectsAfterLoading) {
+                    OnProjectCompilationStarted(projectFile);
+                    _ = await project.GetCompilationAsync(cancellationToken);
+                    OnProjectCompilationCompleted(projectFile);
+                }
             });
 
             OnWorkspaceStateChanged(workspace);

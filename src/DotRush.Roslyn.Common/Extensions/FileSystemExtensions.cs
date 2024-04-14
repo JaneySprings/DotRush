@@ -5,9 +5,10 @@ public static class FileSystemExtensions {
         var directoryInfo = new DirectoryInfo(directoryPath);
         return directoryInfo.EnumerateDirectories().Where(d => !d.Attributes.HasFlag(FileAttributes.Hidden)).Select(d => d.FullName);
     }
-    public static IEnumerable<string> GetVisibleFiles(string directoryPath) {
+    public static IEnumerable<string> GetVisibleFiles(string directoryPath, Func<string, bool>? filter = null) {
         var directoryInfo = new DirectoryInfo(directoryPath);
-        return directoryInfo.EnumerateFiles().Where(d => !d.Attributes.HasFlag(FileAttributes.Hidden)).Select(d => d.FullName);
+        var files = directoryInfo.EnumerateFiles().Where(d => !d.Attributes.HasFlag(FileAttributes.Hidden)).Select(d => d.FullName);
+        return filter == null ? files : files.Where(filter);
     }
     public static IEnumerable<string> GetVisibleFilesRecursive(string directoryPath) {
         var directoryInfo = new DirectoryInfo(directoryPath);

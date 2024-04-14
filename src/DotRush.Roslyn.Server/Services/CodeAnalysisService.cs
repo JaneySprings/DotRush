@@ -47,14 +47,17 @@ public class CodeAnalysisService {
             if (projectIds == null)
                 return;
 
+            var analyzerDiagnoseCompleted = false;
             foreach (var projectId in projectIds) {
                 var project = workspaceService.Solution?.GetProject(projectId);
                 if (project == null)
                     continue;
 
                 var compilation = await CompilationHost.DiagnoseAsync(project, documentPaths, cancellationToken).ConfigureAwait(false);
-                if (configurationService.UseRoslynAnalyzers && compilation != null)
+                if (configurationService.UseRoslynAnalyzers && compilation != null && !analyzerDiagnoseCompleted) {
                     await CompilationHost.AnalyzerDiagnoseAsync(project, documentPaths, compilation, cancellationToken).ConfigureAwait(false);
+                    analyzerDiagnoseCompleted = true;
+                }
             }
         });
     }

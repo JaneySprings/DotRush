@@ -12,27 +12,22 @@ public abstract class DotRushWorkspace : SolutionController {
     protected abstract bool LoadMetadataForReferencedProjects { get; }
     protected abstract bool SkipUnrecognizedProjects { get; }
 
-    public bool TryInitializeWorkspace(Action<Exception>? errorHandler = null) {
-        if (!TryRegisterDotNetEnvironment(errorHandler))
-            return false;
-
+    public void InitializeWorkspace(Action<Exception>? errorHandler = null) {
+        TryRegisterDotNetEnvironment(errorHandler);
         workspace = MSBuildWorkspace.Create(WorkspaceProperties);
         workspace.LoadMetadataForReferencedProjects = LoadMetadataForReferencedProjects;
         workspace.SkipUnrecognizedProjects = SkipUnrecognizedProjects;
-
-        return true;
     }
     public async Task LoadSolutionAsync(CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(workspace);
         await LoadSolutionAsync(workspace, cancellationToken);
     }
     public void FindTargetsInWorkspace(IEnumerable<string>? workspaceFolders) {
-        ClearAllProjects();
         if (workspaceFolders == null)
             return;
 
         foreach (var workspaceFolder in workspaceFolders) {
-            var directoryProjectFiles = FileSystemExtensions.GetVisibleFiles(workspaceFolder).Where(LanguageExtensions.IsProjectFile);
+            var directoryProjectFiles = FileSystemExtensions.GetVisibleFiles(workspaceFolder, LanguageExtensions.IsProjectFile);
             if (directoryProjectFiles.Any()) {
                 AddProjectFiles(directoryProjectFiles);
                 continue;
@@ -46,7 +41,8 @@ public abstract class DotRushWorkspace : SolutionController {
 
     private static bool TryRegisterDotNetEnvironment(Action<Exception>? errorHandler) {
         try {
-            MSBuildLocator.RegisterDefaults();
+            if (MSBuildLocator.CanRegister && !MSBuildLocator.IsRegistered)
+                MSBuildLocator.RegisterDefaults();
             return true;
         } catch (Exception e) {
             CurrentSessionLogger.Error(e);
