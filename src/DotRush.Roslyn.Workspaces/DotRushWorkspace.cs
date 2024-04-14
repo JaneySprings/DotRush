@@ -32,7 +32,7 @@ public abstract class DotRushWorkspace : SolutionController {
                 AddProjectFiles(directoryProjectFiles);
                 continue;
             }
-            AddProjectFiles(FileSystemExtensions.GetVisibleDirectories(workspaceFolder));
+            FindTargetsInWorkspace(FileSystemExtensions.GetVisibleDirectories(workspaceFolder));
         }
     }
     public void AddTargets(IEnumerable<string> projectFiles) {

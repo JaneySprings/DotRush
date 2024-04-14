@@ -28,6 +28,10 @@ public abstract class TestFixtureBase {
     protected string CreateDocument(string projectPath, string documentPath, string documentContent) {
         var projectDirectory = Path.GetDirectoryName(projectPath)!;
         var documentFullPath = Path.Combine(projectDirectory, documentPath);
+        var documentDirectory = Path.GetDirectoryName(documentFullPath)!;
+        if (!Directory.Exists(documentDirectory))
+            Directory.CreateDirectory(documentDirectory);
+
         File.WriteAllText(documentFullPath, documentContent);
         return documentFullPath;
     }
