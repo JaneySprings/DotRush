@@ -61,11 +61,13 @@ public class LanguageServer {
         ObserveClientProcess(clientSettings.ProcessId);
 
         await configurationService.InitializeAsync().ConfigureAwait(false);
-        if (!workspaceService.TryInitializeWorkspace(_ => server.ShowError(Resources.DotNetRegistrationFailed)))
-            return;
+        workspaceService.InitializeWorkspace(_ => server.ShowError(Resources.DotNetRegistrationFailed));
 
-        workspaceService.AddTargets(targets);
-        if (targets.Length == 0) {
+        if (targets.Length != 0)
+            workspaceService.AddTargets(targets);
+        else if (configurationService.ProjectFiles.Count != 0)
+            workspaceService.AddTargets(configurationService.ProjectFiles);
+        else {
             var workspaceFolders = server.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
             workspaceService.FindTargetsInWorkspace(workspaceFolders);
         }

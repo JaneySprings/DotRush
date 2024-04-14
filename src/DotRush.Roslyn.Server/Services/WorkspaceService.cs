@@ -17,6 +17,8 @@ public class WorkspaceService : DotRushWorkspace {
     protected override Dictionary<string, string> WorkspaceProperties => configurationService.WorkspaceProperties;
     protected override bool LoadMetadataForReferencedProjects => configurationService.LoadMetadataForReferencedProjects;
     protected override bool SkipUnrecognizedProjects => configurationService.SkipUnrecognizedProjects;
+    protected override bool RestoreProjectsBeforeLoading => configurationService.RestoreProjectsBeforeLoading;
+    protected override bool CompileProjectsAfterLoading => configurationService.CompileProjectsAfterLoading;
 
     public WorkspaceService(ConfigurationService configurationService, ILanguageServerFacade serverFacade, IServerWorkDoneManager? workDoneManager) {
         this.configurationService = configurationService;

@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
 using Microsoft.Extensions.Configuration;
@@ -7,7 +8,6 @@ namespace DotRush.Roslyn.Server.Services;
 
 public class ConfigurationService {
     private readonly ILanguageServerConfiguration configuration;
-
     private const string ExtensionId = "dotrush";
     private const string RoslynId = "roslyn";
 
@@ -23,8 +23,17 @@ public class ConfigurationService {
     private bool? loadMetadataForReferencedProjects;
     public bool LoadMetadataForReferencedProjects => loadMetadataForReferencedProjects ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:loadMetadataForReferencedProjects", false);
 
+    private bool? restoreProjectsBeforeLoading;
+    public bool RestoreProjectsBeforeLoading => restoreProjectsBeforeLoading ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:restoreProjectsBeforeLoading", true);
+
+    private bool? compileProjectsAfterLoading;
+    public bool CompileProjectsAfterLoading => compileProjectsAfterLoading ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:compileProjectsAfterLoading", true);
+
     private Dictionary<string, string>? workspaceProperties;
     public Dictionary<string, string> WorkspaceProperties => workspaceProperties ??= configuration.GetKeyValuePairs($"{ExtensionId}:{RoslynId}:workspaceProperties");
+
+    private ReadOnlyCollection<string>? projectFiles;
+    public ReadOnlyCollection<string> ProjectFiles => projectFiles ??= configuration.GetArray($"{ExtensionId}:{RoslynId}:projectFiles");
 
     public ConfigurationService(ILanguageServerConfiguration configuration) {
         this.configuration = configuration;

@@ -13,6 +13,9 @@
             "path": "src/DotRush.Roslyn.Server"
         },
         {
+            "path": "src/DotRush.Roslyn.Tests"
+        },
+        {
             "path": "src/VSCode.Extension"
         },
         {

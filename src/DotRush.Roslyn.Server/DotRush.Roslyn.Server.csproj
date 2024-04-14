@@ -7,9 +7,9 @@
 		<SelfContained>true</SelfContained>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 		<OutputPath>..\..\extension\bin</OutputPath>
-		<PublishDir>$(OutputPath)</PublishDir>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <PublishDir>$(OutputPath)</PublishDir>
 		<NoWarn>$(NoWarn);MSB3277</NoWarn>
 	</PropertyGroup>
 
