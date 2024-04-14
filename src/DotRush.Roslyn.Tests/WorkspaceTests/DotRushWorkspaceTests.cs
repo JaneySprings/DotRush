@@ -1,5 +1,6 @@
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Workspaces;
+using DotRush.Roslyn.Workspaces.Extensions;
 using Xunit;
 using Xunit.Sdk;
 
@@ -68,13 +69,14 @@ public class DotRushWorkspaceTests : MSBuildTestFixture, IDisposable {
     }
     [Fact]
     public async Task AutomaticProjectFinderTest() {
-        var workspace = new TestWorkspace([]); 
+        var workspace = new TestWorkspace([]);
         var invisibleDirectory = Path.Combine(MockProjectsDirectory, ".hidden");
         Directory.CreateDirectory(invisibleDirectory);
 
         var firstProject = CreateClassLib("MyClassLib");
         var secondProject = CreateConsoleApp("MyConsoleApp");
         var thirdProject = CreateClassLib("MyClassLib2", null, invisibleDirectory);
+        CreateDocument(firstProject, Path.Combine("Folder", "InnerProject.csproj"), "MyClassLib3");
 
         workspace.FindTargetsInWorkspace([MockProjectsDirectory]);
         await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
@@ -87,6 +89,95 @@ public class DotRushWorkspaceTests : MSBuildTestFixture, IDisposable {
         Assert.Contains("MyConsoleApp", projectNames);
         Assert.DoesNotContain("MyClassLib2", projectNames);
     }
+    [Fact]
+    public async Task SolutionDocumentChangesTest() {
+        var singleProject = CreateClassLib("MyClassLib");
+        var multipleProject = CreateClassLib("MyClassLib2", MultiTargetFramework);
+        var workspace = new TestWorkspace([singleProject, multipleProject]);
+        await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // Create, SourceCode, SingleTFM
+        var singleProjectSourceCodeDocumentPath = CreateDocument(singleProject, "Class2.cs", "class Class2 {}");
+        workspace.CreateDocument(singleProjectSourceCodeDocumentPath);
+        var singleProjectSourceCodeDocumentId = workspace.Solution!.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath).Single();
+        var singleProjectSourceCodeDocument = workspace.Solution.GetDocument(singleProjectSourceCodeDocumentId);
+        Assert.Equal(singleProjectSourceCodeDocumentPath, singleProjectSourceCodeDocument!.FilePath);
+        // Create, SourceCode, MultiTFM
+        var multipleProjectSourceCodeDocumentPath = CreateDocument(multipleProject, "Class2.cs", "class Class2 {}");
+        workspace.CreateDocument(multipleProjectSourceCodeDocumentPath);
+        var multipleProjectSourceCodeDocumentIds = workspace.Solution!.GetDocumentIdsWithFilePath(multipleProjectSourceCodeDocumentPath);
+        Assert.Equal(2, multipleProjectSourceCodeDocumentIds.Length);
+        foreach (var multipleProjectSourceCodeDocumentId in multipleProjectSourceCodeDocumentIds) {
+            var multipleProjectSourceCodeDocument = workspace.Solution.GetDocument(multipleProjectSourceCodeDocumentId);
+            Assert.Equal(multipleProjectSourceCodeDocumentPath, multipleProjectSourceCodeDocument!.FilePath);
+        }
+
+        // Create, Text, SingleTFM
+        var singleProjectTextDocumentPath = CreateDocument(singleProject, "Class2.xaml", "<Window />");
+        workspace.CreateDocument(singleProjectTextDocumentPath);
+        var singleProjectTextDocumentId = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(singleProjectTextDocumentPath).Single();
+        var singleProjectTextDocument = workspace.Solution.GetAdditionalDocument(singleProjectTextDocumentId);
+        Assert.Equal(singleProjectTextDocumentPath, singleProjectTextDocument!.FilePath);
+        // Create, Text, MultiTFM
+        var multipleProjectTextDocumentPath = CreateDocument(multipleProject, "Class2.xaml", "<Window />");
+        workspace.CreateDocument(multipleProjectTextDocumentPath);
+        var multipleProjectTextDocumentIds = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(multipleProjectTextDocumentPath);
+        Assert.Equal(2, multipleProjectTextDocumentIds.Count());
+        foreach (var multipleProjectTextDocumentId in multipleProjectTextDocumentIds) {
+            var multipleProjectTextDocument = workspace.Solution.GetAdditionalDocument(multipleProjectTextDocumentId);
+            Assert.Equal(multipleProjectTextDocumentPath, multipleProjectTextDocument!.FilePath);
+        }
+
+        // Update, SourceCode, SingleTFM
+        workspace.UpdateDocument(singleProjectSourceCodeDocumentPath, "class Class2 { void Method() {}}");
+        singleProjectSourceCodeDocumentId = workspace.Solution!.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath).Single();
+        singleProjectSourceCodeDocument = workspace.Solution.GetDocument(singleProjectSourceCodeDocumentId);
+        var singleProjectSourceCodeDocumentContent = await singleProjectSourceCodeDocument!.GetTextAsync().ConfigureAwait(false);
+        Assert.Equal("class Class2 { void Method() {}}", singleProjectSourceCodeDocumentContent.ToString());
+        // Update, SourceCode, MultiTFM
+        workspace.UpdateDocument(multipleProjectSourceCodeDocumentPath, "class Class2 { void Method() {}}");
+        multipleProjectSourceCodeDocumentIds = workspace.Solution!.GetDocumentIdsWithFilePath(multipleProjectSourceCodeDocumentPath);
+        Assert.Equal(2, multipleProjectSourceCodeDocumentIds.Length);
+        foreach (var multipleProjectSourceCodeDocumentId in multipleProjectSourceCodeDocumentIds) {
+            var multipleProjectSourceCodeDocument = workspace.Solution.GetDocument(multipleProjectSourceCodeDocumentId);
+            var multipleProjectSourceCodeDocumentContent = await multipleProjectSourceCodeDocument!.GetTextAsync().ConfigureAwait(false);
+            Assert.Equal("class Class2 { void Method() {}}", multipleProjectSourceCodeDocumentContent.ToString());
+        }
+
+        // Update, Text, SingleTFM
+        workspace.UpdateDocument(singleProjectTextDocumentPath, "<Window x:Name=\"window\" />");
+        singleProjectTextDocumentId = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(singleProjectTextDocumentPath).Single();
+        singleProjectTextDocument = workspace.Solution.GetAdditionalDocument(singleProjectTextDocumentId);
+        var singleProjectTextDocumentContent = await singleProjectTextDocument!.GetTextAsync().ConfigureAwait(false);
+        Assert.Equal("<Window x:Name=\"window\" />", singleProjectTextDocumentContent.ToString());
+        // Update, Text, MultiTFM
+        workspace.UpdateDocument(multipleProjectTextDocumentPath, "<Window x:Name=\"window\" />");
+        multipleProjectTextDocumentIds = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(multipleProjectTextDocumentPath);
+        Assert.Equal(2, multipleProjectTextDocumentIds.Count());
+        foreach (var multipleProjectTextDocumentId in multipleProjectTextDocumentIds) {
+            var multipleProjectTextDocument = workspace.Solution.GetAdditionalDocument(multipleProjectTextDocumentId);
+            var multipleProjectTextDocumentContent = await multipleProjectTextDocument!.GetTextAsync().ConfigureAwait(false);
+            Assert.Equal("<Window x:Name=\"window\" />", multipleProjectTextDocumentContent.ToString());
+        }
+
+        // Delete, SourceCode, SingleTFM
+        workspace.DeleteDocument(singleProjectSourceCodeDocumentPath);
+        singleProjectSourceCodeDocumentId = workspace.Solution!.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath).SingleOrDefault();
+        Assert.Null(singleProjectSourceCodeDocumentId);
+        // Delete, SourceCode, MultiTFM
+        workspace.DeleteDocument(multipleProjectSourceCodeDocumentPath);
+        multipleProjectSourceCodeDocumentIds = workspace.Solution!.GetDocumentIdsWithFilePath(multipleProjectSourceCodeDocumentPath);
+        Assert.Empty(multipleProjectSourceCodeDocumentIds);
+
+        // Delete, Text, SingleTFM
+        workspace.DeleteDocument(singleProjectTextDocumentPath);
+        singleProjectTextDocumentId = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(singleProjectTextDocumentPath).SingleOrDefault();
+        Assert.Null(singleProjectTextDocumentId);
+        // Delete, Text, MultiTFM
+        workspace.DeleteDocument(multipleProjectTextDocumentPath);
+        multipleProjectTextDocumentIds = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(multipleProjectTextDocumentPath);
+        Assert.Empty(multipleProjectTextDocumentIds);
+    }
 
     public void Dispose() {
         DeleteMockData();
@@ -95,21 +186,18 @@ public class DotRushWorkspaceTests : MSBuildTestFixture, IDisposable {
 
 public class TestWorkspace : DotRushWorkspace {
     private readonly Dictionary<string, string> workspaceProperties;
-    protected override Dictionary<string, string> WorkspaceProperties => workspaceProperties;
-
     private readonly bool loadMetadataForReferencedProjects;
-    protected override bool LoadMetadataForReferencedProjects => loadMetadataForReferencedProjects;
-
     private readonly bool skipUnrecognizedProjects;
-    protected override bool SkipUnrecognizedProjects => skipUnrecognizedProjects;
-
     private readonly bool restoreProjectsBeforeLoading;
-    protected override bool RestoreProjectsBeforeLoading => restoreProjectsBeforeLoading;
-
     private readonly bool compileProjectsAfterLoading;
+
+    protected override Dictionary<string, string> WorkspaceProperties => workspaceProperties;
+    protected override bool LoadMetadataForReferencedProjects => loadMetadataForReferencedProjects;
+    protected override bool SkipUnrecognizedProjects => skipUnrecognizedProjects;
+    protected override bool RestoreProjectsBeforeLoading => restoreProjectsBeforeLoading;
     protected override bool CompileProjectsAfterLoading => compileProjectsAfterLoading;
 
-    public TestWorkspace(string[] targets, Dictionary<string, string>? workspaceProperties = null, bool loadMetadataForReferencedProjects = true, bool skipUnrecognizedProjects = false, bool restoreProjectsBeforeLoading = true, bool compileProjectsAfterLoading = true) {
+    public TestWorkspace(string[] targets, Dictionary<string, string>? workspaceProperties = null, bool loadMetadataForReferencedProjects = true, bool skipUnrecognizedProjects = false, bool restoreProjectsBeforeLoading = true, bool compileProjectsAfterLoading = false) {
         this.workspaceProperties = workspaceProperties ?? new Dictionary<string, string>();
         this.loadMetadataForReferencedProjects = loadMetadataForReferencedProjects;
         this.skipUnrecognizedProjects = skipUnrecognizedProjects;
