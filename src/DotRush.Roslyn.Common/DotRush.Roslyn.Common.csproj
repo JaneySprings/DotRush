@@ -7,5 +7,6 @@
     
     <ItemGroup>
    	    <PackageReference Include="NLog" Version="5.2.4" />
+        <InternalsVisibleTo Include="DotRush.Roslyn.Tests" />
     </ItemGroup>
 </Project>
