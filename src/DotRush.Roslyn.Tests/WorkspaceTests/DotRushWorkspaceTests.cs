@@ -222,6 +222,24 @@ public class DotRushWorkspaceTests : MSBuildTestFixture, IDisposable {
             Assert.Empty(workspace.Solution.GetAdditionalDocumentIdsWithFilePath(folderFile));
     }
 
+    [Fact]
+    public async Task SolutionChangesInIntermidiatePathTest() {
+        var projectPath = CreateClassLib("MyClassLib", MultiTargetFramework);
+        var workspace = new TestWorkspace([projectPath]);
+        await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
+
+        var documentPath = CreateDocument(projectPath, Path.Combine("obj", "Class2.cs"), "class Class2 {}");
+        workspace.CreateDocument(documentPath);
+        var documentIds = workspace.Solution!.GetDocumentIdsWithFilePath(documentPath);
+        Assert.Equal(2, documentIds.Length);
+
+        workspace.UpdateDocument(documentPath, "class Class2 { void Method() {}}");
+        foreach (var documentId in documentIds) {
+            var document = workspace.Solution.GetDocument(documentId);
+            Assert.Equal(documentPath, document!.FilePath);
+        }
+    }
+
     public void Dispose() {
         DeleteMockData();
     }
