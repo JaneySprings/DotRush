@@ -55,8 +55,6 @@ public abstract class SolutionController : ProjectsController {
 
             if (!FileSystemExtensions.IsFileVisible(Path.GetDirectoryName(project.FilePath), project.GetFolders(file), Path.GetFileName(file)))
                 continue;
-            if (file.StartsWith(project.GetIntermediateOutputPath()) || file.StartsWith(project.GetOutputPath()))
-                continue;
             if (project.GetDocumentIdWithFilePath(file) != null)
                 continue;
 
@@ -81,10 +79,6 @@ public abstract class SolutionController : ProjectsController {
             if (document == null || document.Project == null)
                 continue;
 
-            if (file.StartsWith(document.Project.GetIntermediateOutputPath()) ||
-                file.StartsWith(document.Project.GetOutputPath()))
-                continue;
-
             var updatedDocument = document.WithText(sourceText);
             Solution = updatedDocument.Project.Solution;
         }
@@ -100,8 +94,6 @@ public abstract class SolutionController : ProjectsController {
                 continue;
 
             if (!FileSystemExtensions.IsFileVisible(Path.GetDirectoryName(project.FilePath), project.GetFolders(file), Path.GetFileName(file)))
-                continue;
-            if (file.StartsWith(project.GetIntermediateOutputPath()) || file.StartsWith(project.GetOutputPath()))
                 continue;
             if (project.GetAdditionalDocumentIdWithFilePath(file) != null)
                 continue;
@@ -127,10 +119,6 @@ public abstract class SolutionController : ProjectsController {
             if (project == null)
                 continue;
 
-            if (file.StartsWith(project.GetIntermediateOutputPath()) ||
-                file.StartsWith(project.GetOutputPath()))
-                continue;
-
             var updates = Solution?.WithAdditionalDocumentText(documentId, sourceText);
             if (updates == null)
                 continue;
@@ -148,10 +136,6 @@ public abstract class SolutionController : ProjectsController {
             if (project == null || document?.FilePath == null)
                 continue;
 
-            if (document.FilePath.StartsWith(project.GetIntermediateOutputPath()) ||
-                document.FilePath.StartsWith(project.GetOutputPath()))
-                continue;
-
             var updates = project.RemoveDocument(documentId);
             Solution = updates.Solution;
         }
@@ -164,10 +148,6 @@ public abstract class SolutionController : ProjectsController {
             var document = Solution.GetAdditionalDocument(documentId);
             var project = document?.Project;
             if (project == null || document?.FilePath == null)
-                continue;
-
-            if (document.FilePath.StartsWith(project.GetIntermediateOutputPath()) ||
-                document.FilePath.StartsWith(project.GetOutputPath()))
                 continue;
 
             var updates = project.RemoveAdditionalDocument(documentId);
