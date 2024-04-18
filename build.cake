@@ -2,17 +2,22 @@
 
 using _Path = System.IO.Path;
 
-string version;
-string runtime = Argument<string>("arch", "linux-musl-arm64");
-string target = Argument<string>("target", "vsix");
-string configuration = Argument<string>("configuration", "debug");
-
-public string RootDirectory => MakeAbsolute(Directory(".")).ToString();
+public string RootDirectory => MakeAbsolute(Directory("./")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
-public string ServerProjectFilePath => _Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server", "DotRush.Roslyn.Server.csproj");
 public string ExtensionStagingDirectory => _Path.Combine(RootDirectory, "extension");
-public string BinariesDirectory => _Path.Combine(ExtensionStagingDirectory, "bin");
+public string ExtensionBinariesDirectory => _Path.Combine(ExtensionStagingDirectory, "bin");
 
+public string DotRushServerProjectPath => _Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server", "DotRush.Roslyn.Server.csproj");
+public string DotRushTestsProjectPath => _Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Tests", "DotRush.Roslyn.Tests.csproj");
+
+var target = Argument("target", "vsix");
+var runtime = Argument("arch", "osx-arm64");
+var version = Argument("release-version", "1.0.0");
+var configuration = Argument("configuration", "debug");
+
+///////////////////////////////////////////////////////////////////////////////
+// COMMON
+///////////////////////////////////////////////////////////////////////////////
 
 Setup(context => {
 	var date = DateTime.Now;
@@ -27,19 +32,36 @@ Task("clean").Does(() => {
 	CleanDirectories(_Path.Combine(RootDirectory, "src", "**", "obj"));
 });
 
-Task("server").Does(() => DotNetPublish(ServerProjectFilePath, new DotNetPublishSettings {
+///////////////////////////////////////////////////////////////////////////////
+// DOTNET
+///////////////////////////////////////////////////////////////////////////////
+
+Task("server").Does(() => DotNetPublish(DotRushServerProjectPath, new DotNetPublishSettings {
 	MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 	Configuration = configuration,
-	Runtime = runtime
+	Runtime = runtime,
 }));
+
+Task("test").Does(() => DotNetTest(DotRushTestsProjectPath, new DotNetTestSettings {  
+	Configuration = configuration,
+	Verbosity = DotNetVerbosity.Quiet,
+	ResultsDirectory = ArtifactsDirectory,
+	Loggers = new[] { "trx" }
+}));
+
+
+///////////////////////////////////////////////////////////////////////////////
+// TYPESCRIPT
+///////////////////////////////////////////////////////////////////////////////
 
 Task("vsix")
 	.IsDependentOn("clean")
 	.IsDependentOn("server")
-	.DoesForEach<FilePath>(GetFiles("*.json"), file => {
+	.Does(() => {
+		var package = _Path.Combine(RootDirectory, "package.json");
 		var regex = @"^\s\s(""version"":\s+)("".+"")(,)";
 		var options = System.Text.RegularExpressions.RegexOptions.Multiline;
-		ReplaceRegexInFiles(file.ToString(), regex, $"  $1\"{version}\"$3", options);
+		ReplaceRegexInFiles(package, regex, $"  $1\"{version}\"$3", options);
 	})
 	.Does(() => {
 		switch (runtime) {
@@ -53,12 +75,13 @@ Task("vsix")
 	});
 
 
-RunTarget(target);
-
 void ExecuteCommand(string command, string arguments) {
 	if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
 		arguments = $"/c \"{command} {arguments}\"";
 		command = "cmd";
 	}
-	StartProcess(command, arguments);
+	if (StartProcess(command, arguments) != 0)
+		throw new Exception("Command exited with non-zero exit code.");
 }
+
+RunTarget(target);

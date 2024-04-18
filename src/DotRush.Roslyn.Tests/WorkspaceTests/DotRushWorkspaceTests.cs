@@ -1,5 +1,4 @@
 using DotRush.Roslyn.Common.Extensions;
-using DotRush.Roslyn.Workspaces;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Xunit;
 using Xunit.Sdk;
@@ -56,6 +55,7 @@ public class DotRushWorkspaceTests : MSBuildTestFixture, IDisposable {
     }
     [Fact]
     public async Task ErrorOnRestoreTest() {
+        
         var projectPath = CreateProject(@"
 <Project Sdk=""Microsoft.NET.Sdk"">
     <PropertyGroup>
@@ -77,6 +77,7 @@ public class DotRushWorkspaceTests : MSBuildTestFixture, IDisposable {
         var secondProject = CreateConsoleApp("MyConsoleApp");
         var thirdProject = CreateClassLib("MyClassLib2", null, invisibleDirectory);
         CreateDocument(firstProject, Path.Combine("Folder", "InnerProject.csproj"), "MyClassLib3");
+        CreateDocument(secondProject, Path.Combine(".meteor", "InnerProject2.csproj"), "MyClassLib4");
 
         workspace.FindTargetsInWorkspace([MockProjectsDirectory]);
         await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
@@ -177,38 +178,51 @@ public class DotRushWorkspaceTests : MSBuildTestFixture, IDisposable {
         workspace.DeleteDocument(multipleProjectTextDocumentPath);
         multipleProjectTextDocumentIds = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(multipleProjectTextDocumentPath);
         Assert.Empty(multipleProjectTextDocumentIds);
+
+        // DeleteFolder, SourceCode, SingleTFM
+        var folderFiles = new List<string>();
+        for (int i = 1; i < 5; i++) {
+            folderFiles.Add(CreateDocument(singleProject, Path.Combine("TestFolder", $"Class_{i}.cs"), $"class Class_{i} {{}}"));
+            workspace.CreateDocument(folderFiles[i - 1]);
+        }
+        Assert.Equal(folderFiles.Count, workspace.Solution.GetDocumentIdsWithFolderPath(Path.GetDirectoryName(folderFiles.First())!).Count());
+        workspace.DeleteFolder(Path.GetDirectoryName(folderFiles.First())!);
+        foreach (var folderFile in folderFiles)
+            Assert.Empty(workspace.Solution.GetDocumentIdsWithFilePath(folderFile));
+        // DeleteFolder, SourceCode, MultiTFM
+        folderFiles.Clear();
+        for (int i = 1; i < 5; i++) {
+            folderFiles.Add(CreateDocument(multipleProject, Path.Combine("TestFolder", $"Class_{i}.cs"), $"class Class_{i} {{}}"));
+            workspace.CreateDocument(folderFiles[i - 1]);
+        }
+        Assert.Equal(folderFiles.Count * 2, workspace.Solution.GetDocumentIdsWithFolderPath(Path.GetDirectoryName(folderFiles.First())!).Count());
+        workspace.DeleteFolder(Path.GetDirectoryName(folderFiles.First())!);
+        foreach (var folderFile in folderFiles)
+            Assert.Empty(workspace.Solution.GetDocumentIdsWithFilePath(folderFile));
+
+        // DeleteFolder, Text, SingleTFM
+        folderFiles.Clear();
+        for (int i = 1; i < 5; i++) {
+            folderFiles.Add(CreateDocument(singleProject, Path.Combine("TestFolder", $"File_{i}.xaml"), $"<Window{i} />"));
+            workspace.CreateDocument(folderFiles[i - 1]);
+        }
+        Assert.Equal(folderFiles.Count, workspace.Solution.GetAdditionalDocumentIdsWithFolderPath(Path.GetDirectoryName(folderFiles.First())!).Count());
+        workspace.DeleteFolder(Path.GetDirectoryName(folderFiles.First())!);
+        foreach (var folderFile in folderFiles)
+            Assert.Empty(workspace.Solution.GetAdditionalDocumentIdsWithFilePath(folderFile));
+        // DeleteFolder, Text, MultiTFM
+        folderFiles.Clear();
+        for (int i = 1; i < 5; i++) {
+            folderFiles.Add(CreateDocument(multipleProject, Path.Combine("TestFolder", $"File{i}.xaml"), $"File_{i}.xaml"));
+            workspace.CreateDocument(folderFiles[i - 1]);
+        }
+        Assert.Equal(folderFiles.Count * 2, workspace.Solution.GetAdditionalDocumentIdsWithFolderPath(Path.GetDirectoryName(folderFiles.First())!).Count());
+        workspace.DeleteFolder(Path.GetDirectoryName(folderFiles.First())!);
+        foreach (var folderFile in folderFiles)
+            Assert.Empty(workspace.Solution.GetAdditionalDocumentIdsWithFilePath(folderFile));
     }
 
     public void Dispose() {
         DeleteMockData();
-    }
-}
-
-public class TestWorkspace : DotRushWorkspace {
-    private readonly Dictionary<string, string> workspaceProperties;
-    private readonly bool loadMetadataForReferencedProjects;
-    private readonly bool skipUnrecognizedProjects;
-    private readonly bool restoreProjectsBeforeLoading;
-    private readonly bool compileProjectsAfterLoading;
-
-    protected override Dictionary<string, string> WorkspaceProperties => workspaceProperties;
-    protected override bool LoadMetadataForReferencedProjects => loadMetadataForReferencedProjects;
-    protected override bool SkipUnrecognizedProjects => skipUnrecognizedProjects;
-    protected override bool RestoreProjectsBeforeLoading => restoreProjectsBeforeLoading;
-    protected override bool CompileProjectsAfterLoading => compileProjectsAfterLoading;
-
-    public TestWorkspace(string[] targets, Dictionary<string, string>? workspaceProperties = null, bool loadMetadataForReferencedProjects = true, bool skipUnrecognizedProjects = false, bool restoreProjectsBeforeLoading = true, bool compileProjectsAfterLoading = false) {
-        this.workspaceProperties = workspaceProperties ?? new Dictionary<string, string>();
-        this.loadMetadataForReferencedProjects = loadMetadataForReferencedProjects;
-        this.skipUnrecognizedProjects = skipUnrecognizedProjects;
-        this.restoreProjectsBeforeLoading = restoreProjectsBeforeLoading;
-        this.compileProjectsAfterLoading = compileProjectsAfterLoading;
-
-        InitializeWorkspace(e => Assert.Fail(e.Message));
-        AddTargets(targets);
-    }
-
-    public override void OnProjectRestoreFailed(string documentPath, int exitCode) {
-        Assert.Fail($"[{documentPath}]: Project restore failed with exit code {exitCode}");
     }
 }

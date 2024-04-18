@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace DotNet.Meteor.Tests;
+namespace DotRush.Roslyn.Tests;
 
 public static class Assertion {
     public static void CollectionsAreEqual<TValue>(List<TValue> expected, List<TValue> actual) {
