@@ -9,8 +9,8 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 namespace DotRush.Roslyn.Server.Services;
 
 public class WorkspaceService : DotRushWorkspace {
-    private readonly ConfigurationService configurationService;
-    private readonly ILanguageServerFacade serverFacade;
+    private readonly IConfigurationService configurationService;
+    private readonly ILanguageServerFacade? serverFacade;
     private readonly IServerWorkDoneManager? workDoneManager;
     private IWorkDoneObserver? workDoneObserver;
 
@@ -20,7 +20,7 @@ public class WorkspaceService : DotRushWorkspace {
     protected override bool RestoreProjectsBeforeLoading => configurationService.RestoreProjectsBeforeLoading;
     protected override bool CompileProjectsAfterLoading => configurationService.CompileProjectsAfterLoading;
 
-    public WorkspaceService(ConfigurationService configurationService, ILanguageServerFacade serverFacade, IServerWorkDoneManager? workDoneManager) {
+    public WorkspaceService(IConfigurationService configurationService, ILanguageServerFacade? serverFacade, IServerWorkDoneManager? workDoneManager) {
         this.configurationService = configurationService;
         this.workDoneManager = workDoneManager;
         this.serverFacade = serverFacade;
@@ -50,7 +50,7 @@ public class WorkspaceService : DotRushWorkspace {
     }
     public override void OnProjectRestoreFailed(string documentPath, int exitCode) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        serverFacade.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
+        serverFacade?.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
             Uri = DocumentUri.FromFileSystemPath(documentPath),
             Diagnostics = new Container<Diagnostic>([new Diagnostic() {
                 Message = string.Format(null, Resources.ProjectRestoreFailedCompositeFormat, projectName, exitCode),
