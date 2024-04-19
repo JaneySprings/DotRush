@@ -15,15 +15,15 @@ namespace DotRush.Roslyn.Server.Services;
 public class CodeAnalysisService {
     private const int AnalysisFrequencyMs = 500;
 
+    private readonly ILanguageServerFacade? serverFacade;
     private readonly WorkspaceService workspaceService;
-    private readonly ConfigurationService configurationService;
-    private readonly ILanguageServerFacade serverFacade;
+    private readonly IConfigurationService configurationService;
     private CancellationTokenSource compilationTokenSource;
 
     public CompilationHost CompilationHost { get; }
     public CodeActionHost CodeActionHost { get; }
 
-    public CodeAnalysisService(ILanguageServerFacade serverFacade, WorkspaceService workspaceService, ConfigurationService configurationService) {
+    public CodeAnalysisService(ILanguageServerFacade? serverFacade, WorkspaceService workspaceService, IConfigurationService configurationService) {
         this.configurationService = configurationService;
         this.workspaceService = workspaceService;
         this.serverFacade = serverFacade;
@@ -64,7 +64,7 @@ public class CodeAnalysisService {
 
     private void OnDiagnosticsCollectionChanged(object? sender, DiagnosticsCollectionChangedEventArgs e) {
         CurrentSessionLogger.Debug($"Publishing {e.Diagnostics.Count} diagnostics for document: {e.DocumentPath}");
-        serverFacade.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
+        serverFacade?.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
             Diagnostics = new Container<ProtocolModels.Diagnostic>(e.Diagnostics.Select(d => d.ToServerDiagnostic())),
             Uri = DocumentUri.FromFileSystemPath(e.DocumentPath),
         });

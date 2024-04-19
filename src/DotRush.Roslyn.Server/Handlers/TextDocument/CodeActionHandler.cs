@@ -16,10 +16,10 @@ namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 public class CodeActionHandler : CodeActionHandlerBase {
     private readonly WorkspaceService solutionService;
     private readonly CodeAnalysisService codeAnalysisService;
-    private readonly ConfigurationService configurationService;
+    private readonly IConfigurationService configurationService;
     private readonly Dictionary<int, CodeAnalysisCodeAction> codeActionsCache;
 
-    public CodeActionHandler(WorkspaceService solutionService, CodeAnalysisService codeAnalysisService, ConfigurationService configurationService) {
+    public CodeActionHandler(WorkspaceService solutionService, CodeAnalysisService codeAnalysisService, IConfigurationService configurationService) {
         codeActionsCache = new Dictionary<int, CodeAnalysisCodeAction>();
         this.solutionService = solutionService;
         this.codeAnalysisService = codeAnalysisService;

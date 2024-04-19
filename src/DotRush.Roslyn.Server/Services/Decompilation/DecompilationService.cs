@@ -20,12 +20,12 @@ public class DecompilationService {
 
     public string DecompilationDirectory { get; private set; }
 
-    private readonly ConfigurationService configurationService;
+    private readonly IConfigurationService configurationService;
     private readonly ILanguageServerFacade serverFacade;
     private readonly WorkspaceService solutionService;
 
 
-    public DecompilationService(ILanguageServerFacade serverFacade, WorkspaceService solutionService, ConfigurationService configurationService) {
+    public DecompilationService(ILanguageServerFacade serverFacade, WorkspaceService solutionService, IConfigurationService configurationService) {
         DecompilationDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DecompiledProjectName);
 
         this.serverFacade = serverFacade;
