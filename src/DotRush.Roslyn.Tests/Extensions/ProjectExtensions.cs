@@ -26,7 +26,7 @@ public static class TestProjectExtensions {
 </Project>
         ", projectName, projectDirectory);
 
-        CreateDocument(projectPath, "Program.cs", @$"
+        CreateDocument(Path.Combine(Path.GetDirectoryName(projectPath)!, "Program.cs"), @$"
 using System;
 
 namespace {projectName} {{
@@ -51,7 +51,7 @@ namespace {projectName} {{
 </Project>
         ", projectName, projectDirectory);
 
-        CreateDocument(projectPath, "Class1.cs", @$"
+        CreateDocument(Path.Combine(Path.GetDirectoryName(projectPath)!, "Class1.cs"), @$"
 using System;
 
 namespace {projectName} {{
@@ -64,17 +64,15 @@ namespace {projectName} {{
         ");
         return projectPath;
     }
-    public static string CreateDocument(string projectPath, string documentPath, string documentContent) {
-        var projectDirectory = Path.GetDirectoryName(projectPath)!;
-        var documentFullPath = Path.Combine(projectDirectory, documentPath);
-        var documentDirectory = Path.GetDirectoryName(documentFullPath)!;
+    public static string CreateDocument(string documentPath, string documentContent) {
+        var documentDirectory = Path.GetDirectoryName(documentPath)!;
         if (!Directory.Exists(documentDirectory))
             Directory.CreateDirectory(documentDirectory);
-        if (File.Exists(documentFullPath))
-            File.Delete(documentFullPath);
+        if (File.Exists(documentPath))
+            File.Delete(documentPath);
 
-        File.WriteAllText(documentFullPath, documentContent);
-        return documentFullPath;
+        File.WriteAllText(documentPath, documentContent);
+        return documentPath;
     }
     public static string CreateProject(string csprojContent, string projectName, string? projectDirectory = null) {
         projectDirectory ??= TestProjectsDirectory;

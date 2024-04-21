@@ -11,12 +11,12 @@ public class RenameHandlerTests : TestFixtureBase, IDisposable {
     private static WorkspaceService WorkspaceService => ServiceProvider.WorkspaceService;
     private static RenameHandler RenameHandler => new RenameHandler(WorkspaceService);
 
-    private string documentPath = string.Empty;
-    private DocumentUri DocumentUri => DocumentUri.FromFileSystemPath(documentPath);
+    private string DocumentPath => Path.Combine(ServiceProvider.SharedProjectDirectory, "RenameHandlerTest.cs");
+    private DocumentUri DocumentUri => DocumentUri.FromFileSystemPath(DocumentPath);
 
     [Fact]
     public async Task RenameSymbolTest() {
-        documentPath = TestProjectExtensions.CreateDocument(ServiceProvider.SharedProjectPath, "RenameHandlerTest.cs", @"
+        TestProjectExtensions.CreateDocument(DocumentPath, @"
 namespace Tests;
 class RenameHandlerTest {
     private void MainMethod() {
@@ -26,7 +26,7 @@ class RenameHandlerTest {
     }
 }
         ");
-        WorkspaceService.CreateDocument(documentPath);
+        WorkspaceService.CreateDocument(DocumentPath);
         var result = await RenameHandler.Handle(new RenameParams() {
             Position = new Position() {
                 Line = 4,
@@ -43,7 +43,7 @@ class RenameHandlerTest {
     }
     [Fact]
     public async Task RenameSymbolInsideDirectivesTest() {
-        documentPath = TestProjectExtensions.CreateDocument(ServiceProvider.SharedProjectPath, "RenameHandlerTest.cs", @"
+        TestProjectExtensions.CreateDocument(DocumentPath, @"
 namespace Tests;
 class RenameHandlerTest {
     private void MainMethod() {
@@ -58,7 +58,7 @@ class RenameHandlerTest {
 #endif
 }
         ");
-        WorkspaceService.CreateDocument(documentPath);
+        WorkspaceService.CreateDocument(DocumentPath);
         var result = await RenameHandler.Handle(new RenameParams() {
             Position = new Position() {
                 Line = 4,
@@ -75,6 +75,6 @@ class RenameHandlerTest {
     }
 
     public void Dispose() {
-        WorkspaceService.DeleteDocument(documentPath);
+        WorkspaceService.DeleteDocument(DocumentPath);
     }
 }

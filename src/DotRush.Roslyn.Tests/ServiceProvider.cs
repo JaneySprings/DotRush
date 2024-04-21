@@ -9,6 +9,7 @@ public static class ServiceProvider {
     public static TestConfigurationService ConfigurationService { get; }
     public static CodeAnalysisService CodeAnalysisService { get; }
     public static string SharedProjectPath { get; }
+    public static string SharedProjectDirectory => Path.GetDirectoryName(SharedProjectPath)!;
 
     static ServiceProvider() {
         if (Directory.Exists(TestProjectExtensions.TestSharedProjectsDirectory))

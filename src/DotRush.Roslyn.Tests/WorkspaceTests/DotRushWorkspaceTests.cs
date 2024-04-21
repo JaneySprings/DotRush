@@ -65,14 +65,21 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
     [Fact]
     public async Task AutomaticProjectFinderTest() {
         var workspace = new TestWorkspace([]);
+
         var invisibleDirectory = Path.Combine(TestProjectExtensions.TestProjectsDirectory, ".hidden");
         Directory.CreateDirectory(invisibleDirectory);
+        var directoryInfo = new DirectoryInfo(invisibleDirectory);
+        directoryInfo.Attributes |= FileAttributes.Hidden;
 
         var firstProject = TestProjectExtensions.CreateClassLib("MyClassLib");
+        var firstProjectDirectory = Path.GetDirectoryName(firstProject)!;
+
         var secondProject = TestProjectExtensions.CreateConsoleApp("MyConsoleApp");
+        var secondProjectDirectory = Path.GetDirectoryName(secondProject)!;
+
         var thirdProject = TestProjectExtensions.CreateClassLib("MyClassLib2", null, invisibleDirectory);
-        TestProjectExtensions.CreateDocument(firstProject, Path.Combine("Folder", "InnerProject.csproj"), "MyClassLib3");
-        TestProjectExtensions.CreateDocument(secondProject, Path.Combine(".meteor", "InnerProject2.csproj"), "MyClassLib4");
+        TestProjectExtensions.CreateDocument(Path.Combine(firstProjectDirectory, "Folder", "InnerProject.csproj"), "MyClassLib3");
+        TestProjectExtensions.CreateDocument(Path.Combine(secondProjectDirectory, ".meteor", "InnerProject2.csproj"), "MyClassLib4");
 
         workspace.FindTargetsInWorkspace([TestProjectExtensions.TestProjectsDirectory]);
         await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
@@ -88,18 +95,22 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
     [Fact]
     public async Task SolutionDocumentChangesTest() {
         var singleProject = TestProjectExtensions.CreateClassLib("MyClassLib");
+        var singleProjectDirectory = Path.GetDirectoryName(singleProject)!;
+
         var multipleProject = TestProjectExtensions.CreateClassLib("MyClassLib2", TestProjectExtensions.MultiTargetFramework);
+        var multipleProjectDirectory = Path.GetDirectoryName(multipleProject)!;
+
         var workspace = new TestWorkspace([singleProject, multipleProject]);
         await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
 
         // Create, SourceCode, SingleTFM
-        var singleProjectSourceCodeDocumentPath = TestProjectExtensions.CreateDocument(singleProject, "Class2.cs", "class Class2 {}");
+        var singleProjectSourceCodeDocumentPath = TestProjectExtensions.CreateDocument(Path.Combine(singleProjectDirectory, "Class2.cs"), "class Class2 {}");
         workspace.CreateDocument(singleProjectSourceCodeDocumentPath);
         var singleProjectSourceCodeDocumentId = workspace.Solution!.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath).Single();
         var singleProjectSourceCodeDocument = workspace.Solution.GetDocument(singleProjectSourceCodeDocumentId);
         Assert.Equal(singleProjectSourceCodeDocumentPath, singleProjectSourceCodeDocument!.FilePath);
         // Create, SourceCode, MultiTFM
-        var multipleProjectSourceCodeDocumentPath = TestProjectExtensions.CreateDocument(multipleProject, "Class2.cs", "class Class2 {}");
+        var multipleProjectSourceCodeDocumentPath = TestProjectExtensions.CreateDocument(Path.Combine(multipleProjectDirectory, "Class2.cs"), "class Class2 {}");
         workspace.CreateDocument(multipleProjectSourceCodeDocumentPath);
         var multipleProjectSourceCodeDocumentIds = workspace.Solution!.GetDocumentIdsWithFilePath(multipleProjectSourceCodeDocumentPath);
         Assert.Equal(2, multipleProjectSourceCodeDocumentIds.Length);
@@ -109,13 +120,13 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
         }
 
         // Create, Text, SingleTFM
-        var singleProjectTextDocumentPath = TestProjectExtensions.CreateDocument(singleProject, "Class2.xaml", "<Window />");
+        var singleProjectTextDocumentPath = TestProjectExtensions.CreateDocument(Path.Combine(singleProjectDirectory, "Class2.xaml"), "<Window />");
         workspace.CreateDocument(singleProjectTextDocumentPath);
         var singleProjectTextDocumentId = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(singleProjectTextDocumentPath).Single();
         var singleProjectTextDocument = workspace.Solution.GetAdditionalDocument(singleProjectTextDocumentId);
         Assert.Equal(singleProjectTextDocumentPath, singleProjectTextDocument!.FilePath);
         // Create, Text, MultiTFM
-        var multipleProjectTextDocumentPath = TestProjectExtensions.CreateDocument(multipleProject, "Class2.xaml", "<Window />");
+        var multipleProjectTextDocumentPath = TestProjectExtensions.CreateDocument(Path.Combine(multipleProjectDirectory, "Class2.xaml"), "<Window />");
         workspace.CreateDocument(multipleProjectTextDocumentPath);
         var multipleProjectTextDocumentIds = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(multipleProjectTextDocumentPath);
         Assert.Equal(2, multipleProjectTextDocumentIds.Count());
@@ -177,7 +188,7 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
         // DeleteFolder, SourceCode, SingleTFM
         var folderFiles = new List<string>();
         for (int i = 1; i < 5; i++) {
-            folderFiles.Add(TestProjectExtensions.CreateDocument(singleProject, Path.Combine("TestFolder", $"Class_{i}.cs"), $"class Class_{i} {{}}"));
+            folderFiles.Add(TestProjectExtensions.CreateDocument(Path.Combine(singleProjectDirectory, "TestFolder", $"Class_{i}.cs"), $"class Class_{i} {{}}"));
             workspace.CreateDocument(folderFiles[i - 1]);
         }
         Assert.Equal(folderFiles.Count, workspace.Solution.GetDocumentIdsWithFolderPath(Path.GetDirectoryName(folderFiles.First())!).Count());
@@ -187,7 +198,7 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
         // DeleteFolder, SourceCode, MultiTFM
         folderFiles.Clear();
         for (int i = 1; i < 5; i++) {
-            folderFiles.Add(TestProjectExtensions.CreateDocument(multipleProject, Path.Combine("TestFolder", $"Class_{i}.cs"), $"class Class_{i} {{}}"));
+            folderFiles.Add(TestProjectExtensions.CreateDocument(Path.Combine(multipleProjectDirectory, "TestFolder", $"Class_{i}.cs"), $"class Class_{i} {{}}"));
             workspace.CreateDocument(folderFiles[i - 1]);
         }
         Assert.Equal(folderFiles.Count * 2, workspace.Solution.GetDocumentIdsWithFolderPath(Path.GetDirectoryName(folderFiles.First())!).Count());
@@ -198,7 +209,7 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
         // DeleteFolder, Text, SingleTFM
         folderFiles.Clear();
         for (int i = 1; i < 5; i++) {
-            folderFiles.Add(TestProjectExtensions.CreateDocument(singleProject, Path.Combine("TestFolder", $"File_{i}.xaml"), $"<Window{i} />"));
+            folderFiles.Add(TestProjectExtensions.CreateDocument(Path.Combine(singleProjectDirectory, "TestFolder", $"File_{i}.xaml"), $"<Window{i} />"));
             workspace.CreateDocument(folderFiles[i - 1]);
         }
         Assert.Equal(folderFiles.Count, workspace.Solution.GetAdditionalDocumentIdsWithFolderPath(Path.GetDirectoryName(folderFiles.First())!).Count());
@@ -208,7 +219,7 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
         // DeleteFolder, Text, MultiTFM
         folderFiles.Clear();
         for (int i = 1; i < 5; i++) {
-            folderFiles.Add(TestProjectExtensions.CreateDocument(multipleProject, Path.Combine("TestFolder", $"File{i}.xaml"), $"File_{i}.xaml"));
+            folderFiles.Add(TestProjectExtensions.CreateDocument(Path.Combine(multipleProjectDirectory, "TestFolder", $"File{i}.xaml"), $"File_{i}.xaml"));
             workspace.CreateDocument(folderFiles[i - 1]);
         }
         Assert.Equal(folderFiles.Count * 2, workspace.Solution.GetAdditionalDocumentIdsWithFolderPath(Path.GetDirectoryName(folderFiles.First())!).Count());
@@ -220,10 +231,12 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
     [Fact]
     public async Task SolutionChangesInIntermidiatePathTest() {
         var projectPath = TestProjectExtensions.CreateClassLib("MyClassLib", TestProjectExtensions.MultiTargetFramework);
+        var projectDirectory = Path.GetDirectoryName(projectPath)!;
+
         var workspace = new TestWorkspace([projectPath]);
         await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
 
-        var documentPath = TestProjectExtensions.CreateDocument(projectPath, Path.Combine("obj", "Class2.cs"), "class Class2 {}");
+        var documentPath = TestProjectExtensions.CreateDocument(Path.Combine(projectDirectory, "obj", "Class2.cs"), "class Class2 {}");
         workspace.CreateDocument(documentPath);
         var documentIds = workspace.Solution!.GetDocumentIdsWithFilePath(documentPath);
         Assert.Equal(2, documentIds.Length);
