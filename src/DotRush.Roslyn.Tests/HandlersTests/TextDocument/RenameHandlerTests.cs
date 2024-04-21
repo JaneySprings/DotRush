@@ -11,12 +11,14 @@ public class RenameHandlerTests : TestFixtureBase, IDisposable {
     private static WorkspaceService WorkspaceService => ServiceProvider.WorkspaceService;
     private static RenameHandler RenameHandler => new RenameHandler(WorkspaceService);
 
-    private string DocumentPath => Path.Combine(ServiceProvider.SharedProjectDirectory, "RenameHandlerTest.cs");
-    private DocumentUri DocumentUri => DocumentUri.FromFileSystemPath(DocumentPath);
+    private string documentPath = Path.Combine(ServiceProvider.SharedProjectDirectory, "RenameHandlerTest.cs");
+    private string documentPath2 = Path.Combine(ServiceProvider.SharedProjectDirectory, "RenameHandlerTest2.cs");
+    private DocumentUri documentUri => DocumentUri.FromFileSystemPath(documentPath);
+    private DocumentUri documentUri2 => DocumentUri.FromFileSystemPath(documentPath2);
 
     [Fact]
     public async Task RenameSymbolTest() {
-        TestProjectExtensions.CreateDocument(DocumentPath, @"
+        TestProjectExtensions.CreateDocument(documentPath, @"
 namespace Tests;
 class RenameHandlerTest {
     private void MainMethod() {
@@ -26,24 +28,24 @@ class RenameHandlerTest {
     }
 }
         ");
-        WorkspaceService.CreateDocument(DocumentPath);
+        WorkspaceService.CreateDocument(documentPath);
         var result = await RenameHandler.Handle(new RenameParams() {
             Position = new Position() {
                 Line = 4,
                 Character = 10,
             },
             NewName = "TestMethodNew",
-            TextDocument = new TextDocumentIdentifier() { Uri = DocumentUri },
+            TextDocument = new TextDocumentIdentifier() { Uri = documentUri },
         }, CancellationToken.None).ConfigureAwait(false);
         Assert.NotNull(result);
         Assert.Equal(1, result.Changes!.Count);
-        Assert.Equal(2, result.Changes[DocumentUri].Count());
-        foreach (var change in result.Changes[DocumentUri])
+        Assert.Equal(2, result.Changes[documentUri].Count());
+        foreach (var change in result.Changes[documentUri])
             Assert.Equal("New", change.NewText);
     }
     [Fact]
     public async Task RenameSymbolInsideDirectivesTest() {
-        TestProjectExtensions.CreateDocument(DocumentPath, @"
+        TestProjectExtensions.CreateDocument(documentPath, @"
 namespace Tests;
 class RenameHandlerTest {
     private void MainMethod() {
@@ -58,23 +60,60 @@ class RenameHandlerTest {
 #endif
 }
         ");
-        WorkspaceService.CreateDocument(DocumentPath);
+        WorkspaceService.CreateDocument(documentPath);
         var result = await RenameHandler.Handle(new RenameParams() {
             Position = new Position() {
                 Line = 4,
                 Character = 10,
             },
             NewName = "TestMethodNew",
-            TextDocument = new TextDocumentIdentifier() { Uri = DocumentUri },
+            TextDocument = new TextDocumentIdentifier() { Uri = documentUri },
         }, CancellationToken.None).ConfigureAwait(false);
         Assert.NotNull(result);
         Assert.Equal(1, result.Changes!.Count);
-        Assert.Equal(3, result.Changes[DocumentUri].Count());
-        foreach (var change in result.Changes[DocumentUri])
+        Assert.Equal(3, result.Changes[documentUri].Count());
+        foreach (var change in result.Changes[documentUri])
             Assert.Equal("New", change.NewText);
+    }
+    [Fact]
+    public async Task RenameSymbolInDifferentFilesTest() {
+        TestProjectExtensions.CreateDocument(documentPath, @"
+namespace Tests;
+class RenameHandlerTest {
+    private void MainMethod() {
+        SomeClass.TestMethod();
+    }
+}
+        ");
+        TestProjectExtensions.CreateDocument(documentPath2, @"
+namespace Tests;
+class SomeClass {
+    private static void TestMethod() {
+    }
+}
+        ");
+        WorkspaceService.CreateDocument(documentPath);
+        WorkspaceService.CreateDocument(documentPath2);
+        var result = await RenameHandler.Handle(new RenameParams() {
+            Position = new Position() {
+                Line = 4,
+                Character = 20,
+            },
+            NewName = "TestMethodNew",
+            TextDocument = new TextDocumentIdentifier() { Uri = documentUri },
+        }, CancellationToken.None).ConfigureAwait(false);
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Changes!.Count);
+
+        Assert.Single(result.Changes[documentUri]);
+        Assert.Equal("New", result.Changes[documentUri].Single().NewText);
+
+        Assert.Single(result.Changes[documentUri2]);
+        Assert.Equal("New", result.Changes[documentUri2].Single().NewText);
     }
 
     public void Dispose() {
-        WorkspaceService.DeleteDocument(DocumentPath);
+        WorkspaceService.DeleteDocument(documentPath);
+        WorkspaceService.DeleteDocument(documentPath2);
     }
 }
