@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using DotRush.Roslyn.Common.External;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces;
 using OmniSharp.Extensions.LanguageServer.Protocol;
@@ -48,15 +50,17 @@ public class WorkspaceService : DotRushWorkspace {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
         workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(null, Resources.ProjectCompileCompositeFormat, projectName) });
     }
-    public override void OnProjectRestoreFailed(string documentPath, int exitCode) {
+    public override void OnProjectRestoreFailed(string documentPath, ProcessResult result) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
+        var message = string.Join(Environment.NewLine, result.ErrorLines.Count == 0 ? result.OutputLines : result.ErrorLines);
         serverFacade?.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
             Uri = DocumentUri.FromFileSystemPath(documentPath),
             Diagnostics = new Container<Diagnostic>([new Diagnostic() {
-                Message = string.Format(null, Resources.ProjectRestoreFailedCompositeFormat, projectName, exitCode),
+                Message = string.Format(null, Resources.ProjectRestoreFailedCompositeFormat, projectName, message),
                 Range = PositionExtensions.EmptyRange,
                 Severity = DiagnosticSeverity.Error,
                 Source = projectName,
+                Code = "NU0000",
             }]),
         });
     }
