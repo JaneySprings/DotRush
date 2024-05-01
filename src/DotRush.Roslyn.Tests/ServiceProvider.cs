@@ -1,6 +1,5 @@
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Tests.Extensions;
-using DotRush.Roslyn.Tests.HandlersTests;
 
 namespace DotRush.Roslyn.Tests;
 

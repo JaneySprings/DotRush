@@ -11,10 +11,10 @@ public class RenameHandlerTests : TestFixtureBase, IDisposable {
     private static WorkspaceService WorkspaceService => ServiceProvider.WorkspaceService;
     private static RenameHandler RenameHandler => new RenameHandler(WorkspaceService);
 
-    private string documentPath = Path.Combine(ServiceProvider.SharedProjectDirectory, "RenameHandlerTest.cs");
-    private string documentPath2 = Path.Combine(ServiceProvider.SharedProjectDirectory, "RenameHandlerTest2.cs");
-    private DocumentUri documentUri => DocumentUri.FromFileSystemPath(documentPath);
-    private DocumentUri documentUri2 => DocumentUri.FromFileSystemPath(documentPath2);
+    private readonly string documentPath = Path.Combine(ServiceProvider.SharedProjectDirectory, "RenameHandlerTest.cs");
+    private readonly string documentPath2 = Path.Combine(ServiceProvider.SharedProjectDirectory, "RenameHandlerTest2.cs");
+    private DocumentUri DocumentUri => DocumentUri.FromFileSystemPath(documentPath);
+    private DocumentUri DocumentUri2 => DocumentUri.FromFileSystemPath(documentPath2);
 
     [Fact]
     public async Task RenameSymbolTest() {
@@ -35,12 +35,12 @@ class RenameHandlerTest {
                 Character = 10,
             },
             NewName = "TestMethodNew",
-            TextDocument = new TextDocumentIdentifier() { Uri = documentUri },
+            TextDocument = new TextDocumentIdentifier() { Uri = DocumentUri },
         }, CancellationToken.None).ConfigureAwait(false);
         Assert.NotNull(result);
         Assert.Equal(1, result.Changes!.Count);
-        Assert.Equal(2, result.Changes[documentUri].Count());
-        foreach (var change in result.Changes[documentUri])
+        Assert.Equal(2, result.Changes[DocumentUri].Count());
+        foreach (var change in result.Changes[DocumentUri])
             Assert.Equal("New", change.NewText);
     }
     [Fact]
@@ -67,12 +67,12 @@ class RenameHandlerTest {
                 Character = 10,
             },
             NewName = "TestMethodNew",
-            TextDocument = new TextDocumentIdentifier() { Uri = documentUri },
+            TextDocument = new TextDocumentIdentifier() { Uri = DocumentUri },
         }, CancellationToken.None).ConfigureAwait(false);
         Assert.NotNull(result);
         Assert.Equal(1, result.Changes!.Count);
-        Assert.Equal(3, result.Changes[documentUri].Count());
-        foreach (var change in result.Changes[documentUri])
+        Assert.Equal(3, result.Changes[DocumentUri].Count());
+        foreach (var change in result.Changes[DocumentUri])
             Assert.Equal("New", change.NewText);
     }
     [Fact]
@@ -100,16 +100,16 @@ class SomeClass {
                 Character = 20,
             },
             NewName = "TestMethodNew",
-            TextDocument = new TextDocumentIdentifier() { Uri = documentUri },
+            TextDocument = new TextDocumentIdentifier() { Uri = DocumentUri },
         }, CancellationToken.None).ConfigureAwait(false);
         Assert.NotNull(result);
         Assert.Equal(2, result.Changes!.Count);
 
-        Assert.Single(result.Changes[documentUri]);
-        Assert.Equal("New", result.Changes[documentUri].Single().NewText);
+        Assert.Single(result.Changes[DocumentUri]);
+        Assert.Equal("New", result.Changes[DocumentUri].Single().NewText);
 
-        Assert.Single(result.Changes[documentUri2]);
-        Assert.Equal("New", result.Changes[documentUri2].Single().NewText);
+        Assert.Single(result.Changes[DocumentUri2]);
+        Assert.Equal("New", result.Changes[DocumentUri2].Single().NewText);
     }
 
     public void Dispose() {
