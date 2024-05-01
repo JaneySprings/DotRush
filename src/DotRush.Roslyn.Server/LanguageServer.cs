@@ -23,7 +23,7 @@ public class LanguageServer {
             .WithInput(Console.OpenStandardInput())
             .WithOutput(Console.OpenStandardOutput())
             .WithServices(services => services
-                .AddSingleton<ConfigurationService>()
+                .AddSingleton<IConfigurationService, ConfigurationService>()
                 .AddSingleton<WorkspaceService>()
                 .AddSingleton<CodeAnalysisService>()
                 .AddSingleton<DecompilationService>()

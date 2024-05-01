@@ -33,7 +33,6 @@ public class CodeActionHandler : CodeActionHandlerBase {
             ResolveProvider = true,
         };
     }
-
     public override Task<CommandOrCodeActionContainer?> Handle(CodeActionParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
             codeActionsCache.Clear();

@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using DotRush.Roslyn.Server.Services;
 
-namespace DotRush.Roslyn.Tests.HandlersTests;
+namespace DotRush.Roslyn.Tests;
 
 public class TestConfigurationService : IConfigurationService {
     public bool UseRoslynAnalyzers { get; set; }
