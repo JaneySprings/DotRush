@@ -24,7 +24,7 @@ internal static class LogConfig {
         var errorTarget = new FileTarget() {
             FileName = ErrorLogFile,
             DeleteOldFileOnStartup = true,
-            Layout = "${longdate}|${message}${newline}at ${stacktrace:format=Flat:separator= at :reverse=true}${newline}${callsite-filename}[${callsite-linenumber}]",
+            Layout = "${longdate}|${message}",
         };
         var errorAsyncTarget = new AsyncTargetWrapper(errorTarget, 500, AsyncTargetWrapperOverflowAction.Discard);
         configuration.AddTarget("errorLog", errorAsyncTarget);

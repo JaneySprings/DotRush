@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Common.External;
 using DotRush.Roslyn.Workspaces;
 using Xunit;
 
@@ -27,7 +28,7 @@ public class TestWorkspace : DotRushWorkspace {
         AddTargets(targets);
     }
 
-    public override void OnProjectRestoreFailed(string documentPath, int exitCode) {
-        Assert.Fail($"[{documentPath}]: Project restore failed with exit code {exitCode}");
+    public override void OnProjectRestoreFailed(string documentPath, ProcessResult result) {
+        Assert.Fail($"[{documentPath}]: Project restore failed with exit code {result.ExitCode}");
     }
 }

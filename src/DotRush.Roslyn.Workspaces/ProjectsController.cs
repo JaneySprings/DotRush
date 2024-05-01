@@ -1,4 +1,6 @@
+using System.Collections.ObjectModel;
 using DotRush.Roslyn.Common.Extensions;
+using DotRush.Roslyn.Common.External;
 using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -15,7 +17,7 @@ public abstract class ProjectsController {
     public virtual Task OnLoadingCompletedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     public virtual void OnProjectRestoreStarted(string documentPath) {}
     public virtual void OnProjectRestoreCompleted(string documentPath) {}
-    public virtual void OnProjectRestoreFailed(string documentPath, int exitCode) {}
+    public virtual void OnProjectRestoreFailed(string documentPath, ProcessResult result) {}
     public virtual void OnProjectLoadStarted(string documentPath) {}
     public virtual void OnProjectLoadCompleted(string documentPath) {}
     public virtual void OnProjectCompilationStarted(string documentPath) {}
@@ -40,7 +42,7 @@ public abstract class ProjectsController {
                     OnProjectRestoreStarted(projectFile);
                     var result = await workspace.RestoreProjectAsync(projectFile, cancellationToken);
                     if (result.ExitCode != 0)
-                        OnProjectRestoreFailed(projectFile, result.ExitCode);
+                        OnProjectRestoreFailed(projectFile, result);
                     OnProjectRestoreCompleted(projectFile);
                 }
 

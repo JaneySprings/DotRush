@@ -68,8 +68,12 @@ public static class WorkspaceExtensions {
         var processInfo = ProcessRunner.CreateProcess("dotnet", $"restore \"{projectPath}\"", captureOutput: true, displayWindow: false, cancellationToken: cancellationToken);
         var restoreResult = await processInfo.Result;
 
-        if (restoreResult.ExitCode != 0)
-            CurrentSessionLogger.Error(string.Join(Environment.NewLine, restoreResult.OutputLines));
+        if (restoreResult.ExitCode != 0) {
+            foreach (var line in restoreResult.OutputLines)
+                CurrentSessionLogger.Error(line);
+            foreach (var line in restoreResult.ErrorLines)
+                CurrentSessionLogger.Error(line);
+        }
 
         return restoreResult;
     }
