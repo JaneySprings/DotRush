@@ -65,17 +65,14 @@ public class CompilationHost {
         foreach (var documentPath in documentPaths)
             RemoveDocumentDiagnostics(documentPath);
 
-        var analyzerDiagnoseCompleted = false;
         foreach (var projectId in projectIds) {
             var project = solution.GetProject(projectId);
             if (project == null)
                 continue;
 
             var compilation = await DiagnoseAsync(project, documentPaths, cancellationToken).ConfigureAwait(false);
-            if (useRoslynAnalyzers && compilation != null && !analyzerDiagnoseCompleted) {
+            if (useRoslynAnalyzers && compilation != null)
                 await AnalyzerDiagnoseAsync(project, documentPaths, compilation, cancellationToken).ConfigureAwait(false);
-                analyzerDiagnoseCompleted = true;
-            }
         }
     }
     private async Task<Compilation?> DiagnoseAsync(Project project, IEnumerable<string> documentPaths, CancellationToken cancellationToken) {
