@@ -14,14 +14,14 @@ using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensio
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class CodeActionHandler : CodeActionHandlerBase {
-    private readonly WorkspaceService solutionService;
+    private readonly WorkspaceService workspaceService;
     private readonly CodeAnalysisService codeAnalysisService;
     private readonly IConfigurationService configurationService;
     private readonly Dictionary<int, CodeAnalysisCodeAction> codeActionsCache;
 
-    public CodeActionHandler(WorkspaceService solutionService, CodeAnalysisService codeAnalysisService, IConfigurationService configurationService) {
+    public CodeActionHandler(WorkspaceService workspaceService, CodeAnalysisService codeAnalysisService, IConfigurationService configurationService) {
         codeActionsCache = new Dictionary<int, CodeAnalysisCodeAction>();
-        this.solutionService = solutionService;
+        this.workspaceService = workspaceService;
         this.codeAnalysisService = codeAnalysisService;
         this.configurationService = configurationService;
     }
@@ -59,7 +59,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
                 return request;
             }
 
-            var result = await codeAction.ResolveCodeActionAsync(solutionService, cancellationToken).ConfigureAwait(false);
+            var result = await codeAction.ResolveCodeActionAsync(workspaceService, cancellationToken).ConfigureAwait(false);
             if (result == null) {
                 CurrentSessionLogger.Error($"CodeAction '{request.Title}' with id '{codeActionId}' failed to resolve");
                 return request;
@@ -72,21 +72,21 @@ public class CodeActionHandler : CodeActionHandlerBase {
     private async Task<CommandOrCodeActionContainer> GetQuickFixesAsync(string filePath, IEnumerable<int> diagnosticIds, CancellationToken cancellationToken) {
         var result = new List<CommandOrCodeAction>();
         foreach (var diagnosticId in diagnosticIds) {
-            var diagnostic = codeAnalysisService.CompilationHost.GetDiagnosticById(filePath, diagnosticId);
-            if (diagnostic == null)
+            var (diagnostic, diagnosticSourceId) = codeAnalysisService.CompilationHost.GetDiagnosticById(filePath, diagnosticId);
+            var diagnosticSource = workspaceService.Solution?.GetProject(diagnosticSourceId);
+            if (diagnostic == null || diagnosticSource == null)
                 return result;
 
-            var source = configurationService.UseRoslynAnalyzers ? diagnostic.Source : null;
-            var codeFixProviders = codeAnalysisService.CodeActionHost.GetCodeFixProvidersForDiagnosticId(diagnostic.InnerDiagnostic.Id, source);
+            var codeFixProviders = codeAnalysisService.CodeActionHost.GetCodeFixProvidersForDiagnosticId(diagnostic.Id, configurationService.UseRoslynAnalyzers ? diagnosticSource : null);
             if (codeFixProviders == null)
                 return result;
 
-            var document = diagnostic.Source.Documents.FirstOrDefault(it => FileSystemExtensions.PathEquals(it.FilePath, filePath));
+            var document = diagnosticSource.Documents.FirstOrDefault(it => FileSystemExtensions.PathEquals(it.FilePath, filePath));
             if (document == null)
                 return result;
 
             foreach (var codeFixProvider in codeFixProviders) {
-                await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, diagnostic.InnerDiagnostic, (action, _) => {
+                await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, diagnostic, (action, _) => {
                     var singleCodeActions = action.ToSingleCodeActions().Where(x => !x.IsBlacklisted());
                     foreach (var singleCodeAction in singleCodeActions) {
                         if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
