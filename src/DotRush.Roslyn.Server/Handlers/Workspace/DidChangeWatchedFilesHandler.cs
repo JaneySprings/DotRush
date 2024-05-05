@@ -9,11 +9,9 @@ namespace DotRush.Roslyn.Server.Handlers.Workspace;
 
 public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     private readonly WorkspaceService workspaceService;
-    private readonly CommandsService commandsService;
 
-    public DidChangeWatchedFilesHandler(WorkspaceService workspaceService, CommandsService commandsService) {
+    public DidChangeWatchedFilesHandler(WorkspaceService workspaceService) {
         this.workspaceService = workspaceService;
-        this.commandsService = commandsService;
     }
 
     protected override DidChangeWatchedFilesRegistrationOptions CreateRegistrationOptions(DidChangeWatchedFilesCapability capability, ClientCapabilities clientCapabilities) {
@@ -46,32 +44,19 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
             return; // Handled from IDE
 
         if (changeType == FileChangeType.Deleted) {
-            if (IsInternalCommandFile(path))
-                commandsService.ResolveCancellation();
-
             workspaceService.DeleteDocument(path);
             workspaceService.DeleteFolder(path);
             return;
         }
 
         if (changeType == FileChangeType.Changed) {
-            if (IsInternalCommandFile(path))
-                commandsService.ResolveCommand(path);
-
             workspaceService.UpdateDocument(path);
             return;
         }
 
         if (changeType == FileChangeType.Created && File.Exists(path)) {
-            if (IsInternalCommandFile(path))
-                commandsService.ResolveCommand(path);
-
             workspaceService.CreateDocument(path);
             return;
         }
-    }
-
-    public static bool IsInternalCommandFile(string filePath) {
-        return Path.GetFileName(filePath) == "resolve.drc";
     }
 }
