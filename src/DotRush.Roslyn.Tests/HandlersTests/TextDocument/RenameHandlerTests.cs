@@ -9,7 +9,7 @@ namespace DotRush.Roslyn.Tests.HandlersTests.TextDocument;
 
 public class RenameHandlerTests : TestFixtureBase, IDisposable {
     private static WorkspaceService WorkspaceService => ServiceProvider.WorkspaceService;
-    private static RenameHandler RenameHandler => new RenameHandler(WorkspaceService);
+    private static RenameHandler RenameHandler = new RenameHandler(WorkspaceService);
 
     private readonly string documentPath = Path.Combine(ServiceProvider.SharedProjectDirectory, "RenameHandlerTest.cs");
     private readonly string documentPath2 = Path.Combine(ServiceProvider.SharedProjectDirectory, "RenameHandlerTest2.cs");
