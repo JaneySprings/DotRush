@@ -50,4 +50,7 @@ public static class FileSystemExtensions {
         path2 = Path.GetFullPath(path2);
         return string.Equals(path1, path2, StringComparison.OrdinalIgnoreCase);
     }
+    public static string NormalizePath(string path) {
+        return Path.GetFullPath(path).ToLowerInvariant();
+    }
 }

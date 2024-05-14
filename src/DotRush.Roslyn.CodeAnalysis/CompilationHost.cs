@@ -17,19 +17,23 @@ public class CompilationHost {
     public event EventHandler<DiagnosticsCollectionChangedEventArgs>? DiagnosticsChanged;
 
     public void OpenDocument(string documentPath) {
+        documentPath = FileSystemExtensions.NormalizePath(documentPath);
         if (!LanguageExtensions.IsSourceCodeDocument(documentPath))
             return;
         if (workspaceDiagnostics.TryAdd(documentPath, new List<DiagnosticHolder>()))
             CurrentSessionLogger.Debug($"Open document: {documentPath}");
     }
     public void CloseDocument(string documentPath) {
+        documentPath = FileSystemExtensions.NormalizePath(documentPath);
         workspaceDiagnostics.Remove(documentPath);
+
         var eventArgs = new DiagnosticsCollectionChangedEventArgs(documentPath, Array.Empty<Diagnostic>());
         DiagnosticsChanged?.Invoke(this, eventArgs);
         CurrentSessionLogger.Debug($"Close document: {documentPath}");
     }
 
     private void AddDocumentDiagnostics(string documentPath, IEnumerable<Diagnostic> newDiagnostics, ProjectId projectId) {
+        documentPath = FileSystemExtensions.NormalizePath(documentPath);
         if (!workspaceDiagnostics.TryGetValue(documentPath, out List<DiagnosticHolder>? container))
             return;
 
@@ -37,6 +41,7 @@ public class CompilationHost {
         DiagnosticsChanged?.Invoke(this, new DiagnosticsCollectionChangedEventArgs(documentPath, GetDiagnostics(documentPath)!));
     }
     private void RemoveDocumentDiagnostics(string documentPath) {
+        documentPath = FileSystemExtensions.NormalizePath(documentPath);
         if (!workspaceDiagnostics.TryGetValue(documentPath, out List<DiagnosticHolder>? container))
             return;
 
@@ -44,11 +49,13 @@ public class CompilationHost {
     }
 
     public IEnumerable<Diagnostic>? GetDiagnostics(string documentPath) {
+        documentPath = FileSystemExtensions.NormalizePath(documentPath);
         if (!workspaceDiagnostics.TryGetValue(documentPath, out List<DiagnosticHolder>? container))
             return null;
         return container.DistinctBy(d => d.Id).Select(d => d.Diagnostic);
     }
     public (Diagnostic?, ProjectId?) GetDiagnosticById(string documentPath, int diagnosticId) {
+        documentPath = FileSystemExtensions.NormalizePath(documentPath);
         if (!workspaceDiagnostics.TryGetValue(documentPath, out List<DiagnosticHolder>? container))
             return (null, null);
 
