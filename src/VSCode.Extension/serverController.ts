@@ -15,7 +15,7 @@ export class ServerController {
         ServerController.start();
     }
 
-    public static initialize() {
+    private static initialize() {
         const serverOptions: ServerOptions = { command: ServerController.command };
         ServerController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
             diagnosticCollectionName: res.microsoftProblemMatcherId,
