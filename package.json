@@ -130,10 +130,23 @@
             "default": [],
             "description": "%configuration.description.roslyn.workspaceProperties%"
           },
+          "dotrush.roslyn.projectFiles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "%configuration.description.roslyn.projectFiles%"
+          },
           "dotrush.roslyn.enableAnalyzers": {
             "type": "boolean",
             "default": false,
             "description": "%configuration.description.roslyn.enableAnalyzers%"
+          },
+          "dotrush.roslyn.showItemsFromUnimportedNamespaces": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.roslyn.showItemsFromUnimportedNamespaces%"
           },
           "dotrush.roslyn.skipUnrecognizedProjects": {
             "type": "boolean",
@@ -145,10 +158,15 @@
             "default": false,
             "description": "%configuration.description.roslyn.loadMetadataForReferencedProjects%"
           },
-          "dotrush.roslyn.showItemsFromUnimportedNamespaces": {
+          "dotrush.roslyn.restoreProjectsBeforeLoading": {
             "type": "boolean",
-            "default": false,
-            "description": "%configuration.description.roslyn.showItemsFromUnimportedNamespaces%"
+            "default": true,
+            "description": "%configuration.description.roslyn.restoreProjectsBeforeLoading%"
+          },
+          "dotrush.roslyn.compileProjectsAfterLoading": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.description.roslyn.compileProjectsAfterLoading%"
           }
         }
       }
