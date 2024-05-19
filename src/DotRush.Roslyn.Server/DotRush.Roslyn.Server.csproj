@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\Common.Build.props" />
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<AssemblyName>DotRush</AssemblyName>
+		<SelfContained>true</SelfContained>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+		<OutputPath>..\..\extension\bin</OutputPath>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <PublishDir>$(OutputPath)</PublishDir>
+		<NoWarn>$(NoWarn);MSB3277</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
+		<PackageReference Include="ICSharpCode.Decompiler" Version="$(DecompilerVersion)" />
+
+		<ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
+		<ProjectReference Include="..\DotRush.Roslyn.CodeAnalysis\DotRush.Roslyn.CodeAnalysis.csproj" />
+	</ItemGroup>
+</Project>

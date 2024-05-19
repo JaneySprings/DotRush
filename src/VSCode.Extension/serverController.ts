@@ -1,5 +1,4 @@
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
-import { WorkspaceController } from "./workspaceController";
 import * as res from './resources/constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -13,16 +12,11 @@ export class ServerController {
         const serverExecutable = path.join(extensionPath, "extension", "bin", "DotRush");
         const serverExtension = process.platform === 'win32' ? '.exe' : '';
         ServerController.command = serverExecutable + serverExtension;
-
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRestartServer, () => ServerController.restart()));
+        ServerController.start();
     }
 
-    public static initialize() {
-        const serverOptions: ServerOptions = {
-            command: ServerController.command,
-            args: WorkspaceController.targets.flatMap(t => t.projects),
-        };
-
+    private static initialize() {
+        const serverOptions: ServerOptions = { command: ServerController.command };
         ServerController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
             diagnosticCollectionName: res.microsoftProblemMatcherId,
             progressOnInitialization: true,

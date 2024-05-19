@@ -1,14 +1,22 @@
 {
     "folders": [
         {
-            "path": "src/DotRush.Server"
+            "path": "src/DotRush.Roslyn.Common"
+        },
+        {
+            "path": "src/DotRush.Roslyn.Workspaces"
+        },
+        {
+            "path": "src/DotRush.Roslyn.CodeAnalysis"
+        },
+        {
+            "path": "src/DotRush.Roslyn.Server"
+        },
+        {
+            "path": "src/DotRush.Roslyn.Tests"
         },
         {
             "path": "src/VSCode.Extension"
-        },
-        {
-            "path": "themes",
-            "name": "Themes"
         }
     ],
     "launch": {
