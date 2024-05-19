@@ -16,6 +16,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	ContextMenuController.activate(context);
 
 	context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRestartServer, () => ServerController.restart()));
+	context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => ServerController.restart()));
 	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async e => {
 		if (path.extname(e.fileName) !== '.csproj')
 			return;
