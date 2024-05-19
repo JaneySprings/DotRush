@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.External;
 using DotRush.Roslyn.Common.Logging;

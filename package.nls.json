@@ -14,5 +14,8 @@
 	"configuration.description.roslyn.enableAnalyzers": "Enable Roslyn analyzers (may affect performance).",
 	"configuration.description.roslyn.skipUnrecognizedProjects": "Determines if unrecognized projects are skipped when projects are opened.",
 	"configuration.description.roslyn.loadMetadataForReferencedProjects": "Determines if metadata from existing output assemblies is loaded instead of opening referenced projects.",
-	"configuration.description.roslyn.showItemsFromUnimportedNamespaces": "Determines if items from unimported namespaces are shown in completion lists."
+	"configuration.description.roslyn.showItemsFromUnimportedNamespaces": "Determines if items from unimported namespaces are shown in completion lists.",
+	"configuration.description.roslyn.restoreProjectsBeforeLoading": "Determines if projects are restored before they are loaded.",
+	"configuration.description.roslyn.compileProjectsAfterLoading": "Determines if projects are compiled after they are loaded.",
+	"configuration.description.roslyn.projectFiles": "Paths to project files to load."
 }
