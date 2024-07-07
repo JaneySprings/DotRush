@@ -20,8 +20,6 @@ public class DidCloseTextDocumentHandler : DidCloseTextDocumentHandlerBase {
     }
 
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) {
-        var filePath = request.TextDocument.Uri.GetFileSystemPath();
-        codeAnalysisService.CompilationHost.CloseDocument(filePath);
         return Unit.Task;
     }
 }

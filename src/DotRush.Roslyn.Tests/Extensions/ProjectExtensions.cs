@@ -1,4 +1,5 @@
 using System.Reflection;
+using DotRush.Roslyn.Common.Extensions;
 
 namespace DotRush.Roslyn.Tests.Extensions;
 
@@ -72,7 +73,7 @@ namespace {projectName} {{
             File.Delete(documentPath);
 
         File.WriteAllText(documentPath, documentContent);
-        return documentPath;
+        return FileSystemExtensions.NormalizePath(documentPath);
     }
     public static string CreateProject(string csprojContent, string projectName, string? projectDirectory = null) {
         projectDirectory ??= TestProjectsDirectory;

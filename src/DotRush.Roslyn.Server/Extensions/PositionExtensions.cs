@@ -64,5 +64,11 @@ public static class PositionExtensions {
         );
     }
 
+    public static TextSpan ToMergedTextSpan(this IEnumerable<TextSpan> textSpans) {
+        var start = textSpans.Min(it => it.Start);
+        var end = textSpans.Max(it => it.End);
+        return TextSpan.FromBounds(start, end);
+    }
+
     public static ProtocolModels.Range EmptyRange => new ProtocolModels.Range(new ProtocolModels.Position(0, 0), new ProtocolModels.Position(0, 0));
 }

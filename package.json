@@ -170,13 +170,6 @@
           }
         }
       }
-    ],
-    "configurationDefaults": {
-      "explorer.fileNesting.expand": false,
-      "explorer.fileNesting.enabled": true,
-      "explorer.fileNesting.patterns": {
-          "*.xaml": "${capture}.xaml.cs"
-      }
-    }
+    ]
   }
 }

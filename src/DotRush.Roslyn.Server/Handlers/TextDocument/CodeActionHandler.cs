@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.Logging;
@@ -71,22 +72,28 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
     private async Task<CommandOrCodeActionContainer> GetQuickFixesAsync(string filePath, IEnumerable<int> diagnosticIds, CancellationToken cancellationToken) {
         var result = new List<CommandOrCodeAction>();
-        foreach (var diagnosticId in diagnosticIds) {
-            var (diagnostic, diagnosticSourceId) = codeAnalysisService.CompilationHost.GetDiagnosticById(filePath, diagnosticId);
-            var diagnosticSource = workspaceService.Solution?.GetProject(diagnosticSourceId);
-            if (diagnostic == null || diagnosticSource == null)
-                return result;
+        var diagnosticHolderGroups = diagnosticIds
+            .Select(id => codeAnalysisService.CompilationHost.GetDiagnosticById(filePath, id))
+            .Where(it => it != null)
+            .GroupBy(it => it!.Diagnostic.Id);
 
-            var codeFixProviders = codeAnalysisService.CodeActionHost.GetCodeFixProvidersForDiagnosticId(diagnostic.Id, configurationService.UseRoslynAnalyzers ? diagnosticSource : null);
+        foreach (var group in diagnosticHolderGroups) {
+            var project = group.FirstOrDefault()?.Project;
+            if (project == null)
+                continue;
+
+            var codeFixProviders = codeAnalysisService.CodeActionHost.GetCodeFixProvidersForDiagnosticId(group.Key, configurationService.UseRoslynAnalyzers ? project : null);
             if (codeFixProviders == null)
                 return result;
 
-            var document = diagnosticSource.Documents.FirstOrDefault(it => FileSystemExtensions.PathEquals(it.FilePath, filePath));
+            var document = project.Documents.FirstOrDefault(it => FileSystemExtensions.PathEquals(it.FilePath, filePath));
             if (document == null)
                 return result;
 
             foreach (var codeFixProvider in codeFixProviders) {
-                await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, diagnostic, (action, _) => {
+                var textSpan = group.Select(it => it!.Diagnostic.Location.SourceSpan).ToMergedTextSpan();
+                var diagnostics = group.Select(it => it!.Diagnostic).ToImmutableArray();
+                await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, textSpan, diagnostics, (action, _) => {
                     var singleCodeActions = action.ToSingleCodeActions().Where(x => !x.IsBlacklisted());
                     foreach (var singleCodeAction in singleCodeActions) {
                         if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))

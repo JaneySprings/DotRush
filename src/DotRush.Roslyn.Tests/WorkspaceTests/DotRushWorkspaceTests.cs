@@ -106,29 +106,31 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
         // Create, SourceCode, SingleTFM
         var singleProjectSourceCodeDocumentPath = TestProjectExtensions.CreateDocument(Path.Combine(singleProjectDirectory, "Class2.cs"), "class Class2 {}");
         workspace.CreateDocument(singleProjectSourceCodeDocumentPath);
-        var singleProjectSourceCodeDocumentId = workspace.Solution!.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath).Single();
-        var singleProjectSourceCodeDocument = workspace.Solution.GetDocument(singleProjectSourceCodeDocumentId);
+        var singleProjectSourceCodeDocumentId = workspace.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath).Single();
+        var singleProjectSourceCodeDocument = workspace.Solution!.GetDocument(singleProjectSourceCodeDocumentId);
         Assert.Equal(singleProjectSourceCodeDocumentPath, singleProjectSourceCodeDocument!.FilePath);
+        Assert.Single(workspace.Solution.GetProjectIdsWithDocumentFilePath(singleProjectSourceCodeDocumentPath));
         // Create, SourceCode, MultiTFM
         var multipleProjectSourceCodeDocumentPath = TestProjectExtensions.CreateDocument(Path.Combine(multipleProjectDirectory, "Class2.cs"), "class Class2 {}");
         workspace.CreateDocument(multipleProjectSourceCodeDocumentPath);
-        var multipleProjectSourceCodeDocumentIds = workspace.Solution!.GetDocumentIdsWithFilePath(multipleProjectSourceCodeDocumentPath);
-        Assert.Equal(2, multipleProjectSourceCodeDocumentIds.Length);
+        var multipleProjectSourceCodeDocumentIds = workspace.GetDocumentIdsWithFilePath(multipleProjectSourceCodeDocumentPath);
+        Assert.Equal(2, multipleProjectSourceCodeDocumentIds.Count());
         foreach (var multipleProjectSourceCodeDocumentId in multipleProjectSourceCodeDocumentIds) {
             var multipleProjectSourceCodeDocument = workspace.Solution.GetDocument(multipleProjectSourceCodeDocumentId);
             Assert.Equal(multipleProjectSourceCodeDocumentPath, multipleProjectSourceCodeDocument!.FilePath);
         }
+        Assert.Equal(2, workspace.Solution.GetProjectIdsWithDocumentFilePath(multipleProjectSourceCodeDocumentPath).Count());
 
         // Create, Text, SingleTFM
         var singleProjectTextDocumentPath = TestProjectExtensions.CreateDocument(Path.Combine(singleProjectDirectory, "Class2.xaml"), "<Window />");
         workspace.CreateDocument(singleProjectTextDocumentPath);
-        var singleProjectTextDocumentId = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(singleProjectTextDocumentPath).Single();
+        var singleProjectTextDocumentId = workspace.GetAdditionalDocumentIdsWithFilePath(singleProjectTextDocumentPath).Single();
         var singleProjectTextDocument = workspace.Solution.GetAdditionalDocument(singleProjectTextDocumentId);
         Assert.Equal(singleProjectTextDocumentPath, singleProjectTextDocument!.FilePath);
         // Create, Text, MultiTFM
         var multipleProjectTextDocumentPath = TestProjectExtensions.CreateDocument(Path.Combine(multipleProjectDirectory, "Class2.xaml"), "<Window />");
         workspace.CreateDocument(multipleProjectTextDocumentPath);
-        var multipleProjectTextDocumentIds = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(multipleProjectTextDocumentPath);
+        var multipleProjectTextDocumentIds = workspace.GetAdditionalDocumentIdsWithFilePath(multipleProjectTextDocumentPath);
         Assert.Equal(2, multipleProjectTextDocumentIds.Count());
         foreach (var multipleProjectTextDocumentId in multipleProjectTextDocumentIds) {
             var multipleProjectTextDocument = workspace.Solution.GetAdditionalDocument(multipleProjectTextDocumentId);
@@ -137,14 +139,14 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
 
         // Update, SourceCode, SingleTFM
         workspace.UpdateDocument(singleProjectSourceCodeDocumentPath, "class Class2 { void Method() {}}");
-        singleProjectSourceCodeDocumentId = workspace.Solution!.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath).Single();
+        singleProjectSourceCodeDocumentId = workspace.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath).Single();
         singleProjectSourceCodeDocument = workspace.Solution.GetDocument(singleProjectSourceCodeDocumentId);
         var singleProjectSourceCodeDocumentContent = await singleProjectSourceCodeDocument!.GetTextAsync().ConfigureAwait(false);
         Assert.Equal("class Class2 { void Method() {}}", singleProjectSourceCodeDocumentContent.ToString());
         // Update, SourceCode, MultiTFM
         workspace.UpdateDocument(multipleProjectSourceCodeDocumentPath, "class Class2 { void Method() {}}");
-        multipleProjectSourceCodeDocumentIds = workspace.Solution!.GetDocumentIdsWithFilePath(multipleProjectSourceCodeDocumentPath);
-        Assert.Equal(2, multipleProjectSourceCodeDocumentIds.Length);
+        multipleProjectSourceCodeDocumentIds = workspace.GetDocumentIdsWithFilePath(multipleProjectSourceCodeDocumentPath);
+        Assert.Equal(2, multipleProjectSourceCodeDocumentIds.Count());
         foreach (var multipleProjectSourceCodeDocumentId in multipleProjectSourceCodeDocumentIds) {
             var multipleProjectSourceCodeDocument = workspace.Solution.GetDocument(multipleProjectSourceCodeDocumentId);
             var multipleProjectSourceCodeDocumentContent = await multipleProjectSourceCodeDocument!.GetTextAsync().ConfigureAwait(false);
@@ -153,13 +155,13 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
 
         // Update, Text, SingleTFM
         workspace.UpdateDocument(singleProjectTextDocumentPath, "<Window x:Name=\"window\" />");
-        singleProjectTextDocumentId = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(singleProjectTextDocumentPath).Single();
+        singleProjectTextDocumentId = workspace.GetAdditionalDocumentIdsWithFilePath(singleProjectTextDocumentPath).Single();
         singleProjectTextDocument = workspace.Solution.GetAdditionalDocument(singleProjectTextDocumentId);
         var singleProjectTextDocumentContent = await singleProjectTextDocument!.GetTextAsync().ConfigureAwait(false);
         Assert.Equal("<Window x:Name=\"window\" />", singleProjectTextDocumentContent.ToString());
         // Update, Text, MultiTFM
         workspace.UpdateDocument(multipleProjectTextDocumentPath, "<Window x:Name=\"window\" />");
-        multipleProjectTextDocumentIds = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(multipleProjectTextDocumentPath);
+        multipleProjectTextDocumentIds = workspace.GetAdditionalDocumentIdsWithFilePath(multipleProjectTextDocumentPath);
         Assert.Equal(2, multipleProjectTextDocumentIds.Count());
         foreach (var multipleProjectTextDocumentId in multipleProjectTextDocumentIds) {
             var multipleProjectTextDocument = workspace.Solution.GetAdditionalDocument(multipleProjectTextDocumentId);
@@ -169,20 +171,20 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
 
         // Delete, SourceCode, SingleTFM
         workspace.DeleteDocument(singleProjectSourceCodeDocumentPath);
-        singleProjectSourceCodeDocumentId = workspace.Solution!.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath).SingleOrDefault();
+        singleProjectSourceCodeDocumentId = workspace.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath).SingleOrDefault();
         Assert.Null(singleProjectSourceCodeDocumentId);
         // Delete, SourceCode, MultiTFM
         workspace.DeleteDocument(multipleProjectSourceCodeDocumentPath);
-        multipleProjectSourceCodeDocumentIds = workspace.Solution!.GetDocumentIdsWithFilePath(multipleProjectSourceCodeDocumentPath);
+        multipleProjectSourceCodeDocumentIds = workspace.GetDocumentIdsWithFilePath(multipleProjectSourceCodeDocumentPath);
         Assert.Empty(multipleProjectSourceCodeDocumentIds);
 
         // Delete, Text, SingleTFM
         workspace.DeleteDocument(singleProjectTextDocumentPath);
-        singleProjectTextDocumentId = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(singleProjectTextDocumentPath).SingleOrDefault();
+        singleProjectTextDocumentId = workspace.GetAdditionalDocumentIdsWithFilePath(singleProjectTextDocumentPath).SingleOrDefault();
         Assert.Null(singleProjectTextDocumentId);
         // Delete, Text, MultiTFM
         workspace.DeleteDocument(multipleProjectTextDocumentPath);
-        multipleProjectTextDocumentIds = workspace.Solution!.GetAdditionalDocumentIdsWithFilePath(multipleProjectTextDocumentPath);
+        multipleProjectTextDocumentIds = workspace.GetAdditionalDocumentIdsWithFilePath(multipleProjectTextDocumentPath);
         Assert.Empty(multipleProjectTextDocumentIds);
 
         // DeleteFolder, SourceCode, SingleTFM
@@ -215,7 +217,7 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
         Assert.Equal(folderFiles.Count, workspace.Solution.GetAdditionalDocumentIdsWithFolderPath(Path.GetDirectoryName(folderFiles.First())!).Count());
         workspace.DeleteFolder(Path.GetDirectoryName(folderFiles.First())!);
         foreach (var folderFile in folderFiles)
-            Assert.Empty(workspace.Solution.GetAdditionalDocumentIdsWithFilePath(folderFile));
+            Assert.Empty(workspace.GetAdditionalDocumentIdsWithFilePath(folderFile));
         // DeleteFolder, Text, MultiTFM
         folderFiles.Clear();
         for (int i = 1; i < 5; i++) {
@@ -225,7 +227,7 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
         Assert.Equal(folderFiles.Count * 2, workspace.Solution.GetAdditionalDocumentIdsWithFolderPath(Path.GetDirectoryName(folderFiles.First())!).Count());
         workspace.DeleteFolder(Path.GetDirectoryName(folderFiles.First())!);
         foreach (var folderFile in folderFiles)
-            Assert.Empty(workspace.Solution.GetAdditionalDocumentIdsWithFilePath(folderFile));
+            Assert.Empty(workspace.GetAdditionalDocumentIdsWithFilePath(folderFile));
     }
 
     [Fact]
@@ -238,12 +240,12 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
 
         var documentPath = TestProjectExtensions.CreateDocument(Path.Combine(projectDirectory, "obj", "Class2.cs"), "class Class2 {}");
         workspace.CreateDocument(documentPath);
-        var documentIds = workspace.Solution!.GetDocumentIdsWithFilePath(documentPath);
-        Assert.Equal(2, documentIds.Length);
+        var documentIds = workspace.GetDocumentIdsWithFilePath(documentPath);
+        Assert.Equal(2, documentIds.Count());
 
         workspace.UpdateDocument(documentPath, "class Class2 { void Method() {}}");
         foreach (var documentId in documentIds) {
-            var document = workspace.Solution.GetDocument(documentId);
+            var document = workspace.Solution!.GetDocument(documentId);
             Assert.Equal(documentPath, document!.FilePath);
         }
     }

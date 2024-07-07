@@ -29,8 +29,7 @@ class CodeActionTest {
 }
         ");
         WorkspaceService.CreateDocument(documentPath);
-        CodeAnalysisService.CompilationHost.OpenDocument(documentPath);
-        await CodeAnalysisService.CompilationHost.DiagnoseAsync(WorkspaceService.Solution!, useRoslynAnalyzers: false, CancellationToken.None).ConfigureAwait(false);
+        await CodeAnalysisService.CompilationHost.DiagnoseAsync(WorkspaceService.Solution!.Projects, useRoslynAnalyzers: false, CancellationToken.None).ConfigureAwait(false);
 
         var diagnostics = CodeAnalysisService.CompilationHost.GetDiagnostics(documentPath);
         Assert.NotNull(diagnostics);
@@ -74,10 +73,6 @@ class CodeActionTest {
         Assert.Single(textDocumentEdit.Edits);
         var textEdit = textDocumentEdit.Edits.Single();
         Assert.StartsWith("using System.Text.Json;", textEdit.NewText);
-
-        CodeAnalysisService.CompilationHost.CloseDocument(documentPath);
-        diagnostics = CodeAnalysisService.CompilationHost.GetDiagnostics(documentPath);
-        Assert.Null(diagnostics);
     }
 
     public void Dispose() {

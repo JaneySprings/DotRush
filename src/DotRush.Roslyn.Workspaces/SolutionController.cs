@@ -13,9 +13,15 @@ public abstract class SolutionController : ProjectsController {
     protected override void OnWorkspaceStateChanged(MSBuildWorkspace workspace) {
         Solution = workspace.CurrentSolution;
     }
-
     protected async Task LoadSolutionAsync(MSBuildWorkspace workspace, CancellationToken cancellationToken) {
         await LoadAsync(workspace, cancellationToken);
+    }
+
+    public IEnumerable<DocumentId> GetDocumentIdsWithFilePath(string filePath) {
+        return Solution?.Projects.SelectMany(it => it.GetDocumentIdsWithFilePath(filePath)) ?? Enumerable.Empty<DocumentId>();
+    }
+    public IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(string filePath) {
+        return Solution?.Projects.SelectMany(it => it.GetAdditionalDocumentIdsWithFilePath(filePath)) ?? Enumerable.Empty<DocumentId>();
     }
 
     public void DeleteFolder(string path) {
@@ -55,7 +61,7 @@ public abstract class SolutionController : ProjectsController {
 
             if (!FileSystemExtensions.IsFileVisible(Path.GetDirectoryName(project.FilePath), project.GetFolders(file), Path.GetFileName(file)))
                 continue;
-            if (project.GetDocumentIdWithFilePath(file) != null)
+            if (project.GetDocumentIdsWithFilePath(file).Any())
                 continue;
 
             var sourceText = SourceText.From(File.ReadAllText(file));
@@ -65,11 +71,11 @@ public abstract class SolutionController : ProjectsController {
         }
     }
     private void DeleteSourceCodeDocument(string file) {
-        var documentIds = Solution?.GetDocumentIdsWithFilePath(file);
+        var documentIds = GetDocumentIdsWithFilePath(file);
         DeleteSourceCodeDocument(documentIds);
     }
     private void UpdateSourceCodeDocument(string file, string? text = null) {
-        var documentIds = Solution?.GetDocumentIdsWithFilePath(file);
+        var documentIds = GetDocumentIdsWithFilePath(file);
         if (documentIds == null || !File.Exists(file))
             return;
 
@@ -95,7 +101,7 @@ public abstract class SolutionController : ProjectsController {
 
             if (!FileSystemExtensions.IsFileVisible(Path.GetDirectoryName(project.FilePath), project.GetFolders(file), Path.GetFileName(file)))
                 continue;
-            if (project.GetAdditionalDocumentIdWithFilePath(file) != null)
+            if (project.GetAdditionalDocumentIdsWithFilePath(file).Any())
                 continue;
 
             var sourceText = SourceText.From(File.ReadAllText(file));
@@ -105,11 +111,11 @@ public abstract class SolutionController : ProjectsController {
         }
     }
     private void DeleteAdditionalDocument(string file) {
-        var documentIds = Solution?.GetAdditionalDocumentIdsWithFilePath(file);
+        var documentIds = GetAdditionalDocumentIdsWithFilePath(file);
         DeleteAdditionalDocument(documentIds);
     }
     private void UpdateAdditionalDocument(string file, string? text = null) {
-        var documentIds = Solution?.GetDocumentIdsWithFilePath(file);
+        var documentIds = GetAdditionalDocumentIdsWithFilePath(file);
         if (documentIds == null || !File.Exists(file))
             return;
 
