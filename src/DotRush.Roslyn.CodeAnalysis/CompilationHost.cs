@@ -45,13 +45,14 @@ public class CompilationHost {
             if (compilation != null) {
                 var diagnostics = compilation.GetDiagnostics(cancellationToken);
                 var diagnosticsGroups = project.Documents.Where(d => d.FilePath != null).ToDictionary(
-                    d => FileSystemExtensions.NormalizePath(d.FilePath!),
+                    d => d.FilePath!,
                     d => diagnostics.Where(diagnostic => diagnostic.Location.SourceTree?.FilePath == d.FilePath)
                 );
                 foreach (var group in diagnosticsGroups) {
+                    var groupKey = FileSystemExtensions.NormalizePath(group.Key);
                     foreach (var diagnostic in group.Value)
-                        workspaceDiagnostics[group.Key].Add(new DiagnosticHolder(diagnostic, project));
-                    DiagnosticsChanged?.Invoke(this, new DiagnosticsCollectionChangedEventArgs(group.Key, workspaceDiagnostics[group.Key].Select(d => d.Diagnostic)));
+                        workspaceDiagnostics[groupKey].Add(new DiagnosticHolder(diagnostic, project));
+                    DiagnosticsChanged?.Invoke(this, new DiagnosticsCollectionChangedEventArgs(group.Key, workspaceDiagnostics[groupKey].Select(d => d.Diagnostic)));
                 }
             }
 
@@ -61,13 +62,14 @@ public class CompilationHost {
                     var result = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
                     var diagnostics = result.Where(d => d.Location.SourceTree?.FilePath != null);
                     var diagnosticsGroups = project.Documents.Where(d => d.FilePath != null).ToDictionary(
-                        d => FileSystemExtensions.NormalizePath(d.FilePath!),
+                        d => d.FilePath!,
                         d => diagnostics.Where(diagnostic => diagnostic.Location.SourceTree?.FilePath == d.FilePath)
                     );
                     foreach (var group in diagnosticsGroups) {
+                        var groupKey = FileSystemExtensions.NormalizePath(group.Key);
                         foreach (var diagnostic in group.Value)
-                            workspaceDiagnostics[group.Key].Add(new DiagnosticHolder(diagnostic, project));
-                        DiagnosticsChanged?.Invoke(this, new DiagnosticsCollectionChangedEventArgs(group.Key, workspaceDiagnostics[group.Key].Select(d => d.Diagnostic)));
+                            workspaceDiagnostics[groupKey].Add(new DiagnosticHolder(diagnostic, project));
+                        DiagnosticsChanged?.Invoke(this, new DiagnosticsCollectionChangedEventArgs(group.Key, workspaceDiagnostics[groupKey].Select(d => d.Diagnostic)));
                     }
                 }
                 shouldSkipAnalyzers = true;
