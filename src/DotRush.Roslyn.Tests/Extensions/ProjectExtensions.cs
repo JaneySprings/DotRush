@@ -73,7 +73,7 @@ namespace {projectName} {{
             File.Delete(documentPath);
 
         File.WriteAllText(documentPath, documentContent);
-        return FileSystemExtensions.NormalizePath(documentPath);
+        return documentPath;
     }
     public static string CreateProject(string csprojContent, string projectName, string? projectDirectory = null) {
         projectDirectory ??= TestProjectsDirectory;
