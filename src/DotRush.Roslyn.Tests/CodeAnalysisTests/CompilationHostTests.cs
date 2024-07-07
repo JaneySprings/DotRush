@@ -39,6 +39,7 @@ namespace MyClassLib {
         await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
         await compilationHost.DiagnoseAsync(workspace.Solution!.Projects, useRoslynAnalyzers: false, CancellationToken.None).ConfigureAwait(false);
 
+        Assert.NotEmpty(workspace.GetDocumentIdsWithFilePath(documentPath));
         Assert.NotNull(diagnostics);
         Assert.NotEmpty(diagnostics);
 
@@ -66,6 +67,7 @@ namespace MyClassLib {
 }
         ");
         workspace.CreateDocument(documentPath2);
+        Assert.NotEmpty(workspace.GetDocumentIdsWithFilePath(documentPath2));
 
         await compilationHost.DiagnoseAsync(workspace.Solution!.Projects, useRoslynAnalyzers: false, CancellationToken.None).ConfigureAwait(false);
 
@@ -116,6 +118,7 @@ namespace MyClassLib {
         await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
         await compilationHost.DiagnoseAsync(workspace.Solution!.Projects, false, CancellationToken.None).ConfigureAwait(false);
 
+        Assert.NotEmpty(workspace.GetDocumentIdsWithFilePath(documentPath));
         Assert.NotNull(diagnostics);
         Assert.NotEmpty(diagnostics);
 
@@ -148,6 +151,7 @@ namespace MyClassLib {
 }
         ");
         workspace.CreateDocument(documentPath2);
+        Assert.NotEmpty(workspace.GetDocumentIdsWithFilePath(documentPath2));
 
         await compilationHost.DiagnoseAsync(workspace.Solution!.Projects, false, CancellationToken.None).ConfigureAwait(false);
 
