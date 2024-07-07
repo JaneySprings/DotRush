@@ -53,13 +53,8 @@ public static class WorkspaceExtensions {
         if (string.IsNullOrEmpty(documentDirectory) || string.IsNullOrEmpty(rootDirectory))
             return Enumerable.Empty<string>();
 
-        var rootDirectoryName = Path.GetFileName(rootDirectory);
-        var rootDirectoryIndex = documentDirectory.LastIndexOf(rootDirectoryName, StringComparison.OrdinalIgnoreCase);
-        if (rootDirectoryIndex == -1)
-            return Enumerable.Empty<string>();
-
-        var relativePath = documentDirectory.Substring(rootDirectoryIndex + rootDirectoryName.Length);
-        return relativePath.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+        var relativePath = documentDirectory.Replace(rootDirectory, string.Empty, StringComparison.OrdinalIgnoreCase);
+        return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
     }
 
     public static async Task<ProcessResult> RestoreProjectAsync(this MSBuildWorkspace workspace, string projectPath, CancellationToken cancellationToken) {
