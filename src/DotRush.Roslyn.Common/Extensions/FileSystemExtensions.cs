@@ -27,7 +27,9 @@ public static class FileSystemExtensions {
         if (string.IsNullOrEmpty(baseDirectoryPath))
             return false;
 
-        var filePath = Path.Combine(baseDirectoryPath, string.Join(Path.DirectorySeparatorChar, folders), fileName);
+        var filePath = folders.Any()
+            ? Path.Combine(baseDirectoryPath, string.Join(Path.DirectorySeparatorChar, folders), fileName)
+            : Path.Combine(baseDirectoryPath, fileName);
         var fileInfo = new FileInfo(filePath);
         if (fileInfo.Attributes.HasFlag(FileAttributes.Hidden))
             return false;
