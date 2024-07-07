@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Tests.Extensions;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Xunit;
@@ -252,6 +253,31 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
             var documentContent = await document.GetTextAsync().ConfigureAwait(false);
             Assert.Equal("class Class2 { void Method() {}}", documentContent.ToString());
         }
+    }
+    [Fact]
+    public async Task CreateDocumentFullCycleTest() {
+        var singleProject = TestProjectExtensions.CreateClassLib("MyClassLib");
+        var singleProjectDirectory = Path.GetDirectoryName(singleProject)!;
+
+        var workspace = new TestWorkspace([singleProject]);
+        await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
+
+        var singleProjectSourceCodeDocumentPath = TestProjectExtensions.CreateDocument(Path.Combine(singleProjectDirectory, "Class2.cs"), "class Class2 {}");
+        var projectIdsMayBe = workspace.Solution!.GetProjectIdsMayContainsFilePath(singleProjectSourceCodeDocumentPath);
+        Assert.Single(projectIdsMayBe!);
+        var project = workspace.Solution!.GetProject(projectIdsMayBe!.Single());
+        Assert.NotNull(Path.GetDirectoryName(project!.FilePath));
+        Assert.NotNull(Path.GetFileName(singleProjectSourceCodeDocumentPath));
+        Assert.Empty(project.GetFolders(singleProjectSourceCodeDocumentPath));
+        Assert.Empty(project.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath));
+        Assert.True(FileSystemExtensions.IsFileVisible(
+            Path.GetDirectoryName(project.FilePath),
+            project.GetFolders(singleProjectSourceCodeDocumentPath),
+            Path.GetFileName(singleProjectSourceCodeDocumentPath)
+        ));
+
+        workspace.CreateDocument(singleProjectSourceCodeDocumentPath);
+        Assert.Single(workspace.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath));
     }
 
     public void Dispose() {
