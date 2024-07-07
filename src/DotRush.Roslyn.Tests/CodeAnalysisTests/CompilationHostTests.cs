@@ -4,7 +4,6 @@ using DotRush.Roslyn.Tests.Extensions;
 using DotRush.Roslyn.Tests.WorkspaceTests;
 using Microsoft.CodeAnalysis;
 using Xunit;
-using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Tests.CodeAnalysisTests;
 
@@ -35,7 +34,6 @@ namespace MyClassLib {
     }
 }
         ");
-        documentPath = FileSystemExtensions.NormalizePath(documentPath);
         var workspace = new TestWorkspace([projectPath]);
 
         await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
@@ -68,7 +66,6 @@ namespace MyClassLib {
     }
 }
         ");
-        documentPath2 = FileSystemExtensions.NormalizePath(documentPath2);
         workspace.CreateDocument(documentPath2);
         Assert.NotEmpty(workspace.GetDocumentIdsWithFilePath(documentPath2));
 
@@ -116,7 +113,6 @@ namespace MyClassLib {
     }
 }
         ");
-        documentPath = FileSystemExtensions.NormalizePath(documentPath);
         var workspace = new TestWorkspace([projectPath]);
 
         await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
@@ -154,7 +150,6 @@ namespace MyClassLib {
     }
 }
         ");
-        documentPath2 = FileSystemExtensions.NormalizePath(documentPath2);
         workspace.CreateDocument(documentPath2);
         Assert.NotEmpty(workspace.GetDocumentIdsWithFilePath(documentPath2));
 
