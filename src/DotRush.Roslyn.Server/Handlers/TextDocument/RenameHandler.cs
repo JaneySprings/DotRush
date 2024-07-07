@@ -30,7 +30,7 @@ public class RenameHandler : RenameHandlerBase {
     }
     public override async Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken cancellationToken) {
         var workspaceEdits = new Dictionary<string, HashSet<TextEdit>>();
-        var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        var documentIds = workspaceService.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
         if (documentIds == null)
             return null;
 

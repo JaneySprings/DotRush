@@ -21,8 +21,7 @@ public class DidOpenTextDocumentHandler : DidOpenTextDocumentHandlerBase {
 
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken) {
         var filePath = request.TextDocument.Uri.GetFileSystemPath();
-        codeAnalysisService.CompilationHost.OpenDocument(filePath);
-        _ = codeAnalysisService.PublishDiagnosticsAsync();
+        _ = codeAnalysisService.PublishDiagnosticsAsync(filePath);
         return Unit.Task;
     }
 }

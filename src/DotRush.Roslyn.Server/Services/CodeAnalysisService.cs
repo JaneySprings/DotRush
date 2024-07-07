@@ -13,7 +13,7 @@ using DotRush.Roslyn.CodeAnalysis;
 namespace DotRush.Roslyn.Server.Services;
 
 public class CodeAnalysisService {
-    private const int AnalysisFrequencyMs = 500;
+    private const int AnalysisFrequencyMs = 1000;
 
     private readonly ILanguageServerFacade? serverFacade;
     private readonly WorkspaceService workspaceService;
@@ -35,23 +35,27 @@ public class CodeAnalysisService {
         CompilationHost.DiagnosticsChanged += OnDiagnosticsCollectionChanged;
     }
 
-    public Task PublishDiagnosticsAsync() {
+    public Task PublishDiagnosticsAsync(string filePath) {
         if (workspaceService.Solution == null)
             return Task.CompletedTask;
 
         ResetCancellationToken();
         var cancellationToken = compilationTokenSource.Token;
+        var projects = workspaceService.Solution
+            .GetProjectIdsWithDocumentFilePath(filePath)
+            .Select(workspaceService.Solution.GetProject);
+
         return SafeExtensions.InvokeAsync(async () => {
             await Task.Delay(AnalysisFrequencyMs, cancellationToken).ConfigureAwait(false);
-            await CompilationHost.DiagnoseAsync(workspaceService.Solution, configurationService.UseRoslynAnalyzers, cancellationToken).ConfigureAwait(false);
+            await CompilationHost.DiagnoseAsync(projects, configurationService.UseRoslynAnalyzers, cancellationToken).ConfigureAwait(false);
         });
     }
 
     private void OnDiagnosticsCollectionChanged(object? sender, DiagnosticsCollectionChangedEventArgs e) {
-        CurrentSessionLogger.Debug($"Publishing {e.Diagnostics.Count} diagnostics for document: {e.DocumentPath}");
+        CurrentSessionLogger.Debug($"Publishing {e.Diagnostics.Count} diagnostics for document: {e.FilePath}");
         serverFacade?.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
             Diagnostics = new Container<ProtocolModels.Diagnostic>(e.Diagnostics.Select(d => d.ToServerDiagnostic())),
-            Uri = DocumentUri.FromFileSystemPath(e.DocumentPath),
+            Uri = DocumentUri.FromFileSystemPath(e.FilePath),
         });
     }
     private void ResetCancellationToken() {

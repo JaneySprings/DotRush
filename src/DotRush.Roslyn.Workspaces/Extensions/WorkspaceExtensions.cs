@@ -8,10 +8,7 @@ namespace DotRush.Roslyn.Workspaces.Extensions;
 
 public static class WorkspaceExtensions {
     public static IEnumerable<ProjectId> GetProjectIdsWithDocumentFilePath(this Solution solution, string filePath) {
-        return solution.GetDocumentIdsWithFilePath(filePath).Select(id => id.ProjectId);
-    }
-    public static IEnumerable<ProjectId> GetProjectIdsWithDocumentsFilePaths(this Solution solution, IEnumerable<string> filePaths) {
-        return filePaths.SelectMany(filePath => solution.GetProjectIdsWithDocumentFilePath(filePath)).Distinct();
+        return solution.Projects.Where(project => project.GetDocumentIdsWithFilePath(filePath).Any()).Select(project => project.Id);
     }
 
     public static IEnumerable<DocumentId> GetDocumentIdsWithFolderPath(this Solution solution, string folderPath) {
@@ -23,8 +20,8 @@ public static class WorkspaceExtensions {
             .Where(document => document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true)
             .Select(document => document.Id);
     }
-    public static DocumentId? GetDocumentIdWithFilePath(this Project project, string filePath) {
-        return project.Documents.FirstOrDefault(document => FileSystemExtensions.PathEquals(document.FilePath, filePath))?.Id;
+    public static IEnumerable<DocumentId> GetDocumentIdsWithFilePath(this Project project, string filePath) {
+        return project.Documents.Where(it => FileSystemExtensions.PathEquals(it.FilePath, filePath)).Select(it => it.Id);
     }
 
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Solution solution, string folderPath) {
@@ -36,12 +33,8 @@ public static class WorkspaceExtensions {
             .Where(document => document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true)
             .Select(document => document.Id);
     }
-
-    public static DocumentId? GetAdditionalDocumentIdWithFilePath(this Project project, string filePath) {
-        return project.AdditionalDocuments.FirstOrDefault(document => FileSystemExtensions.PathEquals(document.FilePath, filePath))?.Id;
-    }
-    public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(this Solution solution, string filePath) {
-        return solution.Projects.Select(project => project.GetAdditionalDocumentIdWithFilePath(filePath)).Where(it => it != null)!;
+    public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(this Project project, string filePath) {
+        return project.AdditionalDocuments.Where(it => FileSystemExtensions.PathEquals(it.FilePath, filePath)).Select(it => it.Id);
     }
 
     public static IEnumerable<ProjectId>? GetProjectIdsMayContainsFilePath(this Solution solution, string documentPath) {
@@ -55,9 +48,9 @@ public static class WorkspaceExtensions {
             .Select(project => project.Id);
     }
     public static IEnumerable<string> GetFolders(this Project project, string documentPath) {
-        var rootDirectory = Path.GetDirectoryName(project.FilePath);
-        var documentDirectory = Path.GetDirectoryName(documentPath);
-        if (documentDirectory == null || rootDirectory == null)
+        var rootDirectory = FileSystemExtensions.NormalizePath(Path.GetDirectoryName(project.FilePath) ?? string.Empty);
+        var documentDirectory = FileSystemExtensions.NormalizePath(Path.GetDirectoryName(documentPath) ?? string.Empty);
+        if (string.IsNullOrEmpty(documentDirectory) || string.IsNullOrEmpty(rootDirectory))
             return Enumerable.Empty<string>();
 
         var relativePath = documentDirectory.Replace(rootDirectory, string.Empty);

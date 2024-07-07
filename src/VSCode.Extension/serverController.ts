@@ -13,6 +13,8 @@ export class ServerController {
         const serverExtension = process.platform === 'win32' ? '.exe' : '';
         ServerController.command = serverExecutable + serverExtension;
         ServerController.start();
+
+        context.subscriptions.push(ServerController.client);
     }
 
     private static initialize() {

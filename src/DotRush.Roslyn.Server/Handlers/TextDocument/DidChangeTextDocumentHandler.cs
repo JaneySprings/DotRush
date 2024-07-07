@@ -28,8 +28,7 @@ public class DidChangeTextDocumentHandler : DidChangeTextDocumentHandlerBase {
         var text = request.ContentChanges.First().Text;
 
         solutionService.UpdateDocument(filePath, text);
-        codeAnalysisService.CompilationHost.OpenDocument(filePath);
-        _ = codeAnalysisService.PublishDiagnosticsAsync();
+        _ = codeAnalysisService.PublishDiagnosticsAsync(filePath);
         return Unit.Task;
     }
 }

@@ -51,6 +51,8 @@ public static class FileSystemExtensions {
         return string.Equals(path1, path2, StringComparison.OrdinalIgnoreCase);
     }
     public static string NormalizePath(string path) {
+        if (string.IsNullOrEmpty(path))
+            return path;
         return Path.GetFullPath(path).ToLowerInvariant();
     }
 }
