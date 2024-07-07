@@ -54,7 +54,7 @@ public static class WorkspaceExtensions {
             return Enumerable.Empty<string>();
 
         var rootDirectoryName = Path.GetFileName(rootDirectory);
-        var rootDirectoryIndex = documentDirectory.IndexOf(rootDirectoryName, StringComparison.OrdinalIgnoreCase);
+        var rootDirectoryIndex = documentDirectory.LastIndexOf(rootDirectoryName, StringComparison.OrdinalIgnoreCase);
         if (rootDirectoryIndex == -1)
             return Enumerable.Empty<string>();
 
