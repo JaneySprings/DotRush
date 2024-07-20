@@ -29,7 +29,7 @@ public class CompilationHost {
     }
 
     public async Task DiagnoseAsync(IEnumerable<Project?> projects, CancellationToken cancellationToken) {
-        CurrentSessionLogger.Debug("CompilationHost: Diagnostics started");
+        CurrentSessionLogger.Debug($"CompilationHost[{cancellationToken.GetHashCode()}]: Diagnostics started for {projects.Count()} projects");
         workspaceDiagnostics.Clear(); // TODO: You cannot use code actions while diagnostics are being cleared
         bool shouldSkipAnalyzers = false;
         foreach (var project in projects) {
@@ -75,7 +75,7 @@ public class CompilationHost {
                 shouldSkipAnalyzers = true;
             }
         }
-        CurrentSessionLogger.Debug("CompilationHost: Diagnostics finished");
+        CurrentSessionLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics finished");
     }
     private async Task<Compilation?> CompileAsync(Project project, CancellationToken cancellationToken) {
         var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);

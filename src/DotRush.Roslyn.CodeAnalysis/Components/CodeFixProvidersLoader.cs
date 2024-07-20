@@ -51,6 +51,7 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
     public ReadOnlyCollection<CodeFixProvider> LoadFromProject(Project project) {
         var analyzerReferenceAssemblies = project.AnalyzerReferences.Select(it => it.FullPath);
         var result = analyzerReferenceAssemblies.SelectMany(it => LoadFromAssembly(it ?? string.Empty)).ToArray();
+        CurrentSessionLogger.Debug($"Loaded {result.Length} codeFixProviders from project '{project.Name}'");
         return new ReadOnlyCollection<CodeFixProvider>(result);
     }
 }

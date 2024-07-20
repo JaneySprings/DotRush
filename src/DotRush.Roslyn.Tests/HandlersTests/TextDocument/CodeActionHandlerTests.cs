@@ -75,6 +75,58 @@ class CodeActionTest {
         Assert.StartsWith("using System.Text.Json;", textEdit.NewText);
     }
 
+    [Fact]
+    public async Task ApplyCodeActionInConditionsTest() {
+        TestProjectExtensions.CreateDocument(documentPath, @"
+namespace Tests;
+class CodeActionTest {
+    private static void Method() {
+#if NET8_0
+        var test = 1;
+#else
+        var test = 2;
+#endif
+        var test = 3;
+    }
+}
+        ");
+        WorkspaceService.CreateDocument(documentPath);
+        await CodeAnalysisService.CompilationHost.DiagnoseAsync(WorkspaceService.Solution!.Projects, CancellationToken.None).ConfigureAwait(false);
+
+        var diagnostics = CodeAnalysisService.CompilationHost.GetDiagnostics(documentPath);
+        Assert.NotNull(diagnostics);
+        Assert.NotEmpty(diagnostics);
+        var warningDiagnostics = diagnostics.Where(it => it.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Warning);
+        Assert.Equal(3, warningDiagnostics.Count());
+
+        foreach (var warningDiagnostic in warningDiagnostics) {
+            var result = await CodeActionHandler.Handle(new CodeActionParams() {
+                TextDocument = new TextDocumentIdentifier() { Uri = DocumentUri },
+                Context = new CodeActionContext() {
+                    Diagnostics = new Container<Diagnostic>(warningDiagnostic.ToServerDiagnostic())
+                }
+            }, CancellationToken.None).ConfigureAwait(false);
+            Assert.NotNull(result);
+            Assert.Single(result);
+            Assert.NotNull(result.First().CodeAction);
+            Assert.Equal(CodeActionKind.QuickFix, result.First().CodeAction!.Kind);
+            Assert.Equal("Remove unused variable", result.First().CodeAction!.Title);
+
+            var resolvedResult = await CodeActionHandler.Handle(result.First().CodeAction!, CancellationToken.None).ConfigureAwait(false);
+            Assert.NotNull(resolvedResult);
+            Assert.NotNull(resolvedResult.Edit);
+            Assert.NotNull(resolvedResult.Edit!.DocumentChanges);
+            Assert.Single(resolvedResult.Edit!.DocumentChanges);
+            var textDocumentEdit = resolvedResult.Edit!.DocumentChanges.Single().TextDocumentEdit;
+            Assert.NotNull(textDocumentEdit);
+            Assert.Equal(DocumentUri, textDocumentEdit.TextDocument.Uri);
+            Assert.NotNull(textDocumentEdit.Edits);
+            Assert.Single(textDocumentEdit.Edits);
+            var textEdit = textDocumentEdit.Edits.Single();
+            Assert.StartsWith(string.Empty, textEdit.NewText);
+        }
+    }
+
     public void Dispose() {
         WorkspaceService.DeleteDocument(documentPath);
     }
