@@ -26,7 +26,7 @@ public static class CodeActionExtensions {
             return null;
 
         var textDocumentEdits = new List<ProtocolModels.TextDocumentEdit>();
-        var operations = await codeAction.GetOperationsAsync(cancellationToken);
+        var operations = await codeAction.GetOperationsAsync(cancellationToken).ConfigureAwait(false);
         foreach (var operation in operations) {
             if (operation is ApplyChangesOperation applyChangesOperation) {
                 var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solutionService.Solution);
@@ -36,18 +36,18 @@ public static class CodeActionExtensions {
                         var oldDocument = solutionService.Solution.GetDocument(newDocument?.Id);
                         if (oldDocument?.FilePath == null || newDocument?.FilePath == null)
                             continue;
-                        if (textDocumentEdits.Any(x => FileSystemExtensions.PathEquals(x.TextDocument.Uri.GetFileSystemPath(), newDocument.FilePath)))
+
+                        var sourceText = await oldDocument.GetTextAsync(cancellationToken).ConfigureAwait(false);
+                        var textEdits = new List<ProtocolModels.TextEdit>();
+                        var textChanges = await newDocument.GetTextChangesAsync(oldDocument, cancellationToken).ConfigureAwait(false);
+                        textEdits.AddRange(textChanges.Select(x => new ProtocolModels.TextEdit() {
+                            NewText = x.NewText ?? string.Empty,
+                            Range = x.Span.ToRange(sourceText),
+                        }));
+
+                        if (textEdits.Count == 0)
                             continue;
 
-                        var sourceText = await oldDocument.GetTextAsync(cancellationToken);
-                        var textEdits = new List<ProtocolModels.TextEdit>();
-                        var textChanges = await newDocument.GetTextChangesAsync(oldDocument, cancellationToken);
-                        foreach (var textChange in textChanges) {
-                            textEdits.Add(new ProtocolModels.TextEdit() {
-                                NewText = textChange.NewText ?? string.Empty,
-                                Range = textChange.Span.ToRange(sourceText),
-                            });
-                        }
                         textDocumentEdits.Add(new ProtocolModels.TextDocumentEdit() {
                             Edits = textEdits,
                             TextDocument = new ProtocolModels.OptionalVersionedTextDocumentIdentifier() {

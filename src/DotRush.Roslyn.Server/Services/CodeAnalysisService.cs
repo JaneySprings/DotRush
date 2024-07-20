@@ -40,7 +40,7 @@ public class CodeAnalysisService {
         ResetCancellationToken();
         var cancellationToken = compilationTokenSource.Token;
         var projects = workspaceService.Solution
-            .GetProjectIdsWithDocumentFilePath(filePath)
+            .GetProjectIdsWithFilePath(filePath)
             .Select(workspaceService.Solution.GetProject);
 
         return SafeExtensions.InvokeAsync(async () => {

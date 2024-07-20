@@ -7,25 +7,29 @@ using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensio
 namespace DotRush.Roslyn.Workspaces.Extensions;
 
 public static class WorkspaceExtensions {
+    public static IEnumerable<ProjectId> GetProjectIdsWithFilePath(this Solution solution, string filePath) {
+        return solution.GetProjectIdsWithDocumentFilePath(filePath).Concat(solution.GetProjectIdsWithAdditionalDocumentFilePath(filePath)).Distinct();
+    }
+
     public static IEnumerable<ProjectId> GetProjectIdsWithDocumentFilePath(this Solution solution, string filePath) {
         return solution.Projects.Where(project => project.GetDocumentIdsWithFilePath(filePath).Any()).Select(project => project.Id);
+    }
+    public static IEnumerable<ProjectId> GetProjectIdsWithAdditionalDocumentFilePath(this Solution solution, string filePath) {
+        return solution.Projects.Where(project => project.GetAdditionalDocumentIdsWithFilePath(filePath).Any()).Select(project => project.Id);
     }
 
     public static IEnumerable<DocumentId> GetDocumentIdsWithFolderPath(this Solution solution, string folderPath) {
         return solution.Projects.SelectMany(project => project.GetDocumentIdsWithFolderPath(folderPath));
     }
+    public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Solution solution, string folderPath) {
+        return solution.Projects.SelectMany(project => project.GetAdditionalDocumentIdsWithFolderPath(folderPath));
+    }
+
     public static IEnumerable<DocumentId> GetDocumentIdsWithFolderPath(this Project project, string folderPath) {
         var folderPathFixed = folderPath.EndsWith(Path.DirectorySeparatorChar) ? folderPath : folderPath + Path.DirectorySeparatorChar;
         return project.Documents
             .Where(document => document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true)
             .Select(document => document.Id);
-    }
-    public static IEnumerable<DocumentId> GetDocumentIdsWithFilePath(this Project project, string filePath) {
-        return project.Documents.Where(it => FileSystemExtensions.PathEquals(it.FilePath, filePath)).Select(it => it.Id);
-    }
-
-    public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Solution solution, string folderPath) {
-        return solution.Projects.SelectMany(project => project.GetAdditionalDocumentIdsWithFolderPath(folderPath));
     }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Project project, string folderPath) {
         var folderPathFixed = folderPath.EndsWith(Path.DirectorySeparatorChar) ? folderPath : folderPath + Path.DirectorySeparatorChar;
@@ -33,9 +37,14 @@ public static class WorkspaceExtensions {
             .Where(document => document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true)
             .Select(document => document.Id);
     }
+
+    public static IEnumerable<DocumentId> GetDocumentIdsWithFilePath(this Project project, string filePath) {
+        return project.Documents.Where(it => FileSystemExtensions.PathEquals(it.FilePath, filePath)).Select(it => it.Id);
+    }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(this Project project, string filePath) {
         return project.AdditionalDocuments.Where(it => FileSystemExtensions.PathEquals(it.FilePath, filePath)).Select(it => it.Id);
     }
+
 
     public static IEnumerable<ProjectId>? GetProjectIdsMayContainsFilePath(this Solution solution, string documentPath) {
         var projects = solution.Projects.Where(p => documentPath.StartsWith(Path.GetDirectoryName(p.FilePath) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
@@ -56,7 +65,6 @@ public static class WorkspaceExtensions {
         var relativePath = documentDirectory.Replace(rootDirectory, string.Empty, StringComparison.OrdinalIgnoreCase);
         return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
     }
-
     public static async Task<ProcessResult> RestoreProjectAsync(this MSBuildWorkspace workspace, string projectPath, CancellationToken cancellationToken) {
         var processInfo = ProcessRunner.CreateProcess("dotnet", $"restore \"{projectPath}\"", captureOutput: true, displayWindow: false, cancellationToken: cancellationToken);
         var restoreResult = await processInfo.Result;
