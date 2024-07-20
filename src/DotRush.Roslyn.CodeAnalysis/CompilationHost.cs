@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using DotRush.Roslyn.CodeAnalysis.Diagnostics;
+using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.CodeAnalysis;
@@ -28,8 +28,8 @@ public class CompilationHost {
         return container.FirstOrDefault(d => d.Id == diagnosticId);
     }
 
-
-    public async Task DiagnoseAsync(IEnumerable<Project?> projects, bool useRoslynAnalyzers, CancellationToken cancellationToken) {
+    public async Task DiagnoseAsync(IEnumerable<Project?> projects, CancellationToken cancellationToken) {
+        CurrentSessionLogger.Debug("CompilationHost: Diagnostics started");
         workspaceDiagnostics.Clear(); // TODO: You cannot use code actions while diagnostics are being cleared
         bool shouldSkipAnalyzers = false;
         foreach (var project in projects) {
@@ -56,7 +56,7 @@ public class CompilationHost {
                 }
             }
 
-            if (useRoslynAnalyzers && !shouldSkipAnalyzers) {
+            if (!shouldSkipAnalyzers) {
                 var compilationWithAnalyzers = await CompileWithAnalyzersAsync(project, compilation, cancellationToken).ConfigureAwait(false);
                 if (compilationWithAnalyzers != null) {
                     var result = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);

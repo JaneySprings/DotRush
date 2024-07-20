@@ -37,22 +37,26 @@ namespace MyClassLib {
         var workspace = new TestWorkspace([projectPath]);
 
         await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
-        await compilationHost.DiagnoseAsync(workspace.Solution!.Projects, useRoslynAnalyzers: false, CancellationToken.None).ConfigureAwait(false);
+        await compilationHost.DiagnoseAsync(workspace.Solution!.Projects, CancellationToken.None).ConfigureAwait(false);
 
         Assert.NotEmpty(workspace.GetDocumentIdsWithFilePath(documentPath));
         Assert.NotNull(diagnostics);
         Assert.NotEmpty(diagnostics);
 
-        var hidden = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Hidden).ToArray();
-        var warnings = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Warning).ToArray();
-        var errors = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+        var hidden = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Hidden).Select(it => it.Id).ToArray();
+        var warnings = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Warning).Select(it => it.Id).ToArray();
+        var errors = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Error).Select(it => it.Id).ToArray();
 
         Assert.NotEmpty(hidden);
-        Assert.Equal("CS8019", hidden.Single().Id);
+        Assert.Single(hidden);
+        Assert.Contains("CS8019", hidden);
         Assert.NotEmpty(warnings);
-        Assert.Equal("CS0219", warnings.Single().Id);
+        Assert.Equal(2, warnings.Length);
+        Assert.Contains("CA1822", warnings);
+        Assert.Contains("CS0219", warnings);
         Assert.NotEmpty(errors);
-        Assert.Equal("CS0246", errors.Single().Id);
+        Assert.Single(errors);
+        Assert.Contains("CS0246", errors);
 
         var documentPath2 = TestProjectExtensions.CreateDocument(Path.Combine(TestProjectExtensions.TestProjectsDirectory, "MyClassLib", "TestFile2.cs"), @"
 using System;
@@ -69,30 +73,38 @@ namespace MyClassLib {
         workspace.CreateDocument(documentPath2);
         Assert.NotEmpty(workspace.GetDocumentIdsWithFilePath(documentPath2));
 
-        await compilationHost.DiagnoseAsync(workspace.Solution!.Projects, useRoslynAnalyzers: false, CancellationToken.None).ConfigureAwait(false);
+        await compilationHost.DiagnoseAsync(workspace.Solution!.Projects, CancellationToken.None).ConfigureAwait(false);
 
         Assert.NotNull(diagnostics);
         Assert.NotEmpty(diagnostics);
 
-        hidden = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Hidden).ToArray();
-        warnings = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Warning).ToArray();
-        errors = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+        hidden = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Hidden).Select(it => it.Id).ToArray();
+        warnings = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Warning).Select(it => it.Id).ToArray();
+        errors = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Error).Select(it => it.Id).ToArray();
         Assert.NotEmpty(hidden);
-        Assert.Equal("CS8019", hidden.Single().Id);
+        Assert.Single(hidden);
+        Assert.Contains("CS8019", hidden);
         Assert.NotEmpty(warnings);
-        Assert.Equal("CS0219", warnings.Single().Id);
+        Assert.Equal(2, warnings.Length);
+        Assert.Contains("CA1822", warnings);
+        Assert.Contains("CS0219", warnings);
         Assert.NotEmpty(errors);
-        Assert.Equal("CS0246", errors.Single().Id);
+        Assert.Single(errors);
+        Assert.Contains("CS0246", errors);
 
-        hidden = diagnostics[documentPath2]!.Where(d => d.Severity == DiagnosticSeverity.Hidden).ToArray();
-        warnings = diagnostics[documentPath2]!.Where(d => d.Severity == DiagnosticSeverity.Warning).ToArray();
-        errors = diagnostics[documentPath2]!.Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+        hidden = diagnostics[documentPath2]!.Where(d => d.Severity == DiagnosticSeverity.Hidden).Select(it => it.Id).ToArray();
+        warnings = diagnostics[documentPath2]!.Where(d => d.Severity == DiagnosticSeverity.Warning).Select(it => it.Id).ToArray();
+        errors = diagnostics[documentPath2]!.Where(d => d.Severity == DiagnosticSeverity.Error).Select(it => it.Id).ToArray();
         Assert.NotEmpty(hidden);
-        Assert.Equal("CS8019", hidden.Single().Id);
+        Assert.Single(hidden);
+        Assert.Contains("CS8019", hidden);
         Assert.NotEmpty(warnings);
-        Assert.Equal("CS0219", warnings.Single().Id);
+        Assert.Equal(2, warnings.Length);
+        Assert.Contains("CA1822", warnings);
+        Assert.Contains("CS0219", warnings);
         Assert.NotEmpty(errors);
-        Assert.Equal("CS0246", errors.Single().Id);
+        Assert.Single(errors);
+        Assert.Contains("CS0246", errors);
     }
     [Fact]
     public async Task MultitargetDocumentDiagnosticsTest() {
@@ -116,22 +128,23 @@ namespace MyClassLib {
         var workspace = new TestWorkspace([projectPath]);
 
         await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
-        await compilationHost.DiagnoseAsync(workspace.Solution!.Projects, false, CancellationToken.None).ConfigureAwait(false);
+        await compilationHost.DiagnoseAsync(workspace.Solution!.Projects, CancellationToken.None).ConfigureAwait(false);
 
         Assert.NotEmpty(workspace.GetDocumentIdsWithFilePath(documentPath));
         Assert.NotNull(diagnostics);
         Assert.NotEmpty(diagnostics);
 
-        var hidden = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Hidden).ToArray();
-        var warnings = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Warning).ToArray();
-        var errors = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+        var hidden = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Hidden).Select(it => it.Id).OrderBy(it => it).ToArray();
+        var warnings = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Warning).Select(it => it.Id).OrderBy(it => it).ToArray();
+        var errors = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Error).Select(it => it.Id).OrderBy(it => it).ToArray();
 
         Assert.NotEmpty(hidden);
-        Assert.Equal("CS8019", hidden.Single().Id);
+        Assert.Equal("CS8019", hidden.Single());
         Assert.NotEmpty(warnings);
-        Assert.Equal("CS0219", warnings[0].Id);
-        Assert.Equal("CS0219", warnings[1].Id);
-        Assert.Equal("CS0219", warnings[2].Id);
+        Assert.Equal("CA1822", warnings[0]);
+        Assert.Equal("CS0219", warnings[1]);
+        Assert.Equal("CS0219", warnings[2]);
+        Assert.Equal("CS0219", warnings[3]);
         Assert.Empty(errors);
 
         var documentPath2 = TestProjectExtensions.CreateDocument(Path.Combine(TestProjectExtensions.TestProjectsDirectory, "MyClassLib", "TestFile2.cs"), @"
@@ -153,31 +166,33 @@ namespace MyClassLib {
         workspace.CreateDocument(documentPath2);
         Assert.NotEmpty(workspace.GetDocumentIdsWithFilePath(documentPath2));
 
-        await compilationHost.DiagnoseAsync(workspace.Solution!.Projects, false, CancellationToken.None).ConfigureAwait(false);
+        await compilationHost.DiagnoseAsync(workspace.Solution!.Projects, CancellationToken.None).ConfigureAwait(false);
 
         Assert.NotNull(diagnostics);
         Assert.NotEmpty(diagnostics);
 
-        hidden = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Hidden).ToArray();
-        warnings = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Warning).ToArray();
-        errors = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+        hidden = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Hidden).Select(it => it.Id).OrderBy(it => it).ToArray();
+        warnings = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Warning).Select(it => it.Id).OrderBy(it => it).ToArray();
+        errors = diagnostics[documentPath]!.Where(d => d.Severity == DiagnosticSeverity.Error).Select(it => it.Id).OrderBy(it => it).ToArray();
         Assert.NotEmpty(hidden);
-        Assert.Equal("CS8019", hidden.Single().Id);
+        Assert.Equal("CS8019", hidden.Single());
         Assert.NotEmpty(warnings);
-        Assert.Equal("CS0219", warnings[0].Id);
-        Assert.Equal("CS0219", warnings[1].Id);
-        Assert.Equal("CS0219", warnings[2].Id);
+        Assert.Equal("CA1822", warnings[0]);
+        Assert.Equal("CS0219", warnings[1]);
+        Assert.Equal("CS0219", warnings[2]);
+        Assert.Equal("CS0219", warnings[3]);
         Assert.Empty(errors);
 
-        hidden = diagnostics[documentPath2]!.Where(d => d.Severity == DiagnosticSeverity.Hidden).ToArray();
-        warnings = diagnostics[documentPath2]!.Where(d => d.Severity == DiagnosticSeverity.Warning).ToArray();
-        errors = diagnostics[documentPath2]!.Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+        hidden = diagnostics[documentPath2]!.Where(d => d.Severity == DiagnosticSeverity.Hidden).Select(it => it.Id).OrderBy(it => it).ToArray();
+        warnings = diagnostics[documentPath2]!.Where(d => d.Severity == DiagnosticSeverity.Warning).Select(it => it.Id).OrderBy(it => it).ToArray();
+        errors = diagnostics[documentPath2]!.Where(d => d.Severity == DiagnosticSeverity.Error).Select(it => it.Id).OrderBy(it => it).ToArray();
         Assert.NotEmpty(hidden);
-        Assert.Equal("CS8019", hidden.Single().Id);
+        Assert.Equal("CS8019", hidden.Single());
         Assert.NotEmpty(warnings);
-        Assert.Equal("CS0219", warnings[0].Id);
-        Assert.Equal("CS0219", warnings[1].Id);
-        Assert.Equal("CS0219", warnings[2].Id);
+        Assert.Equal("CA1822", warnings[0]);
+        Assert.Equal("CS0219", warnings[1]);
+        Assert.Equal("CS0219", warnings[2]);
+        Assert.Equal("CS0219", warnings[3]);
         Assert.Empty(errors);
     }
 

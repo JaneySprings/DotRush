@@ -1,7 +1,7 @@
 {
   "name": "dotrush",
   "publisher": "nromanov",
-  "version": "1.0.0",
+  "version": "24.7.201",
   "description": "Lightweight C# development environment for Visual Studio Code.",
   "displayName": "DotRush",
   "author": "Nikita Romanov",
@@ -137,11 +137,6 @@
             },
             "default": [],
             "description": "%configuration.description.roslyn.projectFiles%"
-          },
-          "dotrush.roslyn.enableAnalyzers": {
-            "type": "boolean",
-            "default": false,
-            "description": "%configuration.description.roslyn.enableAnalyzers%"
           },
           "dotrush.roslyn.showItemsFromUnimportedNamespaces": {
             "type": "boolean",

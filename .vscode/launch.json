@@ -1,27 +1,26 @@
-// A launch configuration that compiles the extension and then opens it inside a new window
-// Use IntelliSense to learn about possible attributes.
-// Hover to view descriptions of existing attributes.
-// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
 {
-	"version": "0.2.0",
-	"configurations": [
-		{
-			"name": ".NET Core Attach",
-			"type": "coreclr",
-			"processName": "DotRush",
-			"request": "attach"
-		},
-		{
-			"name": "Run Extension",
-			"type": "extensionHost",
-			"request": "launch",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}"
-			],
-			"outFiles": [
-				"${workspaceFolder}/extension/**/*.js"
-			],
-			"preLaunchTask": "tsc: watch"
-		}
-	]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Extension",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}/src/DotRush.Extension.VSCode"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/src/DotRush.Extension.VSCode/extension/**/*.js"
+            ],
+            "preLaunchTask": "tsc: watch"
+        },
+        {
+            "name": ".NET Attach to LSP",
+            "type": "coreclr",
+            "request": "attach",
+            "processName": "DotRush",
+            "windows": {
+                "processName": "DotRush.exe"
+            }
+        }
+    ]
 }

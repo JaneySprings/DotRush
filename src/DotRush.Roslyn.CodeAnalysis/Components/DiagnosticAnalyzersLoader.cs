@@ -1,31 +1,41 @@
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Common;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace DotRush.Roslyn.CodeAnalysis.Diagnostics;
+namespace DotRush.Roslyn.CodeAnalysis.Components;
 
 public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
-    private readonly Dictionary<string, DiagnosticAnalyzer> diagnosticAnalyzersCache = new Dictionary<string, DiagnosticAnalyzer>();
+    public MemoryCache<DiagnosticAnalyzer> ComponentsCache { get; } = new MemoryCache<DiagnosticAnalyzer>();
 
-    public void InitializeEmbeddedComponents() {
-        var csharpEmbeddedAnalyzers = LoadFromAssembly(Assembly.Load(KnownAssemblies.CSharpFeaturesAssemblyName));
-        foreach (var analyzer in csharpEmbeddedAnalyzers)
-            diagnosticAnalyzersCache.TryAdd(analyzer.ToString(), analyzer);
+    public ImmutableArray<DiagnosticAnalyzer> GetComponents(Project? project = null) {
+        if (project == null)
+            return ImmutableArray<DiagnosticAnalyzer>.Empty;
+
+        return ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project)).ToImmutableArray();
     }
+
     public ReadOnlyCollection<DiagnosticAnalyzer> LoadFromProject(Project project) {
         var result = new List<DiagnosticAnalyzer>();
         foreach (var reference in project.AnalyzerReferences)
-            result.AddRange(reference.GetAnalyzers(project.Language));
+            foreach (var analyzer in reference.GetAnalyzers(project.Language)) {
+                result.Add(analyzer);
+                CurrentSessionLogger.Debug($"Loaded analyzer: {analyzer}");
+            }
 
         CurrentSessionLogger.Debug($"Found {result.Count} analyzers in the project '{project.Name}'");
         return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
     }
-    public ReadOnlyCollection<DiagnosticAnalyzer> LoadFromAssembly(Assembly assembly) {
+    public ReadOnlyCollection<DiagnosticAnalyzer> LoadFromAssembly(string assemblyName) {
         var result = new List<DiagnosticAnalyzer>();
+        var assembly = ReflectionExtensions.LoadAssembly(assemblyName);
+        if (assembly == null)
+            return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
+
         var analyzersInfo = assembly.DefinedTypes.Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(DiagnosticAnalyzer)));
         foreach (var analyzerInfo in analyzersInfo) {
             try {
@@ -34,21 +44,12 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
                     continue;
                 }
                 result.Add(instance);
+                CurrentSessionLogger.Debug($"Loaded analyzer: {instance}");
             } catch (Exception ex) {
                 CurrentSessionLogger.Error($"Creating instance of analyzer '{analyzerInfo.Name}' failed, error: {ex}");
             }
         }
         CurrentSessionLogger.Debug($"Loaded {result.Count} analyzers form assembly '{assembly.FullName}'");
         return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
-    }
-    public ImmutableArray<DiagnosticAnalyzer> GetComponents(Project? project = null) {
-        if (diagnosticAnalyzersCache.Count == 0)
-            InitializeEmbeddedComponents();
-
-        if (project == null)
-            return diagnosticAnalyzersCache.Values.ToImmutableArray();
-
-        var projectAnalyzers = LoadFromProject(project);
-        return projectAnalyzers.Concat(diagnosticAnalyzersCache.Values).ToImmutableArray();
     }
 }
