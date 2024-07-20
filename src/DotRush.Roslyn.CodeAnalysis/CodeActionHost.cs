@@ -1,6 +1,5 @@
-using DotRush.Roslyn.CodeAnalysis.Diagnostics;
+using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
-using DotRush.Roslyn.CodeAnalysis.Refactorings;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 

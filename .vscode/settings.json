@@ -1,8 +1,21 @@
 {
+    "dotrush.roslyn.workspaceProperties": [
+    ],
+    "dotrush.roslyn.projectFiles": [
+        "src/DotRush.Roslyn.Common/DotRush.Roslyn.Common.csproj",
+        "src/DotRush.Roslyn.Workspaces/DotRush.Roslyn.Workspaces.csproj",
+        "src/DotRush.Roslyn.CodeAnalysis/DotRush.Roslyn.CodeAnalysis.csproj",
+        "src/DotRush.Roslyn.Server/DotRush.Roslyn.Server.csproj",
+        "src/DotRush.Roslyn.Tests/DotRush.Roslyn.Tests.csproj"
+    ],
     "files.exclude": {
-        "tools": true,
+        "src/DotRush.Roslyn.*/bin": true,
+        "src/DotRush.Roslyn.*/obj": true,
+        "src/**/node_modules": true,
+        "artifacts": true,
+        "tools":true,
         ".config": true,
-        "node_modules": true,
-        "package-lock.json": true,
+        ".gitignore": true,
+        ".gitmodules": true
     }
 }

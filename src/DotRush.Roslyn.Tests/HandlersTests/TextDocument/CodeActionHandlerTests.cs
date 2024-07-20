@@ -13,7 +13,7 @@ public class CodeActionHandlerTests : TestFixtureBase, IDisposable {
     private static CodeAnalysisService CodeAnalysisService => ServiceProvider.CodeAnalysisService;
     private static IConfigurationService ConfigurationService => ServiceProvider.ConfigurationService;
 
-    private static CodeActionHandler CodeActionHandler = new CodeActionHandler(WorkspaceService, CodeAnalysisService, ConfigurationService);
+    private static CodeActionHandler CodeActionHandler = new CodeActionHandler(WorkspaceService, CodeAnalysisService);
 
     private readonly string documentPath = Path.Combine(ServiceProvider.SharedProjectDirectory, "CodeActionHandlerTest.cs");
     private DocumentUri DocumentUri => DocumentUri.FromFileSystemPath(documentPath);
@@ -29,7 +29,7 @@ class CodeActionTest {
 }
         ");
         WorkspaceService.CreateDocument(documentPath);
-        await CodeAnalysisService.CompilationHost.DiagnoseAsync(WorkspaceService.Solution!.Projects, useRoslynAnalyzers: false, CancellationToken.None).ConfigureAwait(false);
+        await CodeAnalysisService.CompilationHost.DiagnoseAsync(WorkspaceService.Solution!.Projects, CancellationToken.None).ConfigureAwait(false);
 
         var diagnostics = CodeAnalysisService.CompilationHost.GetDiagnostics(documentPath);
         Assert.NotNull(diagnostics);

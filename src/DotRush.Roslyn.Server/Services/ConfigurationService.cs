@@ -7,7 +7,6 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 namespace DotRush.Roslyn.Server.Services;
 
 public interface IConfigurationService {
-    bool UseRoslynAnalyzers { get; }
     bool ShowItemsFromUnimportedNamespaces { get; }
     bool SkipUnrecognizedProjects { get; }
     bool LoadMetadataForReferencedProjects { get; }
@@ -21,9 +20,6 @@ public class ConfigurationService : IConfigurationService {
     private readonly ILanguageServerConfiguration configuration;
     private const string ExtensionId = "dotrush";
     private const string RoslynId = "roslyn";
-
-    private bool? useRoslynAnalyzers;
-    bool IConfigurationService.UseRoslynAnalyzers => useRoslynAnalyzers ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:enableAnalyzers", false);
 
     private bool? showItemsFromUnimportedNamespaces;
     bool IConfigurationService.ShowItemsFromUnimportedNamespaces => showItemsFromUnimportedNamespaces ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:showItemsFromUnimportedNamespaces", false);

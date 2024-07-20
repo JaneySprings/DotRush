@@ -1,23 +1,32 @@
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Common;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 
-namespace DotRush.Roslyn.CodeAnalysis.Diagnostics;
+namespace DotRush.Roslyn.CodeAnalysis.Components;
 
 public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
-    private readonly Dictionary<string, CodeFixProvider> codeFixProvidersCache = new Dictionary<string, CodeFixProvider>();
+    public MemoryCache<CodeFixProvider> ComponentsCache { get; } = new MemoryCache<CodeFixProvider>();
 
-    public void InitializeEmbeddedComponents() {
-        var csharpEmbeddedProviders = LoadFromAssembly(Assembly.Load(KnownAssemblies.CSharpFeaturesAssemblyName));
-        foreach (var provider in csharpEmbeddedProviders)
-            codeFixProvidersCache.TryAdd(provider.ToString()!, provider);
+    public ImmutableArray<CodeFixProvider> GetComponents(Project? project = null) {
+        var embeddedProviders = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
+        if (project == null)
+            return embeddedProviders.ToImmutableArray();
+
+        var projectProviders = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
+        return embeddedProviders.Concat(projectProviders).ToImmutableArray();
     }
-    public ReadOnlyCollection<CodeFixProvider> LoadFromAssembly(Assembly assembly) {
+
+    public ReadOnlyCollection<CodeFixProvider> LoadFromAssembly(string assemblyName) {
         var result = new List<CodeFixProvider>();
+        var assembly = ReflectionExtensions.LoadAssembly(assemblyName);
+        if (assembly == null)
+            return new ReadOnlyCollection<CodeFixProvider>(result);
+
         var providersInfo = assembly.DefinedTypes.Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(CodeFixProvider)));
         foreach (var providerInfo in providersInfo) {
             try {
@@ -27,10 +36,11 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
                     continue;
                 }
                 if (Activator.CreateInstance(providerInfo.AsType()) is not CodeFixProvider instance) {
-                    CurrentSessionLogger.Error($"Instance of analyzer '{providerInfo.Name}' is null");
+                    CurrentSessionLogger.Error($"Instance of code fix provider '{providerInfo.Name}' is null");
                     continue;
                 }
                 result.Add(instance);
+                CurrentSessionLogger.Debug($"Loaded code fix provider: {instance}");
             } catch (Exception ex) {
                 CurrentSessionLogger.Error($"Creating instance of analyzer '{providerInfo.Name}' failed, error: {ex}");
             }
@@ -39,20 +49,8 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
         return new ReadOnlyCollection<CodeFixProvider>(result);
     }
     public ReadOnlyCollection<CodeFixProvider> LoadFromProject(Project project) {
-        var analyzerReferenceAssemblies = project.AnalyzerReferences.Select(it => it.FullPath).Where(it => File.Exists(it));
-        var result = analyzerReferenceAssemblies.SelectMany(it => LoadFromAssembly(Assembly.LoadFrom(it!))).ToArray();
-
-        CurrentSessionLogger.Debug($"Loaded {result.Length} codeFixProviders form project '{project.Name}'");
+        var analyzerReferenceAssemblies = project.AnalyzerReferences.Select(it => it.FullPath);
+        var result = analyzerReferenceAssemblies.SelectMany(it => LoadFromAssembly(it ?? string.Empty)).ToArray();
         return new ReadOnlyCollection<CodeFixProvider>(result);
-    }
-    public ImmutableArray<CodeFixProvider> GetComponents(Project? project = null) {
-        if (codeFixProvidersCache.Count == 0)
-            InitializeEmbeddedComponents();
-
-        if (project == null)
-            return codeFixProvidersCache.Values.ToImmutableArray();
-
-        var projectProviders = LoadFromProject(project);
-        return projectProviders.Concat(codeFixProvidersCache.Values).ToImmutableArray();
     }
 }

@@ -4,14 +4,12 @@ using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 
-namespace DotRush.Roslyn.CodeAnalysis.Refactorings;
+namespace DotRush.Roslyn.CodeAnalysis.Components;
 
 public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringProvider> {
-    public void InitializeEmbeddedComponents() {
-        throw new NotImplementedException();
-    }
+    public MemoryCache<CodeRefactoringProvider> ComponentsCache { get; } = new MemoryCache<CodeRefactoringProvider>();
 
-    public ReadOnlyCollection<CodeRefactoringProvider> LoadFromAssembly(Assembly assembly) {
+    public ReadOnlyCollection<CodeRefactoringProvider> LoadFromAssembly(string assemblyPath) {
         throw new NotImplementedException();
     }
     public ReadOnlyCollection<CodeRefactoringProvider> LoadFromProject(Project project) {

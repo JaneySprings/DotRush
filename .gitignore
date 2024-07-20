@@ -3,7 +3,7 @@
 /tools
 /binaries
 /artifacts
-/extension
+/src/**/extension
 
 package-lock.json
 node_modules

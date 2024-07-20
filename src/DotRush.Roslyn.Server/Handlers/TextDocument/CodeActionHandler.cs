@@ -17,14 +17,12 @@ namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 public class CodeActionHandler : CodeActionHandlerBase {
     private readonly WorkspaceService workspaceService;
     private readonly CodeAnalysisService codeAnalysisService;
-    private readonly IConfigurationService configurationService;
     private readonly Dictionary<int, CodeAnalysisCodeAction> codeActionsCache;
 
-    public CodeActionHandler(WorkspaceService workspaceService, CodeAnalysisService codeAnalysisService, IConfigurationService configurationService) {
+    public CodeActionHandler(WorkspaceService workspaceService, CodeAnalysisService codeAnalysisService) {
         codeActionsCache = new Dictionary<int, CodeAnalysisCodeAction>();
         this.workspaceService = workspaceService;
         this.codeAnalysisService = codeAnalysisService;
-        this.configurationService = configurationService;
     }
 
     protected override CodeActionRegistrationOptions CreateRegistrationOptions(CodeActionCapability capability, ClientCapabilities clientCapabilities) {
@@ -82,7 +80,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
             if (project == null)
                 continue;
 
-            var codeFixProviders = codeAnalysisService.CodeActionHost.GetCodeFixProvidersForDiagnosticId(group.Key, configurationService.UseRoslynAnalyzers ? project : null);
+            var codeFixProviders = codeAnalysisService.CodeActionHost.GetCodeFixProvidersForDiagnosticId(group.Key, project);
             if (codeFixProviders == null)
                 return result;
 
