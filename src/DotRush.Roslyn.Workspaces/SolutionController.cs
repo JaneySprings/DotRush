@@ -13,8 +13,8 @@ public abstract class SolutionController : ProjectsController {
     protected override void OnWorkspaceStateChanged(MSBuildWorkspace workspace) {
         Solution = workspace.CurrentSolution;
     }
-    protected async Task LoadSolutionAsync(MSBuildWorkspace workspace, CancellationToken cancellationToken) {
-        await LoadAsync(workspace, cancellationToken);
+    protected Task LoadSolutionAsync(MSBuildWorkspace workspace, CancellationToken cancellationToken) {
+        return LoadAsync(workspace, cancellationToken);
     }
 
     public IEnumerable<DocumentId> GetDocumentIdsWithFilePath(string filePath) {
