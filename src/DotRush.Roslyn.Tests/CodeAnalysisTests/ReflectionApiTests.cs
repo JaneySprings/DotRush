@@ -32,4 +32,15 @@ public class ReflectionApiTests : TestFixtureBase {
         Assert.Equal("roles", parameters[5].Name);
         Assert.Equal("cancellationToken", parameters[6].Name);
     }
+
+    [Fact]
+    public void GenerateTypeCodeActionIsNewFileFieldTest() {
+        var generateTypeCodeActionType = Assembly
+            .Load("Microsoft.CodeAnalysis.Features")
+            .GetType("Microsoft.CodeAnalysis.GenerateType.AbstractGenerateTypeService`6+GenerateTypeCodeAction");
+        Assert.NotNull(generateTypeCodeActionType);
+        
+        var inNewFileField = generateTypeCodeActionType.GetField("_inNewFile", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(inNewFileField);
+    }
 }
