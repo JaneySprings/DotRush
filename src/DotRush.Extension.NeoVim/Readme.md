@@ -1,0 +1,2 @@
+# DotRush for NeoVim
+
