@@ -16,7 +16,7 @@ public static class ServiceProvider {
 
         ConfigurationService = new TestConfigurationService();
         WorkspaceService = new WorkspaceService(ConfigurationService, null, null);
-        CodeAnalysisService = new CodeAnalysisService(null, WorkspaceService);
+        CodeAnalysisService = new CodeAnalysisService(null, ConfigurationService, WorkspaceService);
         SharedProjectPath = TestProjectExtensions.CreateConsoleApp("SharedProjectApp", TestProjectExtensions.MultiTargetFramework, TestProjectExtensions.TestSharedProjectsDirectory);
 
         WorkspaceService.InitializeWorkspace();

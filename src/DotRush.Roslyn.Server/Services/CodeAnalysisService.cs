@@ -12,16 +12,18 @@ using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Roslyn.Server.Services;
 
 public class CodeAnalysisService {
-    private const int AnalysisFrequencyMs = 1000;
+    private const int AnalysisFrequencyMs = 500;
 
     private readonly ILanguageServerFacade? serverFacade;
+    private readonly IConfigurationService configurationService;
     private readonly WorkspaceService workspaceService;
     private CancellationTokenSource compilationTokenSource;
 
     public CompilationHost CompilationHost { get; init; }
     public CodeActionHost CodeActionHost { get; init; }
 
-    public CodeAnalysisService(ILanguageServerFacade? serverFacade, WorkspaceService workspaceService) {
+    public CodeAnalysisService(ILanguageServerFacade? serverFacade, IConfigurationService configurationService, WorkspaceService workspaceService) {
+        this.configurationService = configurationService;
         this.workspaceService = workspaceService;
         this.serverFacade = serverFacade;
 
@@ -30,23 +32,33 @@ public class CodeAnalysisService {
         CompilationHost = new CompilationHost();
         CompilationHost.DiagnosticsChanged += OnDiagnosticsCollectionChanged;
     }
-    public bool HasDiagnosticsForFilePath(string filePath) {
-        return CompilationHost.GetDiagnostics(filePath) != null;
-    }
-    public Task PublishDiagnosticsAsync(string filePath) {
+
+    public Task PublishDiagnosticsAsync(string documentPath) {
+        ResetCancellationToken();
         if (workspaceService.Solution == null)
             return Task.CompletedTask;
 
-        ResetCancellationToken();
         var cancellationToken = compilationTokenSource.Token;
-        var projects = workspaceService.Solution
-            .GetProjectIdsWithFilePath(filePath)
-            .Select(workspaceService.Solution.GetProject);
+        var projectIdsByDocument = workspaceService.Solution.GetProjectIdsWithDocumentFilePath(documentPath);
+        var projectIdsByAdditionalDocument = workspaceService.Solution.GetProjectIdsWithAdditionalDocumentFilePath(documentPath);
+        var projectIds = projectIdsByDocument.Concat(projectIdsByAdditionalDocument).Distinct();
+        var projects = projectIds.Select(workspaceService.Solution.GetProject).Where(p => p != null);
 
+        if (projects == null || !projects.Any())
+            return Task.CompletedTask;
+        
+        if (!configurationService.UseMultitargetDiagnostics)
+            projects = projects.Take(1);
+
+        ResetClientDiagnostics(projects!);
         return SafeExtensions.InvokeAsync(async () => {
             await Task.Delay(AnalysisFrequencyMs, cancellationToken).ConfigureAwait(false);
-            await CompilationHost.DiagnoseAsync(projects, cancellationToken).ConfigureAwait(false);
+            await CompilationHost.DiagnoseAsync(projects!, cancellationToken).ConfigureAwait(false);
         });
+    }
+    public bool HasDiagnostics(string documentPath) {
+        var diagnostics = CompilationHost.GetDiagnostics(documentPath);
+        return diagnostics != null && diagnostics.Any();
     }
 
     private void OnDiagnosticsCollectionChanged(object? sender, DiagnosticsCollectionChangedEventArgs e) {
@@ -54,6 +66,15 @@ public class CodeAnalysisService {
             Diagnostics = new Container<ProtocolModels.Diagnostic>(e.Diagnostics.Select(d => d.ToServerDiagnostic())),
             Uri = DocumentUri.FromFileSystemPath(e.FilePath),
         });
+    }
+    private void ResetClientDiagnostics(IEnumerable<Project> projects) {
+        var documentPaths = projects.SelectMany(p => p.Documents).Select(d => d.FilePath).Distinct().Where(p => p != null);
+        foreach (var documentPath in documentPaths) {
+            serverFacade?.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
+                Diagnostics = new Container<ProtocolModels.Diagnostic>(),
+                Uri = DocumentUri.FromFileSystemPath(documentPath!),
+            });
+        }
     }
     private void ResetCancellationToken() {
         compilationTokenSource?.Cancel();

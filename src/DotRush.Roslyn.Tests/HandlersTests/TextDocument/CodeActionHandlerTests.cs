@@ -30,7 +30,6 @@ class CodeActionTest {
         ");
         WorkspaceService.CreateDocument(documentPath);
         await CodeAnalysisService.CompilationHost.DiagnoseAsync(WorkspaceService.Solution!.Projects, CancellationToken.None).ConfigureAwait(false);
-
         var diagnostics = CodeAnalysisService.CompilationHost.GetDiagnostics(documentPath);
         Assert.NotNull(diagnostics);
         Assert.NotEmpty(diagnostics);
@@ -79,14 +78,14 @@ class CodeActionTest {
     public async Task ApplyCodeActionInConditionsTest() {
         TestProjectExtensions.CreateDocument(documentPath, @"
 namespace Tests;
-class CodeActionTest {
+sealed class CodeActionTest {
     private static void Method() {
 #if NET8_0
         var test = 1;
 #else
         var test = 2;
 #endif
-        var test = 3;
+        var test2 = 3;
     }
 }
         ");
@@ -123,7 +122,7 @@ class CodeActionTest {
             Assert.NotNull(textDocumentEdit.Edits);
             Assert.Single(textDocumentEdit.Edits);
             var textEdit = textDocumentEdit.Edits.Single();
-            Assert.StartsWith(string.Empty, textEdit.NewText);
+            Assert.Equal(string.Empty, textEdit.NewText);
         }
     }
 

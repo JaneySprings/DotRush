@@ -7,10 +7,8 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class DidCloseTextDocumentHandler : DidCloseTextDocumentHandlerBase {
-    private readonly CodeAnalysisService codeAnalysisService;
 
-    public DidCloseTextDocumentHandler(CodeAnalysisService codeAnalysisService) {
-        this.codeAnalysisService = codeAnalysisService;
+    public DidCloseTextDocumentHandler() {
     }
 
     protected override TextDocumentCloseRegistrationOptions CreateRegistrationOptions(TextSynchronizationCapability capability, ClientCapabilities clientCapabilities) {
