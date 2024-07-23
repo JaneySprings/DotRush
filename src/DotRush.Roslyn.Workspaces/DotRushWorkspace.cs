@@ -18,9 +18,9 @@ public abstract class DotRushWorkspace : SolutionController {
         workspace.LoadMetadataForReferencedProjects = LoadMetadataForReferencedProjects;
         workspace.SkipUnrecognizedProjects = SkipUnrecognizedProjects;
     }
-    public async Task LoadSolutionAsync(CancellationToken cancellationToken) {
+    public Task LoadSolutionAsync(CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(workspace);
-        await LoadSolutionAsync(workspace, cancellationToken);
+        return LoadSolutionAsync(workspace, cancellationToken);
     }
     public void FindTargetsInWorkspace(IEnumerable<string>? workspaceFolders) {
         if (workspaceFolders == null)
