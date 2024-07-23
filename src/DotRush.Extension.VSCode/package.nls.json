@@ -17,5 +17,6 @@
 	"configuration.description.roslyn.showItemsFromUnimportedNamespaces": "Determines if items from unimported namespaces are shown in completion lists.",
 	"configuration.description.roslyn.restoreProjectsBeforeLoading": "Determines if projects are restored before they are loaded.",
 	"configuration.description.roslyn.compileProjectsAfterLoading": "Determines if projects are compiled after they are loaded.",
-	"configuration.description.roslyn.projectFiles": "Paths to project files to load."
+	"configuration.description.roslyn.projectFiles": "Paths to project files to load.",
+	"configuration.description.roslyn.useMultitargetDiagnostics": "Determines if projects from all target frameworks are diagnosed."
 }

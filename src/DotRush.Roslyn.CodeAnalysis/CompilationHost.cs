@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
+using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -10,79 +11,48 @@ namespace DotRush.Roslyn.CodeAnalysis;
 
 public class CompilationHost {
     private readonly DiagnosticAnalyzersLoader diagnosticAnalyzersLoader = new DiagnosticAnalyzersLoader();
-    private readonly Dictionary<string, HashSet<DiagnosticHolder>> workspaceDiagnostics = new Dictionary<string, HashSet<DiagnosticHolder>>();
+    private readonly Dictionary<string, IEnumerable<DiagnosticHolder>> workspaceDiagnostics = new Dictionary<string, IEnumerable<DiagnosticHolder>>();
 
     public event EventHandler<DiagnosticsCollectionChangedEventArgs>? DiagnosticsChanged;
 
     public IEnumerable<Diagnostic>? GetDiagnostics(string documentPath) {
         documentPath = FileSystemExtensions.NormalizePath(documentPath);
-        if (!workspaceDiagnostics.TryGetValue(documentPath, out HashSet<DiagnosticHolder>? container))
+        if (!workspaceDiagnostics.TryGetValue(documentPath, out IEnumerable<DiagnosticHolder>? container))
             return null;
         return container.Select(d => d.Diagnostic);
     }
     public DiagnosticHolder? GetDiagnosticById(string documentPath, int diagnosticId) {
         documentPath = FileSystemExtensions.NormalizePath(documentPath);
-        if (!workspaceDiagnostics.TryGetValue(documentPath, out HashSet<DiagnosticHolder>? container))
+        if (!workspaceDiagnostics.TryGetValue(documentPath, out IEnumerable<DiagnosticHolder>? container))
             return null;
 
         return container.FirstOrDefault(d => d.Id == diagnosticId);
     }
 
-    public async Task DiagnoseAsync(IEnumerable<Project?> projects, CancellationToken cancellationToken) {
+    public async Task DiagnoseAsync(IEnumerable<Project> projects, CancellationToken cancellationToken) {
         CurrentSessionLogger.Debug($"CompilationHost[{cancellationToken.GetHashCode()}]: Diagnostics started for {projects.Count()} projects");
-        workspaceDiagnostics.Clear(); // TODO: You cannot use code actions while diagnostics are being cleared
-        bool shouldSkipAnalyzers = false;
+
+        var allDiagnostics = new HashSet<DiagnosticHolder>();
         foreach (var project in projects) {
-            if (project == null)
+            var compilationWithAnalyzers = await CompileWithAnalyzersAsync(project, cancellationToken).ConfigureAwait(false);
+            if (compilationWithAnalyzers == null)
                 continue;
 
-            foreach (var document in project.Documents) {
-                if (document.FilePath != null)
-                    workspaceDiagnostics.TryAdd(FileSystemExtensions.NormalizePath(document.FilePath), new HashSet<DiagnosticHolder>());
-            }
-
-            var compilation = await CompileAsync(project, cancellationToken).ConfigureAwait(false);
-            if (compilation != null) {
-                var diagnostics = compilation.GetDiagnostics(cancellationToken);
-                var diagnosticsGroups = project.Documents.Where(d => d.FilePath != null).ToDictionary(
-                    d => d.FilePath!,
-                    d => diagnostics.Where(diagnostic => diagnostic.Location.SourceTree?.FilePath == d.FilePath)
-                );
-                foreach (var group in diagnosticsGroups) {
-                    var groupKey = FileSystemExtensions.NormalizePath(group.Key);
-                    foreach (var diagnostic in group.Value)
-                        workspaceDiagnostics[groupKey].Add(new DiagnosticHolder(diagnostic, project));
-                    DiagnosticsChanged?.Invoke(this, new DiagnosticsCollectionChangedEventArgs(group.Key, workspaceDiagnostics[groupKey].Select(d => d.Diagnostic)));
-                }
-            }
-
-            if (!shouldSkipAnalyzers) {
-                var compilationWithAnalyzers = await CompileWithAnalyzersAsync(project, compilation, cancellationToken).ConfigureAwait(false);
-                if (compilationWithAnalyzers != null) {
-                    var result = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
-                    var diagnostics = result.Where(d => d.Location.SourceTree?.FilePath != null);
-                    var diagnosticsGroups = project.Documents.Where(d => d.FilePath != null).ToDictionary(
-                        d => d.FilePath!,
-                        d => diagnostics.Where(diagnostic => diagnostic.Location.SourceTree?.FilePath == d.FilePath)
-                    );
-                    foreach (var group in diagnosticsGroups) {
-                        var groupKey = FileSystemExtensions.NormalizePath(group.Key);
-                        foreach (var diagnostic in group.Value)
-                            workspaceDiagnostics[groupKey].Add(new DiagnosticHolder(diagnostic, project));
-                        DiagnosticsChanged?.Invoke(this, new DiagnosticsCollectionChangedEventArgs(group.Key, workspaceDiagnostics[groupKey].Select(d => d.Diagnostic)));
-                    }
-                }
-                shouldSkipAnalyzers = true;
-            }
+            var diagnostics = await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken);
+            allDiagnostics.AddRange(diagnostics.Select(diagnostic => new DiagnosticHolder(diagnostic, project)));
         }
+
+        var diagnosticsByDocument = allDiagnostics.Where(d => !string.IsNullOrEmpty(d.FilePath)).GroupBy(d => d.FilePath);
+        foreach (var diagnostics in diagnosticsByDocument) {
+            workspaceDiagnostics[FileSystemExtensions.NormalizePath(diagnostics.Key!)] = diagnostics;
+            DiagnosticsChanged?.Invoke(this, new DiagnosticsCollectionChangedEventArgs(diagnostics.Key!, diagnostics.Select(d => d.Diagnostic)));
+        }
+
         CurrentSessionLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics finished");
     }
-    private async Task<Compilation?> CompileAsync(Project project, CancellationToken cancellationToken) {
+
+    private async Task<CompilationWithAnalyzers?> CompileWithAnalyzersAsync(Project project, CancellationToken cancellationToken) {
         var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
-        return compilation;
-    }
-    private async Task<CompilationWithAnalyzers?> CompileWithAnalyzersAsync(Project project, Compilation? compilation, CancellationToken cancellationToken) {
-        compilation ??= await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
         if (compilation == null)
             return null;
 
@@ -106,6 +76,8 @@ public sealed class DiagnosticHolder {
     public Diagnostic Diagnostic { get; init; }
     public Project Project { get; init; }
     public int Id { get; init; }
+
+    public string? FilePath => Diagnostic.Location.SourceTree?.FilePath;
 
     public DiagnosticHolder(Diagnostic diagnostic, Project project) {
         Diagnostic = diagnostic;

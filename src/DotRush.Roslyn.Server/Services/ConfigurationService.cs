@@ -12,6 +12,7 @@ public interface IConfigurationService {
     bool LoadMetadataForReferencedProjects { get; }
     bool RestoreProjectsBeforeLoading { get; }
     bool CompileProjectsAfterLoading { get; }
+    bool UseMultitargetDiagnostics { get; }
     Dictionary<string, string> WorkspaceProperties { get; }
     ReadOnlyCollection<string> ProjectFiles { get; }
 }
@@ -35,6 +36,9 @@ public class ConfigurationService : IConfigurationService {
 
     private bool? compileProjectsAfterLoading;
     bool IConfigurationService.CompileProjectsAfterLoading => compileProjectsAfterLoading ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:compileProjectsAfterLoading", true);
+
+    private bool? useMultitargetDiagnostics;
+    bool IConfigurationService.UseMultitargetDiagnostics => useMultitargetDiagnostics ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:useMultitargetDiagnostics", true);
 
     private Dictionary<string, string>? workspaceProperties;
     Dictionary<string, string> IConfigurationService.WorkspaceProperties => workspaceProperties ??= configuration.GetKeyValuePairs($"{ExtensionId}:{RoslynId}:workspaceProperties");

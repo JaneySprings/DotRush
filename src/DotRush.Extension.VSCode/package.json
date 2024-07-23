@@ -162,6 +162,11 @@
             "type": "boolean",
             "default": true,
             "description": "%configuration.description.roslyn.compileProjectsAfterLoading%"
+          },
+          "dotrush.roslyn.useMultitargetDiagnostics": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.description.roslyn.useMultitargetDiagnostics%"
           }
         }
       }

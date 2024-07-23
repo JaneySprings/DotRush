@@ -49,14 +49,14 @@ public abstract class ProjectsController {
                 var project = await workspace.OpenProjectAsync(projectFile, null, cancellationToken);
                 OnProjectLoadCompleted(projectFile);
 
+                OnWorkspaceStateChanged(workspace);
+
                 if (CompileProjectsAfterLoading) {
                     OnProjectCompilationStarted(projectFile);
                     _ = await project.GetCompilationAsync(cancellationToken);
                     OnProjectCompilationCompleted(projectFile);
                 }
             });
-
-            OnWorkspaceStateChanged(workspace);
         }
 
         await OnLoadingCompletedAsync(cancellationToken);

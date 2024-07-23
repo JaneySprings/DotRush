@@ -10,6 +10,7 @@ public class TestConfigurationService : IConfigurationService {
     public bool LoadMetadataForReferencedProjects { get; set; } = true;
     public bool RestoreProjectsBeforeLoading { get; set; } = true;
     public bool CompileProjectsAfterLoading { get; set; } = true;
+    public bool UseMultitargetDiagnostics { get; set; } = true;
     public Dictionary<string, string> WorkspaceProperties { get; set; } = new();
     public ReadOnlyCollection<string> ProjectFiles { get; set; } = new ReadOnlyCollection<string>(new List<string>());
 }

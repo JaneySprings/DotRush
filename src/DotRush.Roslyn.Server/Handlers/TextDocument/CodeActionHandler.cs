@@ -77,21 +77,30 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
         foreach (var group in diagnosticHolderGroups) {
             var project = group.FirstOrDefault()?.Project;
-            if (project == null)
+            if (project == null) {
+                CurrentSessionLogger.Debug($"Project not found for diagnostic id '{group.Key}'");
                 continue;
+            }
 
             var codeFixProviders = codeAnalysisService.CodeActionHost.GetCodeFixProvidersForDiagnosticId(group.Key, project);
-            if (codeFixProviders == null)
+            if (codeFixProviders == null) {
+                CurrentSessionLogger.Debug($"CodeFixProviders not found for diagnostic id '{group.Key}'");
                 return result;
+            }
 
             var document = project.Documents.FirstOrDefault(it => FileSystemExtensions.PathEquals(it.FilePath, filePath));
-            if (document == null)
+            if (document == null) {
+                CurrentSessionLogger.Debug($"Document not found for file path '{filePath}'");
                 return result;
+            }
 
             foreach (var codeFixProvider in codeFixProviders) {
                 var textSpan = group.Select(it => it!.Diagnostic.Location.SourceSpan).ToMergedTextSpan();
                 var diagnostics = group.Select(it => it!.Diagnostic).ToImmutableArray();
                 await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, textSpan, diagnostics, (action, _) => {
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
+
                     var singleCodeActions = action.ToSingleCodeActions().Where(x => !x.IsBlacklisted());
                     foreach (var singleCodeAction in singleCodeActions) {
                         if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
