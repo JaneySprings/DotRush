@@ -37,8 +37,6 @@ stages:
             includePreviewVersions: true
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
-        - script: npm install --prefix src/DotRush.Extension.VSCode
-          displayName: 'Restore Node.js modules'
         - script: npm install -g vsce webpack webpack-cli
           displayName: 'Install Node tools'
 
@@ -71,8 +69,6 @@ stages:
             includePreviewVersions: true
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
-        - script: npm install --prefix src/DotRush.Extension.VSCode
-          displayName: 'Restore Node.js modules'
         - script: npm install -g vsce webpack webpack-cli
           displayName: 'Install Node tools'
 
@@ -105,8 +101,6 @@ stages:
             includePreviewVersions: true
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
-        - script: npm install --prefix src\DotRush.Extension.VSCode
-          displayName: 'Restore Node.js modules'
         - script: npm install -g vsce webpack webpack-cli
           displayName: 'Install Node tools'
 

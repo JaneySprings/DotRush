@@ -69,6 +69,7 @@ Task("vsix")
 		CopyFile(_Path.Combine(RootDirectory, "README.md"), _Path.Combine(DotRushExtensionVSCodePath, "README.md"));
 		CopyFile(_Path.Combine(RootDirectory, "LICENSE"), _Path.Combine(DotRushExtensionVSCodePath, "LICENSE"));
 		CopyDirectory(_Path.Combine(RootDirectory, "assets"), _Path.Combine(DotRushExtensionVSCodePath, "assets"));
+		ExecuteCommand("npm", "install", DotRushExtensionVSCodePath);
 		ExecuteCommand("vsce", $"package --target {runtime} --out {output} {version}", DotRushExtensionVSCodePath);
 	});
 
