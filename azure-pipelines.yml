@@ -190,28 +190,28 @@ stages:
             failTaskOnFailedTests: true
             failTaskOnMissingResultsFile: true
 #//////////////////////////////////////////////////////////////////////
-#// Linux Tests ; Wait for stabilization
+#// Linux Tests
 #//////////////////////////////////////////////////////////////////////
-      # - job: Linux
-      #   pool:
-      #     vmImage: ubuntu-latest
-      #   timeoutInMinutes: 10
-      #   steps:
-      #   - task: UseDotNet@2
-      #     inputs:
-      #       version: '9.x'
-      #       includePreviewVersions: true
-      #   - script: dotnet tool restore
-      #     displayName: 'Restore .NET tools'
-      #   - script: dotnet cake --target=test --configuration=release
-      #     displayName: 'Run tests'
-      #     continueOnError: true
-      #   - task: PublishTestResults@2
-      #     inputs:
-      #       testResultsFormat: 'VSTest'
-      #       testResultsFiles: 'artifacts/*.trx'
-      #       failTaskOnFailedTests: true
-      #       failTaskOnMissingResultsFile: true
+      - job: Linux
+        pool:
+          vmImage: ubuntu-latest
+        timeoutInMinutes: 10
+        steps:
+        - task: UseDotNet@2
+          inputs:
+            version: '9.x'
+            includePreviewVersions: true
+        - script: dotnet tool restore
+          displayName: 'Restore .NET tools'
+        - script: dotnet cake --target=test --configuration=release
+          displayName: 'Run tests'
+          continueOnError: true
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFormat: 'VSTest'
+            testResultsFiles: 'artifacts/*.trx'
+            failTaskOnFailedTests: true
+            failTaskOnMissingResultsFile: true
 #//////////////////////////////////////////////////////////////////////
 #// Windows Tests
 #//////////////////////////////////////////////////////////////////////
