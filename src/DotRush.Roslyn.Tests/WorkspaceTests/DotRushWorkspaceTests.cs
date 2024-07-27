@@ -241,17 +241,12 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
         var documentPath = TestProjectExtensions.CreateDocument(Path.Combine(projectDirectory, "obj", "Class2.cs"), "class Class2 {}");
         workspace.CreateDocument(documentPath);
         var documentIds = workspace.GetDocumentIdsWithFilePath(documentPath);
-        Assert.Equal(2, documentIds.Count());
+        Assert.Empty(documentIds);
 
-        workspace.UpdateDocument(documentPath, "class Class2 { void Method() {}}");
-        foreach (var documentId in documentIds) {
-            var document = workspace.Solution!.GetDocument(documentId);
-            Assert.Equal(documentPath, document!.FilePath);
-            Assert.Single(document!.Folders);
-            Assert.Equal("obj", document.Folders[0]);
-            var documentContent = await document.GetTextAsync().ConfigureAwait(false);
-            Assert.Equal("class Class2 { void Method() {}}", documentContent.ToString());
-        }
+        documentPath = TestProjectExtensions.CreateDocument(Path.Combine(projectDirectory, "bin", "Class3.cs"), "class Class3 {}");
+        workspace.CreateDocument(documentPath);
+        documentIds = workspace.GetDocumentIdsWithFilePath(documentPath);
+        Assert.Empty(documentIds);
     }
     [Fact]
     public async Task CreateDocumentFullCycleTest() {
