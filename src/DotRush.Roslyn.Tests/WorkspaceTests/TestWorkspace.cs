@@ -1,5 +1,6 @@
 using DotRush.Roslyn.Common.External;
 using DotRush.Roslyn.Workspaces;
+using Microsoft.CodeAnalysis;
 using Xunit;
 
 namespace DotRush.Roslyn.Tests.WorkspaceTests;
@@ -30,5 +31,9 @@ public class TestWorkspace : DotRushWorkspace {
 
     public override void OnProjectRestoreFailed(string documentPath, ProcessResult result) {
         Assert.Fail($"[{documentPath}]: Project restore failed with exit code {result.ExitCode}");
+    }
+
+    public void SetSolution(Solution solution) {
+        Solution = solution;
     }
 }

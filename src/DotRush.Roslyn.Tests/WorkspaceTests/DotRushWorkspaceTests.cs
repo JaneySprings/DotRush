@@ -230,7 +230,6 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
         foreach (var folderFile in folderFiles)
             Assert.Empty(workspace.GetAdditionalDocumentIdsWithFilePath(folderFile));
     }
-
     [Fact]
     public async Task SolutionChangesInIntermidiatePathTest() {
         var projectPath = TestProjectExtensions.CreateClassLib("MyClassLib", TestProjectExtensions.MultiTargetFramework);
@@ -278,6 +277,47 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
 
         workspace.CreateDocument(singleProjectSourceCodeDocumentPath);
         Assert.Single(workspace.GetDocumentIdsWithFilePath(singleProjectSourceCodeDocumentPath));
+    }
+    [Fact]
+    public async Task CreateFileOnlyForOneTargetTest() {
+        var projectPath = TestProjectExtensions.CreateClassLib("MyClassLib", TestProjectExtensions.MultiTargetFramework);
+        var targetFrameworks = TestProjectExtensions.MultiTargetFramework.Split(';');
+        var firstTargetFile = TestProjectExtensions.CreateDocument(Path.Combine(Path.GetDirectoryName(projectPath)!, "Targets", targetFrameworks[0], "Class2.cs"), "class Class2 {}");
+        var workspace = new TestWorkspace([projectPath]);
+        await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
+
+        workspace.SetSolution(workspace.Solution!.RemoveDocument(workspace.Solution.Projects
+            .Single(it => it.Name.Contains(targetFrameworks[1])).Documents
+            .Single(it => it.FilePath == firstTargetFile).Id
+        ));
+        Assert.NotNull(workspace.Solution);
+        Assert.Equal(2, workspace.Solution.ProjectIds.Count);
+        var firstProject = workspace.Solution.Projects.Single(it => it.Name.Contains(targetFrameworks[0]));
+        var secondProject = workspace.Solution.Projects.Single(it => it.Name.Contains(targetFrameworks[1]));
+        Assert.NotEqual(firstProject, secondProject);
+        Assert.Contains(firstTargetFile, firstProject.Documents.Select(it => it.FilePath));
+        Assert.DoesNotContain(firstTargetFile, secondProject.Documents.Select(it => it.FilePath));
+
+        var firstTargetFile2 = TestProjectExtensions.CreateDocument(Path.Combine(Path.GetDirectoryName(projectPath)!, "Targets", targetFrameworks[0], "Class3.cs"), "class Class3 {}");
+        workspace.CreateDocument(firstTargetFile2);
+        firstProject = workspace.Solution.Projects.Single(it => it.Name.Contains(targetFrameworks[0]));
+        secondProject = workspace.Solution.Projects.Single(it => it.Name.Contains(targetFrameworks[1]));
+        Assert.Contains(firstTargetFile2, firstProject.Documents.Select(it => it.FilePath));
+        Assert.DoesNotContain(firstTargetFile2, secondProject.Documents.Select(it => it.FilePath));
+
+        var firstTargetFile3 = TestProjectExtensions.CreateDocument(Path.Combine(Path.GetDirectoryName(projectPath)!, "Targets", "Class4.cs"), "class Class4 {}");
+        workspace.CreateDocument(firstTargetFile3);
+        firstProject = workspace.Solution.Projects.Single(it => it.Name.Contains(targetFrameworks[0]));
+        secondProject = workspace.Solution.Projects.Single(it => it.Name.Contains(targetFrameworks[1]));
+        Assert.Contains(firstTargetFile3, firstProject.Documents.Select(it => it.FilePath));
+        Assert.DoesNotContain(firstTargetFile3, secondProject.Documents.Select(it => it.FilePath));
+
+        var commonFile = TestProjectExtensions.CreateDocument(Path.Combine(Path.GetDirectoryName(projectPath)!, "Class5.cs"), "class Class5 {}");
+        workspace.CreateDocument(commonFile);
+        firstProject = workspace.Solution.Projects.Single(it => it.Name.Contains(targetFrameworks[0]));
+        secondProject = workspace.Solution.Projects.Single(it => it.Name.Contains(targetFrameworks[1]));
+        Assert.Contains(commonFile, firstProject.Documents.Select(it => it.FilePath));
+        Assert.Contains(commonFile, secondProject.Documents.Select(it => it.FilePath));
     }
 
     public void Dispose() {

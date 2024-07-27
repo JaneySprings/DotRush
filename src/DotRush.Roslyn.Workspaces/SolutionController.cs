@@ -8,7 +8,7 @@ using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensio
 namespace DotRush.Roslyn.Workspaces;
 
 public abstract class SolutionController : ProjectsController {
-    public Solution? Solution { get; private set; }
+    public Solution? Solution { get; protected set; }
 
     protected override void OnWorkspaceStateChanged(MSBuildWorkspace workspace) {
         Solution = workspace.CurrentSolution;
