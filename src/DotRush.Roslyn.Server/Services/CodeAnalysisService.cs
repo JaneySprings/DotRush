@@ -60,6 +60,12 @@ public class CodeAnalysisService {
         var diagnostics = CompilationHost.GetDiagnostics(documentPath);
         return diagnostics != null && diagnostics.Any();
     }
+    public void ResetClientDiagnostics(string documentPath) {
+        serverFacade?.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
+            Diagnostics = new Container<ProtocolModels.Diagnostic>(),
+            Uri = DocumentUri.FromFileSystemPath(documentPath),
+        });
+    }
 
     private void OnDiagnosticsCollectionChanged(object? sender, DiagnosticsCollectionChangedEventArgs e) {
         serverFacade?.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
@@ -69,12 +75,8 @@ public class CodeAnalysisService {
     }
     private void ResetClientDiagnostics(IEnumerable<Project> projects) {
         var documentPaths = projects.SelectMany(p => p.Documents).Select(d => d.FilePath).Distinct().Where(p => p != null);
-        foreach (var documentPath in documentPaths) {
-            serverFacade?.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
-                Diagnostics = new Container<ProtocolModels.Diagnostic>(),
-                Uri = DocumentUri.FromFileSystemPath(documentPath!),
-            });
-        }
+        foreach (var documentPath in documentPaths)
+            ResetClientDiagnostics(documentPath!);
     }
     private void ResetCancellationToken() {
         compilationTokenSource?.Cancel();

@@ -9,9 +9,11 @@ namespace DotRush.Roslyn.Server.Handlers.Workspace;
 
 public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     private readonly WorkspaceService workspaceService;
+    private readonly CodeAnalysisService codeAnalysisService;
 
-    public DidChangeWatchedFilesHandler(WorkspaceService workspaceService) {
+    public DidChangeWatchedFilesHandler(WorkspaceService workspaceService, CodeAnalysisService codeAnalysisService) {
         this.workspaceService = workspaceService;
+        this.codeAnalysisService = codeAnalysisService;
     }
 
     protected override DidChangeWatchedFilesRegistrationOptions CreateRegistrationOptions(DidChangeWatchedFilesCapability capability, ClientCapabilities clientCapabilities) {
@@ -46,6 +48,7 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         if (changeType == FileChangeType.Deleted) {
             workspaceService.DeleteDocument(path);
             workspaceService.DeleteFolder(path);
+            codeAnalysisService.ResetClientDiagnostics(path);
             return;
         }
 
