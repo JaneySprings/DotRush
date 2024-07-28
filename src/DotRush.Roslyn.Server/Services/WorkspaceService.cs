@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using DotRush.Roslyn.Common.External;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces;
@@ -10,18 +11,18 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 namespace DotRush.Roslyn.Server.Services;
 
 public class WorkspaceService : DotRushWorkspace {
-    private readonly IConfigurationService configurationService;
+    private readonly ConfigurationService configurationService;
     private readonly ILanguageServerFacade? serverFacade;
     private readonly IServerWorkDoneManager? workDoneManager;
     private IWorkDoneObserver? workDoneObserver;
 
-    protected override Dictionary<string, string> WorkspaceProperties => configurationService.WorkspaceProperties;
+    protected override ReadOnlyDictionary<string, string> WorkspaceProperties => configurationService.WorkspaceProperties;
     protected override bool LoadMetadataForReferencedProjects => configurationService.LoadMetadataForReferencedProjects;
     protected override bool SkipUnrecognizedProjects => configurationService.SkipUnrecognizedProjects;
     protected override bool RestoreProjectsBeforeLoading => configurationService.RestoreProjectsBeforeLoading;
     protected override bool CompileProjectsAfterLoading => configurationService.CompileProjectsAfterLoading;
 
-    public WorkspaceService(IConfigurationService configurationService, ILanguageServerFacade? serverFacade, IServerWorkDoneManager? workDoneManager) {
+    public WorkspaceService(ConfigurationService configurationService, ILanguageServerFacade? serverFacade, IServerWorkDoneManager? workDoneManager) {
         this.configurationService = configurationService;
         this.workDoneManager = workDoneManager;
         this.serverFacade = serverFacade;

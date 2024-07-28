@@ -13,6 +13,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<InternalsVisibleTo Include="DotRush.Roslyn.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
 		<PackageReference Include="ICSharpCode.Decompiler" Version="$(DecompilerVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" /> <!-- Required for Roslyn 4.10+ -->

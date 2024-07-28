@@ -6,48 +6,56 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 
 namespace DotRush.Roslyn.Server.Services;
 
-public interface IConfigurationService {
-    bool ShowItemsFromUnimportedNamespaces { get; }
-    bool SkipUnrecognizedProjects { get; }
-    bool LoadMetadataForReferencedProjects { get; }
-    bool RestoreProjectsBeforeLoading { get; }
-    bool CompileProjectsAfterLoading { get; }
-    bool UseMultitargetDiagnostics { get; }
-    Dictionary<string, string> WorkspaceProperties { get; }
-    ReadOnlyCollection<string> ProjectFiles { get; }
-}
-
-public class ConfigurationService : IConfigurationService {
-    private readonly ILanguageServerConfiguration configuration;
+public class ConfigurationService {
+    private readonly ILanguageServerConfiguration? configuration;
     private const string ExtensionId = "dotrush";
     private const string RoslynId = "roslyn";
 
     private bool? showItemsFromUnimportedNamespaces;
-    bool IConfigurationService.ShowItemsFromUnimportedNamespaces => showItemsFromUnimportedNamespaces ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:showItemsFromUnimportedNamespaces", false);
+    public bool ShowItemsFromUnimportedNamespaces => showItemsFromUnimportedNamespaces ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:showItemsFromUnimportedNamespaces", false);
 
     private bool? skipUnrecognizedProjects;
-    bool IConfigurationService.SkipUnrecognizedProjects => skipUnrecognizedProjects ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:skipUnrecognizedProjects", true);
+    public bool SkipUnrecognizedProjects => skipUnrecognizedProjects ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:skipUnrecognizedProjects", true);
 
     private bool? loadMetadataForReferencedProjects;
-    bool IConfigurationService.LoadMetadataForReferencedProjects => loadMetadataForReferencedProjects ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:loadMetadataForReferencedProjects", false);
+    public bool LoadMetadataForReferencedProjects => loadMetadataForReferencedProjects ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:loadMetadataForReferencedProjects", false);
 
     private bool? restoreProjectsBeforeLoading;
-    bool IConfigurationService.RestoreProjectsBeforeLoading => restoreProjectsBeforeLoading ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:restoreProjectsBeforeLoading", true);
+    public bool RestoreProjectsBeforeLoading => restoreProjectsBeforeLoading ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:restoreProjectsBeforeLoading", true);
 
     private bool? compileProjectsAfterLoading;
-    bool IConfigurationService.CompileProjectsAfterLoading => compileProjectsAfterLoading ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:compileProjectsAfterLoading", true);
+    public bool CompileProjectsAfterLoading => compileProjectsAfterLoading ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:compileProjectsAfterLoading", true);
 
     private bool? useMultitargetDiagnostics;
-    bool IConfigurationService.UseMultitargetDiagnostics => useMultitargetDiagnostics ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:useMultitargetDiagnostics", true);
+    public bool UseMultitargetDiagnostics => useMultitargetDiagnostics ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:useMultitargetDiagnostics", true);
 
-    private Dictionary<string, string>? workspaceProperties;
-    Dictionary<string, string> IConfigurationService.WorkspaceProperties => workspaceProperties ??= configuration.GetKeyValuePairs($"{ExtensionId}:{RoslynId}:workspaceProperties");
+    private ReadOnlyDictionary<string, string>? workspaceProperties;
+    public ReadOnlyDictionary<string, string> WorkspaceProperties => workspaceProperties ??= ServerExtensions.GetKeyValuePairs(configuration, $"{ExtensionId}:{RoslynId}:workspaceProperties");
 
     private ReadOnlyCollection<string>? projectFiles;
-    public ReadOnlyCollection<string> ProjectFiles => projectFiles ??= configuration.GetArray($"{ExtensionId}:{RoslynId}:projectFiles");
+    public ReadOnlyCollection<string> ProjectFiles => projectFiles ??= ServerExtensions.GetArray(configuration, $"{ExtensionId}:{RoslynId}:projectFiles");
 
     public ConfigurationService(ILanguageServerConfiguration configuration) {
         this.configuration = configuration;
+    }
+    internal ConfigurationService(
+        bool showItemsFromUnimportedNamespaces,
+        bool skipUnrecognizedProjects,
+        bool loadMetadataForReferencedProjects,
+        bool restoreProjectsBeforeLoading,
+        bool compileProjectsAfterLoading,
+        bool useMultitargetDiagnostics,
+        ReadOnlyDictionary<string, string> workspaceProperties,
+        ReadOnlyCollection<string> projectFiles
+    ) {
+        this.showItemsFromUnimportedNamespaces = showItemsFromUnimportedNamespaces;
+        this.skipUnrecognizedProjects = skipUnrecognizedProjects;
+        this.loadMetadataForReferencedProjects = loadMetadataForReferencedProjects;
+        this.restoreProjectsBeforeLoading = restoreProjectsBeforeLoading;
+        this.compileProjectsAfterLoading = compileProjectsAfterLoading;
+        this.useMultitargetDiagnostics = useMultitargetDiagnostics;
+        this.workspaceProperties = workspaceProperties;
+        this.projectFiles = projectFiles;
     }
 
     public async Task InitializeAsync() {

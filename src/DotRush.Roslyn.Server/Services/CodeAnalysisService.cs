@@ -15,14 +15,14 @@ public class CodeAnalysisService {
     private const int AnalysisFrequencyMs = 500;
 
     private readonly ILanguageServerFacade? serverFacade;
-    private readonly IConfigurationService configurationService;
+    private readonly ConfigurationService configurationService;
     private readonly WorkspaceService workspaceService;
     private CancellationTokenSource compilationTokenSource;
 
     public CompilationHost CompilationHost { get; init; }
     public CodeActionHost CodeActionHost { get; init; }
 
-    public CodeAnalysisService(ILanguageServerFacade? serverFacade, IConfigurationService configurationService, WorkspaceService workspaceService) {
+    public CodeAnalysisService(ILanguageServerFacade? serverFacade, ConfigurationService configurationService, WorkspaceService workspaceService) {
         this.configurationService = configurationService;
         this.workspaceService = workspaceService;
         this.serverFacade = serverFacade;
