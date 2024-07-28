@@ -11,7 +11,7 @@ namespace DotRush.Roslyn.Tests.HandlersTests.TextDocument;
 public class CodeActionHandlerTests : TestFixtureBase, IDisposable {
     private static WorkspaceService WorkspaceService => ServiceProvider.WorkspaceService;
     private static CodeAnalysisService CodeAnalysisService => ServiceProvider.CodeAnalysisService;
-    private static IConfigurationService ConfigurationService => ServiceProvider.ConfigurationService;
+    private static ConfigurationService ConfigurationService => ServiceProvider.ConfigurationService;
 
     private static CodeActionHandler CodeActionHandler = new CodeActionHandler(WorkspaceService, CodeAnalysisService);
 

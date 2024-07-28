@@ -23,8 +23,11 @@ public static class ServerExtensions {
         });
     }
 
-    public static ReadOnlyCollection<string> GetArray(this ILanguageServerConfiguration configuration, string key) {
+    public static ReadOnlyCollection<string> GetArray(ILanguageServerConfiguration? configuration, string key) {
         var result = new List<string>();
+        if (configuration == null)
+            return result.AsReadOnly();
+
         for (byte i = 0; i < byte.MaxValue; i++) {
             var option = configuration?.GetValue<string>($"{key}:{i}");
             if (option == null)
@@ -36,10 +39,12 @@ public static class ServerExtensions {
         return result.AsReadOnly();
     }
 
-    public static Dictionary<string, string> GetKeyValuePairs(this ILanguageServerConfiguration configuration, string key) {
-        var values = configuration.GetArray(key);
+    public static ReadOnlyDictionary<string, string> GetKeyValuePairs(ILanguageServerConfiguration? configuration, string key) {
         var result = new Dictionary<string, string>();
+        if (configuration == null)
+            return new ReadOnlyDictionary<string, string>(result);
 
+        var values = GetArray(configuration, key);
         foreach (var value in values) {
             var keyValue = value.Split('=');
             if (keyValue.Length != 2)
@@ -47,6 +52,6 @@ public static class ServerExtensions {
             result[keyValue[0]] = keyValue[1];
         }
 
-        return result;
+        return new ReadOnlyDictionary<string, string>(result);
     }
 }

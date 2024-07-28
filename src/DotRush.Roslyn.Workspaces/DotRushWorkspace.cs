@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.Build.Locator;
@@ -8,7 +9,7 @@ namespace DotRush.Roslyn.Workspaces;
 public abstract class DotRushWorkspace : SolutionController {
     private MSBuildWorkspace? workspace;
 
-    protected abstract Dictionary<string, string> WorkspaceProperties { get; }
+    protected abstract ReadOnlyDictionary<string, string> WorkspaceProperties { get; }
     protected abstract bool LoadMetadataForReferencedProjects { get; }
     protected abstract bool SkipUnrecognizedProjects { get; }
 

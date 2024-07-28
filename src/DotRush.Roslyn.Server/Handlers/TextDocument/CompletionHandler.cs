@@ -16,13 +16,13 @@ namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class CompletionHandler : CompletionHandlerBase {
     private readonly WorkspaceService solutionService;
-    private readonly IConfigurationService configurationService;
+    private readonly ConfigurationService configurationService;
     private IEnumerable<RoslynCompletionItem>? codeAnalysisCompletionItems;
     private RoslynCompletionService? roslynCompletionService;
     private Document? targetDocument;
     private readonly object? completionOptions;
 
-    public CompletionHandler(WorkspaceService solutionService, IConfigurationService configurationService) {
+    public CompletionHandler(WorkspaceService solutionService, ConfigurationService configurationService) {
         this.solutionService = solutionService;
         this.configurationService = configurationService;
         completionOptions = CompletionServiceExtensions.GetCompletionOptions();
