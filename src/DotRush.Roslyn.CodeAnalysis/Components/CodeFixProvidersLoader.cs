@@ -23,11 +23,11 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
 
     public ReadOnlyCollection<CodeFixProvider> LoadFromAssembly(string assemblyName) {
         var result = new List<CodeFixProvider>();
-        var assembly = ReflectionExtensions.LoadAssembly(assemblyName);
-        if (assembly == null)
+        var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);
+        if (assemblyTypes == null)
             return new ReadOnlyCollection<CodeFixProvider>(result);
 
-        var providersInfo = assembly.DefinedTypes.Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(CodeFixProvider)));
+        var providersInfo = assemblyTypes.Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(CodeFixProvider)));
         foreach (var providerInfo in providersInfo) {
             try {
                 var attribute = providerInfo.GetCustomAttribute<ExportCodeFixProviderAttribute>();
@@ -45,7 +45,7 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
                 CurrentSessionLogger.Error($"Creating instance of analyzer '{providerInfo.Name}' failed, error: {ex}");
             }
         }
-        CurrentSessionLogger.Debug($"Loaded {result.Count} codeFixProviders form assembly '{assembly.FullName}'");
+        CurrentSessionLogger.Debug($"Loaded {result.Count} codeFixProviders form assembly '{assemblyName}'");
         return new ReadOnlyCollection<CodeFixProvider>(result);
     }
     public ReadOnlyCollection<CodeFixProvider> LoadFromProject(Project project) {
