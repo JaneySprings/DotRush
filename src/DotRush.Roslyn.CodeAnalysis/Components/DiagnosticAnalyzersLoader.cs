@@ -32,11 +32,11 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
     }
     public ReadOnlyCollection<DiagnosticAnalyzer> LoadFromAssembly(string assemblyName) {
         var result = new List<DiagnosticAnalyzer>();
-        var assembly = ReflectionExtensions.LoadAssembly(assemblyName);
-        if (assembly == null)
+        var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);
+        if (assemblyTypes == null)
             return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
 
-        var analyzersInfo = assembly.DefinedTypes.Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(DiagnosticAnalyzer)));
+        var analyzersInfo = assemblyTypes.Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(DiagnosticAnalyzer)));
         foreach (var analyzerInfo in analyzersInfo) {
             try {
                 if (Activator.CreateInstance(analyzerInfo.AsType()) is not DiagnosticAnalyzer instance) {
@@ -49,7 +49,7 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
                 CurrentSessionLogger.Error($"Creating instance of analyzer '{analyzerInfo.Name}' failed, error: {ex}");
             }
         }
-        CurrentSessionLogger.Debug($"Loaded {result.Count} analyzers form assembly '{assembly.FullName}'");
+        CurrentSessionLogger.Debug($"Loaded {result.Count} analyzers form assembly '{assemblyName}'");
         return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
     }
 }
