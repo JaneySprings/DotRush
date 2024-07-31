@@ -13,7 +13,7 @@ using SymbolKind = Microsoft.CodeAnalysis.SymbolKind;
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class HoverHandler : HoverHandlerBase {
-    private readonly WorkspaceService solutionService;
+    private readonly NavigationService navigationService;
     public static readonly SymbolDisplayFormat DefaultFormat = SymbolDisplayFormat.FullyQualifiedFormat
         .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)
         .WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.None)
@@ -28,8 +28,8 @@ public class HoverHandler : HoverHandlerBase {
         );
 
 
-    public HoverHandler(WorkspaceService solutionService) {
-        this.solutionService = solutionService;
+    public HoverHandler(NavigationService navigationService) {
+        this.navigationService = navigationService;
     }
 
     protected override HoverRegistrationOptions CreateRegistrationOptions(HoverCapability capability, ClientCapabilities clientCapabilities) {
@@ -40,13 +40,13 @@ public class HoverHandler : HoverHandlerBase {
 
     public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
-            var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
             if (documentIds == null)
                 return null;
 
             var displayStrings = new Dictionary<string, List<string>>();
             foreach (var documentId in documentIds) {
-                var document = solutionService.Solution?.GetDocument(documentId);
+                var document = navigationService.Solution?.GetDocument(documentId);
                 if (document == null)
                     continue;
 

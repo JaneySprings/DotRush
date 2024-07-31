@@ -34,42 +34,43 @@ public class DecompilationService {
     }
 
     public async Task<IEnumerable<ProtocolModels.Location>?> DecompileAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
-        var locations = new List<ProtocolModels.Location>();
-        var namedType = symbol.GetNamedTypeSymbol();
-        var fullName = namedType.GetFullReflectionName();
-        if (string.IsNullOrEmpty(fullName))
-            return null;
+        // var locations = new List<ProtocolModels.Location>();
+        // var namedType = symbol.GetNamedTypeSymbol();
+        // var fullName = namedType.GetFullReflectionName();
 
-        var documentPath = GetDecompiledDocumentPath(fullName);
-        if (!File.Exists(documentPath)) {
-            var compilation = await project.GetCompilationAsync(cancellationToken);
-            var metadataReference = compilation?.GetMetadataReference(symbol.ContainingAssembly);
-            if (!DecompileDocument(fullName, documentPath, metadataReference, symbol.ContainingAssembly))
-                return null;
-        }
+        // if (string.IsNullOrEmpty(fullName))
+        //     return null;
 
-        var symbolFinder = new PlainTextSymbolFinder(symbol);
-        var sourceText = SourceText.From(File.ReadAllText(documentPath));
-        var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, cancellationToken: cancellationToken);
-        var root = await syntaxTree.GetRootAsync(cancellationToken);
+        // var documentPath = GetDecompiledDocumentPath(fullName);
+        // if (!File.Exists(documentPath)) {
+        //     var compilation = await project.GetCompilationAsync(cancellationToken);
+        //     var metadataReference = compilation?.GetMetadataReference(symbol.ContainingAssembly);
+        //     if (!DecompileDocument(fullName, documentPath, metadataReference, symbol.ContainingAssembly))
+        //         return null;
+        // }
 
-        symbolFinder.Visit(root);
-        locations.AddRange(symbolFinder.Locations.Select(loc => new ProtocolModels.Location() {
-            Uri = DocumentUri.FromFileSystemPath(documentPath),
-            Range = loc.ToRange(sourceText),
-        }));
+        // var symbolFinder = new PlainTextSymbolFinder(symbol);
+        // var sourceText = SourceText.From(File.ReadAllText(documentPath));
+        // var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, cancellationToken: cancellationToken);
+        // var root = await syntaxTree.GetRootAsync(cancellationToken);
 
-        if (locations.Count == 0) {
-            locations.Add(new ProtocolModels.Location() {
-                Uri = DocumentUri.FromFileSystemPath(documentPath),
-                Range = new ProtocolModels.Range() {
-                    Start = new ProtocolModels.Position(0, 0),
-                    End = new ProtocolModels.Position(0, 0),
-                },
-            });
-        }
+        // symbolFinder.Visit(root);
+        // locations.AddRange(symbolFinder.Locations.Select(loc => new ProtocolModels.Location() {
+        //     Uri = DocumentUri.FromFileSystemPath(documentPath),
+        //     Range = loc.ToRange(sourceText),
+        // }));
 
-        return locations;
+        // if (locations.Count == 0) {
+        //     locations.Add(new ProtocolModels.Location() {
+        //         Uri = DocumentUri.FromFileSystemPath(documentPath),
+        //         Range = new ProtocolModels.Range() {
+        //             Start = new ProtocolModels.Position(0, 0),
+        //             End = new ProtocolModels.Position(0, 0),
+        //         },
+        //     });
+        // }
+
+        return null;
     }
 
     private static bool DecompileDocument(string fullName, string documentPath, MetadataReference? metadataReference, IAssemblySymbol? assemblySymbol) {
