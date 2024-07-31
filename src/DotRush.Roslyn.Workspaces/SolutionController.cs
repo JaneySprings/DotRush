@@ -9,9 +9,11 @@ namespace DotRush.Roslyn.Workspaces;
 
 public abstract class SolutionController : ProjectsController {
     public Solution? Solution { get; protected set; }
+    public event EventHandler? WorkspaceStateChanged;
 
     protected override void OnWorkspaceStateChanged(MSBuildWorkspace workspace) {
         Solution = workspace.CurrentSolution;
+        WorkspaceStateChanged?.Invoke(this, EventArgs.Empty);
     }
     protected Task LoadSolutionAsync(MSBuildWorkspace workspace, CancellationToken cancellationToken) {
         return LoadAsync(workspace, cancellationToken);

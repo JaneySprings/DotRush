@@ -46,6 +46,15 @@ public static class PositionExtensions {
             Range = location.SourceSpan.ToRange(location.SourceTree.GetText())
         };
     }
+    public static ProtocolModels.Location? ToLocation(this Location location, string filePath) {
+        if (location.SourceTree == null)
+            return null;
+
+        return new ProtocolModels.Location() {
+            Uri = DocumentUri.FromFileSystemPath(filePath),
+            Range = location.SourceSpan.ToRange(location.SourceTree.GetText())
+        };
+    }
 
     public static ProtocolModels.Location? ToLocation(this ReferenceLocation location, SourceText sourceText) {
         if (location.Document.FilePath == null)

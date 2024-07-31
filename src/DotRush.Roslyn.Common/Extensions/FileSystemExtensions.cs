@@ -57,4 +57,15 @@ public static class FileSystemExtensions {
             return path;
         return Path.GetFullPath(path).ToLowerInvariant();
     }
+
+    public static void WriteAllText(string filePath, string content) {
+        if (File.Exists(filePath))
+            File.Delete(filePath);
+
+        var directoryPath = Path.GetDirectoryName(filePath);
+        if (!Directory.Exists(directoryPath))
+            Directory.CreateDirectory(directoryPath!);
+
+        File.WriteAllText(filePath, content);
+    }
 }

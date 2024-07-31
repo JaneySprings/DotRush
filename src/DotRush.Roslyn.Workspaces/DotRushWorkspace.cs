@@ -13,11 +13,12 @@ public abstract class DotRushWorkspace : SolutionController {
     protected abstract bool LoadMetadataForReferencedProjects { get; }
     protected abstract bool SkipUnrecognizedProjects { get; }
 
-    public void InitializeWorkspace(Action<Exception>? errorHandler = null) {
-        TryRegisterDotNetEnvironment(errorHandler);
+    public bool InitializeWorkspace() {
+        var registrationResult = TryRegisterDotNetEnvironment();
         workspace = MSBuildWorkspace.Create(WorkspaceProperties);
         workspace.LoadMetadataForReferencedProjects = LoadMetadataForReferencedProjects;
         workspace.SkipUnrecognizedProjects = SkipUnrecognizedProjects;
+        return registrationResult;
     }
     public Task LoadSolutionAsync(CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(workspace);
@@ -40,14 +41,13 @@ public abstract class DotRushWorkspace : SolutionController {
         AddProjectFiles(projectFiles);
     }
 
-    private static bool TryRegisterDotNetEnvironment(Action<Exception>? errorHandler) {
+    private static bool TryRegisterDotNetEnvironment() {
         try {
             if (MSBuildLocator.CanRegister && !MSBuildLocator.IsRegistered)
                 MSBuildLocator.RegisterDefaults();
             return true;
         } catch (Exception e) {
             CurrentSessionLogger.Error(e);
-            errorHandler?.Invoke(e);
             return false;
         }
     }

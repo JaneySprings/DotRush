@@ -18,10 +18,10 @@
 
 	<ItemGroup>
 		<PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
-		<PackageReference Include="ICSharpCode.Decompiler" Version="$(DecompilerVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" /> <!-- Required for Roslyn 4.10+ -->
 
 		<ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
 		<ProjectReference Include="..\DotRush.Roslyn.CodeAnalysis\DotRush.Roslyn.CodeAnalysis.csproj" />
+		<ProjectReference Include="..\DotRush.Roslyn.Navigation\DotRush.Roslyn.Navigation.csproj" />
 	</ItemGroup>
 </Project>
