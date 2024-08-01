@@ -20,7 +20,7 @@ public class NavigationHost {
     }
 
     public async Task<string?> EmitDecompiledFileAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
-        var symbolFullName = symbol.GetNamedTypeSymbol().GetFullReflectionName();
+        var symbolFullName = symbol.GetNamedTypeFullName();
         if (string.IsNullOrEmpty(symbolFullName))
             return null;
 

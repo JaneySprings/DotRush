@@ -6,23 +6,12 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using DotRush.Roslyn.Common.Extensions;
+using DotRush.Roslyn.Common;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
-    public static readonly SymbolDisplayFormat MemberFormat = new SymbolDisplayFormat(
-        genericsOptions:
-            SymbolDisplayGenericsOptions.IncludeTypeParameters |
-            SymbolDisplayGenericsOptions.IncludeVariance,
-        memberOptions:
-            SymbolDisplayMemberOptions.IncludeParameters,
-        parameterOptions:
-            SymbolDisplayParameterOptions.IncludeExtensionThis |
-            SymbolDisplayParameterOptions.IncludeParamsRefOut |
-            SymbolDisplayParameterOptions.IncludeType,
-        miscellaneousOptions:
-            SymbolDisplayMiscellaneousOptions.UseSpecialTypes
-    );
+    
 
     private readonly NavigationService navigationService;
 
@@ -75,7 +64,7 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
                 continue;
 
             result.Add(new DocumentSymbol() {
-                Name = symbol.ToDisplayString(MemberFormat),
+                Name = symbol.ToDisplayString(DisplayFormat.Member),
                 Kind = symbol.ToSymbolKind(),
                 Range = node.GetLocation().ToRange(),
                 SelectionRange = node.GetLocation().ToRange(),
