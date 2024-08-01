@@ -1,4 +1,6 @@
 using DotRush.Roslyn.Common.Extensions;
+using DotRush.Roslyn.Common.Logging;
+using DotRush.Roslyn.Navigation.Decompilation;
 using DotRush.Roslyn.Navigation.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
@@ -17,23 +19,24 @@ public class NavigationHost {
         GeneratedCodeDirectory = Path.Combine(baseDirectory, "_generated_");
     }
 
-    public async Task<bool> EmitSymbolLocationsAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
-        // var symbolFullName = symbol.GetNamedTypeSymbol().GetFullReflectionName();
-        // if (string.IsNullOrEmpty(symbolFullName))
-        //     return false;
+    public async Task<string?> EmitDecompiledFileAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
+        var symbolFullName = symbol.GetNamedTypeSymbol().GetFullReflectionName();
+        if (string.IsNullOrEmpty(symbolFullName))
+            return null;
 
-        // foreach (var location in symbol.Locations) {
-        //     var documentPath = location.SourceTree?.FilePath;
-        //     if (documentPath == null || !documentPath.EndsWith(".sg.cs", StringComparison.OrdinalIgnoreCase))
-        //         continue;
+        using var decompiler = new AssemblyDecompiler();
+        var isMetadataCollected = await decompiler.CollectAssemblyMetadataAsync(symbol.ContainingAssembly, project, cancellationToken).ConfigureAwait(false);
+        if (!isMetadataCollected)
+            return null;
 
-        //     await EmitCompilerGeneratedCodeAsync(documentPath, project, cancellationToken);
-        // }
-
-        return true;
+        var syntaxTree = decompiler.DecompileType(symbolFullName);
+        var outputFilePath = Path.Combine(DecompiledCodeDirectory, project.Name, symbolFullName + ".cs");
+        
+        FileSystemExtensions.WriteAllText(outputFilePath, syntaxTree.ToString());
+        CreateDocument(outputFilePath, null, project);
+        return outputFilePath;
     }
-
-    public async Task<string?> EmitCompilerGeneratedLocationAsync(Location location, Project project, CancellationToken cancellationToken) {
+    public async Task<string?> EmitCompilerGeneratedFileAsync(Location location, Project project, CancellationToken cancellationToken) {
         var documentPath = location.SourceTree?.FilePath;
         if (location.SourceTree == null || documentPath == null || !LanguageExtensions.IsCompilerGeneratedFile(documentPath))
             return null;
@@ -42,11 +45,14 @@ public class NavigationHost {
         var sourceText = await location.SourceTree.GetTextAsync(cancellationToken).ConfigureAwait(false);
         FileSystemExtensions.WriteAllText(outputFilePath, sourceText.ToString());
         CreateDocument(outputFilePath, sourceText, project);
+
+        CurrentSessionLogger.Debug($"[SourceGenerator]: Created file: {outputFilePath}");
         return outputFilePath;
     }
 
-
     private void CreateDocument(string documentPath, SourceText? sourceText, Project project) {
+        if (project.Documents.Any(d => FileSystemExtensions.PathEquals(d.FilePath, documentPath)))
+            return;
         if (sourceText == null)
             sourceText = SourceText.From(File.ReadAllText(documentPath));
         

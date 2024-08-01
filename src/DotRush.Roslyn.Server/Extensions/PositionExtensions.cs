@@ -37,21 +37,12 @@ public static class PositionExtensions {
         return location.GetLineSpan().Span.ToRange();
     }
 
-    public static ProtocolModels.Location? ToLocation(this Location location) {
+    public static ProtocolModels.Location? ToLocation(this Location location, string? filePath = null) {
         if (location.SourceTree == null)
             return null;
 
         return new ProtocolModels.Location() {
-            Uri = DocumentUri.FromFileSystemPath(location.SourceTree.FilePath),
-            Range = location.SourceSpan.ToRange(location.SourceTree.GetText())
-        };
-    }
-    public static ProtocolModels.Location? ToLocation(this Location location, string filePath) {
-        if (location.SourceTree == null)
-            return null;
-
-        return new ProtocolModels.Location() {
-            Uri = DocumentUri.FromFileSystemPath(filePath),
+            Uri = DocumentUri.FromFileSystemPath(filePath ?? location.SourceTree.FilePath),
             Range = location.SourceSpan.ToRange(location.SourceTree.GetText())
         };
     }

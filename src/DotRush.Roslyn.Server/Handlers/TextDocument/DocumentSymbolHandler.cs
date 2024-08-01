@@ -24,10 +24,10 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
             SymbolDisplayMiscellaneousOptions.UseSpecialTypes
     );
 
-    private readonly WorkspaceService solutionService;
+    private readonly NavigationService navigationService;
 
-    public DocumentSymbolHandler(WorkspaceService solutionService) {
-        this.solutionService = solutionService;
+    public DocumentSymbolHandler(NavigationService navigationService) {
+        this.navigationService = navigationService;
     }
 
     protected override DocumentSymbolRegistrationOptions CreateRegistrationOptions(DocumentSymbolCapability capability, ClientCapabilities clientCapabilities) {
@@ -38,8 +38,8 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
     public override Task<SymbolInformationOrDocumentSymbolContainer?> Handle(DocumentSymbolParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
             var documentPath = request.TextDocument.Uri.GetFileSystemPath();
-            var documentId = solutionService?.Solution?.GetDocumentIdsWithFilePath(documentPath).FirstOrDefault();
-            var document = solutionService?.Solution?.GetDocument(documentId);
+            var documentId = navigationService?.Solution?.GetDocumentIdsWithFilePath(documentPath).FirstOrDefault();
+            var document = navigationService?.Solution?.GetDocument(documentId);
             if (documentId == null || document == null)
                 return null;
 
