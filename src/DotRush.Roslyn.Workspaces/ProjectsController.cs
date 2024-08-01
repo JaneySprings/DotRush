@@ -2,6 +2,7 @@ using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.External;
 using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Workspaces.Extensions;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 
 namespace DotRush.Roslyn.Workspaces;
@@ -21,7 +22,7 @@ public abstract class ProjectsController {
     public virtual void OnProjectLoadCompleted(string documentPath) {}
     public virtual void OnProjectCompilationStarted(string documentPath) {}
     public virtual void OnProjectCompilationCompleted(string documentPath) {}
-    protected abstract void OnWorkspaceStateChanged(MSBuildWorkspace workspace);
+    protected abstract void OnWorkspaceStateChanged(Solution newSolution);
 
     protected void AddProjectFiles(IEnumerable<string> projectPaths) {
         foreach (var projectPath in projectPaths)
@@ -49,7 +50,7 @@ public abstract class ProjectsController {
                 var project = await workspace.OpenProjectAsync(projectFile, null, cancellationToken);
                 OnProjectLoadCompleted(projectFile);
 
-                OnWorkspaceStateChanged(workspace);
+                OnWorkspaceStateChanged(workspace.CurrentSolution);
 
                 if (CompileProjectsAfterLoading) {
                     OnProjectCompilationStarted(projectFile);

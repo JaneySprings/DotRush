@@ -6,14 +6,14 @@ public class LocationsContainer {
     private readonly HashSet<Location> locations = new HashSet<Location>();
     public bool IsEmpty => locations.Count == 0;
 
-    public LocationsContainer Add(Location location) {
-        locations.Add(location);
+    public LocationsContainer Add(Location? location) {
+        if (location != null)
+            locations.Add(location);
         return this;
     }
     public LocationsContainer AddRange(IEnumerable<Location?> locations) {
         foreach (var location in locations)
-            if (location != null)
-                Add(location);
+            Add(location);
 
         return this;
     }
