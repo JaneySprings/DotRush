@@ -13,13 +13,13 @@ public class NavigationService {
     }
 
     public Task<string?> EmitDecompiledFileAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
-        return SafeExtensions.Invoke<Task<string?>>(Task.FromResult<string?>(null), () => {
-            return navigationHost.EmitDecompiledFileAsync(symbol, project, cancellationToken);
+        return SafeExtensions.InvokeAsync(default(string), async () => {
+            return await navigationHost.EmitDecompiledFileAsync(symbol, project, cancellationToken).ConfigureAwait(false);
         });
     }
     public Task<string?> EmitCompilerGeneratedFileAsync(Location location, Project project, CancellationToken cancellationToken) {
-        return SafeExtensions.Invoke<Task<string?>>(Task.FromResult<string?>(null), () => {
-            return navigationHost.EmitCompilerGeneratedFileAsync(location, project, cancellationToken);
+        return SafeExtensions.InvokeAsync(default(string), async () => {
+            return await navigationHost.EmitCompilerGeneratedFileAsync(location, project, cancellationToken).ConfigureAwait(false);
         });
     }
     public void UpdateSolution(Solution? solution) {

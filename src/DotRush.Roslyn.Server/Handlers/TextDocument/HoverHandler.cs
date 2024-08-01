@@ -1,4 +1,5 @@
 using System.Text;
+using DotRush.Roslyn.Common;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
@@ -14,19 +15,6 @@ namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class HoverHandler : HoverHandlerBase {
     private readonly NavigationService navigationService;
-    public static readonly SymbolDisplayFormat DefaultFormat = SymbolDisplayFormat.FullyQualifiedFormat
-        .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)
-        .WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.None)
-        .WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers);
-
-    public static readonly SymbolDisplayFormat MinimalFormat = SymbolDisplayFormat.MinimallyQualifiedFormat
-        .WithMemberOptions(SymbolDisplayMemberOptions.IncludeParameters
-            | SymbolDisplayMemberOptions.IncludeType
-            | SymbolDisplayMemberOptions.IncludeRef
-            | SymbolDisplayMemberOptions.IncludeContainingType
-            | SymbolDisplayMemberOptions.IncludeConstantValue
-        );
-
 
     public HoverHandler(NavigationService navigationService) {
         this.navigationService = navigationService;
@@ -61,8 +49,8 @@ public class HoverHandler : HoverHandlerBase {
                     symbol = aliasSymbol.Target;
 
                 var displayString = symbol.Kind == SymbolKind.NamedType || symbol.Kind == SymbolKind.Namespace
-                    ? symbol.ToDisplayString(DefaultFormat)
-                    : symbol.ToMinimalDisplayString(semanticModel, offset, MinimalFormat);
+                    ? symbol.ToDisplayString(DisplayFormat.Default)
+                    : symbol.ToMinimalDisplayString(semanticModel, offset, DisplayFormat.Minimal);
 
                 if (!displayStrings.ContainsKey(displayString))
                     displayStrings.Add(displayString, new List<string>());
