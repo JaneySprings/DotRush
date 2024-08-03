@@ -12,6 +12,7 @@ namespace DotRush.Roslyn.CodeAnalysis;
 public class CompilationHost {
     private readonly DiagnosticAnalyzersLoader diagnosticAnalyzersLoader = new DiagnosticAnalyzersLoader();
     private readonly Dictionary<string, IEnumerable<DiagnosticHolder>> workspaceDiagnostics = new Dictionary<string, IEnumerable<DiagnosticHolder>>();
+    private readonly CurrentClassLogger currentClassLogger = new CurrentClassLogger(nameof(CompilationHost));
 
     public event EventHandler<DiagnosticsCollectionChangedEventArgs>? DiagnosticsChanged;
 
@@ -30,7 +31,7 @@ public class CompilationHost {
     }
 
     public async Task DiagnoseAsync(IEnumerable<Project> projects, CancellationToken cancellationToken) {
-        CurrentSessionLogger.Debug($"CompilationHost[{cancellationToken.GetHashCode()}]: Diagnostics started for {projects.Count()} projects");
+        currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics started for {projects.Count()} projects");
 
         var allDiagnostics = new HashSet<DiagnosticHolder>();
         foreach (var project in projects) {
@@ -48,7 +49,7 @@ public class CompilationHost {
             DiagnosticsChanged?.Invoke(this, new DiagnosticsCollectionChangedEventArgs(diagnostics.Key!, diagnostics.Select(d => d.Diagnostic)));
         }
 
-        CurrentSessionLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics finished");
+        currentClassLogger.Debug($"{nameof(CompilationHost)}[{cancellationToken.GetHashCode()}]: Diagnostics finished");
     }
 
     private async Task<CompilationWithAnalyzers?> CompileWithAnalyzersAsync(Project project, CancellationToken cancellationToken) {

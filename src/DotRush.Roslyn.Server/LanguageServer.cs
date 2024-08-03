@@ -45,7 +45,7 @@ public class LanguageServer {
             .WithHandler<ReferencesHandler>()
             .WithHandler<ImplementationHandler>()
             .WithHandler<DefinitionHandler>()
-            // .WithHandler<TypeDefinitionHandler>()
+            .WithHandler<TypeDefinitionHandler>()
             .OnStarted(StartedHandlerAsync)
         ).ConfigureAwait(false);
 

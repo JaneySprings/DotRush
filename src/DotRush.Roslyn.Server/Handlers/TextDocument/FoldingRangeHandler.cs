@@ -11,10 +11,10 @@ using DotRush.Roslyn.Common.Extensions;
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class FoldingRangeHandler : FoldingRangeHandlerBase {
-    private readonly WorkspaceService workspaceService;
+    private readonly NavigationService navigationService;
 
-    public FoldingRangeHandler(WorkspaceService workspaceService) {
-        this.workspaceService = workspaceService;
+    public FoldingRangeHandler(NavigationService navigationService) {
+        this.navigationService = navigationService;
     }
 
     protected override FoldingRangeRegistrationOptions CreateRegistrationOptions(FoldingRangeCapability capability, ClientCapabilities clientCapabilities) {
@@ -25,9 +25,9 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
 
     public override Task<Container<FoldingRange>?> Handle(FoldingRangeRequestParam request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
-            var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
             var documentId = documentIds?.FirstOrDefault();
-            var document = workspaceService.Solution?.GetDocument(documentId);
+            var document = navigationService.Solution?.GetDocument(documentId);
             if (document == null)
                 return null;
 

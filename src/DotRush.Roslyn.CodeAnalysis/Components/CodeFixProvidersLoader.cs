@@ -11,6 +11,7 @@ namespace DotRush.Roslyn.CodeAnalysis.Components;
 
 public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
     public MemoryCache<CodeFixProvider> ComponentsCache { get; } = new MemoryCache<CodeFixProvider>();
+    private readonly CurrentClassLogger currentClassLogger = new CurrentClassLogger(nameof(CodeFixProvidersLoader));
 
     public ImmutableArray<CodeFixProvider> GetComponents(Project? project = null) {
         var embeddedProviders = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
@@ -32,26 +33,26 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
             try {
                 var attribute = providerInfo.GetCustomAttribute<ExportCodeFixProviderAttribute>();
                 if (attribute == null) {
-                    CurrentSessionLogger.Debug($"Skipping code fix provider '{providerInfo.Name}' because it is missing the 'ExportCodeFixProviderAttribute'");
+                    currentClassLogger.Debug($"Skipping code fix provider '{providerInfo.Name}' because it is missing the 'ExportCodeFixProviderAttribute'");
                     continue;
                 }
                 if (Activator.CreateInstance(providerInfo.AsType()) is not CodeFixProvider instance) {
-                    CurrentSessionLogger.Error($"Instance of code fix provider '{providerInfo.Name}' is null");
+                    currentClassLogger.Error($"Instance of code fix provider '{providerInfo.Name}' is null");
                     continue;
                 }
                 result.Add(instance);
-                CurrentSessionLogger.Debug($"Loaded code fix provider: {instance}");
+                currentClassLogger.Debug($"Loaded code fix provider: {instance}");
             } catch (Exception ex) {
-                CurrentSessionLogger.Error($"Creating instance of analyzer '{providerInfo.Name}' failed, error: {ex}");
+                currentClassLogger.Error($"Creating instance of analyzer '{providerInfo.Name}' failed, error: {ex}");
             }
         }
-        CurrentSessionLogger.Debug($"Loaded {result.Count} codeFixProviders form assembly '{assemblyName}'");
+        currentClassLogger.Debug($"Loaded {result.Count} codeFixProviders form assembly '{assemblyName}'");
         return new ReadOnlyCollection<CodeFixProvider>(result);
     }
     public ReadOnlyCollection<CodeFixProvider> LoadFromProject(Project project) {
         var analyzerReferenceAssemblies = project.AnalyzerReferences.Select(it => it.FullPath);
         var result = analyzerReferenceAssemblies.SelectMany(it => LoadFromAssembly(it ?? string.Empty)).ToArray();
-        CurrentSessionLogger.Debug($"Loaded {result.Length} codeFixProviders from project '{project.Name}'");
+        currentClassLogger.Debug($"Loaded {result.Length} codeFixProviders from project '{project.Name}'");
         return new ReadOnlyCollection<CodeFixProvider>(result);
     }
 }

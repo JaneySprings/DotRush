@@ -1,4 +1,3 @@
-using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Containers;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
@@ -41,15 +40,17 @@ public class DefinitionHandler : DefinitionHandlerBase {
                 continue;
 
             foreach (var location in symbol.Locations) {
-                if (location.IsInMetadata && !isDecompiled)
+                if (location.IsInMetadata && !isDecompiled) {
                     await navigationService.EmitDecompiledFileAsync(symbol, document.Project, cancellationToken).ConfigureAwait(false);
-
-                var filePath = location.SourceTree?.FilePath ?? string.Empty;
-                if (LanguageExtensions.IsCompilerGeneratedFile(filePath))
-                    filePath = await navigationService.EmitCompilerGeneratedFileAsync(location, document.Project, cancellationToken).ConfigureAwait(false);
-
-                if (string.IsNullOrEmpty(filePath))
                     continue;
+                }
+
+                if (!location.IsInSource || location.SourceTree == null)
+                    continue;
+                
+                var filePath = location.SourceTree?.FilePath ?? string.Empty;
+                if (!File.Exists(filePath))
+                    filePath = await navigationService.EmitCompilerGeneratedFileAsync(location, document.Project, cancellationToken).ConfigureAwait(false);
 
                 result.Add(location.ToLocation(filePath));
             }

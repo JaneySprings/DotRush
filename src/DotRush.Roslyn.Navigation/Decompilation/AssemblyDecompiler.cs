@@ -1,10 +1,12 @@
 using System.Reflection.PortableExecutable;
+using DotRush.Roslyn.Navigation.Extensions;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using Microsoft.CodeAnalysis;
+using ISymbol = Microsoft.CodeAnalysis.ISymbol;
 using SyntaxTree = ICSharpCode.Decompiler.CSharp.Syntax.SyntaxTree;
 
 namespace DotRush.Roslyn.Navigation.Decompilation;
@@ -21,7 +23,6 @@ public class AssemblyDecompiler : IDisposable {
     private UniversalAssemblyResolver? resolver;
     private PEFile? module;
 
-
     public async Task<bool> CollectAssemblyMetadataAsync(IAssemblySymbol assemblySymbol, Project project, CancellationToken cancellationToken) {
         var compilation = await project.GetCompilationAsync(cancellationToken);
         var metadataReference = compilation?.GetMetadataReference(assemblySymbol);
@@ -35,9 +36,12 @@ public class AssemblyDecompiler : IDisposable {
         resolver.AddSearchDirectory(Path.GetDirectoryName(assemblyPath));
         return true;
     }
-    public SyntaxTree DecompileType(string typeName) {
+    public SyntaxTree DecompileType(ISymbol typeSymbol) {
+        var typeName = typeSymbol.GetNamedTypeFullName();
         if (resolver == null || module == null)
             throw new InvalidOperationException("Assembly metadata is not collected");
+        if (string.IsNullOrEmpty(typeName))
+            throw new InvalidOperationException("Type name is empty");
         
         var decompiler = new CSharpDecompiler(module, resolver, settings);
         var fullTypeName = new FullTypeName(typeName);
