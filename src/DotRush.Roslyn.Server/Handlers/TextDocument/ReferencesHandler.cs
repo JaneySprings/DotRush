@@ -9,10 +9,10 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class ReferencesHandler : ReferencesHandlerBase {
-    private readonly WorkspaceService workspaceService;
+    private readonly NavigationService navigationService;
 
-    public ReferencesHandler(WorkspaceService solutionService) {
-        workspaceService = solutionService;
+    public ReferencesHandler(NavigationService navigationService) {
+        this.navigationService = navigationService;
     }
 
     protected override ReferenceRegistrationOptions CreateRegistrationOptions(ReferenceCapability capability, ClientCapabilities clientCapabilities) {
@@ -22,13 +22,13 @@ public class ReferencesHandler : ReferencesHandlerBase {
     }
 
     public override async Task<LocationContainer?> Handle(ReferenceParams request, CancellationToken cancellationToken) {
-        var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
-        if (documentIds == null || workspaceService.Solution == null)
+        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        if (documentIds == null || navigationService.Solution == null)
             return null;
 
         var result = new LocationsContainer();
         foreach (var documentId in documentIds) {
-            var document = workspaceService.Solution.GetDocument(documentId);
+            var document = navigationService.Solution.GetDocument(documentId);
             if (document == null)
                 continue;
 
@@ -37,7 +37,7 @@ public class ReferencesHandler : ReferencesHandlerBase {
             if (symbol == null || symbol.Locations == null)
                 continue;
 
-            var referenceSymbols = await SymbolFinder.FindReferencesAsync(symbol, workspaceService.Solution, cancellationToken);
+            var referenceSymbols = await SymbolFinder.FindReferencesAsync(symbol, navigationService.Solution, cancellationToken);
             var referenceLocations = referenceSymbols
                 .SelectMany(r => r.Locations)
                 .Where(l => File.Exists(l.Document.FilePath));

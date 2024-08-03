@@ -1,8 +1,6 @@
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
-using System.Reflection;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
-using DotRush.Roslyn.Common;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -11,6 +9,7 @@ namespace DotRush.Roslyn.CodeAnalysis.Components;
 
 public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
     public MemoryCache<DiagnosticAnalyzer> ComponentsCache { get; } = new MemoryCache<DiagnosticAnalyzer>();
+    private readonly CurrentClassLogger currentClassLogger = new CurrentClassLogger(nameof(DiagnosticAnalyzersLoader));
 
     public ImmutableArray<DiagnosticAnalyzer> GetComponents(Project? project = null) {
         if (project == null)
@@ -24,12 +23,14 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
         foreach (var reference in project.AnalyzerReferences)
             foreach (var analyzer in reference.GetAnalyzers(project.Language)) {
                 result.Add(analyzer);
-                CurrentSessionLogger.Debug($"Loaded analyzer: {analyzer}");
+                currentClassLogger.Debug($"Loaded analyzer: {analyzer}");
             }
 
-        CurrentSessionLogger.Debug($"Found {result.Count} analyzers in the project '{project.Name}'");
+        currentClassLogger.Debug($"Loaded {result.Count} analyzers from project '{project.Name}'");
         return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
     }
+
+    [Obsolete("Not used anymore")]
     public ReadOnlyCollection<DiagnosticAnalyzer> LoadFromAssembly(string assemblyName) {
         var result = new List<DiagnosticAnalyzer>();
         var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);
@@ -40,16 +41,16 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
         foreach (var analyzerInfo in analyzersInfo) {
             try {
                 if (Activator.CreateInstance(analyzerInfo.AsType()) is not DiagnosticAnalyzer instance) {
-                    CurrentSessionLogger.Error($"Instance of analyzer '{analyzerInfo.Name}' is null");
+                    currentClassLogger.Error($"Instance of analyzer '{analyzerInfo.Name}' is null");
                     continue;
                 }
                 result.Add(instance);
-                CurrentSessionLogger.Debug($"Loaded analyzer: {instance}");
+                currentClassLogger.Debug($"Loaded analyzer: {instance}");
             } catch (Exception ex) {
-                CurrentSessionLogger.Error($"Creating instance of analyzer '{analyzerInfo.Name}' failed, error: {ex}");
+                currentClassLogger.Error($"Creating instance of analyzer '{analyzerInfo.Name}' failed, error: {ex}");
             }
         }
-        CurrentSessionLogger.Debug($"Loaded {result.Count} analyzers form assembly '{assemblyName}'");
+        currentClassLogger.Debug($"Loaded {result.Count} analyzers form assembly '{assemblyName}'");
         return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
     }
 }

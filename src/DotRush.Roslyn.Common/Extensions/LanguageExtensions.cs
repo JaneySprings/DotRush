@@ -13,7 +13,4 @@ public static class LanguageExtensions {
         var allowedExtensions = new[] { ".csproj", /* fsproj vbproj */};
         return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
     }
-    public static bool IsCompilerGeneratedFile(string filePath) {
-        return filePath.EndsWith(".sg.cs", StringComparison.OrdinalIgnoreCase);
-    }
 }
