@@ -26,7 +26,7 @@ public class LanguageServer {
                 .AddSingleton<ConfigurationService>()
                 .AddSingleton<WorkspaceService>()
                 .AddSingleton<CodeAnalysisService>()
-                .AddSingleton<DecompilationService>())
+                .AddSingleton<NavigationService>())
             .WithHandler<DidOpenTextDocumentHandler>()
             .WithHandler<DidChangeTextDocumentHandler>()
             .WithHandler<DidCloseTextDocumentHandler>()
@@ -46,31 +46,31 @@ public class LanguageServer {
             .WithHandler<ImplementationHandler>()
             .WithHandler<DefinitionHandler>()
             .WithHandler<TypeDefinitionHandler>()
-            .OnStarted((s, _) => StartedHandlerAsync(s, args))
+            .OnStarted(StartedHandlerAsync)
         ).ConfigureAwait(false);
 
         await server.WaitForExit.ConfigureAwait(false);
     }
-    private static async Task StartedHandlerAsync(ILanguageServer server, string[] targets) {
+    private static async Task StartedHandlerAsync(ILanguageServer server, CancellationToken cancellationToken) {
         var clientSettings = server.Workspace.ClientSettings;
+        ObserveClientProcess(clientSettings.ProcessId);
+        
         var configurationService = server.Services.GetService<ConfigurationService>()!;
+        var navigationService = server.Services.GetService<NavigationService>()!;
         var workspaceService = server.Services.GetService<WorkspaceService>()!;
 
-        CurrentSessionLogger.Debug($"Server created with targets: {string.Join(", ", targets)}");
-        ObserveClientProcess(clientSettings.ProcessId);
-
         await configurationService.InitializeAsync().ConfigureAwait(false);
-        workspaceService.InitializeWorkspace(_ => server.ShowError(Resources.DotNetRegistrationFailed));
+        if (!workspaceService.InitializeWorkspace())
+            server.ShowError(Resources.DotNetRegistrationFailed);
 
-        if (targets.Length != 0)
-            workspaceService.AddTargets(targets);
-        else if (configurationService.ProjectFiles.Count != 0)
+        if (configurationService.ProjectFiles.Count != 0)
             workspaceService.AddTargets(configurationService.ProjectFiles);
         else {
             var workspaceFolders = server.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
             workspaceService.FindTargetsInWorkspace(workspaceFolders);
         }
 
+        workspaceService.WorkspaceStateChanged += (_, _) => navigationService.UpdateSolution(workspaceService.Solution);
         _ = workspaceService.LoadSolutionAsync(CancellationToken.None);
     }
     private static void ObserveClientProcess(long? pid) {

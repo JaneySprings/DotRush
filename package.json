@@ -1,7 +1,7 @@
 {
   "name": "dotrush",
   "publisher": "nromanov",
-  "version": "24.7.201",
+  "version": "1.0.0",
   "description": "Lightweight C# development environment for Visual Studio Code.",
   "displayName": "DotRush",
   "author": "Nikita Romanov",
@@ -71,6 +71,11 @@
     "menus": {
       "explorer/context": [
         {
+          "command": "dotrush.test",
+          "group": "z_dotnet@0",
+          "when": "dotrush.contextMenuEnabled && (resourceFilename =~ /.*Tests.*/)"
+        },
+        {
           "command": "dotrush.build",
           "group": "z_dotnet@1",
           "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
@@ -93,6 +98,10 @@
       ]
     },
     "commands": [
+      {
+        "command": "dotrush.test",
+        "title": "%command.title.test%"
+      },
       {
         "command": "dotrush.build",
         "title": "%command.title.build%"

@@ -1,5 +1,4 @@
 using NLog;
-
 namespace DotRush.Roslyn.Common.Logging;
 
 public static class CurrentSessionLogger {

@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Common;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
@@ -54,9 +55,9 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
                     .OfType<IMethodSymbol>()
                     .Where(x => x.Parameters.Length >= argumentsCount)
                     .Select(x => new SignatureInformation {
-                        Label = x.ToDisplayString(HoverHandler.MinimalFormat),
+                        Label = x.ToDisplayString(DisplayFormat.Minimal),
                         Parameters = new Container<ParameterInformation>(x.Parameters.Select(y => new ParameterInformation {
-                            Label = y.ToDisplayString(HoverHandler.MinimalFormat)
+                            Label = y.ToDisplayString(DisplayFormat.Minimal)
                         }))
                     })
                 );

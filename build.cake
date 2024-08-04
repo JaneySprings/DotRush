@@ -2,10 +2,10 @@ using _Path = System.IO.Path;
 
 public string RootDirectory => MakeAbsolute(Directory("./")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
+public string ExtensionDirectory => _Path.Combine(RootDirectory, "extension");
 
 public string DotRushServerProjectPath => _Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server", "DotRush.Roslyn.Server.csproj");
 public string DotRushTestsProjectPath => _Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Tests", "DotRush.Roslyn.Tests.csproj");
-public string DotRushExtensionVSCodePath => _Path.Combine(RootDirectory, "src", "DotRush.Extension.VSCode");
 
 var target = Argument("target", "vsix");
 var runtime = Argument("arch", "osx-arm64");
@@ -21,24 +21,22 @@ Setup(context => {
 
 Task("clean").Does(() => {
 	EnsureDirectoryExists(ArtifactsDirectory);
-	CleanDirectories(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.*", "bin"));
-	CleanDirectories(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.*", "obj"));
-	CleanDirectories(_Path.Combine(DotRushExtensionVSCodePath, "extension"));
+	CleanDirectories(_Path.Combine(RootDirectory, "src", "**", "bin"));
+	CleanDirectories(_Path.Combine(RootDirectory, "src", "**", "obj"));
+	CleanDirectories(ExtensionDirectory);
 });
 
 Task("server")
-	.IsDependentOn("clean")
 	.Does(() => DotNetPublish(DotRushServerProjectPath, new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
-		OutputDirectory = _Path.Combine(ArtifactsDirectory, configuration),
+		OutputDirectory = _Path.Combine(ExtensionDirectory, "bin"),
 		Configuration = configuration,
 		Runtime = runtime,
 	}))
 	.Does(() => {
-		var input = _Path.Combine(ArtifactsDirectory, configuration);
+		var input = _Path.Combine(ExtensionDirectory, "bin");
 		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.Roslyn.Server.v{version}_{runtime}.zip");
 		Zip(input, output);
-		DeleteDirectory(input, new DeleteDirectorySettings { Recursive = true });
 	});
 
 Task("test")
@@ -52,12 +50,7 @@ Task("test")
 
 Task("vsix")
 	.IsDependentOn("clean")
-	.Does(() => DotNetPublish(DotRushServerProjectPath, new DotNetPublishSettings {
-		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
-		OutputDirectory = _Path.Combine(DotRushExtensionVSCodePath, "extension", "bin"),
-		Configuration = configuration,
-		Runtime = runtime,
-	}))
+	.IsDependentOn("server")
 	.Does(() => {
 		switch (runtime) {
 			case "win-x64": runtime = "win32-x64"; break;
@@ -66,20 +59,17 @@ Task("vsix")
 			case "osx-arm64": runtime = "darwin-arm64"; break;
 		}
 		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{runtime}.vsix");
-		CopyFile(_Path.Combine(RootDirectory, "README.md"), _Path.Combine(DotRushExtensionVSCodePath, "README.md"));
-		CopyFile(_Path.Combine(RootDirectory, "LICENSE"), _Path.Combine(DotRushExtensionVSCodePath, "LICENSE"));
-		CopyDirectory(_Path.Combine(RootDirectory, "assets"), _Path.Combine(DotRushExtensionVSCodePath, "assets"));
-		ExecuteCommand("npm", "install", DotRushExtensionVSCodePath);
-		ExecuteCommand("vsce", $"package --target {runtime} --out {output} {version}", DotRushExtensionVSCodePath);
+		ExecuteCommand("npm", "install");
+		ExecuteCommand("vsce", $"package --target {runtime} --out {output} --no-git-tag-version {version}");
 	});
 
 
-void ExecuteCommand(string command, string arguments, string cwd) {
+void ExecuteCommand(string command, string arguments) {
 	if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
 		arguments = $"/c \"{command} {arguments}\"";
 		command = "cmd";
 	}
-	if (StartProcess(command, new ProcessSettings { Arguments = arguments, WorkingDirectory = cwd }) != 0)
+	if (StartProcess(command, arguments) != 0)
 		throw new Exception("Command exited with non-zero exit code.");
 }
 

@@ -9,9 +9,11 @@ namespace DotRush.Roslyn.Workspaces;
 
 public abstract class SolutionController : ProjectsController {
     public Solution? Solution { get; protected set; }
+    public event EventHandler? WorkspaceStateChanged;
 
-    protected override void OnWorkspaceStateChanged(MSBuildWorkspace workspace) {
-        Solution = workspace.CurrentSolution;
+    protected override void OnWorkspaceStateChanged(Solution newSolution) {
+        Solution = newSolution;
+        WorkspaceStateChanged?.Invoke(this, EventArgs.Empty);
     }
     protected Task LoadSolutionAsync(MSBuildWorkspace workspace, CancellationToken cancellationToken) {
         return LoadAsync(workspace, cancellationToken);
@@ -67,7 +69,7 @@ public abstract class SolutionController : ProjectsController {
             var sourceText = SourceText.From(File.ReadAllText(file));
             var folders = project.GetFolders(file);
             var updates = project.AddDocument(Path.GetFileName(file), sourceText, folders, file);
-            Solution = updates.Project.Solution;
+            OnWorkspaceStateChanged(updates.Project.Solution);
         }
     }
     private void DeleteSourceCodeDocument(string file) {
@@ -86,7 +88,7 @@ public abstract class SolutionController : ProjectsController {
                 continue;
 
             var updatedDocument = document.WithText(sourceText);
-            Solution = updatedDocument.Project.Solution;
+            OnWorkspaceStateChanged(updatedDocument.Project.Solution);
         }
     }
     private void CreateAdditionalDocument(string file) {
@@ -107,7 +109,7 @@ public abstract class SolutionController : ProjectsController {
             var sourceText = SourceText.From(File.ReadAllText(file));
             var folders = project.GetFolders(file);
             var updates = project.AddAdditionalDocument(Path.GetFileName(file), sourceText, folders, file);
-            Solution = updates.Project.Solution;
+            OnWorkspaceStateChanged(updates.Project.Solution);
         }
     }
     private void DeleteAdditionalDocument(string file) {
@@ -129,7 +131,7 @@ public abstract class SolutionController : ProjectsController {
             if (updates == null)
                 continue;
 
-            Solution = updates;
+            OnWorkspaceStateChanged(updates);
         }
     }
     private void DeleteSourceCodeDocument(IEnumerable<DocumentId>? documentIds) {
@@ -143,7 +145,7 @@ public abstract class SolutionController : ProjectsController {
                 continue;
 
             var updates = project.RemoveDocument(documentId);
-            Solution = updates.Solution;
+            OnWorkspaceStateChanged(updates.Solution);
         }
     }
     private void DeleteAdditionalDocument(IEnumerable<DocumentId>? documentIds) {
@@ -157,7 +159,7 @@ public abstract class SolutionController : ProjectsController {
                 continue;
 
             var updates = project.RemoveAdditionalDocument(documentId);
-            Solution = updates.Solution;
+            OnWorkspaceStateChanged(updates.Solution);
         }
     }
 }
