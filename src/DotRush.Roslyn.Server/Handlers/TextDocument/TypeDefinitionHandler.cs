@@ -10,12 +10,10 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
-    private readonly WorkspaceService solutionService;
-    private readonly DecompilationService decompilationService;
+    private readonly NavigationService navigationService;
 
-    public TypeDefinitionHandler(WorkspaceService solutionService, DecompilationService decompilationService) {
-        this.solutionService = solutionService;
-        this.decompilationService = decompilationService;
+    public TypeDefinitionHandler(NavigationService navigationService) {
+        this.navigationService = navigationService;
     }
 
     protected override TypeDefinitionRegistrationOptions CreateRegistrationOptions(TypeDefinitionCapability capability, ClientCapabilities clientCapabilities) {
@@ -25,24 +23,25 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
     }
 
     public override async Task<LocationOrLocationLinks?> Handle(TypeDefinitionParams request, CancellationToken cancellationToken) {
-        var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        var result = new LocationsContainer();
+        var isDecompiled = false;
+
+        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
         if (documentIds == null)
             return null;
 
-        Document? document = null;
-        ITypeSymbol? typeSymbol = null;
-
-        var result = new LocationsContainer();
+        handle:
         foreach (var documentId in documentIds) {
-            document = solutionService.Solution?.GetDocument(documentId);
+            var document = navigationService.Solution?.GetDocument(documentId);
             if (document == null)
                 continue;
 
-            var sourceText = await document.GetTextAsync(cancellationToken);
-            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
+            var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
+            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken).ConfigureAwait(false);
             if (symbol == null)
                 continue;
 
+            ITypeSymbol? typeSymbol = null;
             if (symbol is ILocalSymbol localSymbol)
                 typeSymbol = localSymbol.Type;
             else if (symbol is IFieldSymbol fieldSymbol)
@@ -55,13 +54,26 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
             if (typeSymbol == null || typeSymbol.Locations == null)
                 continue;
 
-            result.AddRange(typeSymbol.Locations.Select(loc => loc.ToLocation()));
+            foreach (var location in typeSymbol.Locations) {
+                if (location.IsInMetadata && !isDecompiled) {
+                    await navigationService.EmitDecompiledFileAsync(typeSymbol, document.Project, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                if (!location.IsInSource || location.SourceTree == null)
+                    continue;
+                
+                var filePath = location.SourceTree?.FilePath ?? string.Empty;
+                if (!File.Exists(filePath))
+                    filePath = await navigationService.EmitCompilerGeneratedFileAsync(location, document.Project, cancellationToken).ConfigureAwait(false);
+
+                result.Add(location.ToLocation(filePath));
+            }
         }
 
-        if (result.IsEmpty && document != null && typeSymbol != null) {
-            var locations = await decompilationService.DecompileAsync(typeSymbol, document.Project, cancellationToken);
-            if (locations != null)
-                result.AddRange(locations);
+        if (result.IsEmpty && !isDecompiled) {
+            isDecompiled = true;
+            goto handle;
         }
 
         return result.ToLocationOrLocationLinks();

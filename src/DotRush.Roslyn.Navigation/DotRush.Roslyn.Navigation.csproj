@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="..\Common.Build.props" />
+
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ICSharpCode.Decompiler" Version="$(DecompilerVersion)" />
+        <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(CodeAnalysisVersion)" />
+
+        <ProjectReference Include="..\DotRush.Roslyn.Common\DotRush.Roslyn.Common.csproj" />
+    </ItemGroup>
+
+</Project>

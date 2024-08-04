@@ -18,9 +18,11 @@ public class CodeActionHandler : CodeActionHandlerBase {
     private readonly WorkspaceService workspaceService;
     private readonly CodeAnalysisService codeAnalysisService;
     private readonly Dictionary<int, CodeAnalysisCodeAction> codeActionsCache;
+    private readonly CurrentClassLogger currentClassLogger;
 
     public CodeActionHandler(WorkspaceService workspaceService, CodeAnalysisService codeAnalysisService) {
         codeActionsCache = new Dictionary<int, CodeAnalysisCodeAction>();
+        currentClassLogger = new CurrentClassLogger(nameof(CodeActionHandler));
         this.workspaceService = workspaceService;
         this.codeAnalysisService = codeAnalysisService;
     }
@@ -48,19 +50,19 @@ public class CodeActionHandler : CodeActionHandlerBase {
     public override Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(request, async () => {
             if (request.Data == null) {
-                CurrentSessionLogger.Error($"CodeAction '{request.Title}' data is null");
+                currentClassLogger.Error($"CodeAction '{request.Title}' data is null");
                 return request;
             }
 
             var codeActionId = request.Data.ToObject<int>();
             if (!codeActionsCache.TryGetValue(codeActionId, out var codeAction)) {
-                CurrentSessionLogger.Error($"CodeAction '{request.Title}' with id '{codeActionId}' not found");
+                currentClassLogger.Error($"CodeAction '{request.Title}' with id '{codeActionId}' not found");
                 return request;
             }
 
             var result = await codeAction.ResolveCodeActionAsync(workspaceService, cancellationToken).ConfigureAwait(false);
             if (result == null) {
-                CurrentSessionLogger.Error($"CodeAction '{request.Title}' with id '{codeActionId}' failed to resolve");
+                currentClassLogger.Error($"CodeAction '{request.Title}' with id '{codeActionId}' failed to resolve");
                 return request;
             }
 
@@ -78,19 +80,19 @@ public class CodeActionHandler : CodeActionHandlerBase {
         foreach (var group in diagnosticHolderGroups) {
             var project = group.FirstOrDefault()?.Project;
             if (project == null) {
-                CurrentSessionLogger.Debug($"Project not found for diagnostic id '{group.Key}'");
+                currentClassLogger.Debug($"Project not found for diagnostic id '{group.Key}'");
                 continue;
             }
 
             var codeFixProviders = codeAnalysisService.CodeActionHost.GetCodeFixProvidersForDiagnosticId(group.Key, project);
             if (codeFixProviders == null) {
-                CurrentSessionLogger.Debug($"CodeFixProviders not found for diagnostic id '{group.Key}'");
+                currentClassLogger.Debug($"CodeFixProviders not found for diagnostic id '{group.Key}'");
                 return result;
             }
 
             var document = project.Documents.FirstOrDefault(it => FileSystemExtensions.PathEquals(it.FilePath, filePath));
             if (document == null) {
-                CurrentSessionLogger.Debug($"Document not found for file path '{filePath}'");
+                currentClassLogger.Debug($"Document not found for file path '{filePath}'");
                 return result;
             }
 

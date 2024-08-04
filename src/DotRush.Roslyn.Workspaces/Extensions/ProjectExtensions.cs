@@ -21,15 +21,23 @@ public static class ProjectExtensions {
 
     public static IEnumerable<DocumentId> GetDocumentIdsWithFolderPath(this Project project, string folderPath) {
         var folderPathFixed = folderPath.EndsWith(Path.DirectorySeparatorChar) ? folderPath : folderPath + Path.DirectorySeparatorChar;
-        return project.Documents
-            .Where(document => document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true)
-            .Select(document => document.Id);
+        var filteredDocuments = project.Documents.Where(document => {
+            if (document.Folders.Count > 0 && document.Folders[0].Equals("obj", StringComparison.OrdinalIgnoreCase))
+                return false;
+            return document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true;
+        });
+        
+        return filteredDocuments.Select(document => document.Id);
     }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Project project, string folderPath) {
         var folderPathFixed = folderPath.EndsWith(Path.DirectorySeparatorChar) ? folderPath : folderPath + Path.DirectorySeparatorChar;
-        return project.AdditionalDocuments
-            .Where(document => document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true)
-            .Select(document => document.Id);
+        var filteredDocuments = project.AdditionalDocuments.Where(document => {
+            if (document.Folders.Count > 0 && document.Folders[0].Equals("obj", StringComparison.OrdinalIgnoreCase))
+                return false;
+            return document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true;
+        });
+        
+        return filteredDocuments.Select(document => document.Id);
     }
     public static IEnumerable<DocumentId> GetDocumentIdsWithFilePath(this Project project, string filePath) {
         return project.Documents.Where(it => FileSystemExtensions.PathEquals(it.FilePath, filePath)).Select(it => it.Id);

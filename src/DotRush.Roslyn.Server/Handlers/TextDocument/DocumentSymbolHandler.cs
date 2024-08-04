@@ -6,28 +6,17 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using DotRush.Roslyn.Common.Extensions;
+using DotRush.Roslyn.Common;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
-    public static readonly SymbolDisplayFormat MemberFormat = new SymbolDisplayFormat(
-        genericsOptions:
-            SymbolDisplayGenericsOptions.IncludeTypeParameters |
-            SymbolDisplayGenericsOptions.IncludeVariance,
-        memberOptions:
-            SymbolDisplayMemberOptions.IncludeParameters,
-        parameterOptions:
-            SymbolDisplayParameterOptions.IncludeExtensionThis |
-            SymbolDisplayParameterOptions.IncludeParamsRefOut |
-            SymbolDisplayParameterOptions.IncludeType,
-        miscellaneousOptions:
-            SymbolDisplayMiscellaneousOptions.UseSpecialTypes
-    );
+    
 
-    private readonly WorkspaceService solutionService;
+    private readonly NavigationService navigationService;
 
-    public DocumentSymbolHandler(WorkspaceService solutionService) {
-        this.solutionService = solutionService;
+    public DocumentSymbolHandler(NavigationService navigationService) {
+        this.navigationService = navigationService;
     }
 
     protected override DocumentSymbolRegistrationOptions CreateRegistrationOptions(DocumentSymbolCapability capability, ClientCapabilities clientCapabilities) {
@@ -38,8 +27,8 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
     public override Task<SymbolInformationOrDocumentSymbolContainer?> Handle(DocumentSymbolParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
             var documentPath = request.TextDocument.Uri.GetFileSystemPath();
-            var documentId = solutionService?.Solution?.GetDocumentIdsWithFilePath(documentPath).FirstOrDefault();
-            var document = solutionService?.Solution?.GetDocument(documentId);
+            var documentId = navigationService?.Solution?.GetDocumentIdsWithFilePath(documentPath).FirstOrDefault();
+            var document = navigationService?.Solution?.GetDocument(documentId);
             if (documentId == null || document == null)
                 return null;
 
@@ -75,7 +64,7 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
                 continue;
 
             result.Add(new DocumentSymbol() {
-                Name = symbol.ToDisplayString(MemberFormat),
+                Name = symbol.ToDisplayString(DisplayFormat.Member),
                 Kind = symbol.ToSymbolKind(),
                 Range = node.GetLocation().ToRange(),
                 SelectionRange = node.GetLocation().ToRange(),

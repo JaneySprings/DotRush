@@ -9,7 +9,7 @@ export class ContextMenuController {
             const projectFile = await ContextMenuController.selectProjectFileAsync(path);
             if (projectFile === undefined)
                 return;
-            vscode.tasks.executeTask(await DotNetTaskProvider.getBuildTaskAsync(projectFile, '--no-restore'));
+            vscode.tasks.executeTask(await DotNetTaskProvider.getBuildTaskAsync(projectFile));
         }));
         context.subscriptions.push(vscode.commands.registerCommand(res.taskCommandIdRestore, async (path: vscode.Uri) => {
             const projectFile = await ContextMenuController.selectProjectFileAsync(path);
@@ -22,6 +22,12 @@ export class ContextMenuController {
             if (projectFile === undefined)
                 return;
             vscode.tasks.executeTask(await DotNetTaskProvider.getCleanTaskAsync(projectFile));
+        }));
+        context.subscriptions.push(vscode.commands.registerCommand(res.taskCommandIdTest, async (path: vscode.Uri) => {
+            const projectFile = await ContextMenuController.selectProjectFileAsync(path);
+            if (projectFile === undefined)
+                return;
+            vscode.tasks.executeTask(await DotNetTaskProvider.getTestTaskAsync(projectFile));
         }));
 
         vscode.commands.executeCommand('setContext', res.commandIdContextMenuEnabled, true);

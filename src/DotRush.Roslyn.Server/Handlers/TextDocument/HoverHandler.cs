@@ -1,4 +1,5 @@
 using System.Text;
+using DotRush.Roslyn.Common;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
@@ -13,23 +14,10 @@ using SymbolKind = Microsoft.CodeAnalysis.SymbolKind;
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class HoverHandler : HoverHandlerBase {
-    private readonly WorkspaceService solutionService;
-    public static readonly SymbolDisplayFormat DefaultFormat = SymbolDisplayFormat.FullyQualifiedFormat
-        .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)
-        .WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.None)
-        .WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers);
+    private readonly NavigationService navigationService;
 
-    public static readonly SymbolDisplayFormat MinimalFormat = SymbolDisplayFormat.MinimallyQualifiedFormat
-        .WithMemberOptions(SymbolDisplayMemberOptions.IncludeParameters
-            | SymbolDisplayMemberOptions.IncludeType
-            | SymbolDisplayMemberOptions.IncludeRef
-            | SymbolDisplayMemberOptions.IncludeContainingType
-            | SymbolDisplayMemberOptions.IncludeConstantValue
-        );
-
-
-    public HoverHandler(WorkspaceService solutionService) {
-        this.solutionService = solutionService;
+    public HoverHandler(NavigationService navigationService) {
+        this.navigationService = navigationService;
     }
 
     protected override HoverRegistrationOptions CreateRegistrationOptions(HoverCapability capability, ClientCapabilities clientCapabilities) {
@@ -40,13 +28,13 @@ public class HoverHandler : HoverHandlerBase {
 
     public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
-            var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
             if (documentIds == null)
                 return null;
 
             var displayStrings = new Dictionary<string, List<string>>();
             foreach (var documentId in documentIds) {
-                var document = solutionService.Solution?.GetDocument(documentId);
+                var document = navigationService.Solution?.GetDocument(documentId);
                 if (document == null)
                     continue;
 
@@ -61,8 +49,8 @@ public class HoverHandler : HoverHandlerBase {
                     symbol = aliasSymbol.Target;
 
                 var displayString = symbol.Kind == SymbolKind.NamedType || symbol.Kind == SymbolKind.Namespace
-                    ? symbol.ToDisplayString(DefaultFormat)
-                    : symbol.ToMinimalDisplayString(semanticModel, offset, MinimalFormat);
+                    ? symbol.ToDisplayString(DisplayFormat.Default)
+                    : symbol.ToMinimalDisplayString(semanticModel, offset, DisplayFormat.Minimal);
 
                 if (!displayStrings.ContainsKey(displayString))
                     displayStrings.Add(displayString, new List<string>());
