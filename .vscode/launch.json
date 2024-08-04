@@ -6,10 +6,10 @@
             "type": "extensionHost",
             "request": "launch",
             "args": [
-                "--extensionDevelopmentPath=${workspaceFolder}/src/DotRush.Extension.VSCode"
+                "--extensionDevelopmentPath=${workspaceFolder}"
             ],
             "outFiles": [
-                "${workspaceFolder}/src/DotRush.Extension.VSCode/extension/**/*.js"
+                "${workspaceFolder}/extension/**/*.js"
             ],
             "preLaunchTask": "tsc: watch"
         },
