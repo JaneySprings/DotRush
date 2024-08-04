@@ -27,7 +27,6 @@ Task("clean").Does(() => {
 });
 
 Task("server")
-	.IsDependentOn("clean")
 	.Does(() => DotNetPublish(DotRushServerProjectPath, new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 		OutputDirectory = _Path.Combine(ExtensionDirectory, "bin"),
