@@ -40,10 +40,6 @@ stages:
         - script: npm install -g vsce webpack webpack-cli
           displayName: 'Install Node tools'
 
-        - script: dotnet cake --target=server --configuration=release --arch=linux-x64
-          displayName: 'Build ZIP (linux-x64)'
-        - script: dotnet cake --target=server --configuration=release --arch=linux-arm64
-          displayName: 'Build ZIP (linux-arm64)'
         - script: dotnet cake --target=vsix --configuration=release --arch=linux-x64
           displayName: 'Build VSIX (linux-x64)'
         - script: dotnet cake --target=vsix --configuration=release --arch=linux-arm64
@@ -72,10 +68,6 @@ stages:
         - script: npm install -g vsce webpack webpack-cli
           displayName: 'Install Node tools'
 
-        - script: dotnet cake --target=server --configuration=release --arch=osx-x64
-          displayName: 'Build ZIP (osx-x64)'
-        - script: dotnet cake --target=server --configuration=release --arch=osx-arm64
-          displayName: 'Build ZIP (osx-arm64)'
         - script: dotnet cake --target=vsix --configuration=release --arch=osx-x64
           displayName: 'Build VSIX (osx-x64)'
         - script: dotnet cake --target=vsix --configuration=release --arch=osx-arm64
@@ -104,10 +96,6 @@ stages:
         - script: npm install -g vsce webpack webpack-cli
           displayName: 'Install Node tools'
 
-        - script: dotnet cake --target=server --configuration=release --arch=win-x64
-          displayName: 'Build ZIP (win-x64)'
-        - script: dotnet cake --target=server --configuration=release --arch=win-arm64
-          displayName: 'Build ZIP (win-arm64)'
         - script: dotnet cake --target=vsix --configuration=release --arch=win-x64
           displayName: 'Build VSIX (win-x64)'
         - script: dotnet cake --target=vsix --configuration=release --arch=win-arm64

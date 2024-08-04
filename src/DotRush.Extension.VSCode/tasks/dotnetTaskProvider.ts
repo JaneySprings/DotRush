@@ -3,6 +3,9 @@ import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 
 export class DotNetTaskProvider {
+    public static async getTestTaskAsync(projectFile: vscode.Uri, ...args: string[]): Promise<vscode.Task> {
+        return await DotNetTaskProvider.getTaskAsync(projectFile, 'test', ...args);
+    }
     public static async getBuildTaskAsync(projectFile: vscode.Uri, ...args: string[]): Promise<vscode.Task> {
         return await DotNetTaskProvider.getTaskAsync(projectFile, 'build', ...args);
     }

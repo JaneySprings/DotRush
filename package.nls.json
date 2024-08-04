@@ -1,6 +1,7 @@
 {
 	"extension.displayName": "DotRush",
 
+	"command.title.test": "Run Tests",
 	"command.title.build": "Build",
 	"command.title.restore": "Restore",
 	"command.title.clean": "Clean",

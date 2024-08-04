@@ -12,7 +12,7 @@ const extensionConfig = {
   target: 'node',
 	mode: 'none',
 
-  entry: './src/extension.ts',
+  entry: './src/DotRush.Extension.VSCode/extension.ts',
   output: {
     path: path.resolve(__dirname, 'extension'),
     filename: 'extension.js',
