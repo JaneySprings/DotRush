@@ -234,7 +234,6 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
     public async Task SolutionChangesInIntermidiatePathTest() {
         var projectPath = TestProjectExtensions.CreateClassLib("MyClassLib", TestProjectExtensions.MultiTargetFramework);
         var projectDirectory = Path.GetDirectoryName(projectPath)!;
-
         var workspace = new TestWorkspace([projectPath]);
         await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
 
@@ -247,6 +246,11 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
         workspace.CreateDocument(documentPath);
         documentIds = workspace.GetDocumentIdsWithFilePath(documentPath);
         Assert.Empty(documentIds);
+
+        var oldDocumentsCount = workspace.Solution!.Projects.SelectMany(p => p.Documents).Count();
+        workspace.DeleteFolder(Path.Combine(projectDirectory, "obj"));
+        var newDocumentsCount = workspace.Solution!.Projects.SelectMany(p => p.Documents).Count();
+        Assert.Equal(oldDocumentsCount, newDocumentsCount);
     }
     [Fact]
     public async Task CreateDocumentFullCycleTest() {

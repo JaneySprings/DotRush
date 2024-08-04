@@ -26,7 +26,9 @@ public class TestWorkspace : DotRushWorkspace {
         this.restoreProjectsBeforeLoading = restoreProjectsBeforeLoading;
         this.compileProjectsAfterLoading = compileProjectsAfterLoading;
 
-        InitializeWorkspace(e => Assert.Fail(e.Message));
+        if (!InitializeWorkspace())
+            Assert.Fail("Failed to initialize workspace");
+    
         AddTargets(targets);
     }
 

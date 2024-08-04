@@ -7,4 +7,5 @@
 
 package-lock.json
 node_modules
+extension
 .DS_Store

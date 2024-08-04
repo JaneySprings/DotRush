@@ -10,6 +10,7 @@ export const commandIdCreateProjectTemplate = "dotrush.createProjectTemplate";
 export const commandIdRestartServer = "dotrush.restartServer";
 
 export const taskDefinitionType = "dotrush.task";
+export const taskCommandIdTest = "dotrush.test";
 export const taskCommandIdBuild = "dotrush.build";
 export const taskCommandIdRestore = "dotrush.restore";
 export const taskCommandIdClean = "dotrush.clean";

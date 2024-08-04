@@ -13,9 +13,14 @@
         "src/DotRush.Roslyn.*/obj": true,
         "src/**/node_modules": true,
         "artifacts": true,
-        "tools":true,
+        ".editorconfig": true,
         ".config": true,
         ".gitignore": true,
         ".gitmodules": true
-    }
+    },
+    "explorer.fileNesting.expand": false,
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+        "package.json": "package*.json",
+    },
 }
