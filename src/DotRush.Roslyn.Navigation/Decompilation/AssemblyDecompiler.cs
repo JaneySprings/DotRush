@@ -50,6 +50,7 @@ public class AssemblyDecompiler : IDisposable {
         result.InsertChildBefore(result.Children.First(), new PreProcessorDirective(PreProcessorDirectiveType.Region, $"Assembly {module.FullName}"), Roles.PreProcessorDirective);
         result.InsertChildAfter(result.Children.First(), new Comment(" " + module.FileName), Roles.Comment);
         result.InsertChildAfter(result.Children.Skip(1).First(), new PreProcessorDirective(PreProcessorDirectiveType.Endregion, "\n"), Roles.PreProcessorDirective);
+        result.FileName = typeName + ".cs";
         return result;
     }
 
