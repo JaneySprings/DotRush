@@ -29,7 +29,7 @@ public class NavigationHost {
         }
 
         var syntaxTree = decompiler.DecompileType(symbol);
-        var outputFilePath = Path.Combine(DecompiledCodeDirectory, project.Name, symbol.ContainingAssembly.Name, symbol.Name + ".cs");
+        var outputFilePath = Path.Combine(DecompiledCodeDirectory, project.Name, symbol.ContainingAssembly.Name, syntaxTree.FileName);
         FileSystemExtensions.WriteAllText(outputFilePath, syntaxTree.ToString());
         CreateDocument(outputFilePath, null, project);
 
