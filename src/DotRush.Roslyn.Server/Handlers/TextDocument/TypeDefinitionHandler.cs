@@ -24,6 +24,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
 
     public override async Task<LocationOrLocationLinks?> Handle(TypeDefinitionParams request, CancellationToken cancellationToken) {
         var result = new LocationsContainer();
+        var decompiledResult = new LocationsContainer();
         var isDecompiled = false;
 
         var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
@@ -56,7 +57,8 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
 
             foreach (var location in typeSymbol.Locations) {
                 if (location.IsInMetadata && !isDecompiled) {
-                    await navigationService.EmitDecompiledFileAsync(typeSymbol, document.Project, cancellationToken).ConfigureAwait(false);
+                    var decompiledFilePath = await navigationService.EmitDecompiledFileAsync(typeSymbol, document.Project, cancellationToken).ConfigureAwait(false);
+                    decompiledResult.Add(PositionExtensions.ToDecompiledUnknownLocation(decompiledFilePath));
                     continue;
                 }
 
@@ -76,6 +78,8 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
             goto handle;
         }
 
-        return result.ToLocationOrLocationLinks();
+        return result.IsEmpty && !decompiledResult.IsEmpty 
+            ? decompiledResult.ToLocationOrLocationLinks()
+            : result.ToLocationOrLocationLinks();
     }
 }

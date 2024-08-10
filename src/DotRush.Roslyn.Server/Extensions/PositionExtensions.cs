@@ -70,5 +70,15 @@ public static class PositionExtensions {
         return TextSpan.FromBounds(start, end);
     }
 
+    public static ProtocolModels.Location? ToDecompiledUnknownLocation(string? filePath) {
+        if (filePath == null)
+            return null;
+
+        return new ProtocolModels.Location() {
+            Uri = DocumentUri.FromFileSystemPath(filePath),
+            Range = EmptyRange
+        };
+    }
+
     public static ProtocolModels.Range EmptyRange => new ProtocolModels.Range(new ProtocolModels.Position(0, 0), new ProtocolModels.Position(0, 0));
 }
