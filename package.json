@@ -71,26 +71,6 @@
     "menus": {
       "explorer/context": [
         {
-          "command": "dotrush.test",
-          "group": "z_dotnet@0",
-          "when": "dotrush.contextMenuEnabled && (resourceFilename =~ /.*Tests.*/)"
-        },
-        {
-          "command": "dotrush.build",
-          "group": "z_dotnet@1",
-          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
-        },
-        {
-          "command": "dotrush.restore",
-          "group": "z_dotnet@2",
-          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
-        },
-        {
-          "command": "dotrush.clean",
-          "group": "z_dotnet@3",
-          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
-        },
-        {
           "command": "dotrush.createItemTemplate",
           "group": "navigation@10",
           "when": "dotrush.contextMenuEnabled && explorerResourceIsFolder"
@@ -98,22 +78,6 @@
       ]
     },
     "commands": [
-      {
-        "command": "dotrush.test",
-        "title": "%command.title.test%"
-      },
-      {
-        "command": "dotrush.build",
-        "title": "%command.title.build%"
-      },
-      {
-        "command": "dotrush.restore",
-        "title": "%command.title.restore%"
-      },
-      {
-        "command": "dotrush.clean",
-        "title": "%command.title.clean%"
-      },
       {
         "command": "dotrush.createItemTemplate",
         "title": "%command.title.createItemTemplate%"

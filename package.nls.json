@@ -1,10 +1,6 @@
 {
 	"extension.displayName": "DotRush",
 
-	"command.title.test": "Run Tests",
-	"command.title.build": "Build",
-	"command.title.restore": "Restore",
-	"command.title.clean": "Clean",
 	"command.title.createItemTemplate": "New Item...",
 	"command.title.createProjectTemplate": "DotRush: Create a new project",
 	"command.title.restartServer": "DotRush: Restart server",

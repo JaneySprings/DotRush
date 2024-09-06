@@ -1,4 +1,3 @@
-import { ContextMenuController } from './contextMenuController';
 import { WizardController } from './wizards/wizardController';
 import { ServerController } from './serverController';
 import * as res from './resources/constants';
@@ -13,7 +12,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	WizardController.activate(context);
 	ServerController.activate(context);
-	ContextMenuController.activate(context);
 
 	context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRestartServer, () => ServerController.restart()));
 	context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => ServerController.restart()));

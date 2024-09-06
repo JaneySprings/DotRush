@@ -24,7 +24,6 @@
             "args": [
                 "cake",
                 "--target=vsix",
-                "--arch=osx-arm64",
                 "--configuration=release"
             ],
             "problemMatcher": []
