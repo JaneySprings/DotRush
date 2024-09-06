@@ -9,11 +9,6 @@ export const commandIdCreateItemTemplate = "dotrush.createItemTemplate";
 export const commandIdCreateProjectTemplate = "dotrush.createProjectTemplate";
 export const commandIdRestartServer = "dotrush.restartServer";
 
-export const taskDefinitionType = "dotrush.task";
-export const taskCommandIdTest = "dotrush.test";
-export const taskCommandIdBuild = "dotrush.build";
-export const taskCommandIdRestore = "dotrush.restore";
-export const taskCommandIdClean = "dotrush.clean";
 export const taskCommandIdOpenFolder = "vscode.openFolder";
 
 export const messageOmniSharpAlreadyInstalled = "The C# extension is already installed. Please uninstall or disable it to avoid conflicts.";

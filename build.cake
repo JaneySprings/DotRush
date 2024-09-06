@@ -1,16 +1,16 @@
+using System.Runtime.InteropServices;
 using _Path = System.IO.Path;
 
 public string RootDirectory => MakeAbsolute(Directory("./")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
 public string ExtensionDirectory => _Path.Combine(RootDirectory, "extension");
-
 public string DotRushServerProjectPath => _Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server", "DotRush.Roslyn.Server.csproj");
 public string DotRushTestsProjectPath => _Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Tests", "DotRush.Roslyn.Tests.csproj");
 
 var target = Argument("target", "vsix");
-var runtime = Argument("arch", "osx-arm64");
 var version = Argument("release-version", "1.0.0");
 var configuration = Argument("configuration", "debug");
+var runtime = Argument("arch", RuntimeInformation.RuntimeIdentifier);
 
 
 Setup(context => {
@@ -52,15 +52,10 @@ Task("vsix")
 	.IsDependentOn("clean")
 	.IsDependentOn("server")
 	.Does(() => {
-		switch (runtime) {
-			case "win-x64": runtime = "win32-x64"; break;
-			case "win-arm64": runtime = "win32-arm64"; break;
-			case "osx-x64": runtime = "darwin-x64"; break;
-			case "osx-arm64": runtime = "darwin-arm64"; break;
-		}
-		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{runtime}.vsix");
+		var vsruntime = runtime.Replace("win-", "win32-").Replace("osx-", "darwin-");
+		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{vsruntime}.vsix");
 		ExecuteCommand("npm", "install");
-		ExecuteCommand("vsce", $"package --target {runtime} --out {output} --no-git-tag-version {version}");
+		ExecuteCommand("vsce", $"package --target {vsruntime} --out {output} --no-git-tag-version {version}");
 	});
 
 

@@ -12,8 +12,7 @@
     "files.exclude": {
         "src/DotRush.Roslyn.*/bin": true,
         "src/DotRush.Roslyn.*/obj": true,
-        "src/**/node_modules": true,
-        "artifacts": true,
+        "**/node_modules": true,
         ".editorconfig": true,
         ".config": true,
         ".gitignore": true,
