@@ -27,9 +27,6 @@ stages:
         pool:
           vmImage: ubuntu-latest
         timeoutInMinutes: 6
-        variables:
-          - name: version
-            value: $[ replace(variables['Build.SourceBranch'], 'refs/tags/', '') ] 
         steps:
         - task: UseDotNet@2
           inputs:
@@ -55,9 +52,6 @@ stages:
         pool:
           vmImage: macos-latest
         timeoutInMinutes: 6
-        variables:
-          - name: version
-            value: $[ replace(variables['Build.SourceBranch'], 'refs/tags/', '') ] 
         steps:
         - task: UseDotNet@2
           inputs:
@@ -83,9 +77,6 @@ stages:
         pool:
           vmImage: windows-latest
         timeoutInMinutes: 10
-        variables:
-          - name: version
-            value: $[ replace(variables['Build.SourceBranch'], 'refs/tags/', '') ] 
         steps:
         - task: UseDotNet@2
           inputs:
