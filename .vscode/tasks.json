@@ -3,6 +3,7 @@
     "tasks": [
         {
             "label": "tsc: watch",
+            "type": "shell",
             "command": "tsc",
             "args": [
                 "-w",
@@ -25,8 +26,7 @@
                 "cake",
                 "--target=vsix",
                 "--configuration=release"
-            ],
-            "problemMatcher": []
+            ]
         }
     ]
 }

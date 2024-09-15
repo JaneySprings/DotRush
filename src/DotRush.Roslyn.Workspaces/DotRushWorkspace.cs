@@ -43,8 +43,16 @@ public abstract class DotRushWorkspace : SolutionController {
 
     private static bool TryRegisterDotNetEnvironment() {
         try {
-            if (MSBuildLocator.CanRegister && !MSBuildLocator.IsRegistered)
-                MSBuildLocator.RegisterDefaults();
+            if (!MSBuildLocator.CanRegister || MSBuildLocator.IsRegistered)
+                return true;
+
+            var dotnetPath = Environment.GetEnvironmentVariable("DOTNET_ROOT");
+            if (!string.IsNullOrEmpty(dotnetPath)) {
+                MSBuildLocator.RegisterMSBuildPath(dotnetPath);
+                return true;
+            }
+
+            MSBuildLocator.RegisterDefaults();
             return true;
         } catch (Exception e) {
             CurrentSessionLogger.Error(e);

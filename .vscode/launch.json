@@ -17,10 +17,7 @@
             "name": ".NET Attach to LSP",
             "type": "coreclr",
             "request": "attach",
-            "processName": "DotRush",
-            "windows": {
-                "processName": "DotRush.exe"
-            }
+            "processId": "${command:dotrush-essentials.pickProcess}"
         }
     ]
 }
