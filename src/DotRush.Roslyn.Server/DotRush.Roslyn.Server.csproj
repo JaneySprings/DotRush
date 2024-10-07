@@ -23,5 +23,6 @@
 		<ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
 		<ProjectReference Include="..\DotRush.Roslyn.CodeAnalysis\DotRush.Roslyn.CodeAnalysis.csproj" />
 		<ProjectReference Include="..\DotRush.Roslyn.Navigation\DotRush.Roslyn.Navigation.csproj" />
+		<ProjectReference Include="..\DotRush.Roslyn.ExternalAccess\DotRush.Roslyn.ExternalAccess.csproj" />
 	</ItemGroup>
 </Project>

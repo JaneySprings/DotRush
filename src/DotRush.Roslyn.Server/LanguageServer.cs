@@ -26,7 +26,8 @@ public class LanguageServer {
                 .AddSingleton<ConfigurationService>()
                 .AddSingleton<WorkspaceService>()
                 .AddSingleton<CodeAnalysisService>()
-                .AddSingleton<NavigationService>())
+                .AddSingleton<NavigationService>()
+                .AddSingleton<ExternalAccessService>())
             .WithHandler<DidOpenTextDocumentHandler>()
             .WithHandler<DidChangeTextDocumentHandler>()
             .WithHandler<DidCloseTextDocumentHandler>()
@@ -58,6 +59,7 @@ public class LanguageServer {
         var configurationService = server.Services.GetService<ConfigurationService>()!;
         var navigationService = server.Services.GetService<NavigationService>()!;
         var workspaceService = server.Services.GetService<WorkspaceService>()!;
+        var externalAccessService = server.Services.GetService<ExternalAccessService>()!;
 
         await configurationService.InitializeAsync().ConfigureAwait(false);
         if (!workspaceService.InitializeWorkspace())
@@ -72,7 +74,9 @@ public class LanguageServer {
 
         workspaceService.WorkspaceStateChanged += (_, _) => navigationService.UpdateSolution(workspaceService.Solution);
         _ = workspaceService.LoadSolutionAsync(CancellationToken.None);
+        _ = externalAccessService.StartListeningAsync(CancellationToken.None);
     }
+
     private static void ObserveClientProcess(long? pid) {
         if (pid == null || pid <= 0)
             return;

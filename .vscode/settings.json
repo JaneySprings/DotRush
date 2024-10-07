@@ -2,10 +2,6 @@
     "dotrush.roslyn.workspaceProperties": [
     ],
     "dotrush.roslyn.projectFiles": [
-        "src/DotRush.Roslyn.Common/DotRush.Roslyn.Common.csproj",
-        "src/DotRush.Roslyn.Workspaces/DotRush.Roslyn.Workspaces.csproj",
-        "src/DotRush.Roslyn.Navigation/DotRush.Roslyn.Navigation.csproj",
-        "src/DotRush.Roslyn.CodeAnalysis/DotRush.Roslyn.CodeAnalysis.csproj",
         "src/DotRush.Roslyn.Server/DotRush.Roslyn.Server.csproj",
         "src/DotRush.Roslyn.Tests/DotRush.Roslyn.Tests.csproj"
     ],
