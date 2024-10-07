@@ -17,6 +17,8 @@ internal static class LogConfig {
             FileName = DebugLogFile,
             Layout = "${time}|${message}",
             DeleteOldFileOnStartup = true,
+            MaxArchiveFiles = 1,
+            ArchiveAboveSize = 1 * 1024 * 1024, //MB
         };
         var commonAsyncTarget = new AsyncTargetWrapper(commonTarget, 500, AsyncTargetWrapperOverflowAction.Discard);
         configuration.AddTarget("log", commonAsyncTarget);
@@ -25,6 +27,8 @@ internal static class LogConfig {
             FileName = ErrorLogFile,
             DeleteOldFileOnStartup = true,
             Layout = "${longdate}|${message}",
+            MaxArchiveFiles = 1,
+            ArchiveAboveSize = 1 * 1024 * 1024, //MB
         };
         var errorAsyncTarget = new AsyncTargetWrapper(errorTarget, 500, AsyncTargetWrapperOverflowAction.Discard);
         configuration.AddTarget("errorLog", errorAsyncTarget);

@@ -68,11 +68,17 @@
         "activityBar.foreground": "#e5deff",    // onPrimaryContainer
         "activityBarBadge.background": "#453a8e",   // primaryContainer
         "activityBarBadge.foreground": "#e5deff",   // onPrimaryContainer
+
+        // Buttons
+        "button.background": "#453a8e",    // primaryContainer
+        "button.foreground": "#e5deff",    // onPrimaryContainer
         
         // Other
         "focusBorder": "#47445961", // secondaryContainer(38%)
         "panelTitle.activeBorder": "#453a8e", // primaryContainer
-        "panelSectionHeader.background": "#1c1b1f" // surface
+        "panelSectionHeader.background": "#1c1b1f", // surface
+        "textLink.foreground": "#c7bfff",   // primary
+        "textLink.activeForeground": "#aba0fb",  // primary70
     },
     "semanticHighlighting": true,
     "semanticTokenColors": {
