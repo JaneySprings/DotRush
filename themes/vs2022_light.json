@@ -67,10 +67,6 @@
         "activityBar.foreground": "#001b3c",    // onPrimaryContainer
         "activityBarBadge.background": "#d5e3ff",   // primaryContainer
         "activityBarBadge.foreground": "#001b3c",   // onPrimaryContainer
-
-        // Buttons
-        "button.background": "#d5e3ff",   // primaryContainer
-        "button.foreground": "#001b3c",   // onPrimaryContainer
         
         // Other
         "focusBorder": "#c4c6cf", // outlineVariant
