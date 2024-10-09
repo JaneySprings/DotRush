@@ -4,6 +4,7 @@ using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
+using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Workspaces;
 
@@ -24,9 +25,13 @@ public abstract class ProjectsController {
     public virtual void OnProjectCompilationCompleted(string documentPath) {}
     protected abstract void OnWorkspaceStateChanged(Solution newSolution);
 
-    protected void AddProjectFiles(IEnumerable<string> projectPaths) {
-        foreach (var projectPath in projectPaths)
+    protected void AddProjectFiles(IEnumerable<string> projectPaths, IEnumerable<string>? excludePatterns = null) {
+        foreach (var projectPath in projectPaths) {
+            if (excludePatterns != null && FileSystemExtensions.CheckGlobPatterns(projectPath, excludePatterns))
+                continue;
+
             projectFilePaths.Add(projectPath);
+        }
     }
     protected void RemoveProjectFiles(IEnumerable<string> projectPaths) {
         foreach (var projectPath in projectPaths)

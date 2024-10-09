@@ -111,6 +111,14 @@
             "default": [],
             "description": "%configuration.description.roslyn.projectFiles%"
           },
+          "dotrush.roslyn.excludePatterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "%configuration.description.roslyn.excludePatterns%"
+          },
           "dotrush.roslyn.showItemsFromUnimportedNamespaces": {
             "type": "boolean",
             "default": false,

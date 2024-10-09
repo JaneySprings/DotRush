@@ -1,13 +1,15 @@
+using Microsoft.Extensions.FileSystemGlobbing;
+
 namespace DotRush.Roslyn.Common.Extensions;
 
 public static class FileSystemExtensions {
     public static IEnumerable<string> GetVisibleDirectories(string directoryPath) {
         var directoryInfo = new DirectoryInfo(directoryPath);
-        return directoryInfo.EnumerateDirectories().Where(d => !d.Attributes.HasFlag(FileAttributes.Hidden)).Select(d => d.FullName);
+        return directoryInfo.EnumerateDirectories().Where(d => !d.Attributes.HasFlag(FileAttributes.Hidden)).Select(d => d.FullName).ToArray();
     }
     public static IEnumerable<string> GetVisibleFiles(string directoryPath, Func<string, bool>? filter = null) {
         var directoryInfo = new DirectoryInfo(directoryPath);
-        var files = directoryInfo.EnumerateFiles().Where(d => !d.Attributes.HasFlag(FileAttributes.Hidden)).Select(d => d.FullName);
+        var files = directoryInfo.EnumerateFiles().Where(d => !d.Attributes.HasFlag(FileAttributes.Hidden)).Select(d => d.FullName).ToArray();
         return filter == null ? files : files.Where(filter);
     }
     public static IEnumerable<string> GetVisibleFilesRecursive(string directoryPath) {
@@ -67,5 +69,13 @@ public static class FileSystemExtensions {
             Directory.CreateDirectory(directoryPath!);
 
         File.WriteAllText(filePath, content);
+    }
+
+    public static bool CheckGlobPatterns(string path, IEnumerable<string> patterns) {
+        var matcher = new Matcher();
+        foreach (var pattern in patterns)
+            matcher.AddInclude(pattern);
+
+        return matcher.Match(path).HasMatches;
     }
 }

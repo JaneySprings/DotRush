@@ -318,6 +318,25 @@ public class DotRushWorkspaceTests : TestFixtureBase, IDisposable {
         Assert.Contains(commonFile, firstProject.Documents.Select(it => it.FilePath));
         Assert.Contains(commonFile, secondProject.Documents.Select(it => it.FilePath));
     }
+    [Fact]
+    public async Task LoadWithExcludePatternTest() {
+        var workspace = new TestWorkspace([]);
+
+        var firstProject = TestProjectExtensions.CreateClassLib("genMyClassLib");
+        var secondProject = TestProjectExtensions.CreateConsoleApp("MyConsoleApp");
+        var thirdProject = TestProjectExtensions.CreateClassLib("MyClassLib");
+    
+        workspace.FindTargetsInWorkspace([TestProjectExtensions.TestProjectsDirectory], ["**/gen*.*proj"]);
+        await workspace.LoadSolutionAsync(CancellationToken.None).ConfigureAwait(false);
+
+        Assert.NotNull(workspace.Solution);
+        Assert.Equal(2, workspace.Solution.ProjectIds.Count);
+
+        var projectNames = workspace.Solution.Projects.Select(p => p.Name);
+        Assert.Contains("MyClassLib", projectNames);
+        Assert.Contains("MyConsoleApp", projectNames);
+        Assert.DoesNotContain("genMyClassLib", projectNames);
+    }
 
     public void Dispose() {
         if (Directory.Exists(TestProjectExtensions.TestProjectsDirectory))

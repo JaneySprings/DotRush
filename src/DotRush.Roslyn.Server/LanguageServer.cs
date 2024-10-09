@@ -69,7 +69,7 @@ public class LanguageServer {
             workspaceService.AddTargets(configurationService.ProjectFiles);
         else {
             var workspaceFolders = server.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
-            workspaceService.FindTargetsInWorkspace(workspaceFolders);
+            workspaceService.FindTargetsInWorkspace(workspaceFolders, configurationService.ExcludePatterns);
         }
 
         workspaceService.WorkspaceStateChanged += (_, _) => navigationService.UpdateSolution(workspaceService.Solution);
