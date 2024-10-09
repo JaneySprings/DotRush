@@ -35,6 +35,9 @@ public class ConfigurationService {
     private ReadOnlyCollection<string>? projectFiles;
     public ReadOnlyCollection<string> ProjectFiles => projectFiles ??= ServerExtensions.GetArray(configuration, $"{ExtensionId}:{RoslynId}:projectFiles");
 
+    private ReadOnlyCollection<string>? excludePatterns;
+    public ReadOnlyCollection<string> ExcludePatterns => excludePatterns ??= ServerExtensions.GetArray(configuration, $"{ExtensionId}:{RoslynId}:excludePatterns");
+
     public ConfigurationService(ILanguageServerConfiguration configuration) {
         this.configuration = configuration;
     }
@@ -46,7 +49,8 @@ public class ConfigurationService {
         bool compileProjectsAfterLoading,
         bool useMultitargetDiagnostics,
         ReadOnlyDictionary<string, string> workspaceProperties,
-        ReadOnlyCollection<string> projectFiles
+        ReadOnlyCollection<string> projectFiles,
+        ReadOnlyCollection<string> excludePatterns
     ) {
         this.showItemsFromUnimportedNamespaces = showItemsFromUnimportedNamespaces;
         this.skipUnrecognizedProjects = skipUnrecognizedProjects;
@@ -56,6 +60,7 @@ public class ConfigurationService {
         this.useMultitargetDiagnostics = useMultitargetDiagnostics;
         this.workspaceProperties = workspaceProperties;
         this.projectFiles = projectFiles;
+        this.excludePatterns = excludePatterns;
     }
 
     public async Task InitializeAsync() {

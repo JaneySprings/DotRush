@@ -24,17 +24,17 @@ public abstract class DotRushWorkspace : SolutionController {
         ArgumentNullException.ThrowIfNull(workspace);
         return LoadSolutionAsync(workspace, cancellationToken);
     }
-    public void FindTargetsInWorkspace(IEnumerable<string>? workspaceFolders) {
+    public void FindTargetsInWorkspace(IEnumerable<string>? workspaceFolders, IEnumerable<string>? excludePatterns = null) {
         if (workspaceFolders == null)
             return;
 
         foreach (var workspaceFolder in workspaceFolders) {
             var directoryProjectFiles = FileSystemExtensions.GetVisibleFiles(workspaceFolder, LanguageExtensions.IsProjectFile);
             if (directoryProjectFiles.Any()) {
-                AddProjectFiles(directoryProjectFiles);
+                AddProjectFiles(directoryProjectFiles, excludePatterns);
                 continue;
             }
-            FindTargetsInWorkspace(FileSystemExtensions.GetVisibleDirectories(workspaceFolder));
+            FindTargetsInWorkspace(FileSystemExtensions.GetVisibleDirectories(workspaceFolder), excludePatterns);
         }
     }
     public void AddTargets(IEnumerable<string> projectFiles) {

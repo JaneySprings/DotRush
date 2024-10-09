@@ -23,7 +23,8 @@ public static class ServiceProvider {
             compileProjectsAfterLoading: true,
             useMultitargetDiagnostics: true,
             workspaceProperties: new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()),
-            projectFiles: new ReadOnlyCollection<string>(new List<string>())
+            projectFiles: new ReadOnlyCollection<string>(new List<string>()),
+            excludePatterns: new ReadOnlyCollection<string>(new List<string>())
         );
         WorkspaceService = new WorkspaceService(ConfigurationService, null, null);
         CodeAnalysisService = new CodeAnalysisService(null, ConfigurationService, WorkspaceService);
