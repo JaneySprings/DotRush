@@ -15,6 +15,9 @@
     "type": "git",
     "url": "https://github.com/JaneySprings/DotRush"
   },
+  "sponsor": {
+    "url": "https://github.com/sponsors/JaneySprings"
+  },
   "categories": [
     "Programming Languages",
     "Linters",
