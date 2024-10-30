@@ -65,30 +65,7 @@
         "path": "./themes/vs2022_light.json"
       }
     ],
-    "viewsWelcome": [
-      {
-        "view": "explorer",
-        "contents": "%view.title.createProjectTemplate%"
-      }
-    ],
-    "menus": {
-      "explorer/context": [
-        {
-          "command": "dotrush.createItemTemplate",
-          "group": "navigation@10",
-          "when": "dotrush.contextMenuEnabled && explorerResourceIsFolder"
-        }
-      ]
-    },
     "commands": [
-      {
-        "command": "dotrush.createItemTemplate",
-        "title": "%command.title.createItemTemplate%"
-      },
-      {
-        "command": "dotrush.createProjectTemplate",
-        "title": "%command.title.createProjectTemplate%"
-      },
       {
         "command": "dotrush.restartServer",
         "title": "%command.title.restartServer%"

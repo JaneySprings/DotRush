@@ -21,7 +21,7 @@ public static class ExternalTypeResolver {
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
         miscellaneousOptions: SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers | SymbolDisplayMiscellaneousOptions.UseSpecialTypes
     );
-
+    // This method was copied from MonoDevelop
     public static string? Handle(string identifierName, SourceLocation location, Solution? solution) {
         var documentId = solution?.GetDocumentIdsWithFilePath(location.FileName).FirstOrDefault();
         var document = solution?.GetDocument(documentId);

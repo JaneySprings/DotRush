@@ -22,6 +22,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
+            "problemMatcher": [],
             "args": [
                 "cake",
                 "--target=vsix",

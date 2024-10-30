@@ -19,13 +19,13 @@ public class RpcServerHost {
     public async Task RunAsync(CancellationToken cancellationToken) {
         while (!cancellationToken.IsCancellationRequested) {
             using var pipeStream = new NamedPipeServerStream(transportId, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+            currentClassLogger.Debug($"Server created with transport id: '{transportId}'");
             currentClassLogger.Debug("Waiting for connection...");
 
             await pipeStream.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
+            currentClassLogger.Debug("Client connected");
 
-            var jsonRpc = JsonRpc.Attach(pipeStream, messageHandler);
-            currentClassLogger.Debug("Connected");
-
+            using var jsonRpc = JsonRpc.Attach(pipeStream, messageHandler);
             await jsonRpc.Completion.ConfigureAwait(false);
         }
     }
