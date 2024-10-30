@@ -1,6 +1,5 @@
-import { WizardController } from './wizards/wizardController';
 import { ServerController } from './serverController';
-import * as res from './resources/constants';
+import * as res from './constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
 
@@ -10,7 +9,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		return;
 	}
 
-	WizardController.activate(context);
 	ServerController.activate(context);
 
 	context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRestartServer, () => ServerController.restart()));

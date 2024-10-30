@@ -7,7 +7,7 @@ public class ExternalAccessService {
     private readonly RpcServerHost rpcServerHost;
 
     public ExternalAccessService(ILanguageServerFacade serverFacade, WorkspaceService workspaceService) {
-        rpcServerHost = new RpcServerHost(workspaceService, $"DotRush-{serverFacade.Workspace.ClientSettings.ProcessId}");  
+        rpcServerHost = new RpcServerHost(workspaceService, $"dotrush-{serverFacade.Workspace.ClientSettings.ProcessId}");  
     }
 
     public Task StartListeningAsync(CancellationToken cancellationToken) {

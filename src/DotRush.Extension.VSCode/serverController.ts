@@ -1,5 +1,5 @@
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
-import * as res from './resources/constants';
+import * as res from './constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
 
