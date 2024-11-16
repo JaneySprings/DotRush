@@ -6,10 +6,10 @@
             "type": "extensionHost",
             "request": "launch",
             "args": [
-                "--extensionDevelopmentPath=${workspaceFolder}"
+                "--extensionDevelopmentPath=${workspaceFolder}/src/VSCode"
             ],
             "outFiles": [
-                "${workspaceFolder}/extension/**/*.js"
+                "${workspaceFolder}/src/VSCode/extension/**/*.js"
             ],
             "preLaunchTask": "tsc: watch"
         },

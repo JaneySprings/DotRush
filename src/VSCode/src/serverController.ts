@@ -9,7 +9,7 @@ export class ServerController {
 
     public static activate(context: vscode.ExtensionContext) {
         const extensionPath = context.extensionPath;
-        const serverExecutable = path.join(extensionPath, "extension", "bin", "DotRush");
+        const serverExecutable = path.join(extensionPath, "extension", "bin", "LanguageServer", "DotRush");
         const serverExtension = process.platform === 'win32' ? '.exe' : '';
         ServerController.command = serverExecutable + serverExtension;
         ServerController.start();

@@ -8,7 +8,7 @@
             "args": [
                 "-w",
                 "-p",
-                "${workspaceFolder}/src/DotRush.Extension.VSCode"
+                "${workspaceFolder}/src/VSCode"
             ],
             "isBackground": true,
             "problemMatcher": [
