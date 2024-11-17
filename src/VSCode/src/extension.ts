@@ -1,27 +1,35 @@
-import { ServerController } from './serverController';
-import * as res from './constants';
+import { ContextMenuController } from './controllers/contextMenuController';
+import { DebugAdapterController } from './controllers/debugAdapterController';
+import { LanguageServerController } from './controllers/languageServerController';
+import { StateController } from './controllers/stateController';
+import { StatusBarController } from './controllers/statusbarController';
+import { ModulesView } from './features/modulesView';
+import { Interop } from './interop/interop';
+import { PublicExports } from './publicExports';
+import * as res from './resources/constants';
 import * as vscode from 'vscode';
-import * as path from 'path';
 
 export async function activate(context: vscode.ExtensionContext) {
 	if (vscode.extensions.getExtension(res.extensionMicrosoftId)) {
 		vscode.window.showErrorMessage(res.messageOmniSharpAlreadyInstalled, { modal: true });
 		return;
 	}
+	
+	const exports = new PublicExports();
+	Interop.initialize(context.extensionPath);
 
-	ServerController.activate(context);
+	StateController.activate(context);
+	StatusBarController.activate(context);
+	ContextMenuController.activate(context);
+	DebugAdapterController.activate(context);
+	LanguageServerController.activate(context);
 
-	context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRestartServer, () => ServerController.restart()));
-	context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => ServerController.restart()));
-	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async e => {
-		if (path.extname(e.fileName) !== '.csproj')
-			return;
+	ModulesView.feature.activate(context);
 
-		const value = await vscode.window.showWarningMessage(res.messageProjectChanged, res.messageReload)
-		if (value === res.messageReload)
-			ServerController.restart();
-	}));
+	StatusBarController.update();
+	return exports;
 }
 export function deactivate() {
-	ServerController.stop();
+	StateController.deactivate();
+	LanguageServerController.stop();
 }

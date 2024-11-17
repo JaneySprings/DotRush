@@ -8,7 +8,7 @@
             "args": [
                 "-w",
                 "-p",
-                "${workspaceFolder}/src/VSCode"
+                "${workspaceFolder}/src/VSCode/src"
             ],
             "isBackground": true,
             "problemMatcher": [

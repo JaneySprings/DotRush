@@ -65,10 +65,133 @@
         "path": "./themes/vs2022_light.json"
       }
     ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "dotrush.test",
+          "group": "dotnet@0",
+          "when": "dotrush.contextMenuEnabled && (resourceFilename =~ /.*Tests.*/)"
+        },
+        {
+          "command": "dotrush.build",
+          "group": "dotnet@1",
+          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
+        },
+        {
+          "command": "dotrush.restore",
+          "group": "dotnet@2",
+          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
+        },
+        {
+          "command": "dotrush.clean",
+          "group": "dotnet@3",
+          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
+        }
+      ]
+    },
+    "views": {
+      "debug": [
+        {
+          "id": "dotrush.modulesView",
+          "name": "Modules",
+          "when": "debugType == coreclr"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "dotrush.restartServer",
         "title": "%command.title.restartServer%"
+      },
+      {
+        "command": "dotrush.test",
+        "title": "%command.title.test%"
+      },
+      {
+        "command": "dotrush.build",
+        "title": "%command.title.build%"
+      },
+      {
+        "command": "dotrush.restore",
+        "title": "%command.title.restore%"
+      },
+      {
+        "command": "dotrush.clean",
+        "title": "%command.title.clean%"
+      }
+    ],
+    "debuggers": [
+      {
+        "program": "extension/bin/Debugger/vsdbg",
+        "windows": {
+          "program": "extension/bin/Debugger/vsdbg.exe"
+        },
+        "type": "coreclr",
+        "label": ".NET Core Debugger",
+        "languages": [
+          "csharp",
+          "fsharp",
+          "razor",
+          "aspnetcorerazor"
+        ],
+        "initialConfigurations": [
+          {
+            "name": ".NET Core Debugger (launch)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "dotrush: Build"
+          },
+          {
+            "name": ".NET Core Debugger (attach)",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:dotrush.pickProcess}"
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": ".NET Core Debugger (launch)",
+            "description": "Launch .NET Core Debugger",
+            "body": {
+              "name": ".NET Core Debugger (launch)",
+              "type": "coreclr",
+              "request": "launch",
+              "preLaunchTask": "dotrush: Build"
+            }
+          },
+          {
+            "label": ".NET Core Debugger (attach)",
+            "description": "Attach .NET Core Debugger",
+            "body": {
+              "name": ".NET Core Debugger (attach)",
+              "type": "coreclr",
+              "request": "attach",
+              "processId": "^\"\\${command:dotrush.pickProcess}\""
+            }
+          }
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "properties": {
+              "program": {
+                "type": "string"
+              },
+              "args": {
+                "type": "array"
+              }
+            }
+          },
+          "attach": {
+            "properties": {
+              "processId": {
+                "type": "string"
+              },
+              "args": {
+                "type": "array"
+              }
+            }
+          }
+        }
       }
     ],
     "configuration": [
@@ -131,6 +254,18 @@
           }
         }
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "debug.hideSlowPreLaunchWarning": true,
+      "explorer.fileNesting.expand": false,
+      "explorer.fileNesting.enabled": true,
+      "explorer.fileNesting.patterns": {
+        "*.xaml": "${capture}.xaml.cs",
+        "*.axaml": "${capture}.axaml.cs"
+      },
+      "editor.quickSuggestions": {
+        "strings": "on"
+      }
+    }
   }
 }

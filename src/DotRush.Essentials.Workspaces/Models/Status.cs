@@ -1,9 +1,10 @@
+using System.Text.Json.Serialization;
 
 namespace DotRush.Essentials.Workspaces.Models;
 
 public class Status {
-    public bool IsSuccess { get; set; }
-    public string? Message { get; set; }
+    [JsonPropertyName("isSuccess")] public bool IsSuccess { get; set; }
+    [JsonPropertyName("message")] public string? Message { get; set; }
 
     public Status(bool isSuccess, string? message) {
         IsSuccess = isSuccess;

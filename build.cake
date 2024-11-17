@@ -67,7 +67,7 @@ Task("vsix")
 	});
 
 
-void ExecuteCommand(string command, string arguments, string? cwd = null) {
+void ExecuteCommand(string command, string arguments, string cwd = null) {
 	if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
 		arguments = $"/c \"{command} {arguments}\"";
 		command = "cmd";

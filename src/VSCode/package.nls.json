@@ -4,6 +4,10 @@
 	"command.title.createItemTemplate": "New Item...",
 	"command.title.createProjectTemplate": "DotRush: Create a new project",
 	"command.title.restartServer": "DotRush: Restart server",
+	"command.title.test": "Run Tests",
+	"command.title.build": "Build",
+	"command.title.restore": "Restore",
+	"command.title.clean": "Clean",
 
 	"view.title.createProjectTemplate": "[Open a folder](command:vscode.openFolder) that contains a .NET project or create a new project.\n[Create New Project](command:dotrush.createProjectTemplate)",
 
