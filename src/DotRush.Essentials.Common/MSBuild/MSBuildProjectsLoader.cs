@@ -10,15 +10,10 @@ public static class MSBuildProjectsLoader {
 
         foreach (var projectFile in Directory.EnumerateFiles(workspacePath, "*.*proj", SearchOption.AllDirectories)) {
             var project = new MSBuildProject(projectFile);
-            if (!IsProjectExecutable(project)) {
-                callback?.Invoke($"Skipping project {project.Name} because it is not an executable.");
-                continue;
-            }
-
             project.Configurations = GetConfigurations(project);
             project.Frameworks = GetTargetFrameworks(project);
             project.IsTestProject = IsTestProject(project);
-
+            project.IsExecutable = IsProjectExecutable(project);
             projects.Add(project);
         }
 

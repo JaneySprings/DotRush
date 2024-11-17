@@ -45,6 +45,14 @@ Task("workspaces")
 		Runtime = runtime,
 	}));
 
+Task("explorer")
+	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Essentials.TestExplorer", "DotRush.Essentials.TestExplorer.csproj"), new DotNetPublishSettings {
+		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
+		OutputDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "TestExplorer"),
+		Configuration = configuration,
+		Runtime = runtime,
+	}));
+
 Task("test")
 	.IsDependentOn("clean")
 	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Tests", "DotRush.Roslyn.Tests.csproj"), new DotNetTestSettings {  
@@ -58,6 +66,7 @@ Task("vsix")
 	.IsDependentOn("clean")
 	.IsDependentOn("server")
 	.IsDependentOn("workspaces")
+	.IsDependentOn("explorer")
 	.Does(() => {
 		var vsruntime = runtime.Replace("win-", "win32-").Replace("osx-", "darwin-");
 		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{vsruntime}.vsix");

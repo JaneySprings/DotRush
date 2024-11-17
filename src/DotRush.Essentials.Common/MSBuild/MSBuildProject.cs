@@ -9,6 +9,7 @@ public class MSBuildProject {
     [JsonPropertyName("frameworks")] public IEnumerable<string> Frameworks { get; set; }
     [JsonPropertyName("configurations")] public IEnumerable<string> Configurations { get; set; }
     [JsonPropertyName("isTestProject")] public bool IsTestProject { get; set; }
+    [JsonPropertyName("isExecutable")] public bool IsExecutable { get; set; }
 
     [JsonIgnore] public string Directory => SystemPath.GetDirectoryName(Path)!;
 

@@ -3,6 +3,7 @@ import { DebugAdapterController } from './controllers/debugAdapterController';
 import { LanguageServerController } from './controllers/languageServerController';
 import { StateController } from './controllers/stateController';
 import { StatusBarController } from './controllers/statusbarController';
+import { TestExplorerController } from './controllers/testExplorerController';
 import { ModulesView } from './features/modulesView';
 import { Interop } from './interop/interop';
 import { PublicExports } from './publicExports';
@@ -23,6 +24,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	ContextMenuController.activate(context);
 	DebugAdapterController.activate(context);
 	LanguageServerController.activate(context);
+	TestExplorerController.activate(context);
 
 	ModulesView.feature.activate(context);
 	return exports;

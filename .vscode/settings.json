@@ -3,6 +3,7 @@
     ],
     "dotrush.roslyn.projectFiles": [
         "src/DotRush.Essentials.Workspaces/DotRush.Essentials.Workspaces.csproj",
+        "src/DotRush.Essentials.TestExplorer/DotRush.Essentials.TestExplorer.csproj",
         "src/DotRush.Roslyn.Server/DotRush.Roslyn.Server.csproj",
         "src/DotRush.Roslyn.Tests/DotRush.Roslyn.Tests.csproj"
     ],

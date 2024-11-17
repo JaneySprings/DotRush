@@ -5,6 +5,7 @@ import { Project, ProjectItem } from '../models/project';
 import { Icons } from '../resources/icons';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
+import { TestExplorerController } from "./testExplorerController";
 
 export class StatusBarController {
     private static projectStatusBarItem: vscode.StatusBarItem;
@@ -39,6 +40,8 @@ export class StatusBarController {
     public static async update() : Promise<void> {
         const folders = vscode.workspace.workspaceFolders!.map(it => it.uri.fsPath);
         StatusBarController.projects = await Interop.getProjects(folders);
+        PublicExports.instance.onProjectsChanged.invoke(StatusBarController.projects);
+        TestExplorerController.refreshTests();
 
         if (StatusBarController.projects.length === 0) {
             StatusBarController.projectStatusBarItem.hide();
@@ -50,25 +53,27 @@ export class StatusBarController {
         StateController.load();
         StatusBarController.performSelectProject(StatusBarController.project);
         StatusBarController.performSelectConfiguration(StatusBarController.configuration);
-        StatusBarController.projectStatusBarItem.show();
         StatusBarController.configurationStatusBarItem.show();
+        StatusBarController.projects.length === 1 
+                ? StatusBarController.projectStatusBarItem.hide() 
+                : StatusBarController.projectStatusBarItem.show();
     }
 
     public static performSelectProject(item: Project | undefined = undefined) {
         StatusBarController.project = item ?? StatusBarController.projects[0];
         StatusBarController.projectStatusBarItem.text = `${Icons.project} ${StatusBarController.project?.name}`;
-        PublicExports.instance.projectChangedEventHandler.invoke(StatusBarController.project);
+        PublicExports.instance.onActiveProjectChanged.invoke(StatusBarController.project);
         StateController.saveProject();
     }
     public static performSelectConfiguration(item: string | undefined = undefined) {
         StatusBarController.configuration = item ?? 'Debug';
-        StatusBarController.configurationStatusBarItem.text = `${Icons.target} ${StatusBarController.configuration} | Any CPU`;
-        PublicExports.instance.configurationChangedEventHandler.invoke(StatusBarController.configuration);
+        StatusBarController.configurationStatusBarItem.text = `${StatusBarController.configuration} | Any CPU`;
+        PublicExports.instance.onActiveConfigurationChanged.invoke(StatusBarController.configuration);
         StateController.saveConfiguration();
     }
 
     public static async showQuickPickProject() {
-        const items = StatusBarController.projects.map(project => new ProjectItem(project));
+        const items = StatusBarController.projects.filter(p => p.isExecutable).map(p => new ProjectItem(p));
         const options = { placeHolder: res.commandTitleSelectActiveProject };
         const selectedItem = await vscode.window.showQuickPick(items, options);
 
