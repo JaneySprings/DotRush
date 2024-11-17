@@ -25,8 +25,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	LanguageServerController.activate(context);
 
 	ModulesView.feature.activate(context);
-
-	StatusBarController.update();
 	return exports;
 }
 export function deactivate() {

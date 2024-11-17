@@ -194,6 +194,21 @@
         }
       }
     ],
+    "taskDefinitions": [
+      {
+        "type": "dotrush.task",
+        "required": [],
+        "properties": {
+          "args": {
+            "type": "array",
+            "default": [],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
     "configuration": [
       {
         "title": "%extension.displayName%",

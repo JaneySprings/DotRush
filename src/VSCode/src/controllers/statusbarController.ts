@@ -33,6 +33,8 @@ export class StatusBarController {
             if (ev.fileName.endsWith('proj') || ev.fileName.endsWith('.props'))
                 StatusBarController.update();
         }));
+
+        StatusBarController.update();
     }
     public static async update() : Promise<void> {
         const folders = vscode.workspace.workspaceFolders!.map(it => it.uri.fsPath);
