@@ -1,4 +1,3 @@
-import { StatusBarController } from './statusbarController';
 import { ExtensionContext } from 'vscode';
 import * as res from '../resources/constants';
 
@@ -12,23 +11,11 @@ export class StateController {
         StateController.context = undefined;
     }
 
-    public static load() {
-        if (StateController.context === undefined)
-            return;
-
-        const project = StateController.context.workspaceState.get<string>(`${res.extensionId}.project`);
-        const configuration = StateController.context.workspaceState.get<string>(`${res.extensionId}.configuration`);
-
-        StatusBarController.project = StatusBarController.projects.find(it => it.path === project);
-        StatusBarController.configuration = StatusBarController.project?.configurations.find(it => it === configuration);
+    public static getLocal<TValue>(key: string): TValue | undefined {
+        return StateController.context?.workspaceState.get<TValue>(`${res.extensionId}.${key}`);
     }
-    public static saveProject() {
-        if (StateController.context !== undefined)
-            StateController.context.workspaceState.update(`${res.extensionId}.project`, StatusBarController.project?.path);
-    }
-    public static saveConfiguration() {
-        if (StateController.context !== undefined)
-            StateController.context.workspaceState.update(`${res.extensionId}.configuration`, StatusBarController.configuration);
+    public static putLocal(key: string, value: any) {
+        StateController.context?.workspaceState.update(`${res.extensionId}.${key}`, value);
     }
 
     public static getGlobal<TValue>(key: string): TValue | undefined {

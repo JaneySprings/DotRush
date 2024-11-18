@@ -6,7 +6,6 @@ import { StatusBarController } from './controllers/statusbarController';
 import { TestExplorerController } from './controllers/testExplorerController';
 import { ModulesView } from './features/modulesView';
 import { Interop } from './interop/interop';
-import { PublicExports } from './publicExports';
 import * as res from './resources/constants';
 import * as vscode from 'vscode';
 
@@ -15,8 +14,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.showErrorMessage(res.messageOmniSharpAlreadyInstalled, { modal: true });
 		return;
 	}
-	
-	const exports = new PublicExports();
+
 	Interop.initialize(context.extensionPath);
 
 	StateController.activate(context);
@@ -27,7 +25,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	TestExplorerController.activate(context);
 
 	ModulesView.feature.activate(context);
-	return exports;
 }
 export function deactivate() {
 	StateController.deactivate();

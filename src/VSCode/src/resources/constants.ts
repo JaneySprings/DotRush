@@ -19,6 +19,7 @@ export const commandIdSelectActiveConfiguration = "dotrush.selectActiveConfigura
 export const commandTitleSelectActiveConfiguration = "Select project configuration";
 export const commandIdActiveProjectPath = "dotrush.activeProjectPath";
 export const commandIdActiveConfiguration = "dotrush.activeConfiguration";
+export const commandIdSetStartupProject = "dotrush.setStartupProject";
 
 export const taskDefinitionId = "dotrush.task";
 export const extendedViewIdModules = "dotrush.modulesView";

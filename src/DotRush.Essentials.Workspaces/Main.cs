@@ -10,7 +10,7 @@ public class Program {
     public static readonly Dictionary<string, Action<string[]>> CommandHandler = new() {
         { "--list-proc", ListProcesses },
         { "--install-vsdbg", InstallDebugger },
-        { "--analyze-workspace", AnalyzeWorkspace }
+        { "--project", GetProject }
     };
 
     private static void Main(string[] args) {
@@ -44,11 +44,8 @@ public class Program {
         var processes = ProcessInfoProvider.GetProcesses();
         Console.WriteLine(JsonSerializer.Serialize(processes));
     }
-    public static void AnalyzeWorkspace(string[] args) {
-        var projects = new List<MSBuildProject>();
-        for (int i = 1; i < args.Length; i++)
-            projects.AddRange(MSBuildProjectsLoader.LoadProjects(args[i], CurrentSessionLogger.Debug));
-
-        Console.WriteLine(JsonSerializer.Serialize(projects));
+    public static void GetProject(string[] args) {
+        var project = MSBuildProjectsLoader.LoadProject(args[1], CurrentSessionLogger.Debug);
+        Console.WriteLine(JsonSerializer.Serialize(project));
     }
 }

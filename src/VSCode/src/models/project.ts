@@ -13,24 +13,23 @@ export interface Project {
 export class ProjectItem implements QuickPickItem {
     label: string;
     description: string;
-    detail: string;
-    item: Project;
+    item: string;
 
-    constructor(project: Project) {
-        this.label = project.name;
-        this.detail = project.path;
-        this.description = project.frameworks?.join('  ');
-        this.item = project;
+    constructor(projectPath: string) {
+        this.label = path.basename(projectPath, '.csproj');
+        this.description = '';
+        this.item = projectPath;
     }
+}
 
-    public static from(projectPath: string): ProjectItem {
-        return new ProjectItem({
-            name: path.basename(projectPath, '.csproj'),
-            path: projectPath,
-            frameworks: [],
-            configurations: [],
-            isTestProject: false,
-            isExecutable: false
-        });
+export class TargetFrameworkItem implements QuickPickItem {
+    label: string;
+    description: string;
+    item: string;
+
+    constructor(tfm: string, projectName: string) {
+        this.label = projectName;
+        this.description = tfm;
+        this.item = tfm;
     }
 }

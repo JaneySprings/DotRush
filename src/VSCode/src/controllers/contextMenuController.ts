@@ -1,5 +1,7 @@
 import { DotNetTaskProvider } from './../providers/dotnetTaskProvider';
+import { StatusBarController } from './statusbarController';
 import { ProjectItem } from './../models/project';
+import { Interop } from '../interop/interop';
 import * as res from './../resources/constants';
 import * as vscode from 'vscode';
 
@@ -25,6 +27,11 @@ export class ContextMenuController {
             if (projectFile !== undefined)
                 vscode.tasks.executeTask(DotNetTaskProvider.getTestTask(projectFile));
         }));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdSetStartupProject, async (path: vscode.Uri) => {
+            const projectFile = await ContextMenuController.selectProjectFileAsync(path);
+            if (projectFile !== undefined)
+                StatusBarController.performSelectProject(await Interop.getProject(projectFile));
+        }));
 
         vscode.commands.executeCommand('setContext', `dotrush.contextMenuEnabled`, true);
     }
@@ -41,7 +48,7 @@ export class ContextMenuController {
         if (files.length === 1)
             return files[0].fsPath;
 
-        const selectedItem = await vscode.window.showQuickPick(files.map(it => ProjectItem.from(it.fsPath)), { placeHolder: res.messageSelectProjectTitle });
-        return selectedItem?.item.path;
+        const selectedItem = await vscode.window.showQuickPick(files.map(it => new ProjectItem(it.fsPath)), { placeHolder: res.messageSelectProjectTitle });
+        return selectedItem?.item;
     }
 }

@@ -1,16 +1,15 @@
 import { StatusBarController } from './statusbarController';
 import { Interop } from '../interop/interop';
 import { TestCase } from '../models/test';
-import * as vscode from 'vscode';
-import * as path from 'path';
 import * as res from '../resources/constants'
+import * as vscode from 'vscode';
 
 export class TestExplorerController {
     private static controller: vscode.TestController;
-    private static testsResultDirectory: string;
+    // private static testsResultDirectory: string;
 
     public static activate(context: vscode.ExtensionContext) {
-        TestExplorerController.testsResultDirectory = path.join(context.extensionPath, "extension", "bin", "testResults");
+        // TestExplorerController.testsResultDirectory = path.join(context.extensionPath, "extension", "bin", "testResults");
 
         TestExplorerController.controller = vscode.tests.createTestController(res.testExplorerViewId, res.testExplorerViewTitle);
         TestExplorerController.controller.refreshHandler = TestExplorerController.refreshTests;
@@ -21,17 +20,26 @@ export class TestExplorerController {
     }
     public static async refreshTests(): Promise<void> {
         TestExplorerController.controller.items.replace([]);
+        if (StatusBarController.project === undefined)
+            return;
 
-        for (const project of StatusBarController.projects) {
-            const discoveredTests = await Interop.getTests(project.path);
-            if (discoveredTests.length === 0)
-                continue;
+        const convertItems = (tests: TestCase[]) => tests.map(t => {
+            const item = TestExplorerController.controller.createTestItem(t.id, t.name, vscode.Uri.file(t.filePath));
+            if (t.range !== null)
+                item.range = t.range;
+            if (t.children !== null)
+                item.children.replace(convertItems(t.children));
+            return item;
+        });
 
-            const testItems = TestExplorerController.convertTestItems(discoveredTests);
-            const root = TestExplorerController.controller.createTestItem(project.name, project.name);
-            root.children.replace(testItems);
-            TestExplorerController.controller.items.add(root);
-        }
+        const project = StatusBarController.project;
+        const discoveredTests = await Interop.getTests(project.path);
+        if (discoveredTests.length === 0)
+            return;
+
+        const root = TestExplorerController.controller.createTestItem(project.name, project.name);
+        root.children.replace(convertItems(discoveredTests));
+        TestExplorerController.controller.items.add(root);
     }
 
 
@@ -126,17 +134,6 @@ export class TestExplorerController {
     //         }, 120000);
     //     });
     // }
-
-    private static convertTestItems(tests: TestCase[]): vscode.TestItem[] {
-        return tests.map(t => {
-            const item = this.controller.createTestItem(t.id, t.name, vscode.Uri.file(t.filePath));
-            if (t.range !== null)
-                item.range = t.range;
-            if (t.children !== null)
-                item.children.replace(TestExplorerController.convertTestItems(t.children));
-            return item;
-        });
-    }
     // private static convertTestRequest(request: vscode.TestRunRequest) : Map<vscode.TestItem, vscode.TestItem[]> {
     //     const testItems = new Map<vscode.TestItem, vscode.TestItem[]>();
     //     const getRootNode = (item: vscode.TestItem) : vscode.TestItem => {

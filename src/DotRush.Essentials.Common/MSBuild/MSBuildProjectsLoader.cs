@@ -1,23 +1,19 @@
 namespace DotRush.Essentials.Common.MSBuild;
 
 public static class MSBuildProjectsLoader {
-    public static IEnumerable<MSBuildProject> LoadProjects(string workspacePath, Action<string>? callback = null) {
-        var projects = new List<MSBuildProject>();
-        if (!Directory.Exists(workspacePath)) {
-            callback?.Invoke($"Could not find workspace directory {workspacePath}");
-            return projects;
+    public static MSBuildProject? LoadProject(string projectFile, Action<string>? callback = null) {
+        if (!File.Exists(projectFile)) {
+            callback?.Invoke($"Could not find workspace directory {projectFile}");
+            return null;
         }
 
-        foreach (var projectFile in Directory.EnumerateFiles(workspacePath, "*.*proj", SearchOption.AllDirectories)) {
-            var project = new MSBuildProject(projectFile);
-            project.Configurations = GetConfigurations(project);
-            project.Frameworks = GetTargetFrameworks(project);
-            project.IsTestProject = IsTestProject(project);
-            project.IsExecutable = IsProjectExecutable(project);
-            projects.Add(project);
-        }
+        var project = new MSBuildProject(projectFile);
+        project.Configurations = GetConfigurations(project);
+        project.Frameworks = GetTargetFrameworks(project);
+        project.IsTestProject = IsTestProject(project);
+        project.IsExecutable = IsProjectExecutable(project);
 
-        return projects.OrderBy(x => x.Name);
+        return project;
     }
 
     private static bool IsProjectExecutable(MSBuildProject project) {

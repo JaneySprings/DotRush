@@ -19,10 +19,10 @@ export class Interop {
         Interop.testExplorerToolPath = path.join(extensionPath, "extension", "bin", "TestExplorer", "DotRush.Essentials.TestExplorer" + Interop.execExtension);
     }
 
-    public static async getProjects(folders: string[]): Promise<Project[]> {
-        return await ProcessRunner.runAsync<Project[]>(new ProcessArgumentBuilder(Interop.workspacesToolPath)
-            .append("--analyze-workspace")
-            .append(...folders));
+    public static async getProject(projectFile: string): Promise<Project> {
+        return await ProcessRunner.runAsync<Project>(new ProcessArgumentBuilder(Interop.workspacesToolPath)
+            .append("--project")
+            .append(projectFile));
     }
     public static async getTests(projectFile: string): Promise<TestCase[]> {
         return await ProcessRunner.runAsync<TestCase[]>(new ProcessArgumentBuilder(Interop.testExplorerToolPath)
