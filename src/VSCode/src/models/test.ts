@@ -1,4 +1,4 @@
-import { Range } from "vscode";
+import { Range, TestItem, TestController, Uri } from "vscode";
 
 export interface TestCase {
     id: string;
@@ -13,4 +13,15 @@ export interface TestResult {
     duration: string;
     state: string;
     errorMessage: string | null;
+}
+
+export class TestCaseExtensions {
+    public static toTestItem(test: TestCase, controller: TestController): TestItem {
+        const item = controller.createTestItem(test.id, test.name, Uri.file(test.filePath));
+        if (test.range !== null)
+            item.range = test.range;
+        if (test.children !== null)
+            item.children.replace(test.children.map(c => TestCaseExtensions.toTestItem(c, controller)));
+        return item;
+    }
 }

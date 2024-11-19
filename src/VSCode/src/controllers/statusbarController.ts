@@ -16,7 +16,15 @@ export class StatusBarController {
     public static configuration: string | undefined;
     public static framework: string | undefined;
 
-    public static activate(context: vscode.ExtensionContext) {
+    public static async activate(context: vscode.ExtensionContext): Promise<void> {
+        if (vscode.extensions.getExtension(res.extensionMeteorId) !== undefined) {
+            const exports = await vscode.extensions.getExtension(res.extensionMeteorId)?.activate();
+            exports?.onActiveProjectChanged?.add((p: Project) => StatusBarController.project = p);
+            exports?.onActiveConfigurationChanged?.add((c: string) => StatusBarController.configuration = c);
+            exports?.onActiveFrameworkChanged?.add((f: string) => StatusBarController.framework = f);
+            return;
+        }
+
         StatusBarController.projectStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
         StatusBarController.configurationStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
         StatusBarController.projectDecorationProvider = new StartupProjectDecorationProvider();
@@ -39,6 +47,7 @@ export class StatusBarController {
         }));
 
         StatusBarController.update();
+        vscode.commands.executeCommand('setContext', res.commandIdStatusBarEnabled, true);
     }
     public static async update() : Promise<void> {
         let projectPath = StateController.getLocal<string>('project');

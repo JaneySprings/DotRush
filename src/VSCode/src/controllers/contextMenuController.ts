@@ -10,7 +10,7 @@ export class ContextMenuController {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdBuildProject, async (path: vscode.Uri) => {
             const projectFile = await ContextMenuController.selectProjectFileAsync(path);
             if (projectFile !== undefined)
-                vscode.tasks.executeTask(DotNetTaskProvider.getBuildTask(projectFile));
+                vscode.tasks.executeTask(DotNetTaskProvider.getBuildTask(projectFile, StatusBarController.configuration));
         }));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRestoreProject, async (path: vscode.Uri) => {
             const projectFile = await ContextMenuController.selectProjectFileAsync(path);
@@ -25,15 +25,13 @@ export class ContextMenuController {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdTestProject, async (path: vscode.Uri) => {
             const projectFile = await ContextMenuController.selectProjectFileAsync(path);
             if (projectFile !== undefined)
-                vscode.tasks.executeTask(DotNetTaskProvider.getTestTask(projectFile));
+                vscode.tasks.executeTask(DotNetTaskProvider.getTestTask(projectFile, StatusBarController.configuration));
         }));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdSetStartupProject, async (path: vscode.Uri) => {
             const projectFile = await ContextMenuController.selectProjectFileAsync(path);
             if (projectFile !== undefined)
                 StatusBarController.performSelectProject(await Interop.getProject(projectFile));
         }));
-
-        vscode.commands.executeCommand('setContext', `dotrush.contextMenuEnabled`, true);
     }
 
     private static async selectProjectFileAsync(targetUri: vscode.Uri): Promise<string | undefined> {

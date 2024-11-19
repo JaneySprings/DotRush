@@ -1,8 +1,8 @@
-import { StatusBarController } from './statusbarController';
+import { TestCaseExtensions } from '../models/test';
 import { Interop } from '../interop/interop';
-import { TestCase } from '../models/test';
 import * as res from '../resources/constants'
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 export class TestExplorerController {
     private static controller: vscode.TestController;
@@ -17,29 +17,22 @@ export class TestExplorerController {
         context.subscriptions.push(TestExplorerController.controller);
         context.subscriptions.push(TestExplorerController.controller.createRunProfile('Run Tests', vscode.TestRunProfileKind.Run, TestExplorerController.runTests));
         context.subscriptions.push(TestExplorerController.controller.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, TestExplorerController.debugTests));
+        TestExplorerController.refreshTests();
     }
     public static async refreshTests(): Promise<void> {
         TestExplorerController.controller.items.replace([]);
-        if (StatusBarController.project === undefined)
-            return;
 
-        const convertItems = (tests: TestCase[]) => tests.map(t => {
-            const item = TestExplorerController.controller.createTestItem(t.id, t.name, vscode.Uri.file(t.filePath));
-            if (t.range !== null)
-                item.range = t.range;
-            if (t.children !== null)
-                item.children.replace(convertItems(t.children));
-            return item;
-        });
+        const projects = await vscode.workspace.findFiles('**/*Tests.*csproj');
+        for (const project of projects) {
+            const projectName = path.basename(project.fsPath, '.csproj');
+            const discoveredTests = await Interop.getTests(project.fsPath);
+            if (discoveredTests.length === 0)
+                continue;
 
-        const project = StatusBarController.project;
-        const discoveredTests = await Interop.getTests(project.path);
-        if (discoveredTests.length === 0)
-            return;
-
-        const root = TestExplorerController.controller.createTestItem(project.name, project.name);
-        root.children.replace(convertItems(discoveredTests));
-        TestExplorerController.controller.items.add(root);
+            const root = TestExplorerController.controller.createTestItem(projectName, projectName);
+            root.children.replace(discoveredTests.map(t => TestCaseExtensions.toTestItem(t, TestExplorerController.controller)));
+            TestExplorerController.controller.items.add(root);
+        }
     }
 
 

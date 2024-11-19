@@ -8,22 +8,22 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
         if (StatusBarController.project == undefined || StatusBarController.configuration === undefined)
             return undefined;
         
-        return DotNetTaskProvider.getTask(task.definition, StatusBarController.project.path, 'build');
+        return DotNetTaskProvider.getTask(task.definition, StatusBarController.project.path, 'build', StatusBarController.configuration, StatusBarController.framework);
     }
     provideTasks(token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task[]> {
         if (StatusBarController.project == undefined || StatusBarController.configuration === undefined)
             return undefined;
         
         return [ 
-            DotNetTaskProvider.getTask({ type: res.taskDefinitionId }, StatusBarController.project.path, 'build')
+            DotNetTaskProvider.getTask({ type: res.taskDefinitionId }, StatusBarController.project.path, 'build', StatusBarController.configuration, StatusBarController.framework),
         ];
     }
 
-    public static getTestTask(projectFile: string): vscode.Task {
+    public static getTestTask(projectFile: string, configuration: string | undefined): vscode.Task {
         return DotNetTaskProvider.getTask({ type: res.taskDefinitionId }, projectFile, 'test');
     }
-    public static getBuildTask(projectFile: string): vscode.Task {
-        return DotNetTaskProvider.getTask({ type: res.taskDefinitionId }, projectFile, 'build');
+    public static getBuildTask(projectFile: string, configuration: string | undefined): vscode.Task {
+        return DotNetTaskProvider.getTask({ type: res.taskDefinitionId }, projectFile, 'build', configuration);
     }
     public static getRestoreTask(projectFile: string): vscode.Task {
         return DotNetTaskProvider.getTask({ type: res.taskDefinitionId }, projectFile, 'restore');
@@ -32,10 +32,11 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
         return DotNetTaskProvider.getTask({ type: res.taskDefinitionId }, projectFile, 'clean');
     }
 
-    private static getTask(definition: vscode.TaskDefinition, projectPath: string, target: string): vscode.Task {
+    private static getTask(definition: vscode.TaskDefinition, projectPath: string, target: string, configuration: string | undefined = undefined, framework: string | undefined = undefined): vscode.Task {
         const builder = new ProcessArgumentBuilder('dotnet')
             .append(target).append(projectPath)
-            .append(`-p:Configuration=${StatusBarController.configuration}`);
+            .conditional(`-p:Configuration=${configuration}`, () => configuration !== undefined)
+            .conditional(`-p:TargetFramework=${framework}`, () => framework !== undefined);
 
         definition.args?.forEach((arg: string) => builder.override(arg));
         

@@ -70,27 +70,27 @@
         {
           "command": "dotrush.setStartupProject",
           "group": "dotnet_0@1",
-          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
+          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
         },
         {
           "command": "dotrush.test",
           "group": "dotnet_1@0",
-          "when": "dotrush.contextMenuEnabled && (resourceFilename =~ /.*Tests.*/)"
+          "when": "(resourceFilename =~ /.*Tests.*/)"
         },
         {
           "command": "dotrush.build",
           "group": "dotnet_1@1",
-          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
+          "when": "(explorerResourceIsFolder || resourceExtname == .csproj)"
         },
         {
           "command": "dotrush.restore",
           "group": "dotnet_1@2",
-          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
+          "when": "(explorerResourceIsFolder || resourceExtname == .csproj)"
         },
         {
           "command": "dotrush.clean",
           "group": "dotnet_1@3",
-          "when": "dotrush.contextMenuEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
+          "when": "(explorerResourceIsFolder || resourceExtname == .csproj)"
         }
       ]
     },
@@ -201,6 +201,20 @@
             }
           }
         }
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "csharp"
+      },
+      {
+        "language": "fsharp"
+      },
+      {
+        "language": "razor"
+      },
+      {
+        "language": "aspnetcorerazor"
       }
     ],
     "taskDefinitions": [

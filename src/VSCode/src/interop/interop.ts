@@ -37,10 +37,11 @@ export class Interop {
         return await ProcessRunner.runAsync<Status>(new ProcessArgumentBuilder(Interop.workspacesToolPath)
             .append("--install-vsdbg"));
     }
-    public static getPropertyValue(propertyName: string, project: Project, configuration: string) : string | undefined {
+    public static getPropertyValue(propertyName: string, project: Project, configuration: string | undefined, framework: string | undefined) : string | undefined {
         return ProcessRunner.runSync(new ProcessArgumentBuilder("dotnet")
             .append("msbuild").append(project.path)
             .append(`-getProperty:${propertyName}`)
-            .conditional(`-p:Configuration=${configuration}`, () => configuration));
+            .conditional(`-p:Configuration=${configuration}`, () => configuration)
+            .conditional(`-p:TargetFramework=${framework}`, () => framework));
     }
 }

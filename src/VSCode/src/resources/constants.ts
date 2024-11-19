@@ -2,6 +2,7 @@ export const extensionId = "dotrush";
 export const extensionPublisher = "nromanov";
 
 export const extensionMicrosoftId = "ms-dotnettools.csharp";
+export const extensionMeteorId = "nromanov.dotnet-meteor";
 export const microsoftProblemMatcherId = "msCompile";
 export const debuggerVsdbgId = "coreclr";
 export const debuggerVsdbgTitle = ".NET Core Debugger";
@@ -20,6 +21,7 @@ export const commandTitleSelectActiveConfiguration = "Select project configurati
 export const commandIdActiveProjectPath = "dotrush.activeProjectPath";
 export const commandIdActiveConfiguration = "dotrush.activeConfiguration";
 export const commandIdSetStartupProject = "dotrush.setStartupProject";
+export const commandIdStatusBarEnabled = "dotrush.statusBarEnabled";
 
 export const taskDefinitionId = "dotrush.task";
 export const extendedViewIdModules = "dotrush.modulesView";

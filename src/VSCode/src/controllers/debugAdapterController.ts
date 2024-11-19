@@ -23,7 +23,7 @@ export class DebugAdapterController {
         if (StatusBarController.project === undefined || StatusBarController.configuration === undefined)
             return await DebugAdapterController.pickProgramPath();
 
-        const assemblyPath = Interop.getPropertyValue('TargetPath', StatusBarController.project, StatusBarController.configuration);
+        const assemblyPath = Interop.getPropertyValue('TargetPath', StatusBarController.project, StatusBarController.configuration, StatusBarController.framework);
 		if (!assemblyPath)
 			return await DebugAdapterController.pickProgramPath();
 
