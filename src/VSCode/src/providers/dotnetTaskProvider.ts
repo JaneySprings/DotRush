@@ -19,11 +19,11 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
         ];
     }
 
-    public static getTestTask(projectFile: string, configuration: string | undefined): vscode.Task {
-        return DotNetTaskProvider.getTask({ type: res.taskDefinitionId }, projectFile, 'test');
+    public static getTestTask(projectFile: string, args: string[] | undefined = undefined): vscode.Task {
+        return DotNetTaskProvider.getTask({ type: res.taskDefinitionId, args: args }, projectFile, 'test', StatusBarController.configuration);
     }
-    public static getBuildTask(projectFile: string, configuration: string | undefined): vscode.Task {
-        return DotNetTaskProvider.getTask({ type: res.taskDefinitionId }, projectFile, 'build', configuration);
+    public static getBuildTask(projectFile: string): vscode.Task {
+        return DotNetTaskProvider.getTask({ type: res.taskDefinitionId }, projectFile, 'build', StatusBarController.configuration);
     }
     public static getRestoreTask(projectFile: string): vscode.Task {
         return DotNetTaskProvider.getTask({ type: res.taskDefinitionId }, projectFile, 'restore');

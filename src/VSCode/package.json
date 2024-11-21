@@ -73,11 +73,6 @@
           "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
         },
         {
-          "command": "dotrush.test",
-          "group": "dotnet_1@0",
-          "when": "(resourceFilename =~ /.*Tests.*/)"
-        },
-        {
           "command": "dotrush.build",
           "group": "dotnet_1@1",
           "when": "(explorerResourceIsFolder || resourceExtname == .csproj)"
@@ -106,26 +101,27 @@
     "commands": [
       {
         "command": "dotrush.restartServer",
+        "category": "%extension.displayName%",
         "title": "%command.title.restartServer%"
       },
       {
         "command": "dotrush.setStartupProject",
+        "category": "%extension.displayName%",
         "title": "%command.title.setStartupProject%"
       },
       {
-        "command": "dotrush.test",
-        "title": "%command.title.test%"
-      },
-      {
         "command": "dotrush.build",
+        "category": "%extension.displayName%",
         "title": "%command.title.build%"
       },
       {
         "command": "dotrush.restore",
+        "category": "%extension.displayName%",
         "title": "%command.title.restore%"
       },
       {
         "command": "dotrush.clean",
+        "category": "%extension.displayName%",
         "title": "%command.title.clean%"
       }
     ],

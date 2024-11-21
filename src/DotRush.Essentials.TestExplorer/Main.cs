@@ -4,7 +4,9 @@ namespace DotRush.Essentials.TestExplorer;
 
 public class Program {
     public static readonly Dictionary<string, Action<string[]>> CommandHandler = new() {
-        { "--list-tests", DiscoverTests }
+        { "--list-tests", DiscoverTests },
+        { "--convert", ConvertReport },
+        { "--run", RunTestHost }
     };
 
     private static void Main(string[] args) {
@@ -17,5 +19,13 @@ public class Program {
     public static void DiscoverTests(string[] args) {
         var tests = TestExplorer.DiscoverTests(args[1]);
         Console.WriteLine(JsonSerializer.Serialize(tests));
+    }
+    public static void ConvertReport(string[] args) {
+        var results = ReportConverter.ReadReport(args[1]);
+        Console.WriteLine(JsonSerializer.Serialize(results));
+    }
+    public static void RunTestHost(string[] args) {
+        var result = TestHost.RunForDebugAsync(args[1]).Result;
+        Console.WriteLine(JsonSerializer.Serialize(result));
     }
 }

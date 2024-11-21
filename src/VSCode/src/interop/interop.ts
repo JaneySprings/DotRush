@@ -3,7 +3,7 @@ import { ProcessRunner } from './processRunner';
 import { Project } from '../models/project';
 import { Process } from '../models/process';
 import { Status } from '../models/status';
-import { TestCase } from '../models/test';
+import { TestCase, TestResult } from '../models/test';
 import * as path from 'path';
 
 
@@ -29,6 +29,11 @@ export class Interop {
             .append("--list-tests")
             .append(projectFile));
     }
+    public static async getTestResults(reportFile: string): Promise<TestResult[]> {
+        return await ProcessRunner.runAsync<TestResult[]>(new ProcessArgumentBuilder(Interop.testExplorerToolPath)
+            .append("--convert")
+            .append(reportFile));
+    }
     public static async getProcesses(): Promise<Process[]> {
         return await ProcessRunner.runAsync<Process[]>(new ProcessArgumentBuilder(Interop.workspacesToolPath)
             .append("--list-proc"));
@@ -36,6 +41,11 @@ export class Interop {
     public static async installDebugger(): Promise<Status> {
         return await ProcessRunner.runAsync<Status>(new ProcessArgumentBuilder(Interop.workspacesToolPath)
             .append("--install-vsdbg"));
+    }
+    public static async runTestHost(invocation: string): Promise<number> {
+        return await ProcessRunner.runDetached<number>(new ProcessArgumentBuilder(Interop.testExplorerToolPath)
+            .append("--run")
+            .append(invocation));
     }
     public static getPropertyValue(propertyName: string, project: Project, configuration: string | undefined, framework: string | undefined) : string | undefined {
         return ProcessRunner.runSync(new ProcessArgumentBuilder("dotnet")

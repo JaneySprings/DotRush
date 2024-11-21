@@ -1,4 +1,4 @@
-import { spawnSync, exec } from 'child_process';
+import { spawnSync, spawn } from 'child_process';
 import { ProcessArgumentBuilder } from './processArgumentBuilder';
 
 export class ProcessRunner {
@@ -11,15 +11,36 @@ export class ProcessRunner {
         return result.stdout.toString().trimEnd();
     }
     public static runAsync<TModel>(builder: ProcessArgumentBuilder): Promise<TModel> {
-        return new Promise<TModel>((resolve, reject) => { 
-            exec(builder.build(), (error, stdout, stderr) => {
-                if (error) {
-                    console.error(stderr);
-                    reject(stderr);
-                }
-
-                resolve(JSON.parse(stdout.toString()));
-            })
+        return new Promise((resolve) => {
+            const child = spawn(builder.getCommand(), builder.getArguments(), {
+                stdio: ['ignore', 'pipe', 'pipe'],
+                detached: true,
+            });
+    
+            let output = '';
+            child.stdout?.on('data', (data) => {
+                output += data.toString().trimEnd();
+            });
+            child.stderr?.on('data', (data) => {
+                console.error(data.toString());
+            });
+            child.on('close', () => {
+                resolve(JSON.parse(output));
+            });
+            child.unref();
+        });
+    }
+    public static runDetached<TModel>(builder: ProcessArgumentBuilder): Promise<TModel> {
+        return new Promise((resolve) => {
+            const child = spawn(builder.getCommand(), builder.getArguments(), {
+                detached: true,
+                stdio: ['ignore', 'pipe', 'ignore'],
+            });
+   
+            child.stdout?.on('data', (data) => {
+                resolve(JSON.parse(data.toString().trimEnd()));
+            });
+            child.unref();
         });
     }
 }

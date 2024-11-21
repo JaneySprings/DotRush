@@ -1,21 +1,26 @@
-// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the MIT license.
-// dotnet/sdk/src/BuiltInTools/dotnet-format/Utilities/ProcessRunner.cs
-
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-
 namespace DotRush.Essentials.Common.External;
 
-public readonly struct ProcessResult {
-    public Process Process { get; }
-    public int ExitCode { get; }
-    public ReadOnlyCollection<string> OutputLines { get; }
-    public ReadOnlyCollection<string> ErrorLines { get; }
+public class ProcessResult {
+    public List<string> StandardOutput { get; }
+    public List<string> StandardError  { get; }
+    public int ExitCode  { get; }
 
-    public ProcessResult(Process process, int exitCode, ReadOnlyCollection<string> outputLines, ReadOnlyCollection<string> errorLines) {
-        Process = process;
-        ExitCode = exitCode;
-        OutputLines = outputLines;
-        ErrorLines = errorLines;
+    public bool Success => this.ExitCode == 0;
+
+    public string GetAllOutput() {
+        return string.Join(Environment.NewLine, this.StandardOutput.Concat(this.StandardError));
+    }
+
+    public string GetOutput() {
+        return string.Join(Environment.NewLine, this.StandardOutput);
+    }
+    public string GetError() {
+        return string.Join(Environment.NewLine, this.StandardError);
+    }
+
+    internal ProcessResult(List<string> stdOut, List<string> stdErr, int exitCode) {
+        this.StandardOutput = stdOut;
+        this.StandardError = stdErr;
+        this.ExitCode = exitCode;
     }
 }

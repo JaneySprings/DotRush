@@ -1,15 +1,17 @@
-import { TestCaseExtensions } from '../models/test';
+import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
+import { TestExtensions } from '../models/test';
 import { Interop } from '../interop/interop';
 import * as res from '../resources/constants'
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 
 export class TestExplorerController {
     private static controller: vscode.TestController;
-    // private static testsResultDirectory: string;
+    private static testsResultDirectory: string;
 
     public static activate(context: vscode.ExtensionContext) {
-        // TestExplorerController.testsResultDirectory = path.join(context.extensionPath, "extension", "bin", "testResults");
+        TestExplorerController.testsResultDirectory = path.join(context.extensionPath, "extension", "bin", "TestExplorer");
 
         TestExplorerController.controller = vscode.tests.createTestController(res.testExplorerViewId, res.testExplorerViewTitle);
         TestExplorerController.controller.refreshHandler = TestExplorerController.refreshTests;
@@ -19,6 +21,7 @@ export class TestExplorerController {
         context.subscriptions.push(TestExplorerController.controller.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, TestExplorerController.debugTests));
         TestExplorerController.refreshTests();
     }
+
     public static async refreshTests(): Promise<void> {
         TestExplorerController.controller.items.replace([]);
 
@@ -29,132 +32,108 @@ export class TestExplorerController {
             if (discoveredTests.length === 0)
                 continue;
 
-            const root = TestExplorerController.controller.createTestItem(projectName, projectName);
-            root.children.replace(discoveredTests.map(t => TestCaseExtensions.toTestItem(t, TestExplorerController.controller)));
+            const root = TestExplorerController.controller.createTestItem(projectName, projectName, project);
+            root.children.replace(discoveredTests.map(t => TestExtensions.toTestItem(t, TestExplorerController.controller)));
             TestExplorerController.controller.items.add(root);
         }
     }
 
-
     private static async runTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
-        // TestController.convertTestRequest(request).forEach(async(value, key) => {
-        //     const run = TestController.controller.createTestRun(request);
-        //     const results = await TestController.runTestAdapter(value, key, run);
-        //     if (results.length === 0) {
-        //         run.end();
-        //         return;
-        //     }
-            
-        //     const testNodes = TestController.getFlattenTestNodes(key);
-        //     results.forEach(result => {
-        //         const duration = Number(result.duration.match(/\d+/g)?.join('')) / 10000;
-        //         const testItem = testNodes.find(t => t.id === result.fullName);
-        //         if (testItem === undefined)
-        //             return;
+        TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {
+            if (project.uri === undefined)
+                return;
 
-        //         if (result.state === 'Passed')
-        //             run.passed(testItem, duration);
-        //         else if (result.state === 'Failed')
-        //             run.failed(testItem, new vscode.TestMessage(result.errorMessage ?? ''), duration);
-        //         else
-        //             run.skipped(testItem);
-        //     });
-        //     run.end();
-        // });
+            const testsReport = path.join(TestExplorerController.testsResultDirectory, `${project.label}.trx`);
+            if (fs.existsSync(testsReport))
+                vscode.workspace.fs.delete(vscode.Uri.file(testsReport));
+
+            const testArguments: string[] = [ '--logger',`'trx;LogFileName=${testsReport}'` ];
+            if (filters.length > 0) {
+                testArguments.push('--filter');
+                testArguments.push(`'${filters.join('|')}'`);
+            }
+            
+            const testRun = TestExplorerController.controller.createTestRun(request);
+            const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getTestTask(project.uri?.fsPath, testArguments));
+            await new Promise<void>((resolve) => vscode.tasks.onDidEndTask(e => {
+                if (e.execution.task === execution.task)
+                    resolve();
+            }));
+
+            const testResults = await Interop.getTestResults(testsReport);
+            const testNodes = TestExplorerController.getAllChildren(project);
+            testResults.forEach(result => {
+                const duration = Number(result.duration.match(/\d+/g)?.join('')) / 10000;
+                const testItem = testNodes.find(t => t.id === result.fullName);
+                if (testItem === undefined)
+                    return;
+
+                if (result.state === 'Passed')
+                    testRun.passed(testItem, duration);
+                else if (result.state === 'Failed')
+                    testRun.failed(testItem, TestExtensions.toTestMessage(result), duration);
+                else
+                    testRun.skipped(testItem);
+            });
+            testRun.end();
+        });
     }
     private static async debugTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
-        // TestController.convertTestRequest(request).forEach(async(value, key) => {
-        //     const pid = await TestController.debugTestAdapter(value, key);
-        //     if (pid <= 0)
-        //         return;
+        TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {
+            if (project.uri === undefined)
+                return;
+            
+            const testsReport = path.join(TestExplorerController.testsResultDirectory, `${project.label}.trx`);
+            if (fs.existsSync(testsReport))
+                vscode.workspace.fs.delete(vscode.Uri.file(testsReport));
 
-        //     const run = TestController.controller.createTestRun(request);
-        //     await vscode.debug.startDebugging(undefined, {
-        //         "name": "Debug Tests",
-        //         "type": res.debuggerVsdbgId,
-        //         "request": "attach",
-        //         "processId": pid
-        //     });
-        //     run.end();
-        // });
+            const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getBuildTask(project.uri?.fsPath));
+            await new Promise<void>((resolve) => vscode.tasks.onDidEndTask(e => {
+                if (e.execution.task === execution.task)
+                    resolve();
+            }));
+
+            const testArguments: string[] = [ 
+                project.uri.fsPath, '--no-build', `--logger trx;LogFileName=${testsReport}` 
+            ];
+            if (filters.length > 0) 
+                testArguments.push(`--filter ${filters.join('|')}`);
+    
+            const pid = await Interop.runTestHost(testArguments.join(' '));
+            await vscode.debug.startDebugging(undefined, {
+                "name": "Debug Tests",
+                "type": res.debuggerVsdbgId,
+                "request": "attach",
+                "processId": pid
+            });
+        });
     }
 
-    // private static async runTestAdapter(tests: vscode.TestItem[], root: vscode.TestItem, run: vscode.TestRun) : Promise<TestResult[]> {
-    //     const filter = tests.map(t => t.id).join('|');
-    //     const testsResultFile = path.join(TestController.testsResultDirectory, `${root.label}.trx`);
-    //     if (fs.existsSync(testsResultFile))
-    //         vscode.workspace.fs.delete(vscode.Uri.file(testsResultFile));
+    private static convertTestRequest(request: vscode.TestRunRequest) : Map<vscode.TestItem, string[]> {
+        const testItems = new Map<vscode.TestItem, string[]>();
+        const getRootNode = (item: vscode.TestItem) : vscode.TestItem => {
+            if (item.parent === undefined)
+                return item;
+            return getRootNode(item.parent);
+        }
 
-    //     const result = await ProcessRunner.getResultAsync(new ProcessArgumentBuilder("dotnet")
-    //         .append("test").appendQuoted(root.uri!.fsPath)
-    //         .append("--logger").appendQuoted(`trx;LogFileName=${testsResultFile}`)
-    //         .conditional('--filter', () => filter !== undefined && filter !== '')
-    //         .conditional(`\"${filter}\"`, () => filter !== undefined && filter !== ''));
+        request.include?.forEach(item => {
+            const rootNode = getRootNode(item);
+            if (!testItems.has(rootNode))
+                testItems.set(rootNode, []);
+            if (item.id !== rootNode.id)
+                testItems.get(rootNode)?.push(item.id);
+        });
 
-    //     run.appendOutput(result.stdout);
-    //     run.appendOutput(result.stderr);
-        
-    //     if (!fs.existsSync(testsResultFile))
-    //         return [];
-
-    //     return await Interop.getTestsResult(testsResultFile);
-    // }
-    // private static async debugTestAdapter(tests: vscode.TestItem[], root: vscode.TestItem) : Promise<number> {
-    //     const filter = tests.map(t => t.id).join('|');
-    //     const builder = new ProcessArgumentBuilder("dotnet")
-    //         .append("test").appendQuoted(root.uri!.fsPath)
-    //         .conditional('--filter', () => filter !== undefined && filter !== '')
-    //         .conditional(`\"${filter}\"`, () => filter !== undefined && filter !== '');
-
-    //     await vscode.tasks.executeTask(new vscode.Task(
-    //         {type: "process"}, vscode.TaskScope.Workspace, 
-    //         "Start Test Process", "dotnet", 
-    //         new vscode.ProcessExecution(builder.getCommand(), builder.getArguments(), { env: { "VSTEST_HOST_DEBUG": "1" } })
-    //     ));
-
-    //     return await new Promise<number>((resolve) => {
-    //         const interval = setInterval(async () => {
-    //             const processes = await Interop.getProcesses();
-    //             const hostProcesses = processes.filter(p => p.name === 'testhost');
-    //             if (hostProcesses.length > 0) {
-    //                 clearInterval(interval);
-    //                 resolve(hostProcesses.reduce((prev, current) => (prev.id > current.id) ? prev : current).id);
-    //             }
-    //         }, 500);
-    //         setTimeout(() => {
-    //             clearInterval(interval);
-    //             resolve(-1);
-    //         }, 120000);
-    //     });
-    // }
-    // private static convertTestRequest(request: vscode.TestRunRequest) : Map<vscode.TestItem, vscode.TestItem[]> {
-    //     const testItems = new Map<vscode.TestItem, vscode.TestItem[]>();
-    //     const getRootNode = (item: vscode.TestItem) : vscode.TestItem => {
-    //         if (item.parent === undefined)
-    //             return item;
-    //         return getRootNode(item.parent);
-    //     }
-
-    //     request.include?.forEach(item => {
-    //         const rootNode = getRootNode(item);
-    //         if (!testItems.has(rootNode))
-    //             testItems.set(rootNode, []);
-            
-    //         if (rootNode === item)
-    //             testItems.set(rootNode, []);
-    //         else
-    //             testItems.get(rootNode)?.push(item);
-    //     });
-
-    //     return testItems;
-    // }
-    // private static getFlattenTestNodes(root: vscode.TestItem) : vscode.TestItem[] {
-    //     const result: vscode.TestItem[] = [];
-    //     const pushNodes = (node: vscode.TestItemCollection) => node.forEach(n => {
-    //         result.push(n);
-    //         pushNodes(n.children);
-    //     });
-    //     pushNodes(root.children);
-    //     return result;
-    // }
+        return testItems;
+    }
+    private static getAllChildren(root: vscode.TestItem) : vscode.TestItem[] {
+        const result: vscode.TestItem[] = [];
+        const pushNodes = (node: vscode.TestItemCollection) => node.forEach(n => {
+            result.push(n);
+            pushNodes(n.children);
+        });
+        pushNodes(root.children);
+        return result;
+    }
 }
