@@ -98,7 +98,7 @@ export class StatusBarController {
 
         const project = StatusBarController.project;
         const items = project.frameworks.map(f => new TargetFrameworkItem(f, project.name));
-        const options = { placeHolder: res.commandTitleSelectActiveProject };
+        const options = { placeHolder: res.commandTitleSelectActiveFramework };
         const selectedItem = await vscode.window.showQuickPick(items, options);
 
         if (selectedItem !== undefined) 

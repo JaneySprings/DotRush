@@ -15,7 +15,7 @@ export const commandIdRestoreProject = "dotrush.restore";
 export const commandIdCleanProject = "dotrush.clean";
 
 export const commandIdSelectActiveProject = "dotrush.selectActiveProject";
-export const commandTitleSelectActiveProject = "Select workspace project";
+export const commandTitleSelectActiveFramework = "Select target framework";
 export const commandIdSelectActiveConfiguration = "dotrush.selectActiveConfiguration";
 export const commandTitleSelectActiveConfiguration = "Select project configuration";
 export const commandIdActiveProjectPath = "dotrush.activeProjectPath";
