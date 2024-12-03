@@ -19,6 +19,6 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
 		if (!config.processId && config.request === 'attach')
 			config.processId = await DebugAdapterController.getProcessId();
 
-        return config;
+        return DebugAdapterController.provideDebuggerOptions(config);
 	}
 }

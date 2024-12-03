@@ -3,6 +3,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DotRush.Essentials.Common;
+using DotRush.Essentials.Common.External;
 using DotRush.Essentials.Common.Logging;
 
 namespace DotRush.Essentials.Workspaces.Debugger;
@@ -86,6 +87,13 @@ public static class VsdbgDownloader {
         if (!File.Exists(executable)) {
             CurrentSessionLogger.Error($"Debugger executable not found: '{executable}'");
             return null;
+        }
+
+        if (!RuntimeInfo.IsWindows) {
+            var registrationResult = new ProcessRunner("chmod", new ProcessArgumentBuilder()
+                .Append("+x").AppendQuoted(executable)).WaitForExit();
+            if (!registrationResult.Success)
+                CurrentSessionLogger.Error($"Failed to register debugger executable: {registrationResult.GetError()}");
         }
 
         return executable;

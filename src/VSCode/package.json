@@ -183,6 +183,44 @@
               },
               "args": {
                 "type": "array"
+              },
+              "cwd": {
+                "type": "string"
+              },
+              "env": {
+                "type": "object"
+              },
+              "console": {
+                "type": "string",
+                "enum": [
+                  "internalConsole",
+                  "integratedTerminal",
+                  "externalTerminal"
+                ]
+              },
+              "sourceFileMap": {
+                "type": "object"
+              },
+              "justMyCode": {
+                "type": "boolean"
+              },
+              "requireExactSource": {
+                "type": "boolean"
+              },
+              "enableStepFiltering": {
+                "type": "boolean"
+              },
+              "pipeTransport": {
+                "type": "object"
+              },
+              "suppressJITOptimizations": {
+                "type": "boolean"
+              },
+              "symbolOptions": {
+                "type": "object"
+              },
+              "sourceLinkOptions": {
+                "type": "object"
               }
             }
           },
@@ -191,8 +229,23 @@
               "processId": {
                 "type": "string"
               },
-              "args": {
-                "type": "array"
+              "sourceFileMap": {
+                "type": "object"
+              },
+              "justMyCode": {
+                "type": "boolean"
+              },
+              "requireExactSource": {
+                "type": "boolean"
+              },
+              "enableStepFiltering": {
+                "type": "boolean"
+              },
+              "symbolOptions": {
+                "type": "object"
+              },
+              "sourceLinkOptions": {
+                "type": "object"
               }
             }
           }
@@ -285,6 +338,43 @@
             "type": "boolean",
             "default": true,
             "description": "%configuration.description.roslyn.useMultitargetDiagnostics%"
+          },
+          "dotrush.debugger.projectAssembliesOnly": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.debugger.projectAssembliesOnly%"
+          },
+          "dotrush.debugger.stepOverPropertiesAndOperators": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.debugger.stepOverPropertiesAndOperators%"
+          },
+          "dotrush.debugger.searchMicrosoftSymbolServer": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.debugger.searchMicrosoftSymbolServer%"
+          },
+          "dotrush.debugger.automaticSourcelinkDownload": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.description.debugger.automaticSourcelinkDownload%"
+          },
+          "dotrush.debugger.symbolSearchPaths": {
+            "type": "array",
+            "description": "%configuration.description.debugger.symbolSearchPaths%",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dotrush.debugger.console": {
+            "type": "string",
+            "default": "externalTerminal",
+            "description": "%configuration.description.debugger.console%",
+            "enum": [
+              "internalConsole",
+              "integratedTerminal",
+              "externalTerminal"
+            ]
           }
         }
       }

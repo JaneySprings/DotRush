@@ -19,6 +19,25 @@ export class DebugAdapterController {
             await DebugAdapterController.installDebugger();
     }
 
+    public static provideDebuggerOptions(options: vscode.DebugConfiguration): vscode.DebugConfiguration {
+        if (options.justMyCode === undefined)
+            options.justMyCode = DebugAdapterController.getSetting('debugger.projectAssembliesOnly', false);
+        if (options.enableStepFiltering === undefined)
+            options.enableStepFiltering = DebugAdapterController.getSetting('debugger.stepOverPropertiesAndOperators', false);
+        if (options.console === undefined)
+            options.console = DebugAdapterController.getSetting('debugger.console');
+        if (options.symbolOptions === undefined)
+            options.symbolOptions = {
+                searchPaths: DebugAdapterController.getSetting('debugger.symbolSearchPaths'),
+                searchMicrosoftSymbolServer: DebugAdapterController.getSetting('debugger.searchMicrosoftSymbolServer', false),
+            };
+        if (options.sourceLinkOptions === undefined)
+            options.sourceLinkOptions = {
+                "*": { enabled: DebugAdapterController.getSetting('debugger.automaticSourcelinkDownload', true) }
+            }
+
+        return options;
+    }
     public static async getProgramPath(): Promise<string | undefined> {
         if (StatusBarController.project === undefined || StatusBarController.configuration === undefined)
             return await DebugAdapterController.pickProgramPath();
@@ -58,17 +77,8 @@ export class DebugAdapterController {
             channel.show();
         }
     }
-//     private static async findProjectFile(directory: string): Promise<string | undefined> {
-//         const projectFiles = await vscode.workspace.findFiles(new vscode.RelativePattern(directory, '*.csproj'));
-// 		if (projectFiles.length > 1)
-// 			return undefined;
-//         if (projectFiles.length === 1)
-//             return projectFiles[0].fsPath;
-        
-//         const parentDirectory = path.dirname(directory);
-//         if (parentDirectory === directory)
-//             return undefined;
 
-//         return DebugAdapterController.findProjectFile(parentDirectory);
-//     }
+    public static getSetting(id: string, fallback: any = undefined): any {
+        return vscode.workspace.getConfiguration(res.extensionId).get(id) ?? fallback;
+    }
 }

@@ -55,9 +55,9 @@ export class TestExplorerController {
             
             const testRun = TestExplorerController.controller.createTestRun(request);
             const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getTestTask(project.uri?.fsPath, testArguments));
-            await new Promise<void>((resolve) => vscode.tasks.onDidEndTask(e => {
+            await new Promise<void>((resolve, reject) => vscode.tasks.onDidEndTaskProcess(e => {
                 if (e.execution.task === execution.task)
-                    resolve();
+                    e.exitCode === 0 ? resolve() : reject();
             }));
 
             const testResults = await Interop.getTestResults(testsReport);
@@ -88,9 +88,9 @@ export class TestExplorerController {
                 vscode.workspace.fs.delete(vscode.Uri.file(testsReport));
 
             const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getBuildTask(project.uri?.fsPath));
-            await new Promise<void>((resolve) => vscode.tasks.onDidEndTask(e => {
+            await new Promise<void>((resolve, reject) => vscode.tasks.onDidEndTaskProcess(e => {
                 if (e.execution.task === execution.task)
-                    resolve();
+                    e.exitCode === 0 ? resolve() : reject();
             }));
 
             const testArguments: string[] = [ 
