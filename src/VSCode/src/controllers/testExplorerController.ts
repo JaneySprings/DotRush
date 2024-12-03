@@ -117,6 +117,11 @@ export class TestExplorerController {
             return getRootNode(item.parent);
         }
 
+        if (request.include === undefined) {
+            TestExplorerController.controller.items.forEach(item => testItems.set(item, []));
+            return testItems;
+        }
+
         request.include?.forEach(item => {
             const rootNode = getRootNode(item);
             if (!testItems.has(rootNode))
