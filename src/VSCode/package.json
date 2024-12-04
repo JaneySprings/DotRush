@@ -1,0 +1,395 @@
+{
+  "name": "dotrush",
+  "publisher": "nromanov",
+  "version": "24.11.321",
+  "description": "Lightweight C# development environment for Visual Studio Code.",
+  "displayName": "DotRush",
+  "author": "Nikita Romanov",
+  "license": "MIT",
+  "icon": "assets/icon.png",
+  "preview": false,
+  "bugs": {
+    "url": "https://github.com/JaneySprings/DotRush/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JaneySprings/DotRush"
+  },
+  "sponsor": {
+    "url": "https://github.com/sponsors/JaneySprings"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Snippets"
+  ],
+  "keywords": [
+    "C#",
+    ".NET",
+    "csharp",
+    "dotnet"
+  ],
+  "engines": {
+    "vscode": "^1.73.0"
+  },
+  "activationEvents": [
+    "workspaceContains:**/*.csproj"
+  ],
+  "main": "extension/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "watch": "tsc -watch -p ./src/tsconfig.json",
+    "package": "webpack --mode production"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.73.0",
+    "ts-loader": "^9.4.1",
+    "typescript": "^4.8.4",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  },
+  "contributes": {
+    "themes": [
+      {
+        "label": "Visual Studio 2022 Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/vs2022_dark.json"
+      },
+      {
+        "label": "Visual Studio 2022 Light",
+        "uiTheme": "vs",
+        "path": "./themes/vs2022_light.json"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "dotrush.setStartupProject",
+          "group": "dotnet_0@1",
+          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
+        },
+        {
+          "command": "dotrush.build",
+          "group": "dotnet_1@1",
+          "when": "(explorerResourceIsFolder || resourceExtname == .csproj)"
+        },
+        {
+          "command": "dotrush.restore",
+          "group": "dotnet_1@2",
+          "when": "(explorerResourceIsFolder || resourceExtname == .csproj)"
+        },
+        {
+          "command": "dotrush.clean",
+          "group": "dotnet_1@3",
+          "when": "(explorerResourceIsFolder || resourceExtname == .csproj)"
+        }
+      ]
+    },
+    "views": {
+      "debug": [
+        {
+          "id": "dotrush.modulesView",
+          "name": "Modules",
+          "when": "debugType == coreclr"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "dotrush.restartServer",
+        "category": "%extension.displayName%",
+        "title": "%command.title.restartServer%"
+      },
+      {
+        "command": "dotrush.setStartupProject",
+        "category": "%extension.displayName%",
+        "title": "%command.title.setStartupProject%"
+      },
+      {
+        "command": "dotrush.build",
+        "category": "%extension.displayName%",
+        "title": "%command.title.build%"
+      },
+      {
+        "command": "dotrush.restore",
+        "category": "%extension.displayName%",
+        "title": "%command.title.restore%"
+      },
+      {
+        "command": "dotrush.clean",
+        "category": "%extension.displayName%",
+        "title": "%command.title.clean%"
+      }
+    ],
+    "debuggers": [
+      {
+        "program": "extension/bin/Debugger/vsdbg",
+        "windows": {
+          "program": "extension/bin/Debugger/vsdbg.exe"
+        },
+        "type": "coreclr",
+        "label": ".NET Core Debugger",
+        "languages": [
+          "csharp",
+          "fsharp",
+          "razor",
+          "aspnetcorerazor"
+        ],
+        "initialConfigurations": [
+          {
+            "name": ".NET Core Debugger (launch)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "dotrush: Build"
+          },
+          {
+            "name": ".NET Core Debugger (attach)",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:dotrush.pickProcess}"
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": ".NET Core Debugger (launch)",
+            "description": "Launch .NET Core Debugger",
+            "body": {
+              "name": ".NET Core Debugger (launch)",
+              "type": "coreclr",
+              "request": "launch",
+              "preLaunchTask": "dotrush: Build"
+            }
+          },
+          {
+            "label": ".NET Core Debugger (attach)",
+            "description": "Attach .NET Core Debugger",
+            "body": {
+              "name": ".NET Core Debugger (attach)",
+              "type": "coreclr",
+              "request": "attach",
+              "processId": "^\"\\${command:dotrush.pickProcess}\""
+            }
+          }
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "properties": {
+              "program": {
+                "type": "string"
+              },
+              "args": {
+                "type": "array"
+              },
+              "cwd": {
+                "type": "string"
+              },
+              "env": {
+                "type": "object"
+              },
+              "console": {
+                "type": "string",
+                "enum": [
+                  "internalConsole",
+                  "integratedTerminal",
+                  "externalTerminal"
+                ]
+              },
+              "sourceFileMap": {
+                "type": "object"
+              },
+              "justMyCode": {
+                "type": "boolean"
+              },
+              "requireExactSource": {
+                "type": "boolean"
+              },
+              "enableStepFiltering": {
+                "type": "boolean"
+              },
+              "pipeTransport": {
+                "type": "object"
+              },
+              "suppressJITOptimizations": {
+                "type": "boolean"
+              },
+              "symbolOptions": {
+                "type": "object"
+              },
+              "sourceLinkOptions": {
+                "type": "object"
+              }
+            }
+          },
+          "attach": {
+            "properties": {
+              "processId": {
+                "type": "string"
+              },
+              "sourceFileMap": {
+                "type": "object"
+              },
+              "justMyCode": {
+                "type": "boolean"
+              },
+              "requireExactSource": {
+                "type": "boolean"
+              },
+              "enableStepFiltering": {
+                "type": "boolean"
+              },
+              "symbolOptions": {
+                "type": "object"
+              },
+              "sourceLinkOptions": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "csharp"
+      },
+      {
+        "language": "fsharp"
+      },
+      {
+        "language": "razor"
+      },
+      {
+        "language": "aspnetcorerazor"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "dotrush.task",
+        "required": [],
+        "properties": {
+          "args": {
+            "type": "array",
+            "default": [],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "configuration": [
+      {
+        "title": "%extension.displayName%",
+        "properties": {
+          "dotrush.roslyn.workspaceProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "%configuration.description.roslyn.workspaceProperties%"
+          },
+          "dotrush.roslyn.projectFiles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "%configuration.description.roslyn.projectFiles%"
+          },
+          "dotrush.roslyn.excludePatterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "%configuration.description.roslyn.excludePatterns%"
+          },
+          "dotrush.roslyn.showItemsFromUnimportedNamespaces": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.roslyn.showItemsFromUnimportedNamespaces%"
+          },
+          "dotrush.roslyn.skipUnrecognizedProjects": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.description.roslyn.skipUnrecognizedProjects%"
+          },
+          "dotrush.roslyn.loadMetadataForReferencedProjects": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.roslyn.loadMetadataForReferencedProjects%"
+          },
+          "dotrush.roslyn.restoreProjectsBeforeLoading": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.description.roslyn.restoreProjectsBeforeLoading%"
+          },
+          "dotrush.roslyn.compileProjectsAfterLoading": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.description.roslyn.compileProjectsAfterLoading%"
+          },
+          "dotrush.roslyn.useMultitargetDiagnostics": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.description.roslyn.useMultitargetDiagnostics%"
+          },
+          "dotrush.debugger.projectAssembliesOnly": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.debugger.projectAssembliesOnly%"
+          },
+          "dotrush.debugger.stepOverPropertiesAndOperators": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.debugger.stepOverPropertiesAndOperators%"
+          },
+          "dotrush.debugger.searchMicrosoftSymbolServer": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.debugger.searchMicrosoftSymbolServer%"
+          },
+          "dotrush.debugger.automaticSourcelinkDownload": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.description.debugger.automaticSourcelinkDownload%"
+          },
+          "dotrush.debugger.symbolSearchPaths": {
+            "type": "array",
+            "description": "%configuration.description.debugger.symbolSearchPaths%",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dotrush.debugger.console": {
+            "type": "string",
+            "default": "externalTerminal",
+            "description": "%configuration.description.debugger.console%",
+            "enum": [
+              "internalConsole",
+              "integratedTerminal",
+              "externalTerminal"
+            ]
+          }
+        }
+      }
+    ],
+    "configurationDefaults": {
+      "debug.hideSlowPreLaunchWarning": true,
+      "explorer.fileNesting.expand": false,
+      "explorer.fileNesting.enabled": true,
+      "explorer.fileNesting.patterns": {
+        "*.xaml": "${capture}.xaml.cs",
+        "*.axaml": "${capture}.axaml.cs"
+      },
+      "editor.quickSuggestions": {
+        "strings": "on"
+      }
+    }
+  }
+}
