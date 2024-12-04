@@ -4,5 +4,5 @@
 
 ---
 <p align="center">
-<a href="https://github.com/JaneySprings/DotRush/blob/main/src/VSCode/Readme.md">VSCode README</a> | <a href="https://github.com/JaneySprings/DotRush/blob/main/src/NeoVim/Readme.md">NeoVim README</a>
+<a href="https://github.com/JaneySprings/DotRush/blob/main/src/VSCode/README.md">VSCode README</a> | <a href="https://github.com/JaneySprings/DotRush/blob/main/src/NeoVim/Readme.md">NeoVim README</a>
 </p>
