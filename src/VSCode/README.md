@@ -48,22 +48,22 @@ You can format the entire document or selected code blocs.
 ### Cross-Platform Error Detection
 &emsp;DotRush highlights errors and displays descriptions in all Target Frameworks used in your project.
 
-![image](https://github.com/JaneySprings/DotRush/raw/main/VSCode/assets/image3.png)
+![image](https://github.com/JaneySprings/DotRush/raw/main/src/VSCode/assets/image3.png)
 
 
 ### Multiple Project Management
 &emsp;Empowering you with [Code Workspaces](https://code.visualstudio.com/docs/editor/workspaces) DotRush lets you effortlessly combine multiple projects and apply different settings to them. DotRush seamlessly activates all features when you add a new folder to your workspace. **Note that `.sln` files are not supported.**
 
-![image](https://github.com/JaneySprings/DotRush/raw/main/VSCode/assets/image4.png)
+![image](https://github.com/JaneySprings/DotRush/raw/main/src/VSCode/assets/image4.png)
 
 
 ### Quick Fixes
 &emsp;Activate error quick fixes by hovering over an error or clicking on the lamp icon:
 
-![image](https://github.com/JaneySprings/DotRush/raw/main/VSCode/assets/image5.png)
+![image](https://github.com/JaneySprings/DotRush/raw/main/src/VSCode/assets/image5.png)
 
 
 ### Code Decompiling
 &emsp;When navigating to a class not included in your project, DotRush will decompile it with [ICSharpCode Decompiler](https://github.com/icsharpcode/ILSpy/), allowing you to explore external libraries.
 
-![image](https://github.com/JaneySprings/DotRush/raw/main/VSCode/assets/image6.png)
+![image](https://github.com/JaneySprings/DotRush/raw/main/src/VSCode/assets/image6.png)
