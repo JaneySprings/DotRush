@@ -55,9 +55,9 @@ export class TestExplorerController {
             
             const testRun = TestExplorerController.controller.createTestRun(request);
             const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getTestTask(project.uri?.fsPath, testArguments));
-            await new Promise<void>((resolve, reject) => vscode.tasks.onDidEndTaskProcess(e => {
+            await new Promise<boolean>((resolve) => vscode.tasks.onDidEndTaskProcess(e => {
                 if (e.execution.task === execution.task)
-                    e.exitCode === 0 ? resolve() : reject();
+                    resolve(e.exitCode === 0);
             }));
 
             const testResults = await Interop.getTestResults(testsReport);
@@ -88,10 +88,13 @@ export class TestExplorerController {
                 vscode.workspace.fs.delete(vscode.Uri.file(testsReport));
 
             const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getBuildTask(project.uri?.fsPath));
-            await new Promise<void>((resolve, reject) => vscode.tasks.onDidEndTaskProcess(e => {
+            const executionExitCode = await new Promise<number>((resolve) => vscode.tasks.onDidEndTaskProcess(e => {
                 if (e.execution.task === execution.task)
-                    e.exitCode === 0 ? resolve() : reject();
+                    resolve(e.exitCode ?? -1);
             }));
+
+            if (executionExitCode !== 0)
+                return;
 
             const testArguments: string[] = [ 
                 project.uri.fsPath, '--no-build', `--logger trx;LogFileName=${testsReport}` 
