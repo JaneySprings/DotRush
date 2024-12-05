@@ -1,6 +1,6 @@
 <img align="right" width="60%" src="https://github.com/JaneySprings/DotRush/raw/main/assets/preview.png" style="padding: 2% 0% 0% 2%"/>
 
-### C# Development Environment for Visual Studio Code
+### C# Development Environment for Visual Studio Code and NeoVim
 &emsp;DotRush is a powerful, lightweight, and efficient **C# Language Server Extension** designed for **VS Code** and **NeoVim**. Built with performance and simplicity in mind, DotRush empowers developers with robust C# development tools in their favorite editors.
 
 <br clear="right"/>
