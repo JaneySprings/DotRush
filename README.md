@@ -8,21 +8,29 @@
 
 ## Features
 
-- **IntelliSense**: Advanced autocompletion and suggestions to boost your productivity.
+- **C# IntelliSense** </br>
+Advanced autocompletion and suggestions to boost your productivity.
 
-- **Code Navigation**: Effortlessly navigate to definitions, references, and symbols.
+- **Code Navigation** </br>
+Effortlessly navigate to definitions, references, and symbols.
 
-- **Code Decompilation**: Instantly decompile code with [ICSharpCode Decompiler](https://github.com/icsharpcode/ILSpy/) to view the underlying source.
+- **Code Decompilation** </br>
+Instantly decompile code with [ICSharpCode Decompiler](https://github.com/icsharpcode/ILSpy/) to view the underlying source.
 
-- **Multitarget Diagnostics**: Real-time linting and error detection to catch issues early in all target frameworks of your project.
+- **Multitarget Diagnostics** </br>
+Real-time linting and error detection to catch issues early in all target frameworks of your project.
 
-- **Formatting**: Automatic code formatting for clean, consistent code.
+- **Formatting** </br>
+Automatic code formatting for clean, consistent code.
 
-- **Multi-platform Support**: Seamless integration with both VS Code and NeoVim.
+- **Multi-platform Support** </br>
+Seamless integration with both VS Code and NeoVim on Windows, macOS, and Linux.
 
-- **Performance**: Lightweight and efficient, DotRush is designed to be fast and responsive.
+- **Performance** </br>
+Lightweight and efficient, DotRush is designed to be fast and responsive.
 
-- **Additional Features for VSCode**: DotRush provides additional features for Visual Studio Code users, such as `.NET Core Debugger` and `Test Explorer`.
+- **Additional Features for VSCode** </br>
+DotRush provides additional features for Visual Studio Code users, such as `.NET Core Debugger` and `Test Explorer`.
 
 
 ## Installation
