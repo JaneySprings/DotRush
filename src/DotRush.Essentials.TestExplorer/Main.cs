@@ -25,7 +25,7 @@ public class Program {
         Console.WriteLine(JsonSerializer.Serialize(results));
     }
     public static void RunTestHost(string[] args) {
-        var result = TestHost.RunForDebugAsync(args[1]).Result;
+        var result = TestHost.RunForDebugAsync(args[1], args[2]).Result;
         Console.WriteLine(JsonSerializer.Serialize(result));
     }
 }

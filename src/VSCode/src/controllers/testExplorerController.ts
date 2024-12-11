@@ -17,12 +17,14 @@ export class TestExplorerController {
         TestExplorerController.controller.refreshHandler = TestExplorerController.refreshTests;
         
         context.subscriptions.push(TestExplorerController.controller);
-        context.subscriptions.push(TestExplorerController.controller.createRunProfile('Run Tests', vscode.TestRunProfileKind.Run, TestExplorerController.runTests));
-        context.subscriptions.push(TestExplorerController.controller.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, TestExplorerController.debugTests));
+        context.subscriptions.push(TestExplorerController.controller.createRunProfile('Run NUnit/XUnit Tests', vscode.TestRunProfileKind.Run, TestExplorerController.runTests, true));
+        context.subscriptions.push(TestExplorerController.controller.createRunProfile('Run Tests with Custom Configuration', vscode.TestRunProfileKind.Run, TestExplorerController.runTestsWithCustomConfig));
+        context.subscriptions.push(TestExplorerController.controller.createRunProfile('Debug NUnit/XUnit Tests', vscode.TestRunProfileKind.Debug, TestExplorerController.debugTests, true));
+        context.subscriptions.push(TestExplorerController.controller.createRunProfile('Debug Tests with Custom Configuration', vscode.TestRunProfileKind.Debug, TestExplorerController.debugTestsWithCustomConfig));
         TestExplorerController.refreshTests();
     }
 
-    public static async refreshTests(): Promise<void> {
+    private static async refreshTests(): Promise<void> {
         TestExplorerController.controller.items.replace([]);
 
         const projects = await vscode.workspace.findFiles('**/*Tests.*csproj');
@@ -37,78 +39,67 @@ export class TestExplorerController {
             TestExplorerController.controller.items.add(root);
         }
     }
-
     private static async runTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
         TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {
-            if (project.uri === undefined)
-                return;
+            const testReport = path.join(TestExplorerController.testsResultDirectory, `${project.label}.trx`);
+            if (fs.existsSync(testReport))
+                vscode.workspace.fs.delete(vscode.Uri.file(testReport));
 
-            const testsReport = path.join(TestExplorerController.testsResultDirectory, `${project.label}.trx`);
-            if (fs.existsSync(testsReport))
-                vscode.workspace.fs.delete(vscode.Uri.file(testsReport));
-
-            const testArguments: string[] = [ '--logger',`'trx;LogFileName=${testsReport}'` ];
+            const testArguments: string[] = [ '--logger',`'trx;LogFileName=${testReport}'` ];
             if (filters.length > 0) {
                 testArguments.push('--filter');
                 testArguments.push(`'${filters.join('|')}'`);
             }
             
             const testRun = TestExplorerController.controller.createTestRun(request);
-            const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getTestTask(project.uri?.fsPath, testArguments));
+            const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getTestTask(project.uri!.fsPath, testArguments));
             await new Promise<boolean>((resolve) => vscode.tasks.onDidEndTaskProcess(e => {
                 if (e.execution.task === execution.task)
                     resolve(e.exitCode === 0);
             }));
 
-            const testResults = await Interop.getTestResults(testsReport);
-            const testNodes = TestExplorerController.getAllChildren(project);
-            testResults.forEach(result => {
-                const duration = Number(result.duration.match(/\d+/g)?.join('')) / 10000;
-                const testItem = testNodes.find(t => t.id === result.fullName);
-                if (testItem === undefined)
-                    return;
+            await TestExplorerController.pushTestResults(testRun, project, testReport);
+        });
+    }
+    private static async runTestsWithCustomConfig(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
+        TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {
+            const testReport = path.join(TestExplorerController.testsResultDirectory, `${project.label}.trx`);
+            if (fs.existsSync(testReport))
+                vscode.workspace.fs.delete(vscode.Uri.file(testReport));
+            
+            const testRun = TestExplorerController.controller.createTestRun(request);
+            // do
 
-                if (result.state === 'Passed')
-                    testRun.passed(testItem, duration);
-                else if (result.state === 'Failed')
-                    testRun.failed(testItem, TestExtensions.toTestMessage(result), duration);
-                else
-                    testRun.skipped(testItem);
-            });
-            testRun.end();
+            await TestExplorerController.pushTestResults(testRun, project, testReport);
         });
     }
     private static async debugTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
         TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {
-            if (project.uri === undefined)
-                return;
-            
-            const testsReport = path.join(TestExplorerController.testsResultDirectory, `${project.label}.trx`);
-            if (fs.existsSync(testsReport))
-                vscode.workspace.fs.delete(vscode.Uri.file(testsReport));
-
-            const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getBuildTask(project.uri?.fsPath));
+            const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getBuildTask(project.uri!.fsPath));
             const executionExitCode = await new Promise<number>((resolve) => vscode.tasks.onDidEndTaskProcess(e => {
                 if (e.execution.task === execution.task)
                     resolve(e.exitCode ?? -1);
             }));
 
-            if (executionExitCode !== 0)
+            if (executionExitCode !== 0 || token.isCancellationRequested)
                 return;
 
-            const testArguments: string[] = [ 
-                project.uri.fsPath, '--no-build', `--logger trx;LogFileName=${testsReport}` 
-            ];
-            if (filters.length > 0) 
-                testArguments.push(`--filter ${filters.join('|')}`);
-    
-            const pid = await Interop.runTestHost(testArguments.join(' '));
-            await vscode.debug.startDebugging(undefined, {
-                "name": "Debug Tests",
-                "type": res.debuggerVsdbgId,
-                "request": "attach",
-                "processId": pid
+            await vscode.debug.startDebugging(vscode.workspace.getWorkspaceFolder(project.uri!), {
+                name: request.profile?.label ?? 'Debug Tests',
+                type: res.debuggerVsdbgId,
+                request: 'attach',
+                processId: await Interop.runTestHost(project.uri!.fsPath, filters.join('|'))
             });
+        });
+    }
+    private static async debugTestsWithCustomConfig(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
+        TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {
+            const customConfiguration = vscode.workspace.getConfiguration(res.extensionId).get<vscode.DebugConfiguration>('testExplorer.customDebugConfiguration');
+            if (customConfiguration === undefined)
+                return;
+            
+            customConfiguration.env = { VS_TEST_FILTER: filters.join(',') }
+            await vscode.debug.startDebugging(vscode.workspace.getWorkspaceFolder(project.uri!), customConfiguration);
         });
     }
 
@@ -135,13 +126,33 @@ export class TestExplorerController {
 
         return testItems;
     }
-    private static getAllChildren(root: vscode.TestItem) : vscode.TestItem[] {
-        const result: vscode.TestItem[] = [];
-        const pushNodes = (node: vscode.TestItemCollection) => node.forEach(n => {
-            result.push(n);
-            pushNodes(n.children);
+    private static pushTestResults(testRun: vscode.TestRun, project: vscode.TestItem, testReport: string): Promise<void> {
+        const getAllChildren = (root: vscode.TestItem) => {
+            const result: vscode.TestItem[] = [];
+            const pushNodes = (node: vscode.TestItemCollection) => node.forEach(n => {
+                result.push(n);
+                pushNodes(n.children);
+            });
+            pushNodes(root.children);
+            return result;
+        }
+        
+        const testNodes = getAllChildren(project);
+        return Interop.getTestResults(testReport).then(testResults => {
+            testResults.forEach(result => {
+                const duration = Number(result.duration.match(/\d+/g)?.join('')) / 10000;
+                const testItem = testNodes.find(t => t.id === result.fullName);
+                if (testItem === undefined)
+                    return;
+
+                if (result.state === 'Passed')
+                    testRun.passed(testItem, duration);
+                else if (result.state === 'Failed')
+                    testRun.failed(testItem, TestExtensions.toTestMessage(result), duration);
+                else
+                    testRun.skipped(testItem);
+            });
+            testRun.end();
         });
-        pushNodes(root.children);
-        return result;
     }
 }
