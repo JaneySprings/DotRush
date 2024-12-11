@@ -54,7 +54,7 @@ export class DebugAdapterController {
     public static async getProcessId(): Promise<string | undefined> {
         return await DebugAdapterController.pickProcessId();
     }
-    
+
     private static async pickProgramPath(): Promise<string | undefined> {
         const programPath = await vscode.window.showOpenDialog({
             title: res.messageSelectProgramTitle,

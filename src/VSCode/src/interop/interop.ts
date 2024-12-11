@@ -42,10 +42,11 @@ export class Interop {
         return await ProcessRunner.runAsync<Status>(new ProcessArgumentBuilder(Interop.workspacesToolPath)
             .append("--install-vsdbg"));
     }
-    public static async runTestHost(invocation: string): Promise<number> {
+    public static async runTestHost(projectFile: string, filter: string): Promise<number> {
         return await ProcessRunner.runDetached<number>(new ProcessArgumentBuilder(Interop.testExplorerToolPath)
             .append("--run")
-            .append(invocation));
+            .append(projectFile)
+            .append(filter));
     }
     public static getPropertyValue(propertyName: string, project: Project, configuration: string | undefined, framework: string | undefined) : string | undefined {
         return ProcessRunner.runSync(new ProcessArgumentBuilder("dotnet")

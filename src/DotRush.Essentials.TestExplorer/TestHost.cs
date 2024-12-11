@@ -11,13 +11,17 @@ public static class TestHost {
         reportsDirectory = AppDomain.CurrentDomain.BaseDirectory;
     }
 
-    public static Task<int> RunForDebugAsync(string invocation) {
-        CurrentSessionLogger.Debug($"Running test host with command line '{invocation}'");
+    public static Task<int> RunForDebugAsync(string projectFile, string filter) {
+        CurrentSessionLogger.Debug($"Running test host with filter '{filter}'");
         
         var tcs = new TaskCompletionSource<int>();
         var process = new ProcessRunner("dotnet", new ProcessArgumentBuilder()
             .Append("test")
-            .Append(invocation), new HandleStartProcessLogger(tcs));
+            .Append(projectFile)
+            .Append("--no-build")
+            .Conditional($"--filter {filter}", () => !string.IsNullOrEmpty(filter)), 
+            new HandleStartProcessLogger(tcs)
+        );
 
         process.SetEnvironmentVariable("VSTEST_HOST_DEBUG", "1");
         process.Start();

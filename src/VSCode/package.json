@@ -375,6 +375,14 @@
               "integratedTerminal",
               "externalTerminal"
             ]
+          },
+          "dotrush.testExplorer.customDebugConfiguration": {
+            "type": "object",
+            "description": "%configuration.description.testExplorer.customDebugConfiguration%"
+          },
+          "dotrush.testExplorer.customRunConfiguration": {
+            "type": "object",
+            "description": "%configuration.description.testExplorer.customRunConfiguration%"
           }
         }
       }
