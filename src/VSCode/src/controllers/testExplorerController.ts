@@ -41,10 +41,7 @@ export class TestExplorerController {
     }
     private static async runTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
         TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {
-            const testReport = path.join(TestExplorerController.testsResultDirectory, `${project.label}.trx`);
-            if (fs.existsSync(testReport))
-                vscode.workspace.fs.delete(vscode.Uri.file(testReport));
-
+            const testReport = TestExplorerController.getTestReportPath(project);
             const testArguments: string[] = [ '--logger',`'trx;LogFileName=${testReport}'` ];
             if (filters.length > 0) {
                 testArguments.push('--filter');
@@ -63,10 +60,7 @@ export class TestExplorerController {
     }
     private static async runTestsWithCustomConfig(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
         TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {
-            const testReport = path.join(TestExplorerController.testsResultDirectory, `${project.label}.trx`);
-            if (fs.existsSync(testReport))
-                vscode.workspace.fs.delete(vscode.Uri.file(testReport));
-            
+            const testReport = TestExplorerController.getTestReportPath(project);
             const testRun = TestExplorerController.controller.createTestRun(request);
             // do
 
@@ -83,8 +77,8 @@ export class TestExplorerController {
 
             if (executionExitCode !== 0 || token.isCancellationRequested)
                 return;
-
-            await vscode.debug.startDebugging(vscode.workspace.getWorkspaceFolder(project.uri!), {
+            
+            await vscode.debug.startDebugging(TestExplorerController.getWorkspaceFolder(), {
                 name: request.profile?.label ?? 'Debug Tests',
                 type: res.debuggerVsdbgId,
                 request: 'attach',
@@ -99,7 +93,7 @@ export class TestExplorerController {
                 return;
             
             customConfiguration.env = { VS_TEST_FILTER: filters.join(',') }
-            await vscode.debug.startDebugging(vscode.workspace.getWorkspaceFolder(project.uri!), customConfiguration);
+            await vscode.debug.startDebugging(TestExplorerController.getWorkspaceFolder(), customConfiguration);
         });
     }
 
@@ -154,5 +148,20 @@ export class TestExplorerController {
             });
             testRun.end();
         });
+    }
+    public static getWorkspaceFolder() : vscode.WorkspaceFolder | undefined {
+        if (vscode.workspace.workspaceFolders === undefined)
+            return undefined;
+        if (vscode.workspace.workspaceFolders.length === 1)
+            return vscode.workspace.workspaceFolders[0];
+
+        return undefined;
+    }
+    public static getTestReportPath(project: vscode.TestItem): string {
+        const testReport = path.join(TestExplorerController.testsResultDirectory, `${project.label}.trx`);
+        if (fs.existsSync(testReport))
+            vscode.workspace.fs.delete(vscode.Uri.file(testReport));
+
+        return testReport;
     }
 }
