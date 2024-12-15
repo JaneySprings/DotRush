@@ -70,12 +70,14 @@ export class DebugAdapterController {
         return selectedItem?.item.id.toString();
     }
     private static async installDebugger(): Promise<void> {
+        const channel = vscode.window.createOutputChannel(res.extensionId);
+        channel.appendLine('Installing VSDBG debugger. This may take a few minutes...');
+        channel.show();
         const result = await Interop.installDebugger();
-        if (!result.isSuccess) {
-            const channel = vscode.window.createOutputChannel(res.extensionId);
+        if (!result.isSuccess)
             channel.appendLine(`Failed to install debugger: ${result.message}`);
-            channel.show();
-        }
+        else
+            channel.appendLine('Debugger installed successfully.');
     }
 
     public static getSetting(id: string, fallback: any = undefined): any {
