@@ -25,8 +25,5 @@
 	"configuration.description.debugger.searchMicrosoftSymbolServer": "Search Microsoft Symbol Server for missing PDBs.",
 	"configuration.description.debugger.automaticSourcelinkDownload": "Automatically download source files from SourceLink.",
 	"configuration.description.debugger.symbolSearchPaths": "Additional symbol search paths.",
-	"configuration.description.debugger.console": "Console to use for debugging console applications.",
-
-	"configuration.description.testExplorer.customRunConfiguration": "Custom run configuration to use for running tests.",
-	"configuration.description.testExplorer.customDebugConfiguration": "Custom debugger configuration to use for running tests."
+	"configuration.description.debugger.console": "Console to use for debugging console applications."
 }

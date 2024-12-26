@@ -18,9 +18,7 @@ export class TestExplorerController {
         
         context.subscriptions.push(TestExplorerController.controller);
         context.subscriptions.push(TestExplorerController.controller.createRunProfile('Run NUnit/XUnit Tests', vscode.TestRunProfileKind.Run, TestExplorerController.runTests, true));
-        context.subscriptions.push(TestExplorerController.controller.createRunProfile('Run Tests with Custom Configuration', vscode.TestRunProfileKind.Run, TestExplorerController.runTestsWithCustomConfig));
         context.subscriptions.push(TestExplorerController.controller.createRunProfile('Debug NUnit/XUnit Tests', vscode.TestRunProfileKind.Debug, TestExplorerController.debugTests, true));
-        context.subscriptions.push(TestExplorerController.controller.createRunProfile('Debug Tests with Custom Configuration', vscode.TestRunProfileKind.Debug, TestExplorerController.debugTestsWithCustomConfig));
         TestExplorerController.refreshTests();
     }
 
@@ -58,15 +56,6 @@ export class TestExplorerController {
             await TestExplorerController.pushTestResults(testRun, project, testReport);
         });
     }
-    private static async runTestsWithCustomConfig(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
-        TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {
-            const testReport = TestExplorerController.getTestReportPath(project);
-            const testRun = TestExplorerController.controller.createTestRun(request);
-            // do
-
-            await TestExplorerController.pushTestResults(testRun, project, testReport);
-        });
-    }
     private static async debugTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
         TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {
             const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getBuildTask(project.uri!.fsPath));
@@ -84,16 +73,6 @@ export class TestExplorerController {
                 request: 'attach',
                 processId: await Interop.runTestHost(project.uri!.fsPath, filters.join('|'))
             });
-        });
-    }
-    private static async debugTestsWithCustomConfig(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
-        TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {
-            const customConfiguration = vscode.workspace.getConfiguration(res.extensionId).get<vscode.DebugConfiguration>('testExplorer.customDebugConfiguration');
-            if (customConfiguration === undefined)
-                return;
-            
-            customConfiguration.env = { VS_TEST_FILTER: filters.join(',') }
-            await vscode.debug.startDebugging(TestExplorerController.getWorkspaceFolder(), customConfiguration);
         });
     }
 
