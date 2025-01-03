@@ -8,8 +8,7 @@ export class LanguageServerController {
     private static command: string;
 
     public static activate(context: vscode.ExtensionContext) {
-        const extensionPath = context.extensionPath;
-        const serverExecutable = path.join(extensionPath, "extension", "bin", "LanguageServer", "DotRush");
+        const serverExecutable = path.join(context.extensionPath, "extension", "bin", "LanguageServer", "DotRush");
         const serverExtension = process.platform === 'win32' ? '.exe' : '';
         LanguageServerController.command = serverExecutable + serverExtension;
         LanguageServerController.start();

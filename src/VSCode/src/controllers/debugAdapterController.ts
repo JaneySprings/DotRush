@@ -39,10 +39,10 @@ export class DebugAdapterController {
         return options;
     }
     public static async getProgramPath(): Promise<string | undefined> {
-        if (StatusBarController.project === undefined || StatusBarController.configuration === undefined)
+        if (StatusBarController.activeProject === undefined || StatusBarController.activeConfiguration === undefined)
             return await DebugAdapterController.pickProgramPath();
 
-        const assemblyPath = Interop.getPropertyValue('TargetPath', StatusBarController.project, StatusBarController.configuration, StatusBarController.framework);
+        const assemblyPath = Interop.getPropertyValue('TargetPath', StatusBarController.activeProject, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
 		if (!assemblyPath)
 			return await DebugAdapterController.pickProgramPath();
 

@@ -1,4 +1,4 @@
-import { QuickPickItem } from "vscode";
+import { QuickPickItem, workspace } from "vscode";
 import * as path from "path";
 
 export interface Project {
@@ -10,15 +10,17 @@ export interface Project {
     isExecutable: boolean;
 }
 
-export class ProjectItem implements QuickPickItem {
+export class ProjectOrSolutionItem implements QuickPickItem {
     label: string;
     description: string;
     item: string;
 
-    constructor(projectPath: string) {
-        this.label = path.basename(projectPath, '.csproj');
-        this.description = '';
-        this.item = projectPath;
+    constructor(targetPath: string) {
+        this.description = workspace.asRelativePath(targetPath);
+        this.item = targetPath;
+        this.label = targetPath.endsWith('sln') 
+            ? path.basename(targetPath, '.sln')
+            : path.basename(targetPath, '.csproj');
     }
 }
 

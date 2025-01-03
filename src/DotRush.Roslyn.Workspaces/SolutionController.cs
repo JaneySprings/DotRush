@@ -1,4 +1,5 @@
 using DotRush.Roslyn.Common.Extensions;
+using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -15,8 +16,37 @@ public abstract class SolutionController : ProjectsController {
         Solution = newSolution;
         WorkspaceStateChanged?.Invoke(this, EventArgs.Empty);
     }
-    protected Task LoadSolutionAsync(MSBuildWorkspace workspace, CancellationToken cancellationToken) {
-        return LoadAsync(workspace, cancellationToken);
+
+    protected async Task LoadSolutionAsync(MSBuildWorkspace workspace, IEnumerable<string> solutionFilePaths, CancellationToken cancellationToken) {
+        CurrentSessionLogger.Debug($"Loading solutions: {string.Join(';', solutionFilePaths)}");
+        await OnLoadingStartedAsync(cancellationToken);
+
+        foreach (var solutionFile in solutionFilePaths) {
+            await SafeExtensions.InvokeAsync(async () => {
+                if (RestoreProjectsBeforeLoading) {
+                    OnProjectRestoreStarted(solutionFile);
+                    var result = await workspace.RestoreProjectAsync(solutionFile, cancellationToken);
+                    if (result.ExitCode != 0)
+                        OnProjectRestoreFailed(solutionFile, result);
+                    OnProjectRestoreCompleted(solutionFile);
+                }
+
+                OnProjectLoadStarted(solutionFile);
+                var solution = await workspace.OpenSolutionAsync(solutionFile, null, cancellationToken);
+                OnProjectLoadCompleted(solutionFile);
+
+                OnWorkspaceStateChanged(workspace.CurrentSolution);
+
+                // if (CompileProjectsAfterLoading) {
+                //     OnProjectCompilationStarted(solutionFile);
+                //     _ = await project.GetCompilationAsync(cancellationToken);
+                //     OnProjectCompilationCompleted(solutionFile);
+                // }
+            });
+        }
+
+        await OnLoadingCompletedAsync(cancellationToken);
+        CurrentSessionLogger.Debug($"Projects loading completed, loaded {workspace.CurrentSolution.ProjectIds.Count} projects");
     }
 
     public IEnumerable<DocumentId> GetDocumentIdsWithFilePath(string filePath) {

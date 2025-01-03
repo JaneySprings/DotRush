@@ -65,16 +65,11 @@ public class LanguageServer {
         if (!workspaceService.InitializeWorkspace())
             server.ShowError(Resources.DotNetRegistrationFailed);
 
-        if (configurationService.ProjectFiles.Count != 0)
-            workspaceService.AddTargets(configurationService.ProjectFiles);
-        else {
-            var workspaceFolders = server.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
-            workspaceService.FindTargetsInWorkspace(workspaceFolders, configurationService.ExcludePatterns);
-        }
-
         workspaceService.WorkspaceStateChanged += (_, _) => navigationService.UpdateSolution(workspaceService.Solution);
-        _ = workspaceService.LoadSolutionAsync(CancellationToken.None);
-        _ = externalAccessService.StartListeningAsync(CancellationToken.None);
+        if (configurationService.ProjectOrSolutionFiles.Count != 0) {
+            _ = workspaceService.LoadAsync(configurationService.ProjectOrSolutionFiles, CancellationToken.None);
+            _ = externalAccessService.StartListeningAsync(CancellationToken.None);
+        }
     }
 
     private static void ObserveClientProcess(long? pid) {
