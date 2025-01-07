@@ -66,10 +66,8 @@ public class LanguageServer {
             server.ShowError(Resources.DotNetRegistrationFailed);
 
         workspaceService.WorkspaceStateChanged += (_, _) => navigationService.UpdateSolution(workspaceService.Solution);
-        if (configurationService.ProjectOrSolutionFiles.Count != 0) {
-            _ = workspaceService.LoadAsync(configurationService.ProjectOrSolutionFiles, CancellationToken.None);
-            _ = externalAccessService.StartListeningAsync(CancellationToken.None);
-        }
+        _ = workspaceService.LoadAsync(CancellationToken.None);
+        _ = externalAccessService.StartListeningAsync(CancellationToken.None);
     }
 
     private static void ObserveClientProcess(long? pid) {

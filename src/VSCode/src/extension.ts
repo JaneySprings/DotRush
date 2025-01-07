@@ -17,12 +17,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	Interop.initialize(context.extensionPath);
 
-	StateController.activate(context);
-	StatusBarController.activate(context);
-	ContextMenuController.activate(context);
-	DebugAdapterController.activate(context);
-	LanguageServerController.activate(context);
-	TestExplorerController.activate(context);
+	await StateController.activate(context);
+	await StatusBarController.activate(context);
+	await ContextMenuController.activate(context);
+	await DebugAdapterController.activate(context);
+	await LanguageServerController.activate(context);
+	await TestExplorerController.activate(context);
 
 	ModulesView.feature.activate(context);
 }

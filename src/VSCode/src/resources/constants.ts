@@ -9,6 +9,7 @@ export const debuggerVsdbgTitle = ".NET Core Debugger";
 
 export const commandIdRestartServer = "dotrush.restartServer";
 export const commandIdPickProcess = "dotrush.pickProcess";
+export const commandIdPickTargets = "dotrush.pickProjectOrSolutionFiles";
 export const commandIdTestProject = "dotrush.test";
 export const commandIdBuildProject = "dotrush.build";
 export const commandIdRestoreProject = "dotrush.restore";
@@ -34,4 +35,5 @@ export const messageNoProjectFileFound = "No project files found in the current 
 export const messageSelectProcessTitle = "Select a process to attach";
 export const messageSelectProjectTitle = "Select a project file";
 export const messageSelectProgramTitle = "Select a Program to Debug";
+export const messageSelectTargetTitle = "Select Project or Solution files";
 export const messageReload = "Reload";

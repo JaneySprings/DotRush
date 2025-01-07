@@ -1,4 +1,5 @@
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
+import { StatusBarController } from './statusbarController';
 import { TestExtensions } from '../models/test';
 import { Interop } from '../interop/interop';
 import * as res from '../resources/constants'
@@ -10,7 +11,7 @@ export class TestExplorerController {
     private static controller: vscode.TestController;
     private static testsResultDirectory: string;
 
-    public static activate(context: vscode.ExtensionContext) {
+    public static async activate(context: vscode.ExtensionContext): Promise<void> {
         TestExplorerController.testsResultDirectory = path.join(context.extensionPath, "extension", "bin", "TestExplorer");
 
         TestExplorerController.controller = vscode.tests.createTestController(res.testExplorerViewId, res.testExplorerViewTitle);
@@ -23,16 +24,18 @@ export class TestExplorerController {
     }
 
     private static async refreshTests(): Promise<void> {
+        if (StatusBarController.projects === undefined)
+            return;
+
         TestExplorerController.controller.items.replace([]);
 
-        const projects = await vscode.workspace.findFiles('**/*Tests.*csproj');
-        for (const project of projects) {
-            const projectName = path.basename(project.fsPath, '.csproj');
-            const discoveredTests = await Interop.getTests(project.fsPath);
+        for (const projectPath of StatusBarController.projects) {
+            const projectName = path.basename(projectPath, '.csproj');
+            const discoveredTests = await Interop.getTests(projectPath);
             if (discoveredTests.length === 0)
                 continue;
 
-            const root = TestExplorerController.controller.createTestItem(projectName, projectName, project);
+            const root = TestExplorerController.controller.createTestItem(projectName, projectName, vscode.Uri.file(projectPath));
             root.children.replace(discoveredTests.map(t => TestExtensions.toTestItem(t, TestExplorerController.controller)));
             TestExplorerController.controller.items.add(root);
         }

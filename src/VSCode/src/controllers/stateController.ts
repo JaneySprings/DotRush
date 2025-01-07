@@ -4,7 +4,7 @@ import * as res from '../resources/constants';
 export class StateController {
     private static context: ExtensionContext | undefined;
 
-    public static activate(context: ExtensionContext) {
+    public static async activate(context: ExtensionContext): Promise<void> {
         StateController.context = context;
     }
     public static deactivate() {

@@ -1,4 +1,4 @@
-import { QuickPickItem, workspace } from "vscode";
+import { QuickPickItem, QuickPickItemKind, workspace } from "vscode";
 import * as path from "path";
 
 export interface Project {
@@ -11,6 +11,15 @@ export interface Project {
 }
 
 export class ProjectOrSolutionItem implements QuickPickItem {
+    public static solutionSeparator: QuickPickItem = {
+        label: 'Solutions',
+        kind: QuickPickItemKind.Separator
+    };
+    public static projectSeparator: QuickPickItem = {
+        label: 'Projects',
+        kind: QuickPickItemKind.Separator
+    };
+
     label: string;
     description: string;
     item: string;

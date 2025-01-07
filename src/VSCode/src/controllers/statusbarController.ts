@@ -16,6 +16,9 @@ export class StatusBarController {
     public static activeConfiguration: string | undefined;
     public static activeFramework: string | undefined;
 
+    public static projects: string[] | undefined;
+    public static solutions: string[] | undefined;
+
     public static async activate(context: vscode.ExtensionContext): Promise<void> {
         if (vscode.extensions.getExtension(res.extensionMeteorId) !== undefined) {
             const exports = await vscode.extensions.getExtension(res.extensionMeteorId)?.activate();
@@ -40,16 +43,20 @@ export class StatusBarController {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveConfiguration, () => StatusBarController.activeConfiguration));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdSelectActiveProject, StatusBarController.showQuickPickFramework));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdSelectActiveConfiguration, StatusBarController.showQuickPickConfiguration));
-
-        StatusBarController.update();
-        vscode.commands.executeCommand('setContext', res.commandIdStatusBarEnabled, true);
+        
+        await vscode.commands.executeCommand('setContext', res.commandIdStatusBarEnabled, true);
+        await StatusBarController.update();
     }
     public static async update() : Promise<void> {
+        StatusBarController.solutions = (await vscode.workspace.findFiles('**/*.sln')).map(x => x.fsPath);
+        StatusBarController.projects = (await vscode.workspace.findFiles('**/*.csproj')).map(x => x.fsPath);
+
         let projectPath = StateController.getLocal<string>('project');
         let configuration = StateController.getLocal<string>('configuration');
         let framework = StateController.getLocal<string>('framework');
+        
         if (projectPath === undefined || !fs.existsSync(projectPath)) {
-            projectPath = (await vscode.workspace.findFiles('**/*.csproj', undefined, 1))[0]?.fsPath;
+            projectPath = StatusBarController.projects.at(0);
             configuration = undefined;
             framework = undefined;
         }

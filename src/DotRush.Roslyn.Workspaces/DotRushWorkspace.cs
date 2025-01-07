@@ -19,16 +19,14 @@ public abstract class DotRushWorkspace : SolutionController {
         workspace.SkipUnrecognizedProjects = SkipUnrecognizedProjects;
         return registrationResult;
     }
-    public async Task LoadAsync(IEnumerable<string> targets, CancellationToken cancellationToken) {
-        ArgumentNullException.ThrowIfNull(workspace);
-        
-        var solutionFiles = targets.Where(it => Path.GetExtension(it).Equals(".sln", StringComparison.OrdinalIgnoreCase));
-        var projectFiles = targets.Where(it => Path.GetExtension(it).Equals(".csproj", StringComparison.OrdinalIgnoreCase));
 
-        if (solutionFiles.Any())
-            await LoadSolutionAsync(workspace, solutionFiles, cancellationToken);
-        if (projectFiles.Any())
-            await LoadProjectsAsync(workspace, projectFiles, cancellationToken);
+    public Task LoadSolutionAsync(IEnumerable<string> solutionFiles, CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(workspace);
+        return LoadSolutionAsync(workspace, solutionFiles, cancellationToken);
+    }
+    public Task LoadProjectsAsync(IEnumerable<string> projectFiles, CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(workspace);
+        return LoadProjectsAsync(workspace, projectFiles, cancellationToken);
     }
 
     private static bool TryRegisterDotNetEnvironment() {
