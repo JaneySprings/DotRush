@@ -25,7 +25,7 @@ export class ContextMenuController {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdSetStartupProject, async (path: vscode.Uri) => {
             const projectFile = await ContextMenuController.selectProjectFileAsync(path);
             if (projectFile !== undefined)
-                StatusBarController.performSelectProject(await Interop.getProject(projectFile));
+                StatusBarController.performSelectProject(projectFile);
         }));
     }
 
