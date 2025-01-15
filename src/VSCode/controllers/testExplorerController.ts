@@ -11,7 +11,7 @@ export class TestExplorerController {
     private static controller: vscode.TestController;
     private static testsResultDirectory: string;
 
-    public static async activate(context: vscode.ExtensionContext): Promise<void> {
+    public static activate(context: vscode.ExtensionContext) {
         TestExplorerController.testsResultDirectory = path.join(context.extensionPath, "extension", "bin", "TestExplorer");
 
         TestExplorerController.controller = vscode.tests.createTestController(res.testExplorerViewId, res.testExplorerViewTitle);

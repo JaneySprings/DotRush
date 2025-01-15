@@ -48,9 +48,9 @@ export class Interop {
             .append(projectFile)
             .append(filter));
     }
-    public static getPropertyValue(propertyName: string, project: Project, configuration: string | undefined, framework: string | undefined) : string | undefined {
+    public static getPropertyValue(propertyName: string, projectPath: string, configuration: string | undefined, framework: string | undefined) : string | undefined {
         return ProcessRunner.runSync(new ProcessArgumentBuilder("dotnet")
-            .append("msbuild").append(project.path)
+            .append("msbuild").append(projectPath)
             .append(`-getProperty:${propertyName}`)
             .conditional(`-p:Configuration=${configuration}`, () => configuration)
             .conditional(`-p:TargetFramework=${framework}`, () => framework));

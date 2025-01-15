@@ -8,10 +8,7 @@ import * as path from 'path';
 export class LanguageServerController {
     private static client: LanguageClient;
     private static command: string;
-    private static targets: string[] | undefined;
-
-    public static projects: string[] | undefined;
-    public static solutions: string[] | undefined;
+    private static running: boolean;
 
     public static async activate(context: vscode.ExtensionContext): Promise<void> {
         const serverExecutable = path.join(context.extensionPath, "extension", "bin", "LanguageServer", "DotRush");
@@ -38,7 +35,7 @@ export class LanguageServerController {
     }
 
     private static initialize() {
-        const serverOptions: ServerOptions = { command: LanguageServerController.command, args: LanguageServerController.targets };
+        const serverOptions: ServerOptions = { command: LanguageServerController.command };
         LanguageServerController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
             diagnosticCollectionName: res.microsoftProblemMatcherId,
             progressOnInitialization: true,
@@ -53,14 +50,19 @@ export class LanguageServerController {
     public static start() {
         LanguageServerController.initialize();
         LanguageServerController.client.start();
+        LanguageServerController.running = true;
     }
     public static stop() {
         LanguageServerController.client.stop();
         LanguageServerController.client.dispose();
+        LanguageServerController.running = false;
     }
     public static restart() {
         LanguageServerController.stop();
         LanguageServerController.start();
+    }
+    public static isRunning(): boolean {
+        return LanguageServerController.running;
     }
 
     private static async showQuickPickTargets(): Promise<void> {
@@ -75,11 +77,15 @@ export class LanguageServerController {
         }
 
         const result = (await vscode.window.showQuickPick(items, { canPickMany: true, placeHolder: res.messageSelectTargetTitle }))?.map((it: any) => it.item);
-        if (result !== undefined)
-            await vscode.workspace.getConfiguration(res.extensionId).update("roslyn.projectOrSolutionFiles", result, vscode.ConfigurationTarget.Workspace);
+        if (result === undefined)
+            return;
+
+        await vscode.workspace.getConfiguration(res.extensionId).update("roslyn.projectOrSolutionFiles", result, vscode.ConfigurationTarget.Workspace);
+        if (LanguageServerController.isRunning())
+            LanguageServerController.restart();
     }
     private static shouldSelectTargets(): boolean {
-        const configValue = vscode.workspace.getConfiguration(res.extensionId).get<string[]>("roslyn.projectOrSolutionFiles");
+        const configValue = vscode.workspace.getConfiguration(res.extensionId).get<string[]>('roslyn.projectOrSolutionFiles');
         if (configValue != undefined && configValue.length != 0)
             return false;
         if (StatusBarController.solutions === undefined || StatusBarController.projects === undefined)

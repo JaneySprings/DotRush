@@ -1,12 +1,11 @@
 import { DotNetTaskProvider } from './../providers/dotnetTaskProvider';
 import { StatusBarController } from './statusbarController';
 import { ProjectOrSolutionItem } from './../models/project';
-import { Interop } from '../interop/interop';
 import * as res from './../resources/constants';
 import * as vscode from 'vscode';
 
 export class ContextMenuController {
-    public static async activate(context: vscode.ExtensionContext): Promise<void> {
+    public static activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdBuildProject, async (path: vscode.Uri) => {
             const projectFile = await ContextMenuController.selectProjectFileAsync(path);
             if (projectFile !== undefined)
