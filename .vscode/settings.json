@@ -1,7 +1,7 @@
 {
     "dotrush.roslyn.workspaceProperties": [
     ],
-    "dotrush.roslyn.projectFiles": [
+    "dotrush.roslyn.projectOrSolutionFiles": [
         "src/DotRush.Essentials.Workspaces/DotRush.Essentials.Workspaces.csproj",
         "src/DotRush.Essentials.TestExplorer/DotRush.Essentials.TestExplorer.csproj",
         "src/DotRush.Roslyn.Server/DotRush.Roslyn.Server.csproj",
@@ -11,6 +11,8 @@
         "src/DotRush.*/bin": true,
         "src/DotRush.*/obj": true,
         "**/node_modules": true,
+        ".config": true,
+        ".github": true,
         ".editorconfig": true,
         ".gitignore": true,
         ".gitmodules": true

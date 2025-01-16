@@ -1,7 +1,7 @@
 <Project>
     <PropertyGroup>
-        <CodeAnalysisVersion>4.12.0-2.final</CodeAnalysisVersion>
-		<DecompilerVersion>8.2.0.7535</DecompilerVersion>
+        <CodeAnalysisVersion>4.12.0</CodeAnalysisVersion>
+		<DecompilerVersion>9.0.0.7876-RC</DecompilerVersion>
 
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>

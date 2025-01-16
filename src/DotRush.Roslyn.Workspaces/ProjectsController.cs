@@ -4,12 +4,10 @@ using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
-using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Workspaces;
 
 public abstract class ProjectsController {
-    private readonly HashSet<string> projectFilePaths = new HashSet<string>();
 
     protected abstract bool RestoreProjectsBeforeLoading { get; }
     protected abstract bool CompileProjectsAfterLoading { get; }
@@ -25,19 +23,7 @@ public abstract class ProjectsController {
     public virtual void OnProjectCompilationCompleted(string documentPath) {}
     protected abstract void OnWorkspaceStateChanged(Solution newSolution);
 
-    protected void AddProjectFiles(IEnumerable<string> projectPaths, IEnumerable<string>? excludePatterns = null) {
-        foreach (var projectPath in projectPaths) {
-            if (excludePatterns != null && FileSystemExtensions.CheckGlobPatterns(projectPath, excludePatterns))
-                continue;
-
-            projectFilePaths.Add(projectPath);
-        }
-    }
-    protected void RemoveProjectFiles(IEnumerable<string> projectPaths) {
-        foreach (var projectPath in projectPaths)
-            projectFilePaths.Remove(projectPath);
-    }
-    protected async Task LoadAsync(MSBuildWorkspace workspace, CancellationToken cancellationToken) {
+    protected async Task LoadProjectsAsync(MSBuildWorkspace workspace, IEnumerable<string> projectFilePaths, CancellationToken cancellationToken) {
         CurrentSessionLogger.Debug($"Loading projects: {string.Join(';', projectFilePaths)}");
         await OnLoadingStartedAsync(cancellationToken);
 

@@ -32,11 +32,9 @@ public class ConfigurationService {
     private ReadOnlyDictionary<string, string>? workspaceProperties;
     public ReadOnlyDictionary<string, string> WorkspaceProperties => workspaceProperties ??= ServerExtensions.GetKeyValuePairs(configuration, $"{ExtensionId}:{RoslynId}:workspaceProperties");
 
-    private ReadOnlyCollection<string>? projectFiles;
-    public ReadOnlyCollection<string> ProjectFiles => projectFiles ??= ServerExtensions.GetArray(configuration, $"{ExtensionId}:{RoslynId}:projectFiles");
+    private ReadOnlyCollection<string>? projectOrSolutionFiles;
+    public ReadOnlyCollection<string> ProjectOrSolutionFiles => projectOrSolutionFiles ??= ServerExtensions.GetArray(configuration, $"{ExtensionId}:{RoslynId}:projectOrSolutionFiles");
 
-    private ReadOnlyCollection<string>? excludePatterns;
-    public ReadOnlyCollection<string> ExcludePatterns => excludePatterns ??= ServerExtensions.GetArray(configuration, $"{ExtensionId}:{RoslynId}:excludePatterns");
 
     public ConfigurationService(ILanguageServerConfiguration configuration) {
         this.configuration = configuration;
@@ -49,8 +47,7 @@ public class ConfigurationService {
         bool compileProjectsAfterLoading,
         bool useMultitargetDiagnostics,
         ReadOnlyDictionary<string, string> workspaceProperties,
-        ReadOnlyCollection<string> projectFiles,
-        ReadOnlyCollection<string> excludePatterns
+        ReadOnlyCollection<string> projectOrSolutionFiles
     ) {
         this.showItemsFromUnimportedNamespaces = showItemsFromUnimportedNamespaces;
         this.skipUnrecognizedProjects = skipUnrecognizedProjects;
@@ -59,8 +56,7 @@ public class ConfigurationService {
         this.compileProjectsAfterLoading = compileProjectsAfterLoading;
         this.useMultitargetDiagnostics = useMultitargetDiagnostics;
         this.workspaceProperties = workspaceProperties;
-        this.projectFiles = projectFiles;
-        this.excludePatterns = excludePatterns;
+        this.projectOrSolutionFiles = projectOrSolutionFiles;
     }
 
     public async Task InitializeAsync() {

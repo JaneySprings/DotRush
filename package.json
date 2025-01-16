@@ -1,7 +1,7 @@
 {
   "name": "dotrush",
   "publisher": "nromanov",
-  "version": "24.11.321",
+  "version": "25.1.15",
   "description": "Lightweight C# development environment for Visual Studio Code.",
   "displayName": "DotRush",
   "author": "Nikita Romanov",
@@ -87,6 +87,20 @@
           "group": "dotnet_1@3",
           "when": "(explorerResourceIsFolder || resourceExtname == .csproj)"
         }
+      ],
+      "commandPalette": [
+        {
+          "command": "dotrush.build",
+          "when": "false"
+        },
+        {
+          "command": "dotrush.restore",
+          "when": "false"
+        },
+        {
+          "command": "dotrush.clean",
+          "when": "false"
+        }
       ]
     },
     "views": {
@@ -108,6 +122,11 @@
         "command": "dotrush.setStartupProject",
         "category": "%extension.displayName%",
         "title": "%command.title.setStartupProject%"
+      },
+      {
+        "command": "dotrush.pickProjectOrSolutionFiles",
+        "category": "%extension.displayName%",
+        "title": "%command.title.pickProjectOrSolutionFiles%"
       },
       {
         "command": "dotrush.build",
@@ -293,21 +312,12 @@
             "default": [],
             "description": "%configuration.description.roslyn.workspaceProperties%"
           },
-          "dotrush.roslyn.projectFiles": {
+          "dotrush.roslyn.projectOrSolutionFiles": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "default": [],
-            "description": "%configuration.description.roslyn.projectFiles%"
-          },
-          "dotrush.roslyn.excludePatterns": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "description": "%configuration.description.roslyn.excludePatterns%"
+            "description": "%configuration.description.roslyn.projectOrSolutionFiles%"
           },
           "dotrush.roslyn.showItemsFromUnimportedNamespaces": {
             "type": "boolean",

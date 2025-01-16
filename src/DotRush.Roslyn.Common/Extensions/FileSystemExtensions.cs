@@ -72,6 +72,9 @@ public static class FileSystemExtensions {
     }
 
     public static bool CheckGlobPatterns(string path, IEnumerable<string> patterns) {
+        if (!patterns.Any())
+            return true;
+        
         var matcher = new Matcher();
         foreach (var pattern in patterns)
             matcher.AddInclude(pattern);
