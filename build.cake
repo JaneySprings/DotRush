@@ -55,14 +55,28 @@ Task("explorer")
 
 Task("test")
 	.IsDependentOn("clean")
-	// .Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Tests", "DotRush.Roslyn.Tests.csproj"), new DotNetTestSettings {  
-	// 	Configuration = configuration,
-	// 	Verbosity = DotNetVerbosity.Quiet,
-	// 	ResultsDirectory = ArtifactsDirectory,
-	// 	Loggers = new[] { "trx" }
-	// }));
-	//TODO: Refactoring
-	.Does(() => {});
+	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Workspaces.Tests", "DotRush.Roslyn.Workspaces.Tests.csproj"),
+		new DotNetTestSettings {  
+			Configuration = configuration,
+			Verbosity = DotNetVerbosity.Quiet,
+			ResultsDirectory = ArtifactsDirectory,
+			Loggers = new[] { "trx" }
+		}
+	// )).Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Navigation.Tests", "DotRush.Roslyn.Navigation.Tests.csproj"),
+	// 	new DotNetTestSettings {  
+	// 		Configuration = configuration,
+	// 		Verbosity = DotNetVerbosity.Quiet,
+	// 		ResultsDirectory = ArtifactsDirectory,
+	// 		Loggers = new[] { "trx" }
+	// 	}
+	// )).Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.CodeAnalysis.Tests", "DotRush.Roslyn.CodeAnalysis.Tests.csproj"),
+	// 	new DotNetTestSettings {  
+	// 		Configuration = configuration,
+	// 		Verbosity = DotNetVerbosity.Quiet,
+	// 		ResultsDirectory = ArtifactsDirectory,
+	// 		Loggers = new[] { "trx" }
+	// 	}
+	));
 
 Task("vsix")
 	.IsDependentOn("clean")
