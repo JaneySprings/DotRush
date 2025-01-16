@@ -35,7 +35,10 @@ public class WorkspaceService : DotRushWorkspace {
             return;
         }
 
-        var solutionFiles = targets.Where(it => Path.GetExtension(it).Equals(".sln", StringComparison.OrdinalIgnoreCase));
+        var solutionFiles = targets.Where(it => 
+            Path.GetExtension(it).Equals(".sln", StringComparison.OrdinalIgnoreCase) ||
+            Path.GetExtension(it).Equals(".slnf", StringComparison.OrdinalIgnoreCase)
+        );
         if (solutionFiles.Any())
             await LoadSolutionAsync(solutionFiles, cancellationToken).ConfigureAwait(false);
 

@@ -24,7 +24,7 @@ export class StateController {
 
     public static getProject() : string | undefined {
         const projectPath = StateController.getLocal<string>('project');
-        return StatusBarController.projects?.find(it => it === projectPath);
+        return StatusBarController.projects.find(it => it === projectPath);
     }
     public static getFramework() : string | undefined {
         return StateController.getLocal<string>('framework');

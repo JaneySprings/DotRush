@@ -67,11 +67,11 @@ export class LanguageServerController {
 
     private static async showQuickPickTargets(): Promise<void> {
         const items: vscode.QuickPickItem[] = [];
-        if (StatusBarController.solutions !== undefined) {
+        if (StatusBarController.solutions.length > 0) {
             items.push(ProjectOrSolutionItem.solutionSeparator);
             items.push(...StatusBarController.solutions.map(it => new ProjectOrSolutionItem(it)));
         }
-        if (StatusBarController.projects !== undefined) {
+        if (StatusBarController.projects.length > 0) {
             items.push(ProjectOrSolutionItem.projectSeparator);
             items.push(...StatusBarController.projects.map(it => new ProjectOrSolutionItem(it)));
         }
@@ -88,11 +88,9 @@ export class LanguageServerController {
         const configValue = vscode.workspace.getConfiguration(res.extensionId).get<string[]>('roslyn.projectOrSolutionFiles');
         if (configValue != undefined && configValue.length != 0)
             return false;
-        if (StatusBarController.solutions === undefined || StatusBarController.projects === undefined)
-            return false;
         if (StatusBarController.solutions.length === 1 || StatusBarController.projects.length === 1)
             return false;
 
-        return true;
+        return StatusBarController.solutions.length > 1 || StatusBarController.projects.length > 1
     }
 }

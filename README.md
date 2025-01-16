@@ -1,7 +1,7 @@
-<img align="right" width="60%" src="https://github.com/JaneySprings/DotRush/raw/main/assets/preview.png" style="padding: 2% 0% 0% 2%"/>
+<img align="right" width="60%" src="assets/preview.png" style="padding: 2% 0% 0% 2%"/>
 
-### C# Development Environment for Visual Studio Code and NeoVim
-&emsp;DotRush is a powerful, lightweight, and efficient **C# Language Server Extension** designed for **VS Code** and **NeoVim**. Built with performance and simplicity in mind, DotRush empowers developers with robust C# development tools in their favorite editors.
+### C# Development Environment for Visual Studio Code
+&emsp;DotRush is a powerful, lightweight, and efficient **C# Development Environment** designed for **VS Code**. Built with performance and simplicity in mind, DotRush provides a seamless development experience for C# developers.
 
 <br clear="right"/>
 
@@ -27,4 +27,10 @@ Seamless integration with both VS Code and NeoVim on Windows, macOS, and Linux.
 
 - **Performance** </br>
 Lightweight and efficient, DotRush is designed to be fast and responsive.
+
+
+## Working with Projects and Solutions
+&emsp;If your folder contains multiple projects or a solution file, DotRush will show the following picker for all projects and solutions in the folder. DotRush automatically saves selected projects and solutions in the workspace settings. You can open it manually by executing the `DotRush: Pick Project or Solution files` command:
+
+![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image1.png)
 

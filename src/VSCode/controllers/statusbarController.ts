@@ -16,8 +16,8 @@ export class StatusBarController {
     public static activeConfiguration: string | undefined;
     public static activeFramework: string | undefined;
 
-    public static projects: string[] | undefined;
-    public static solutions: string[] | undefined;
+    public static projects: string[] = [];
+    public static solutions: string[] = [];
 
     public static async activate(context: vscode.ExtensionContext): Promise<void> {
         StatusBarController.createProjectStatusBarItem(context);
@@ -48,9 +48,11 @@ export class StatusBarController {
         if (StatusBarController.projectStatusBarItem === undefined)
             return;
 
-        StatusBarController.solutions = (await vscode.workspace.findFiles('**/*.sln')).map(x => x.fsPath);
+        StatusBarController.solutions.push(...(await vscode.workspace.findFiles('**/*.slnf')).map(x => x.fsPath));
+        StatusBarController.solutions.push(...(await vscode.workspace.findFiles('**/*.sln')).map(x => x.fsPath));
         StatusBarController.projects = (await vscode.workspace.findFiles('**/*.csproj')).map(x => x.fsPath);
-        if (StatusBarController.projects.length === 0)
+
+        if (StatusBarController.projects.length <= 0)
             return StatusBarController.projectStatusBarItem.hide();
 
         const projectPath = StateController.getProject() ?? StatusBarController.projects[0];
@@ -60,7 +62,7 @@ export class StatusBarController {
         if (StatusBarController.projectStatusBarItem === undefined)
             return;
 
-        if (StatusBarController.projects === undefined || StatusBarController.projects.length === 0)
+        if (StatusBarController.projects.length <= 0)
             return StatusBarController.configurationStatusBarItem.hide();
 
         const framework = StateController.getFramework();
@@ -72,7 +74,7 @@ export class StatusBarController {
         if (StatusBarController.configurationStatusBarItem === undefined)
             return;
 
-        if (StatusBarController.projects === undefined || StatusBarController.projects.length === 0)
+        if (StatusBarController.projects.length <= 0)
             return StatusBarController.configurationStatusBarItem.hide();
 
         const configuration = StateController.getConfiguration();

@@ -24,9 +24,6 @@ export class TestExplorerController {
     }
 
     private static async refreshTests(): Promise<void> {
-        if (StatusBarController.projects === undefined)
-            return;
-
         TestExplorerController.controller.items.replace([]);
 
         for (const projectPath of StatusBarController.projects) {
