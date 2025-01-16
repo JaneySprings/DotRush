@@ -3,7 +3,7 @@ using _Path = System.IO.Path;
 
 public string RootDirectory => MakeAbsolute(Directory("./")).ToString();
 public string ArtifactsDirectory => _Path.Combine(RootDirectory, "artifacts");
-public string VSCodeExtensionDirectory => _Path.Combine(RootDirectory, "src", "VSCode", "extension");
+public string VSCodeExtensionDirectory => _Path.Combine(RootDirectory, "extension");
 
 var target = Argument("target", "vsix");
 var version = Argument("release-version", "1.0.0");
@@ -55,12 +55,28 @@ Task("explorer")
 
 Task("test")
 	.IsDependentOn("clean")
-	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Tests", "DotRush.Roslyn.Tests.csproj"), new DotNetTestSettings {  
-		Configuration = configuration,
-		Verbosity = DotNetVerbosity.Quiet,
-		ResultsDirectory = ArtifactsDirectory,
-		Loggers = new[] { "trx" }
-	}));
+	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Workspaces.Tests", "DotRush.Roslyn.Workspaces.Tests.csproj"),
+		new DotNetTestSettings {  
+			Configuration = configuration,
+			Verbosity = DotNetVerbosity.Quiet,
+			ResultsDirectory = ArtifactsDirectory,
+			Loggers = new[] { "trx" }
+		}
+	// )).Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Navigation.Tests", "DotRush.Roslyn.Navigation.Tests.csproj"),
+	// 	new DotNetTestSettings {  
+	// 		Configuration = configuration,
+	// 		Verbosity = DotNetVerbosity.Quiet,
+	// 		ResultsDirectory = ArtifactsDirectory,
+	// 		Loggers = new[] { "trx" }
+	// 	}
+	// )).Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.CodeAnalysis.Tests", "DotRush.Roslyn.CodeAnalysis.Tests.csproj"),
+	// 	new DotNetTestSettings {  
+	// 		Configuration = configuration,
+	// 		Verbosity = DotNetVerbosity.Quiet,
+	// 		ResultsDirectory = ArtifactsDirectory,
+	// 		Loggers = new[] { "trx" }
+	// 	}
+	));
 
 Task("vsix")
 	.IsDependentOn("clean")
@@ -70,18 +86,17 @@ Task("vsix")
 	.Does(() => {
 		var vsruntime = runtime.Replace("win-", "win32-").Replace("osx-", "darwin-");
 		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{vsruntime}.vsix");
-		var extensionPath = _Path.Combine(VSCodeExtensionDirectory, "..");
-		ExecuteCommand("npm", "install", extensionPath);
-		ExecuteCommand("vsce", $"package --target {vsruntime} --out {output} --no-git-tag-version {version}", extensionPath);
+		ExecuteCommand("npm", "install");
+		ExecuteCommand("vsce", $"package --target {vsruntime} --out {output} --no-git-tag-version {version}");
 	});
 
 
-void ExecuteCommand(string command, string arguments, string cwd = null) {
+void ExecuteCommand(string command, string arguments) {
 	if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
 		arguments = $"/c \"{command} {arguments}\"";
 		command = "cmd";
 	}
-	if (StartProcess(command, new ProcessSettings { WorkingDirectory = cwd, Arguments = arguments }) != 0)
+	if (StartProcess(command, arguments) != 0)
 		throw new Exception("Command exited with non-zero exit code.");
 }
 

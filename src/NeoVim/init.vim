@@ -8,11 +8,9 @@ call plug#end()
 
 lua << EOF
 
-vim.bo.omnifunc = 'vim.lsp.omnifunc'
-
 require('lspconfig.configs').dotrush = {
     default_config = {
-        cmd = { "/home/user/.lsp/dotrush/DotRush" }, -- Adjust the path to the DotRush executable
+        cmd = { "C:\\Users\\Test\\.lsp\\dotrush\\DotRush.exe" }, -- Adjust the path to the DotRush executable
         filetypes = { 'cs', 'xaml' },
         root_dir = function(fname)
             return vim.fn.getcwd()

@@ -16,7 +16,7 @@ export class DebugAdapterController {
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerVsdbgId, new DotNetDebugConfigurationProvider()));
 
         if (!fs.existsSync(path.join(context.extensionPath, 'extension', 'bin', 'Debugger')))
-            await DebugAdapterController.installDebugger();
+            await DebugAdapterController.installDebugger(context);
     }
 
     public static provideDebuggerOptions(options: vscode.DebugConfiguration): vscode.DebugConfiguration {
@@ -39,10 +39,10 @@ export class DebugAdapterController {
         return options;
     }
     public static async getProgramPath(): Promise<string | undefined> {
-        if (StatusBarController.project === undefined || StatusBarController.configuration === undefined)
+        if (StatusBarController.activeProject === undefined || StatusBarController.activeConfiguration === undefined)
             return await DebugAdapterController.pickProgramPath();
 
-        const assemblyPath = Interop.getPropertyValue('TargetPath', StatusBarController.project, StatusBarController.configuration, StatusBarController.framework);
+        const assemblyPath = Interop.getPropertyValue('TargetPath', StatusBarController.activeProject.path, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
 		if (!assemblyPath)
 			return await DebugAdapterController.pickProgramPath();
 
@@ -69,10 +69,11 @@ export class DebugAdapterController {
         const selectedItem = await vscode.window.showQuickPick(processes.map(p => new ProcessItem(p)), { placeHolder: res.messageSelectProcessTitle });
         return selectedItem?.item.id.toString();
     }
-    private static async installDebugger(): Promise<void> {
+    private static async installDebugger(context: vscode.ExtensionContext): Promise<void> {
         const channel = vscode.window.createOutputChannel(res.extensionId);
+        context.subscriptions.push(channel);
+
         channel.appendLine('Installing VSDBG debugger. This may take a few minutes...');
-        channel.show();
         const result = await Interop.installDebugger();
         if (!result.isSuccess)
             channel.appendLine(`Failed to install debugger: ${result.message}`);

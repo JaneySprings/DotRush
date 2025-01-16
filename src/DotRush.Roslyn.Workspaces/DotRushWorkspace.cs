@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -20,25 +19,14 @@ public abstract class DotRushWorkspace : SolutionController {
         workspace.SkipUnrecognizedProjects = SkipUnrecognizedProjects;
         return registrationResult;
     }
-    public Task LoadSolutionAsync(CancellationToken cancellationToken) {
-        ArgumentNullException.ThrowIfNull(workspace);
-        return LoadSolutionAsync(workspace, cancellationToken);
-    }
-    public void FindTargetsInWorkspace(IEnumerable<string>? workspaceFolders, IEnumerable<string>? excludePatterns = null) {
-        if (workspaceFolders == null)
-            return;
 
-        foreach (var workspaceFolder in workspaceFolders) {
-            var directoryProjectFiles = FileSystemExtensions.GetVisibleFiles(workspaceFolder, LanguageExtensions.IsProjectFile);
-            if (directoryProjectFiles.Any()) {
-                AddProjectFiles(directoryProjectFiles, excludePatterns);
-                continue;
-            }
-            FindTargetsInWorkspace(FileSystemExtensions.GetVisibleDirectories(workspaceFolder), excludePatterns);
-        }
+    public Task LoadSolutionAsync(IEnumerable<string> solutionFiles, CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(workspace);
+        return LoadSolutionAsync(workspace, solutionFiles, cancellationToken);
     }
-    public void AddTargets(IEnumerable<string> projectFiles) {
-        AddProjectFiles(projectFiles);
+    public Task LoadProjectsAsync(IEnumerable<string> projectFiles, CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(workspace);
+        return LoadProjectsAsync(workspace, projectFiles, cancellationToken);
     }
 
     private static bool TryRegisterDotNetEnvironment() {

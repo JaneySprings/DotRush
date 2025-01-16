@@ -11,6 +11,6 @@
         <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
         <!-- <PublishTrimmed>true</PublishTrimmed> -->
 		<!-- <TrimMode>partial</TrimMode> -->
-        <CodeAnalysisVersion>4.12.0-2.final</CodeAnalysisVersion>
+        <CodeAnalysisVersion>4.12.0</CodeAnalysisVersion>
     </PropertyGroup>
 </Project>
