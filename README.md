@@ -32,5 +32,5 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 ## Working with Projects and Solutions
 &emsp;If your folder contains multiple projects or a solution file, DotRush will show the following picker for all projects and solutions in the folder. DotRush automatically saves selected projects and solutions in the workspace settings. You can open it manually by executing the `DotRush: Pick Project or Solution files` command:
 
-![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image1.png)
+![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image1.jpg)
 
