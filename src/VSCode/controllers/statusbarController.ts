@@ -2,6 +2,7 @@ import { Project, TargetFrameworkItem } from '../models/project';
 import { StateController } from './stateController';
 import { PublicExports } from '../publicExports';
 import { Interop } from "../interop/interop";
+import { Extensions } from '../extensions';
 import { Icons } from '../resources/icons';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
@@ -16,13 +17,19 @@ export class StatusBarController {
     public static activeConfiguration: string | undefined;
     public static activeFramework: string | undefined;
 
-    public static projects: string[] = [];
-    public static solutions: string[] = [];
 
     public static async activate(context: vscode.ExtensionContext): Promise<void> {
-        StatusBarController.createProjectStatusBarItem(context);
-        StatusBarController.createConfigurationStatusBarItem(context);
+        StatusBarController.projectStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+        StatusBarController.configurationStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
         StatusBarController.projectDecorationProvider = new StartupProjectDecorationProvider();
+        
+        StatusBarController.projectStatusBarItem.command = res.commandIdSelectActiveFramework;
+        StatusBarController.configurationStatusBarItem.command = res.commandIdSelectActiveConfiguration;
+
+        context.subscriptions.push(StatusBarController.projectStatusBarItem);
+        context.subscriptions.push(StatusBarController.configurationStatusBarItem);
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdSelectActiveFramework, StatusBarController.showQuickPickFramework));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdSelectActiveConfiguration, StatusBarController.showQuickPickConfiguration));
         context.subscriptions.push(vscode.window.registerFileDecorationProvider(StatusBarController.projectDecorationProvider));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveProjectPath, () => StatusBarController.activeProject?.path));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveConfiguration, () => StatusBarController.activeConfiguration));
@@ -34,55 +41,33 @@ export class StatusBarController {
         await vscode.commands.executeCommand('setContext', res.commandIdStatusBarEnabled, true);
         await StatusBarController.updateProjectStatusBarItem();
     }
-
-    private static createProjectStatusBarItem(context: vscode.ExtensionContext) {
-        StatusBarController.projectStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-        StatusBarController.projectStatusBarItem.command = res.commandIdSelectActiveFramework;
-        context.subscriptions.push(StatusBarController.projectStatusBarItem);
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdSelectActiveFramework, StatusBarController.showQuickPickFramework));
-    }
-    private static createConfigurationStatusBarItem(context: vscode.ExtensionContext) {
-        StatusBarController.configurationStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
-        StatusBarController.configurationStatusBarItem.command = res.commandIdSelectActiveConfiguration;
-        context.subscriptions.push(StatusBarController.configurationStatusBarItem);
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdSelectActiveConfiguration, StatusBarController.showQuickPickConfiguration));
-    }
-
+    
     private static async updateProjectStatusBarItem(): Promise<void> {
-        if (StatusBarController.projectStatusBarItem === undefined)
-            return;
-
-        StatusBarController.solutions.push(...(await vscode.workspace.findFiles('**/*.slnf')).map(x => x.fsPath));
-        StatusBarController.solutions.push(...(await vscode.workspace.findFiles('**/*.sln')).map(x => x.fsPath));
-        StatusBarController.projects = (await vscode.workspace.findFiles('**/*.csproj')).map(x => x.fsPath);
-
-        if (StatusBarController.projects.length <= 0)
+        const projects = await Extensions.getProjectFiles();
+        if (projects.length <= 0)
             return StatusBarController.projectStatusBarItem.hide();
 
-        const projectPath = StateController.getProject() ?? StatusBarController.projects[0];
+        let projectPath = StateController.getLocal<string>('project');
+        if (projectPath === undefined || !projects.includes(projectPath))
+            projectPath = projects[0];
+
         await StatusBarController.performSelectProject(projectPath);
     }
     private static async updateFrameworkStatusBarItem(): Promise<void> {
-        if (StatusBarController.projectStatusBarItem === undefined)
+        if (StatusBarController.activeProject === undefined)
             return;
 
-        if (StatusBarController.projects.length <= 0)
-            return StatusBarController.configurationStatusBarItem.hide();
-
-        const framework = StateController.getFramework();
-        const activeFramework = StatusBarController.activeProject?.frameworks.find(it => it === framework);
+        const framework = StateController.getLocal<string>('framework');
+        const activeFramework = StatusBarController.activeProject.frameworks.find(it => it === framework);
         StatusBarController.performSelectFramework(activeFramework);
         StatusBarController.projectStatusBarItem.show();
     }
     private static async updateConfigurationStatusBarItem(): Promise<void> {
-        if (StatusBarController.configurationStatusBarItem === undefined)
+        if (StatusBarController.activeProject === undefined)
             return;
 
-        if (StatusBarController.projects.length <= 0)
-            return StatusBarController.configurationStatusBarItem.hide();
-
-        const configuration = StateController.getConfiguration();
-        const activeConfiguration = StatusBarController.activeProject?.configurations.find(it => it === configuration);
+        const configuration = StateController.getLocal<string>('configuration');
+        const activeConfiguration = StatusBarController.activeProject.configurations.find(it => it === configuration);
         StatusBarController.performSelectConfiguration(activeConfiguration);
         StatusBarController.configurationStatusBarItem.show();
     }
@@ -92,7 +77,7 @@ export class StatusBarController {
         StatusBarController.activeProject = item;
         StatusBarController.projectDecorationProvider.update(item);
         PublicExports.instance.onActiveProjectChanged.invoke(StatusBarController.activeProject);
-        StateController.putProject(StatusBarController.activeProject.path);
+        StateController.putLocal('project', StatusBarController.activeProject.path);
         StatusBarController.updateFrameworkStatusBarItem();
         StatusBarController.updateConfigurationStatusBarItem();
     }
@@ -100,13 +85,13 @@ export class StatusBarController {
         StatusBarController.activeFramework = item ?? StatusBarController.activeProject?.frameworks[0];
         StatusBarController.projectStatusBarItem.text = `${Icons.target} ${StatusBarController.activeProject?.name} | ${StatusBarController.activeFramework}`;
         PublicExports.instance.onActiveFrameworkChanged.invoke(StatusBarController.activeFramework);
-        StateController.putFramework(StatusBarController.activeFramework);
+        StateController.putLocal('framework', StatusBarController.activeFramework);
     }
     public static performSelectConfiguration(item: string | undefined = undefined) {
         StatusBarController.activeConfiguration = item ?? 'Debug';
         StatusBarController.configurationStatusBarItem.text = `${Icons.target} ${StatusBarController.activeConfiguration} | Any CPU`;
         PublicExports.instance.onActiveConfigurationChanged.invoke(StatusBarController.activeConfiguration);
-        StateController.putConfiguration(StatusBarController.activeConfiguration);
+        StateController.putLocal('configuration', StatusBarController.activeConfiguration);
     }
 
     public static async showQuickPickFramework() {

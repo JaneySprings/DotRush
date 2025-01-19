@@ -1,6 +1,6 @@
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
-import { StatusBarController } from "./statusbarController";
 import { ProjectOrSolutionItem } from "../models/project";
+import { Extensions } from "../extensions";
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -15,7 +15,7 @@ export class LanguageServerController {
         const serverExtension = process.platform === 'win32' ? '.exe' : '';
         LanguageServerController.command = serverExecutable + serverExtension;
         
-        if (LanguageServerController.shouldSelectTargets())
+        if (await LanguageServerController.shouldQuickPickTargets())
             await LanguageServerController.showQuickPickTargets();
 
         LanguageServerController.start();
@@ -67,13 +67,15 @@ export class LanguageServerController {
 
     private static async showQuickPickTargets(): Promise<void> {
         const items: vscode.QuickPickItem[] = [];
-        if (StatusBarController.solutions.length > 0) {
+        const solutions = await Extensions.getSolutionFiles();
+        const projects = await Extensions.getProjectFiles();
+        if (solutions.length > 0) {
             items.push(ProjectOrSolutionItem.solutionSeparator);
-            items.push(...StatusBarController.solutions.map(it => new ProjectOrSolutionItem(it)));
+            items.push(...solutions.map(it => new ProjectOrSolutionItem(it)));
         }
-        if (StatusBarController.projects.length > 0) {
+        if (projects.length > 0) {
             items.push(ProjectOrSolutionItem.projectSeparator);
-            items.push(...StatusBarController.projects.map(it => new ProjectOrSolutionItem(it)));
+            items.push(...projects.map(it => new ProjectOrSolutionItem(it)));
         }
 
         const result = (await vscode.window.showQuickPick(items, { canPickMany: true, placeHolder: res.messageSelectTargetTitle }))?.map((it: any) => it.item);
@@ -84,13 +86,16 @@ export class LanguageServerController {
         if (LanguageServerController.isRunning())
             LanguageServerController.restart();
     }
-    private static shouldSelectTargets(): boolean {
-        const configValue = vscode.workspace.getConfiguration(res.extensionId).get<string[]>('roslyn.projectOrSolutionFiles');
-        if (configValue != undefined && configValue.length != 0)
-            return false;
-        if (StatusBarController.solutions.length === 1 || StatusBarController.projects.length === 1)
+    private static async shouldQuickPickTargets(): Promise<boolean> {
+        const projectOrSolutionFiles = vscode.workspace.getConfiguration(res.extensionId).get<string[]>('roslyn.projectOrSolutionFiles');
+        if (projectOrSolutionFiles !== undefined && projectOrSolutionFiles.length > 0)
             return false;
 
-        return StatusBarController.solutions.length > 1 || StatusBarController.projects.length > 1
+        const solutions = await Extensions.getSolutionFiles();
+        const projects = await Extensions.getProjectFiles();
+        if (solutions.length === 1 || projects.length === 1)
+            return false;
+
+        return solutions.length > 1 || projects.length > 1;
     }
 }

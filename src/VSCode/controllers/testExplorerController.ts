@@ -1,7 +1,7 @@
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
-import { StatusBarController } from './statusbarController';
 import { TestExtensions } from '../models/test';
 import { Interop } from '../interop/interop';
+import { Extensions } from '../extensions';
 import * as res from '../resources/constants'
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -26,13 +26,14 @@ export class TestExplorerController {
     private static async refreshTests(): Promise<void> {
         TestExplorerController.controller.items.replace([]);
 
-        for (const projectPath of StatusBarController.projects) {
-            const projectName = path.basename(projectPath, '.csproj');
-            const discoveredTests = await Interop.getTests(projectPath);
+        const projectFiles = await Extensions.getProjectFiles();
+        for (const projectFile of projectFiles) {
+            const projectName = path.basename(projectFile, '.csproj');
+            const discoveredTests = await Interop.getTests(projectFile);
             if (discoveredTests.length === 0)
                 continue;
 
-            const root = TestExplorerController.controller.createTestItem(projectName, projectName, vscode.Uri.file(projectPath));
+            const root = TestExplorerController.controller.createTestItem(projectName, projectName, vscode.Uri.file(projectFile));
             root.children.replace(discoveredTests.map(t => TestExtensions.toTestItem(t, TestExplorerController.controller)));
             TestExplorerController.controller.items.add(root);
         }
