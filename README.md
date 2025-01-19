@@ -34,3 +34,6 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image1.jpg)
 
+
+## Running and Debugging .NET Core Applications
+&emsp;TODO

@@ -12,10 +12,10 @@ const extensionConfig = {
   target: 'node',
 	mode: 'none',
 
-  entry: './src/VSCode/extension.ts',
+  entry: './src/VSCode/main.ts',
   output: {
     path: path.resolve(__dirname, 'extension'),
-    filename: 'extension.js',
+    filename: 'main.js',
     libraryTarget: 'commonjs2'
   },
   externals: {

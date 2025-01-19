@@ -19,13 +19,15 @@ export async function activate(context: vscode.ExtensionContext) {
 	const exports = new PublicExports();
 	Interop.initialize(context.extensionPath);
 
-	await StateController.activate(context);
-	await StatusBarController.activate(context);
-	ContextMenuController.activate(context);
-	DebugAdapterController.activate(context);
-	LanguageServerController.activate(context);
-	TestExplorerController.activate(context);
+	if (vscode.workspace.workspaceFolders !== undefined) {
+		StateController.activate(context);
+		StatusBarController.activate(context);
+		ContextMenuController.activate(context);
+		LanguageServerController.activate(context);
+		TestExplorerController.activate(context);
+	}
 
+	DebugAdapterController.activate(context);
 	ModulesView.feature.activate(context);
 
 	return exports;

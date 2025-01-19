@@ -2,6 +2,7 @@ import { DotNetDebugConfigurationProvider } from '../providers/dotnetDebugConfig
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
 import { StatusBarController } from './statusbarController';
 import { ProcessItem } from '../models/process';
+import { Extensions } from '../extensions';
 import { Interop } from '../interop/interop';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
@@ -10,7 +11,7 @@ import * as fs from 'fs';
 
 export class DebugAdapterController {
     public static async activate(context: vscode.ExtensionContext) : Promise<void> {
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickProcess, async () => await DebugAdapterController.pickProcessId()));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickProcess, async () => await DebugAdapterController.showQuickPickProcess()));
 
         context.subscriptions.push(vscode.tasks.registerTaskProvider(res.taskDefinitionId, new DotNetTaskProvider()));
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerVsdbgId, new DotNetDebugConfigurationProvider()));
@@ -21,41 +22,38 @@ export class DebugAdapterController {
 
     public static provideDebuggerOptions(options: vscode.DebugConfiguration): vscode.DebugConfiguration {
         if (options.justMyCode === undefined)
-            options.justMyCode = DebugAdapterController.getSetting('debugger.projectAssembliesOnly', false);
+            options.justMyCode = Extensions.getSetting('debugger.projectAssembliesOnly', false);
         if (options.enableStepFiltering === undefined)
-            options.enableStepFiltering = DebugAdapterController.getSetting('debugger.stepOverPropertiesAndOperators', false);
+            options.enableStepFiltering = Extensions.getSetting('debugger.stepOverPropertiesAndOperators', false);
         if (options.console === undefined)
-            options.console = DebugAdapterController.getSetting('debugger.console');
+            options.console = Extensions.getSetting('debugger.console');
         if (options.symbolOptions === undefined)
             options.symbolOptions = {
-                searchPaths: DebugAdapterController.getSetting('debugger.symbolSearchPaths'),
-                searchMicrosoftSymbolServer: DebugAdapterController.getSetting('debugger.searchMicrosoftSymbolServer', false),
+                searchPaths: Extensions.getSetting('debugger.symbolSearchPaths'),
+                searchMicrosoftSymbolServer: Extensions.getSetting('debugger.searchMicrosoftSymbolServer', false),
             };
         if (options.sourceLinkOptions === undefined)
             options.sourceLinkOptions = {
-                "*": { enabled: DebugAdapterController.getSetting('debugger.automaticSourcelinkDownload', true) }
+                "*": { enabled: Extensions.getSetting('debugger.automaticSourcelinkDownload', true) }
             }
 
         return options;
     }
     public static async getProgramPath(): Promise<string | undefined> {
         if (StatusBarController.activeProject === undefined || StatusBarController.activeConfiguration === undefined)
-            return await DebugAdapterController.pickProgramPath();
+            return await DebugAdapterController.showQuickPickProgram();
 
         const assemblyPath = Interop.getPropertyValue('TargetPath', StatusBarController.activeProject.path, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
 		if (!assemblyPath)
-			return await DebugAdapterController.pickProgramPath();
+			return await DebugAdapterController.showQuickPickProgram();
 
         const programDirectory = path.dirname(assemblyPath);
         const programFile = path.basename(assemblyPath, '.dll');
         const programPath = path.join(programDirectory, programFile + Interop.execExtension);
 		return programPath;
 	}
-    public static async getProcessId(): Promise<string | undefined> {
-        return await DebugAdapterController.pickProcessId();
-    }
 
-    private static async pickProgramPath(): Promise<string | undefined> {
+    public static async showQuickPickProgram(): Promise<string | undefined> {
         const programPath = await vscode.window.showOpenDialog({
             title: res.messageSelectProgramTitle,
             canSelectFiles: true,
@@ -64,7 +62,7 @@ export class DebugAdapterController {
         });
         return programPath?.[0].fsPath;
     }
-    private static async pickProcessId(): Promise<string | undefined> {
+    public static async showQuickPickProcess(): Promise<string | undefined> {
         const processes = await Interop.getProcesses();
         const selectedItem = await vscode.window.showQuickPick(processes.map(p => new ProcessItem(p)), { placeHolder: res.messageSelectProcessTitle });
         return selectedItem?.item.id.toString();
@@ -79,9 +77,5 @@ export class DebugAdapterController {
             channel.appendLine(`Failed to install debugger: ${result.message}`);
         else
             channel.appendLine('Debugger installed successfully.');
-    }
-
-    public static getSetting(id: string, fallback: any = undefined): any {
-        return vscode.workspace.getConfiguration(res.extensionId).get(id) ?? fallback;
     }
 }

@@ -33,9 +33,10 @@
     "vscode": "^1.73.0"
   },
   "activationEvents": [
-    "workspaceContains:**/*.csproj"
+    "workspaceContains:**/*.csproj",
+    "onDebug"
   ],
-  "main": "extension/extension.js",
+  "main": "extension/main.js",
   "scripts": {
     "vscode:prepublish": "npm run package",
     "watch": "tsc -watch -p ./src/tsconfig.json",
