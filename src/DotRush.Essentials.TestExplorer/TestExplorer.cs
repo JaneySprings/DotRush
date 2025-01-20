@@ -12,7 +12,7 @@ public static class TestExplorer {
     public static IEnumerable<TestCase> DiscoverTests(string projectFile) {
         //TODO: Use MSBuildProjectsLoader from common lib
         // Check the IsTestProject property
-        if (!projectFile.Contains("Tests.", StringComparison.OrdinalIgnoreCase)) {
+        if (!projectFile.Contains("test", StringComparison.OrdinalIgnoreCase)) {
             CurrentSessionLogger.Debug($"'{projectFile}' is not a test project");
             return Enumerable.Empty<TestCase>();
         }

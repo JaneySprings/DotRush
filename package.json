@@ -157,7 +157,8 @@
           "csharp",
           "fsharp",
           "razor",
-          "aspnetcorerazor"
+          "aspnetcorerazor",
+          "xml"
         ],
         "initialConfigurations": [
           {

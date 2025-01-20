@@ -83,7 +83,12 @@ export class StatusBarController {
     }
     public static performSelectFramework(item: string | undefined = undefined) {
         StatusBarController.activeFramework = item ?? StatusBarController.activeProject?.frameworks[0];
-        StatusBarController.projectStatusBarItem.text = `${Icons.target} ${StatusBarController.activeProject?.name} | ${StatusBarController.activeFramework}`;
+
+        if (StatusBarController.activeFramework === undefined)
+            StatusBarController.projectStatusBarItem.text = `${Icons.target} ${StatusBarController.activeProject?.name}`;
+        else
+            StatusBarController.projectStatusBarItem.text = `${Icons.target} ${StatusBarController.activeProject?.name} | ${StatusBarController.activeFramework}`;
+
         PublicExports.instance.onActiveFrameworkChanged.invoke(StatusBarController.activeFramework);
         StateController.putLocal('framework', StatusBarController.activeFramework);
     }
