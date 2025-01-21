@@ -124,14 +124,13 @@ export class StatusBarController {
 class StartupProjectDecorationProvider implements vscode.FileDecorationProvider {
     private _onDidChangeFileDecorations: vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined> = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>();
     private startupProjectUri: vscode.Uri | undefined;
-    private startupProjectDirectoryUri: vscode.Uri | undefined;
 
     public onDidChangeFileDecorations?: vscode.Event<vscode.Uri | vscode.Uri[] | undefined> | undefined = this._onDidChangeFileDecorations.event;
     public provideFileDecoration(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<vscode.FileDecoration> {
-        if (this.startupProjectUri === undefined || this.startupProjectDirectoryUri === undefined)
+        if (this.startupProjectUri === undefined)
             return undefined;
 
-        if (uri.fsPath !== this.startupProjectUri.fsPath && uri.fsPath !== this.startupProjectDirectoryUri.fsPath)
+        if (!this.startupProjectUri.fsPath.startsWith(uri.fsPath))
             return undefined;
 
         return { 
@@ -144,13 +143,11 @@ class StartupProjectDecorationProvider implements vscode.FileDecorationProvider 
     public update(project: Project | undefined) {
         if (project === undefined) {
             this.startupProjectUri = undefined;
-            this.startupProjectDirectoryUri = undefined;
             this._onDidChangeFileDecorations.fire(undefined);
             return;
         }
 
         this.startupProjectUri = vscode.Uri.file(project.path);
-        this.startupProjectDirectoryUri = vscode.Uri.file(path.dirname(project.path));
         this._onDidChangeFileDecorations.fire(undefined);
     }
 }
