@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
@@ -35,12 +36,11 @@ public class CompilationHost {
 
         var allDiagnostics = new HashSet<DiagnosticHolder>();
         foreach (var project in projects) {
-            var compilationWithAnalyzers = await CompileWithAnalyzersAsync(project, cancellationToken).ConfigureAwait(false);
-            if (compilationWithAnalyzers == null)
+            var diagnostics = await GetDiagnosticsAsync(project, cancellationToken);
+            if (diagnostics == null)
                 continue;
 
-            var diagnostics = await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken);
-            allDiagnostics.AddRange(diagnostics.Select(diagnostic => new DiagnosticHolder(diagnostic, project)));
+            allDiagnostics.AddRange(diagnostics.Value.Select(diagnostic => new DiagnosticHolder(diagnostic, project)));
         }
 
         var diagnosticsByDocument = allDiagnostics.Where(d => !string.IsNullOrEmpty(d.FilePath)).GroupBy(d => d.FilePath);
@@ -52,14 +52,20 @@ public class CompilationHost {
         currentClassLogger.Debug($"{nameof(CompilationHost)}[{cancellationToken.GetHashCode()}]: Diagnostics finished");
     }
 
-    private async Task<CompilationWithAnalyzers?> CompileWithAnalyzersAsync(Project project, CancellationToken cancellationToken) {
+    private async Task<ImmutableArray<Diagnostic>?> GetDiagnosticsAsync(Project project, CancellationToken cancellationToken) {
         var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
         if (compilation == null)
             return null;
 
         var diagnosticAnalyzers = diagnosticAnalyzersLoader.GetComponents(project);
+        if (diagnosticAnalyzers == null || diagnosticAnalyzers.Length == 0)
+            return compilation.GetDiagnostics(cancellationToken);
+
         var compilationWithAnalyzers = compilation.WithAnalyzers(diagnosticAnalyzers, project.AnalyzerOptions);
-        return compilationWithAnalyzers;
+        if (compilationWithAnalyzers == null)
+            return null;
+
+        return await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken);
     }
 }
 
