@@ -37,11 +37,13 @@ public abstract class SolutionController : ProjectsController {
 
                 OnWorkspaceStateChanged(workspace.CurrentSolution);
 
-                // if (CompileProjectsAfterLoading) {
-                //     OnProjectCompilationStarted(solutionFile);
-                //     _ = await project.GetCompilationAsync(cancellationToken);
-                //     OnProjectCompilationCompleted(solutionFile);
-                // }
+                if (CompileProjectsAfterLoading) {
+                    foreach (var project in solution.Projects) {
+                        OnProjectCompilationStarted(project.FilePath ?? solutionFile);
+                        _ = await project.GetCompilationAsync(cancellationToken);
+                        OnProjectCompilationCompleted(project.FilePath ?? solutionFile);
+                    }
+                }
             });
         }
 
