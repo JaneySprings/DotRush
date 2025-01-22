@@ -10,6 +10,10 @@ export class Extensions {
     public static async getProjectFiles(): Promise<string[]> {
         return (await Extensions.findFiles(undefined, Extensions.projectExtPattern)).map(x => x.fsPath);
     }
+    public static async getTestProjectFiles(): Promise<string[]> {
+        const projects = await Extensions.getProjectFiles();
+        return projects.filter(x => path.basename(x).toLowerCase().includes('test'));
+    }
     public static async getSolutionFiles(): Promise<string[]> {
         return (await Extensions.findFiles(undefined, Extensions.solutionExtPattern)).map(x => x.fsPath);
     }
@@ -29,6 +33,14 @@ export class Extensions {
         const items = projectFiles.map(it => new ProjectOrSolutionItem(it.fsPath));
         const selectedItem = await vscode.window.showQuickPick(items, { placeHolder: res.messageSelectProjectTitle });
         return selectedItem?.item;
+    }
+
+    public static async parallelForEach<T>(items: T[], action: (item: T) => Promise<void>): Promise<void> {
+        const parallel = 4;
+        for (let i = 0; i < items.length; i += parallel) {
+            const slice = items.slice(i, i + parallel);
+            await Promise.all(slice.map(action));
+        }
     }
 
     private static async findFiles(baseUri: vscode.Uri | undefined, extension: string): Promise<vscode.Uri[]> {

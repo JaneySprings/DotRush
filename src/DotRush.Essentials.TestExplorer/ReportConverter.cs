@@ -17,14 +17,16 @@ public static class ReportConverter {
         if (testResults == null)
             return result;
 
+        CreateTestIdCache(tests);
+
         foreach (XmlNode testResult in testResults) {
             if (testResult.Attributes == null)
                 continue;
 
             result.Add(new TestResult {
+                FullName = GetTestFullName(testResult.Attributes),
                 State = testResult.Attributes["outcome"]?.Value,
                 Duration = testResult.Attributes["duration"]?.Value,
-                FullName = GetTestFullName(testResult.Attributes, tests),
                 StackTrace =  testResult.SelectSingleNode("*[local-name()='Output']/*[local-name()='ErrorInfo']/*[local-name()='StackTrace']")?.InnerText,
                 ErrorMessage = testResult.SelectSingleNode("*[local-name()='Output']/*[local-name()='ErrorInfo']/*[local-name()='Message']")?.InnerText,
             });
@@ -32,13 +34,15 @@ public static class ReportConverter {
         return result;
     }
 
-     private static string GetTestFullName(XmlAttributeCollection testNodeAttributes, XmlNode[] testNodes) {
+    private static string GetTestFullName(XmlAttributeCollection testNodeAttributes) {
         var testId = testNodeAttributes["testId"]?.Value;
         if (string.IsNullOrEmpty(testId))
             return RemoveInlineData(testNodeAttributes["testName"]?.Value);
 
-        var testNode = testNodes.FirstOrDefault(p => p.Attributes?["id"]?.Value == testId);
-        var testMethod = testNode?.SelectSingleNode("*[local-name()='TestMethod']");
+        if (!testIdCache.TryGetValue(testId, out var testNode))
+            return RemoveInlineData(testNodeAttributes["testName"]?.Value);
+
+        var testMethod = testNode.SelectSingleNode("*[local-name()='TestMethod']");
         if (testMethod == null || testMethod.Attributes == null)
             return RemoveInlineData(testNodeAttributes["testName"]?.Value);
     
@@ -52,5 +56,20 @@ public static class ReportConverter {
 
         var index = fullName.IndexOf('(', StringComparison.Ordinal);
         return index > 0 ? fullName.Substring(0, index) : fullName;
+    }
+
+    private static Dictionary<string, XmlNode> testIdCache = new();
+    private static void CreateTestIdCache(XmlNode[] testNodes) {
+        testIdCache = new Dictionary<string, XmlNode>();
+        foreach (XmlNode testNode in testNodes) {
+            if (testNode.Attributes == null)
+                continue;
+
+            var testId = testNode.Attributes["id"]?.Value;
+            if (string.IsNullOrEmpty(testId))
+                continue;
+
+            testIdCache[testId] = testNode;
+        }
     }
 }
