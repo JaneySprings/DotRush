@@ -26,17 +26,17 @@ export class TestExplorerController {
     private static async refreshTests(): Promise<void> {
         TestExplorerController.controller.items.replace([]);
 
-        const projectFiles = await Extensions.getProjectFiles();
-        for (const projectFile of projectFiles) {
+        const projectFiles = await Extensions.getTestProjectFiles();
+        return Extensions.parallelForEach(projectFiles, async (projectFile) => {
             const projectName = path.basename(projectFile, '.csproj');
             const discoveredTests = await Interop.getTests(projectFile);
             if (discoveredTests.length === 0)
-                continue;
+                return;
 
             const root = TestExplorerController.controller.createTestItem(projectName, projectName, vscode.Uri.file(projectFile));
             root.children.replace(discoveredTests.map(t => TestExtensions.toTestItem(t, TestExplorerController.controller)));
             TestExplorerController.controller.items.add(root);
-        }
+        });
     }
     private static async runTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
         TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {

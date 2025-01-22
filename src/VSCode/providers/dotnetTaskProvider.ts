@@ -4,6 +4,10 @@ import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 
 export class DotNetTaskProvider implements vscode.TaskProvider {
+    public static onWindows: boolean = process.platform === 'win32';
+    public static onLinux: boolean = process.platform === 'linux';
+    public static onMac: boolean = process.platform === 'darwin';
+
     resolveTask(task: vscode.Task, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task> { 
         if (StatusBarController.activeProject == undefined || StatusBarController.activeConfiguration === undefined)
             return undefined;
@@ -37,6 +41,10 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
             .append(target).append(projectPath)
             .conditional(`-p:Configuration=${configuration}`, () => configuration !== undefined)
             .conditional(`-p:TargetFramework=${framework}`, () => framework !== undefined);
+
+        if (DotNetTaskProvider.onWindows) {
+            builder.append('-p:DebugType=portable');
+        }
 
         definition.args?.forEach((arg: string) => builder.override(arg));
         

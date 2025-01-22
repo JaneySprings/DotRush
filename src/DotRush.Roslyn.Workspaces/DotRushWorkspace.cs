@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.Build.Locator;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 
 namespace DotRush.Roslyn.Workspaces;
@@ -18,6 +19,14 @@ public abstract class DotRushWorkspace : SolutionController {
         workspace.LoadMetadataForReferencedProjects = LoadMetadataForReferencedProjects;
         workspace.SkipUnrecognizedProjects = SkipUnrecognizedProjects;
         return registrationResult;
+    }
+
+    protected override void OnApplyChangesRequested(Solution? newSolution) {
+        // ArgumentNullException.ThrowIfNull(workspace);
+        // if (newSolution != null /*&& SomeTrueExpression*/)
+        //     workspace.TryApplyChanges(newSolution);
+
+        // OnWorkspaceStateChanged(workspace.CurrentSolution);
     }
 
     public Task LoadSolutionAsync(IEnumerable<string> solutionFiles, CancellationToken cancellationToken) {

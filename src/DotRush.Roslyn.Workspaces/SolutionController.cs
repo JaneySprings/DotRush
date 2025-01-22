@@ -12,6 +12,7 @@ public abstract class SolutionController : ProjectsController {
     public Solution? Solution { get; protected set; }
     public event EventHandler? WorkspaceStateChanged;
 
+    protected abstract void OnApplyChangesRequested(Solution? newSolution);
     protected override void OnWorkspaceStateChanged(Solution newSolution) {
         Solution = newSolution;
         WorkspaceStateChanged?.Invoke(this, EventArgs.Empty);
@@ -63,18 +64,23 @@ public abstract class SolutionController : ProjectsController {
         var additionalDocumentIds = Solution?.GetAdditionalDocumentIdsWithFolderPath(path);
         DeleteSourceCodeDocument(csharpDocumentIds);
         DeleteAdditionalDocument(additionalDocumentIds);
+        OnApplyChangesRequested(Solution);
     }
     public void CreateDocument(string file) {
         if (LanguageExtensions.IsAdditionalDocument(file))
             CreateAdditionalDocument(file);
         if (LanguageExtensions.IsSourceCodeDocument(file))
             CreateSourceCodeDocument(file);
+
+        OnApplyChangesRequested(Solution);
     }
     public void DeleteDocument(string file) {
         if (LanguageExtensions.IsAdditionalDocument(file))
             DeleteAdditionalDocument(file);
         if (LanguageExtensions.IsSourceCodeDocument(file))
             DeleteSourceCodeDocument(file);
+
+        OnApplyChangesRequested(Solution);
     }
     public void UpdateDocument(string file, string? text = null) {
         if (LanguageExtensions.IsAdditionalDocument(file))
