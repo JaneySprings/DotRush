@@ -1,4 +1,4 @@
-using DotRush.Essentials.Common.Logging;
+using DotRush.Essentials.Common.MSBuild;
 using DotRush.Essentials.TestExplorer.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -10,6 +10,10 @@ namespace DotRush.Essentials.TestExplorer;
 public static class TestExplorer {
 
     public static IEnumerable<TestCase> DiscoverTests(string projectFile) {
+        var project = MSBuildProjectsLoader.LoadProject(projectFile);
+        if (project != null && project.IsLegacyFormat)
+            return Enumerable.Empty<TestCase>();
+
         var testProjectDirectory = Path.GetDirectoryName(projectFile)!;
         return GetFixtures(testProjectDirectory);
     }

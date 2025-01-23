@@ -12,6 +12,7 @@ public abstract class DotRushWorkspace : SolutionController {
     protected abstract ReadOnlyDictionary<string, string> WorkspaceProperties { get; }
     protected abstract bool LoadMetadataForReferencedProjects { get; }
     protected abstract bool SkipUnrecognizedProjects { get; }
+    protected abstract bool ApplyWorkspaceChanges { get; }
 
     public bool InitializeWorkspace() {
         var registrationResult = TryRegisterDotNetEnvironment();
@@ -22,11 +23,11 @@ public abstract class DotRushWorkspace : SolutionController {
     }
 
     protected override void OnApplyChangesRequested(Solution? newSolution) {
-        // ArgumentNullException.ThrowIfNull(workspace);
-        // if (newSolution != null /*&& SomeTrueExpression*/)
-        //     workspace.TryApplyChanges(newSolution);
-
-        // OnWorkspaceStateChanged(workspace.CurrentSolution);
+        ArgumentNullException.ThrowIfNull(workspace);
+        if (newSolution != null && ApplyWorkspaceChanges) {
+            workspace.TryApplyChanges(newSolution);
+            OnWorkspaceStateChanged(workspace.CurrentSolution);
+        }
     }
 
     public Task LoadSolutionAsync(IEnumerable<string> solutionFiles, CancellationToken cancellationToken) {

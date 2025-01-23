@@ -1,3 +1,5 @@
+using System.Xml.Linq;
+
 namespace DotRush.Essentials.Common.MSBuild;
 
 public static class MSBuildProjectsLoader {
@@ -12,6 +14,7 @@ public static class MSBuildProjectsLoader {
         project.Frameworks = GetTargetFrameworks(project);
         project.IsTestProject = IsTestProject(project);
         project.IsExecutable = IsProjectExecutable(project);
+        project.IsLegacyFormat = IsLegacyFormat(project);
 
         return project;
     }
@@ -23,6 +26,13 @@ public static class MSBuildProjectsLoader {
     private static bool IsTestProject(MSBuildProject project) {
         var isTestProject = project.EvaluateProperty("IsTestProject");
         return isTestProject != null && isTestProject.Contains("true", StringComparison.OrdinalIgnoreCase);
+    }
+    private static bool IsLegacyFormat(MSBuildProject project) {
+        var document = XDocument.Load(project.Path);
+        if (document.Root == null || !document.Root.HasAttributes)
+            return false;
+        
+        return !document.Root.Attributes().Any(a => a.Name.LocalName == "Sdk");
     }
 
     private static IEnumerable<string> GetTargetFrameworks(MSBuildProject project) {

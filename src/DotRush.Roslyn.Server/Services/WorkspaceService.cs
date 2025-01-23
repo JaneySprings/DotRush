@@ -21,6 +21,7 @@ public class WorkspaceService : DotRushWorkspace {
     protected override bool SkipUnrecognizedProjects => configurationService.SkipUnrecognizedProjects;
     protected override bool RestoreProjectsBeforeLoading => configurationService.RestoreProjectsBeforeLoading;
     protected override bool CompileProjectsAfterLoading => configurationService.CompileProjectsAfterLoading;
+    protected override bool ApplyWorkspaceChanges => configurationService.ApplyWorkspaceChanges;
 
     public WorkspaceService(ConfigurationService configurationService, ILanguageServerFacade? serverFacade, IServerWorkDoneManager? workDoneManager) {
         this.configurationService = configurationService;
