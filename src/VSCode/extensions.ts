@@ -17,8 +17,8 @@ export class Extensions {
     public static async getSolutionFiles(): Promise<string[]> {
         return (await Extensions.findFiles(undefined, Extensions.solutionExtPattern)).map(x => x.fsPath);
     }
-    public static getSetting(id: string, fallback: any = undefined): any {
-        return vscode.workspace.getConfiguration(res.extensionId).get(id) ?? fallback;
+    public static getSetting<TValue>(id: string, fallback: TValue | undefined = undefined): TValue | undefined {
+        return vscode.workspace.getConfiguration(res.extensionId).get<TValue>(id) ?? fallback;
     }
 
     public static async selectProjectFile(baseUri: vscode.Uri | undefined = undefined): Promise<string | undefined> {

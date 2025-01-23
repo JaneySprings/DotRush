@@ -102,9 +102,9 @@ export class TestExplorerController {
     }
     private static pushTestResults(testRun: vscode.TestRun, project: vscode.TestItem, testReport: string): Promise<void> {
         const getAllChildren = (root: vscode.TestItem) => {
-            const result: vscode.TestItem[] = [];
+            const result = new Map<string, vscode.TestItem>();
             const pushNodes = (node: vscode.TestItemCollection) => node.forEach(n => {
-                result.push(n);
+                result.set(n.id, n);
                 pushNodes(n.children);
             });
             pushNodes(root.children);
@@ -114,8 +114,8 @@ export class TestExplorerController {
         const testNodes = getAllChildren(project);
         return Interop.getTestResults(testReport).then(testResults => {
             testResults.forEach(result => {
-                const duration = Number(result.duration.match(/\d+/g)?.join('')) / 10000;
-                const testItem = testNodes.find(t => t.id === result.fullName);
+                const duration = TestExtensions.toDurationNumber(result.duration);
+                const testItem = testNodes.get(result.fullName);
                 if (testItem === undefined)
                     return;
 

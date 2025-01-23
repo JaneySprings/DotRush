@@ -26,6 +26,9 @@ public class ConfigurationService {
     private bool? compileProjectsAfterLoading;
     public bool CompileProjectsAfterLoading => compileProjectsAfterLoading ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:compileProjectsAfterLoading", true);
 
+    private bool? applyWorkspaceChanges;
+    public bool ApplyWorkspaceChanges => applyWorkspaceChanges ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:applyWorkspaceChanges", false);
+
     private bool? useMultitargetDiagnostics;
     public bool UseMultitargetDiagnostics => useMultitargetDiagnostics ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:useMultitargetDiagnostics", true);
 

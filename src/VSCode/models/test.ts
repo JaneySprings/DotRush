@@ -10,8 +10,8 @@ export interface TestCase {
 
 export interface TestResult {
     fullName: string;
-    duration: string;
-    state: string;
+    duration: string | null;
+    state: string | null;
     stackTrace: string | null;
     errorMessage: string | null;
 }
@@ -30,5 +30,16 @@ export class TestExtensions {
         if (testResult.stackTrace !== null)
             message += `\n\n${testResult.stackTrace}`;
         return new TestMessage(message);
+    }
+    public static toDurationNumber(duration: string | null): number {
+        const match = duration?.match(/(\d+):(\d+):(\d+)\.(\d+)/);
+        if (duration === null || !match)
+            return 1;
+
+        const [_, hours, minutes, seconds, milliseconds] = match;
+        return parseInt(hours, 10) * 60 * 60 * 1000 +
+            parseInt(minutes, 10) * 60 * 1000 +
+            parseInt(seconds, 10) * 1000 +
+            parseInt(milliseconds.slice(0, 3), 10);
     }
 }
