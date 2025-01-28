@@ -392,6 +392,13 @@
               "integratedTerminal",
               "externalTerminal"
             ]
+          },
+          "dotrush.testExplorer.testProjectFiles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "%configuration.description.testExplorer.testProjectFiles%"
           }
         }
       }

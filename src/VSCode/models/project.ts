@@ -1,5 +1,6 @@
 import { QuickPickItem, QuickPickItemKind, workspace } from "vscode";
 import * as path from "path";
+import { Icons } from "../resources/icons";
 
 export interface Project {
     name: string;
@@ -27,9 +28,11 @@ export class ProjectOrSolutionItem implements QuickPickItem {
     constructor(targetPath: string) {
         this.description = workspace.asRelativePath(targetPath);
         this.item = targetPath;
-        this.label = targetPath.endsWith('sln') 
-            ? path.basename(targetPath, '.sln')
-            : path.basename(targetPath, '.csproj');
+
+        const isSolution = targetPath.endsWith('sln');
+        const icon = isSolution ? Icons.solution : Icons.project;
+        const name = isSolution ? path.basename(targetPath, '.sln') : path.basename(targetPath, '.csproj');
+        this.label = `${icon} ${name}`;
     }
 }
 

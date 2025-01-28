@@ -26,7 +26,10 @@ export class TestExplorerController {
     private static async refreshTests(): Promise<void> {
         TestExplorerController.controller.items.replace([]);
 
-        const projectFiles = await Extensions.getTestProjectFiles();
+        let projectFiles = Extensions.getSetting<string[]>('testExplorer.testProjectFiles');
+        if (projectFiles === undefined || projectFiles.length === 0)
+            projectFiles = await Extensions.getProjectFiles();
+
         return Extensions.parallelForEach(projectFiles, async (projectFile) => {
             const projectName = path.basename(projectFile, '.csproj');
             const discoveredTests = await Interop.getTests(projectFile);
