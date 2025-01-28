@@ -1,5 +1,4 @@
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
-import { ProjectOrSolutionItem } from "../models/project";
 import { Extensions } from "../extensions";
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
@@ -66,22 +65,7 @@ export class LanguageServerController {
     }
 
     private static async showQuickPickTargets(): Promise<void> {
-        const items: vscode.QuickPickItem[] = [];
-        const solutions = await Extensions.getSolutionFiles();
-        const projects = await Extensions.getProjectFiles();
-        if (solutions.length > 0) {
-            items.push(ProjectOrSolutionItem.solutionSeparator);
-            items.push(...solutions.map(it => new ProjectOrSolutionItem(it)));
-        }
-        if (projects.length > 0) {
-            items.push(ProjectOrSolutionItem.projectSeparator);
-            items.push(...projects.map(it => new ProjectOrSolutionItem(it)));
-        }
-
-        const result = (await vscode.window.showQuickPick(items, { canPickMany: true, placeHolder: res.messageSelectTargetTitle }))?.map((it: any) => it.item);
-        if (result === undefined)
-            return;
-
+        const result = await Extensions.selectProjectOrSolutionFiles();
         await vscode.workspace.getConfiguration(res.extensionId).update("roslyn.projectOrSolutionFiles", result, vscode.ConfigurationTarget.Workspace);
         if (LanguageServerController.isRunning())
             LanguageServerController.restart();

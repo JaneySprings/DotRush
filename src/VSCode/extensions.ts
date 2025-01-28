@@ -10,10 +10,6 @@ export class Extensions {
     public static async getProjectFiles(): Promise<string[]> {
         return (await Extensions.findFiles(undefined, Extensions.projectExtPattern)).map(x => x.fsPath);
     }
-    public static async getTestProjectFiles(): Promise<string[]> {
-        const projects = await Extensions.getProjectFiles();
-        return projects.filter(x => path.basename(x).toLowerCase().includes('test'));
-    }
     public static async getSolutionFiles(): Promise<string[]> {
         return (await Extensions.findFiles(undefined, Extensions.solutionExtPattern)).map(x => x.fsPath);
     }
@@ -21,18 +17,49 @@ export class Extensions {
         return vscode.workspace.getConfiguration(res.extensionId).get<TValue>(id) ?? fallback;
     }
 
-    public static async selectProjectFile(baseUri: vscode.Uri | undefined = undefined): Promise<string | undefined> {
+    public static async selectProjectOrSolutionFile(baseUri: vscode.Uri | undefined = undefined): Promise<string | undefined> {
+        const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionExtPattern);
         const projectFiles = await Extensions.findFiles(baseUri, Extensions.projectExtPattern);
-        if (projectFiles.length === 0) {
+        if (projectFiles.length === 0 || solutionFiles.length === 0) {
             vscode.window.showErrorMessage(res.messageNoProjectFileFound);
             return undefined;
         }
-        if (projectFiles.length === 1)
+        if (projectFiles.length === 1 && solutionFiles.length === 0)
             return projectFiles[0].fsPath;
+        if (projectFiles.length === 0 && solutionFiles.length === 1)
+            return solutionFiles[0].fsPath;
 
-        const items = projectFiles.map(it => new ProjectOrSolutionItem(it.fsPath));
-        const selectedItem = await vscode.window.showQuickPick(items, { placeHolder: res.messageSelectProjectTitle });
+        const items: vscode.QuickPickItem[] = [];
+        if (solutionFiles.length > 0) {
+            items.push(ProjectOrSolutionItem.solutionSeparator);
+            items.push(...solutionFiles.map(it => new ProjectOrSolutionItem(it.fsPath)));
+        }
+        if (projectFiles.length > 0) {
+            items.push(ProjectOrSolutionItem.projectSeparator);
+            items.push(...projectFiles.map(it => new ProjectOrSolutionItem(it.fsPath)));
+        }
+        const selectedItem = await vscode.window.showQuickPick<any>(items, { placeHolder: res.messageSelectProjectTitle });
         return selectedItem?.item;
+    }
+    public static async selectProjectOrSolutionFiles(baseUri: vscode.Uri | undefined = undefined): Promise<string[] | undefined> {
+        const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionExtPattern);
+        const projectFiles = await Extensions.findFiles(baseUri, Extensions.projectExtPattern);
+        if (projectFiles.length === 0 || solutionFiles.length === 0) {
+            vscode.window.showErrorMessage(res.messageNoProjectFileFound);
+            return undefined;
+        }
+
+        const items: vscode.QuickPickItem[] = [];
+        if (solutionFiles.length > 0) {
+            items.push(ProjectOrSolutionItem.solutionSeparator);
+            items.push(...solutionFiles.map(it => new ProjectOrSolutionItem(it.fsPath)));
+        }
+        if (projectFiles.length > 0) {
+            items.push(ProjectOrSolutionItem.projectSeparator);
+            items.push(...projectFiles.map(it => new ProjectOrSolutionItem(it.fsPath)));
+        }
+        const selectedItems = await vscode.window.showQuickPick(items, { canPickMany: true, placeHolder: res.messageSelectTargetTitle });
+        return selectedItems?.map((it: any) => it.item);
     }
 
     public static async parallelForEach<T>(items: T[], action: (item: T) => Promise<void>): Promise<void> {
