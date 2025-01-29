@@ -66,12 +66,12 @@ export class LanguageServerController {
 
     private static async showQuickPickTargets(): Promise<void> {
         const result = await Extensions.selectProjectOrSolutionFiles();
-        await vscode.workspace.getConfiguration(res.extensionId).update("roslyn.projectOrSolutionFiles", result, vscode.ConfigurationTarget.Workspace);
+        await Extensions.putSetting("roslyn.projectOrSolutionFiles", result, vscode.ConfigurationTarget.Workspace);
         if (LanguageServerController.isRunning())
             LanguageServerController.restart();
     }
     private static async shouldQuickPickTargets(): Promise<boolean> {
-        const projectOrSolutionFiles = vscode.workspace.getConfiguration(res.extensionId).get<string[]>('roslyn.projectOrSolutionFiles');
+        const projectOrSolutionFiles = Extensions.getSetting<string[]>('roslyn.projectOrSolutionFiles');
         if (projectOrSolutionFiles !== undefined && projectOrSolutionFiles.length > 0)
             return false;
 
