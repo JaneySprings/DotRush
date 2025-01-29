@@ -19,11 +19,6 @@ export class Extensions {
     public static putSetting<TValue>(id: string, value: TValue, target: vscode.ConfigurationTarget): Thenable<void> {
         return vscode.workspace.getConfiguration(res.extensionId).update(id, value, target);
     }
-    public static processVariableReferences(value: string): string {
-        return value
-            .replace(/\${workspaceFolder}/g, vscode.workspace.workspaceFolders?.[0].uri.fsPath ?? '')
-            .replace(/\${fileWorkspaceFolder}/g, path.dirname(vscode.workspace.workspaceFile?.fsPath ?? ''));
-    }
 
     public static async selectProjectOrSolutionFile(baseUri: vscode.Uri | undefined = undefined): Promise<string | undefined> {
         if (baseUri !== undefined && path.extname(baseUri?.fsPath) === '.sln')

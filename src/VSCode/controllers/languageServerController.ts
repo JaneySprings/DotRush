@@ -34,7 +34,10 @@ export class LanguageServerController {
     }
 
     private static initialize() {
-        const serverOptions: ServerOptions = { command: LanguageServerController.command };
+        const serverOptions: ServerOptions = { 
+            command: LanguageServerController.command,
+            options: { cwd: LanguageServerController.getCurrentWorkingDirectory() }
+        };
         LanguageServerController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
             diagnosticCollectionName: res.microsoftProblemMatcherId,
             progressOnInitialization: true,
@@ -81,5 +84,13 @@ export class LanguageServerController {
             return false;
 
         return solutions.length > 1 || projects.length > 1;
+    }
+    private static getCurrentWorkingDirectory(): string | undefined {
+        if (vscode.workspace.workspaceFile !== undefined)
+            return path.dirname(vscode.workspace.workspaceFile.fsPath);
+        if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length > 0)
+            return vscode.workspace.workspaceFolders[0].uri.fsPath;
+
+        return undefined;
     }
 }
