@@ -47,8 +47,8 @@ public static class ProjectExtensions {
     }
 
     public static IEnumerable<string> GetFolders(this Project project, string documentPath) {
-        var rootDirectory = FileSystemExtensions.NormalizePath(Path.GetDirectoryName(project.FilePath) ?? string.Empty);
-        var documentDirectory = FileSystemExtensions.NormalizePath(Path.GetDirectoryName(documentPath) ?? string.Empty);
+        var rootDirectory = Path.GetDirectoryName(project.FilePath);
+        var documentDirectory = Path.GetDirectoryName(documentPath);
         if (string.IsNullOrEmpty(documentDirectory) || string.IsNullOrEmpty(rootDirectory))
             return Enumerable.Empty<string>();
 
