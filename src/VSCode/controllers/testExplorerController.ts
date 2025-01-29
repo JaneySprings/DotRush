@@ -26,7 +26,7 @@ export class TestExplorerController {
     private static async refreshTests(): Promise<void> {
         TestExplorerController.controller.items.replace([]);
 
-        let projectFiles = Extensions.getSetting<string[]>('testExplorer.testProjectFiles');
+        let projectFiles = Extensions.getSetting<string[]>('testExplorer.testProjectFiles')?.map(it => Extensions.processVariableReferences(it));
         if (projectFiles === undefined || projectFiles.length === 0)
             projectFiles = await Extensions.getProjectFiles();
 

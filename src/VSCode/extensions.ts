@@ -16,8 +16,21 @@ export class Extensions {
     public static getSetting<TValue>(id: string, fallback: TValue | undefined = undefined): TValue | undefined {
         return vscode.workspace.getConfiguration(res.extensionId).get<TValue>(id) ?? fallback;
     }
+    public static putSetting<TValue>(id: string, value: TValue, target: vscode.ConfigurationTarget): Thenable<void> {
+        return vscode.workspace.getConfiguration(res.extensionId).update(id, value, target);
+    }
+    public static processVariableReferences(value: string): string {
+        return value
+            .replace(/\${workspaceFolder}/g, vscode.workspace.workspaceFolders?.[0].uri.fsPath ?? '')
+            .replace(/\${fileWorkspaceFolder}/g, path.dirname(vscode.workspace.workspaceFile?.fsPath ?? ''));
+    }
 
     public static async selectProjectOrSolutionFile(baseUri: vscode.Uri | undefined = undefined): Promise<string | undefined> {
+        if (baseUri !== undefined && path.extname(baseUri?.fsPath) === '.sln')
+            return baseUri.fsPath;
+        if (baseUri !== undefined && path.extname(baseUri?.fsPath) === '.csproj')
+            return baseUri.fsPath;
+        
         const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionExtPattern);
         const projectFiles = await Extensions.findFiles(baseUri, Extensions.projectExtPattern);
         if (projectFiles.length === 0 || solutionFiles.length === 0) {
