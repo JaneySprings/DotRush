@@ -1,4 +1,5 @@
 import { StatusBarController } from '../controllers/statusbarController';
+import { Extensions } from '../extensions';
 import { ProcessArgumentBuilder } from '../interop/processArgumentBuilder';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
@@ -37,6 +38,7 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
     }
 
     private static getTask(definition: vscode.TaskDefinition, projectPath: string, target: string, configuration: string | undefined = undefined, framework: string | undefined = undefined): vscode.Task {
+        const options: vscode.ShellExecutionOptions = { cwd: Extensions.getCurrentWorkingDirectory() };
         const builder = new ProcessArgumentBuilder('dotnet')
             .append(target).append(projectPath)
             .conditional(`-p:Configuration=${configuration}`, () => configuration !== undefined)
@@ -53,7 +55,7 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
             vscode.TaskScope.Workspace, 
             'Build',
             res.extensionId,
-            new vscode.ShellExecution(builder.getCommand(), builder.getArguments()),
+            new vscode.ShellExecution(builder.getCommand(), builder.getArguments(), options),
             `$${res.microsoftProblemMatcherId}`
         );
     }

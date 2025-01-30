@@ -130,6 +130,11 @@
         "title": "%command.title.pickProjectOrSolutionFiles%"
       },
       {
+        "command": "dotrush.buildWorkspace",
+        "category": "%extension.displayName%",
+        "title": "%command.title.buildWorkspace%"
+      },
+      {
         "command": "dotrush.build",
         "category": "%extension.displayName%",
         "title": "%command.title.build%"

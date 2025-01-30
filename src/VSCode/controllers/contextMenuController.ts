@@ -26,5 +26,20 @@ export class ContextMenuController {
             if (projectFile !== undefined)
                 StatusBarController.performSelectProject(projectFile);
         }));
+
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdBuildWorkspace, async () => {
+            let projectOrSolutionFiles = Extensions.getSetting<string[]>(res.configIdRoslynProjectOrSolutionFiles);
+            if (projectOrSolutionFiles === undefined || projectOrSolutionFiles.length === 0)
+                projectOrSolutionFiles = await Extensions.selectProjectOrSolutionFiles();
+
+            if (projectOrSolutionFiles === undefined || projectOrSolutionFiles.length === 0)
+                return;
+
+            for (const targetFile of projectOrSolutionFiles) {
+                const executionSuccess = await Extensions.waitForTask(DotNetTaskProvider.getBuildTask(targetFile));
+                if (!executionSuccess)
+                    break;
+            }
+        }));
     }
 }
