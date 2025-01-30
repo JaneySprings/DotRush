@@ -36,7 +36,7 @@ export class LanguageServerController {
     private static initialize() {
         const serverOptions: ServerOptions = { 
             command: LanguageServerController.command,
-            options: { cwd: LanguageServerController.getCurrentWorkingDirectory() }
+            options: { cwd: Extensions.getCurrentWorkingDirectory() }
         };
         LanguageServerController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
             diagnosticCollectionName: res.microsoftProblemMatcherId,
@@ -69,12 +69,12 @@ export class LanguageServerController {
 
     private static async showQuickPickTargets(): Promise<void> {
         const result = await Extensions.selectProjectOrSolutionFiles();
-        await Extensions.putSetting("roslyn.projectOrSolutionFiles", result, vscode.ConfigurationTarget.Workspace);
+        await Extensions.putSetting(res.configIdRoslynProjectOrSolutionFiles, result, vscode.ConfigurationTarget.Workspace);
         if (LanguageServerController.isRunning())
             LanguageServerController.restart();
     }
     private static async shouldQuickPickTargets(): Promise<boolean> {
-        const projectOrSolutionFiles = Extensions.getSetting<string[]>('roslyn.projectOrSolutionFiles');
+        const projectOrSolutionFiles = Extensions.getSetting<string[]>(res.configIdRoslynProjectOrSolutionFiles);
         if (projectOrSolutionFiles !== undefined && projectOrSolutionFiles.length > 0)
             return false;
 
@@ -84,13 +84,5 @@ export class LanguageServerController {
             return false;
 
         return solutions.length > 1 || projects.length > 1;
-    }
-    private static getCurrentWorkingDirectory(): string | undefined {
-        if (vscode.workspace.workspaceFile !== undefined)
-            return path.dirname(vscode.workspace.workspaceFile.fsPath);
-        if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length > 0)
-            return vscode.workspace.workspaceFolders[0].uri.fsPath;
-
-        return undefined;
     }
 }

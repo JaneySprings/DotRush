@@ -22,6 +22,7 @@ export const commandTitleSelectActiveConfiguration = "Select project configurati
 export const commandIdActiveProjectPath = "dotrush.activeProjectPath";
 export const commandIdActiveConfiguration = "dotrush.activeConfiguration";
 export const commandIdSetStartupProject = "dotrush.setStartupProject";
+export const commandIdBuildWorkspace = "dotrush.buildWorkspace";
 export const commandIdStatusBarEnabled = "dotrush.statusBarEnabled";
 
 export const taskDefinitionId = "dotrush.task";
@@ -37,3 +38,5 @@ export const messageSelectProjectTitle = "Select a project file";
 export const messageSelectProgramTitle = "Select a Program to Debug";
 export const messageSelectTargetTitle = "Select Project or Solution files";
 export const messageReload = "Reload";
+
+export const configIdRoslynProjectOrSolutionFiles = "roslyn.projectOrSolutionFiles";

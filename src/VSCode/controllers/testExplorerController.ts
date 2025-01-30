@@ -48,24 +48,14 @@ export class TestExplorerController {
             }
             
             const testRun = TestExplorerController.controller.createTestRun(request);
-            const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getTestTask(project.uri!.fsPath, testArguments));
-            await new Promise<boolean>((resolve) => vscode.tasks.onDidEndTaskProcess(e => {
-                if (e.execution.task === execution.task)
-                    resolve(e.exitCode === 0);
-            }));
-
+            await Extensions.waitForTask(DotNetTaskProvider.getTestTask(project.uri!.fsPath, testArguments));
             await TestExplorerController.pushTestResults(testRun, project, testReport);
         });
     }
     private static async debugTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
         TestExplorerController.convertTestRequest(request).forEach(async(filters, project) => {
-            const execution = await vscode.tasks.executeTask(DotNetTaskProvider.getBuildTask(project.uri!.fsPath));
-            const executionExitCode = await new Promise<number>((resolve) => vscode.tasks.onDidEndTaskProcess(e => {
-                if (e.execution.task === execution.task)
-                    resolve(e.exitCode ?? -1);
-            }));
-
-            if (executionExitCode !== 0 || token.isCancellationRequested)
+            const executionSuccess = await Extensions.waitForTask(DotNetTaskProvider.getBuildTask(project.uri!.fsPath));
+            if (!executionSuccess || token.isCancellationRequested)
                 return;
             
             await vscode.debug.startDebugging(TestExplorerController.getWorkspaceFolder(), {

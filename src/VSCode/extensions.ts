@@ -21,9 +21,9 @@ export class Extensions {
     }
 
     public static async selectProjectOrSolutionFile(baseUri: vscode.Uri | undefined = undefined): Promise<string | undefined> {
-        if (baseUri !== undefined && path.extname(baseUri?.fsPath) === '.sln')
+        if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath) === '.sln')
             return baseUri.fsPath;
-        if (baseUri !== undefined && path.extname(baseUri?.fsPath) === '.csproj')
+        if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath) === '.csproj')
             return baseUri.fsPath;
         
         const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionExtPattern);
@@ -76,6 +76,26 @@ export class Extensions {
             const slice = items.slice(i, i + parallel);
             await Promise.all(slice.map(action));
         }
+    }
+    public static async waitForTask(task: vscode.Task): Promise<boolean> {
+        const execution = await vscode.tasks.executeTask(task);
+        const executionExitCode = await new Promise<number>((resolve) => {
+            const disposable = vscode.tasks.onDidEndTaskProcess(e => {
+                if (e.execution.task === execution.task) {
+                    resolve(e.exitCode ?? -1);
+                    disposable.dispose();
+                }
+            });
+        });
+        return executionExitCode === 0;
+    }
+    public static getCurrentWorkingDirectory(): string | undefined {
+        if (vscode.workspace.workspaceFile !== undefined)
+            return path.dirname(vscode.workspace.workspaceFile.fsPath);
+        if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length > 0)
+            return vscode.workspace.workspaceFolders[0].uri.fsPath;
+
+        return undefined;
     }
 
     private static async findFiles(baseUri: vscode.Uri | undefined, extension: string): Promise<vscode.Uri[]> {
