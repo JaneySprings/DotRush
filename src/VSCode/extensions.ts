@@ -28,7 +28,7 @@ export class Extensions {
         
         const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionExtPattern);
         const projectFiles = await Extensions.findFiles(baseUri, Extensions.projectExtPattern);
-        if (projectFiles.length === 0 || solutionFiles.length === 0) {
+        if (projectFiles.length === 0 && solutionFiles.length === 0) {
             vscode.window.showErrorMessage(res.messageNoProjectFileFound);
             return undefined;
         }
