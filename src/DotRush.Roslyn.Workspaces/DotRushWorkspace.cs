@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.Build.Locator;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 
 namespace DotRush.Roslyn.Workspaces;
@@ -22,10 +21,10 @@ public abstract class DotRushWorkspace : SolutionController {
         return registrationResult;
     }
 
-    protected override void OnApplyChangesRequested(Solution? newSolution) {
+    public void ApplyChanges() {
         ArgumentNullException.ThrowIfNull(workspace);
-        if (newSolution != null && ApplyWorkspaceChanges) {
-            workspace.TryApplyChanges(newSolution);
+        if (Solution != null && ApplyWorkspaceChanges) {
+            workspace.TryApplyChanges(Solution);
             OnWorkspaceStateChanged(workspace.CurrentSolution);
         }
     }

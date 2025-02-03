@@ -1,5 +1,3 @@
-using Microsoft.Extensions.FileSystemGlobbing;
-
 namespace DotRush.Roslyn.Common.Extensions;
 
 public static class FileSystemExtensions {
@@ -46,20 +44,7 @@ public static class FileSystemExtensions {
 
         return true;
     }
-    public static bool PathEquals(string? path1, string? path2) {
-        if (string.IsNullOrEmpty(path1) || string.IsNullOrEmpty(path2))
-            return false;
-
-        path1 = Path.GetFullPath(path1);
-        path2 = Path.GetFullPath(path2);
-        return string.Equals(path1, path2, StringComparison.OrdinalIgnoreCase);
-    }
-    public static string NormalizePath(string path) {
-        if (string.IsNullOrEmpty(path))
-            return path;
-        return Path.GetFullPath(path).ToLowerInvariant();
-    }
-
+    
     public static void WriteAllText(string filePath, string content) {
         if (File.Exists(filePath))
             File.Delete(filePath);
@@ -69,16 +54,5 @@ public static class FileSystemExtensions {
             Directory.CreateDirectory(directoryPath!);
 
         File.WriteAllText(filePath, content);
-    }
-
-    public static bool CheckGlobPatterns(string path, IEnumerable<string> patterns) {
-        if (!patterns.Any())
-            return true;
-        
-        var matcher = new Matcher();
-        foreach (var pattern in patterns)
-            matcher.AddInclude(pattern);
-
-        return matcher.Match(path).HasMatches;
     }
 }

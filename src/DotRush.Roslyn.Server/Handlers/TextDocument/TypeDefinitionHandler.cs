@@ -1,6 +1,7 @@
 using DotRush.Roslyn.Server.Containers;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
+using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -27,7 +28,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
         var decompiledResult = new LocationsContainer();
         var isDecompiled = false;
 
-        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
         if (documentIds == null)
             return null;
 

@@ -7,6 +7,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using DotRush.Roslyn.Common.Extensions;
+using DotRush.Roslyn.Workspaces.Extensions;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -25,7 +26,7 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
 
     public override Task<Container<FoldingRange>?> Handle(FoldingRangeRequestParam request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
-            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
             var documentId = documentIds?.FirstOrDefault();
             var document = navigationService.Solution?.GetDocument(documentId);
             if (document == null)

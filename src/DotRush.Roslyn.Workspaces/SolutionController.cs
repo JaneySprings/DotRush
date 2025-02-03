@@ -12,7 +12,6 @@ public abstract class SolutionController : ProjectsController {
     public Solution? Solution { get; protected set; }
     public event EventHandler? WorkspaceStateChanged;
 
-    protected abstract void OnApplyChangesRequested(Solution? newSolution);
     protected override void OnWorkspaceStateChanged(Solution newSolution) {
         Solution = newSolution;
         WorkspaceStateChanged?.Invoke(this, EventArgs.Empty);
@@ -52,35 +51,23 @@ public abstract class SolutionController : ProjectsController {
         CurrentSessionLogger.Debug($"Projects loading completed, loaded {workspace.CurrentSolution.ProjectIds.Count} projects");
     }
 
-    public IEnumerable<DocumentId> GetDocumentIdsWithFilePath(string filePath) {
-        return Solution?.Projects.SelectMany(it => it.GetDocumentIdsWithFilePath(filePath)) ?? Enumerable.Empty<DocumentId>();
-    }
-    public IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(string filePath) {
-        return Solution?.Projects.SelectMany(it => it.GetAdditionalDocumentIdsWithFilePath(filePath)) ?? Enumerable.Empty<DocumentId>();
-    }
-
     public void DeleteFolder(string path) {
         var csharpDocumentIds = Solution?.GetDocumentIdsWithFolderPath(path);
         var additionalDocumentIds = Solution?.GetAdditionalDocumentIdsWithFolderPath(path);
         DeleteSourceCodeDocument(csharpDocumentIds);
         DeleteAdditionalDocument(additionalDocumentIds);
-        OnApplyChangesRequested(Solution);
     }
     public void CreateDocument(string file) {
         if (LanguageExtensions.IsAdditionalDocument(file))
             CreateAdditionalDocument(file);
         if (LanguageExtensions.IsSourceCodeDocument(file))
             CreateSourceCodeDocument(file);
-
-        OnApplyChangesRequested(Solution);
     }
     public void DeleteDocument(string file) {
         if (LanguageExtensions.IsAdditionalDocument(file))
             DeleteAdditionalDocument(file);
         if (LanguageExtensions.IsSourceCodeDocument(file))
             DeleteSourceCodeDocument(file);
-
-        OnApplyChangesRequested(Solution);
     }
     public void UpdateDocument(string file, string? text = null) {
         if (LanguageExtensions.IsAdditionalDocument(file))
@@ -111,11 +98,11 @@ public abstract class SolutionController : ProjectsController {
         }
     }
     private void DeleteSourceCodeDocument(string file) {
-        var documentIds = GetDocumentIdsWithFilePath(file);
+        var documentIds = Solution?.GetDocumentIdsWithFilePathV2(file);
         DeleteSourceCodeDocument(documentIds);
     }
     private void UpdateSourceCodeDocument(string file, string? text = null) {
-        var documentIds = GetDocumentIdsWithFilePath(file);
+        var documentIds = Solution?.GetDocumentIdsWithFilePathV2(file);
         if (documentIds == null || !File.Exists(file))
             return;
 
@@ -151,11 +138,11 @@ public abstract class SolutionController : ProjectsController {
         }
     }
     private void DeleteAdditionalDocument(string file) {
-        var documentIds = GetAdditionalDocumentIdsWithFilePath(file);
+        var documentIds = Solution?.GetAdditionalDocumentIdsWithFilePathV2(file);
         DeleteAdditionalDocument(documentIds);
     }
     private void UpdateAdditionalDocument(string file, string? text = null) {
-        var documentIds = GetAdditionalDocumentIdsWithFilePath(file);
+        var documentIds = Solution?.GetAdditionalDocumentIdsWithFilePathV2(file);
         if (documentIds == null || !File.Exists(file))
             return;
 

@@ -1,6 +1,7 @@
 using DotRush.Roslyn.Server.Containers;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
+using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis.FindSymbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
@@ -22,7 +23,7 @@ public class ReferencesHandler : ReferencesHandlerBase {
     }
 
     public override async Task<LocationContainer?> Handle(ReferenceParams request, CancellationToken cancellationToken) {
-        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
         if (documentIds == null || navigationService.Solution == null)
             return null;
 

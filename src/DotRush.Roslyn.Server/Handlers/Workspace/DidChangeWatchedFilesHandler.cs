@@ -10,6 +10,7 @@ namespace DotRush.Roslyn.Server.Handlers.Workspace;
 public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     private readonly WorkspaceService workspaceService;
     private readonly CodeAnalysisService codeAnalysisService;
+    private bool shouldApplyWorkspaceChanges;
 
     public DidChangeWatchedFilesHandler(WorkspaceService workspaceService, CodeAnalysisService codeAnalysisService) {
         this.workspaceService = workspaceService;
@@ -28,6 +29,10 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     }
 
     public override Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
+        if (workspaceService.Solution == null)
+            return Unit.Task;
+
+        shouldApplyWorkspaceChanges = false;
         foreach (var change in request.Changes) {
             var path = change.Uri.GetFileSystemPath();
             HandleFileChange(path, change.Type);
@@ -37,6 +42,9 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
                     HandleFileChange(filePath, FileChangeType.Created);
             }
         }
+        
+        if (shouldApplyWorkspaceChanges)
+            workspaceService.ApplyChanges();
 
         return Unit.Task;
     }
@@ -49,6 +57,7 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
             workspaceService.DeleteDocument(path);
             workspaceService.DeleteFolder(path);
             codeAnalysisService.ResetClientDiagnostics(path);
+            shouldApplyWorkspaceChanges = true;
             return;
         }
 
@@ -59,6 +68,7 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
 
         if (changeType == FileChangeType.Created && File.Exists(path)) {
             workspaceService.CreateDocument(path);
+            shouldApplyWorkspaceChanges = true;
             return;
         }
     }

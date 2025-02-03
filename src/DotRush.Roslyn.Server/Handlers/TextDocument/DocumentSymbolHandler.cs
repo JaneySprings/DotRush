@@ -7,6 +7,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common;
+using DotRush.Roslyn.Workspaces.Extensions;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -27,7 +28,7 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
     public override Task<SymbolInformationOrDocumentSymbolContainer?> Handle(DocumentSymbolParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
             var documentPath = request.TextDocument.Uri.GetFileSystemPath();
-            var documentId = navigationService?.Solution?.GetDocumentIdsWithFilePath(documentPath).FirstOrDefault();
+            var documentId = navigationService?.Solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
             var document = navigationService?.Solution?.GetDocument(documentId);
             if (documentId == null || document == null)
                 return null;

@@ -13,7 +13,6 @@ using OmniSharpLanguageServer = OmniSharp.Extensions.LanguageServer.Server.Langu
 namespace DotRush.Roslyn.Server;
 
 public class LanguageServer {
-    public const string CodeAnalysisFeaturesAssembly = "Microsoft.CodeAnalysis.CSharp.Features";
     public static TextDocumentSelector SelectorForAllDocuments => TextDocumentSelector.ForPattern("**/*.cs", "**/*.xaml");
     public static TextDocumentSelector SelectorForSourceCodeDocuments => TextDocumentSelector.ForPattern("**/*.cs");
 
@@ -32,7 +31,6 @@ public class LanguageServer {
             .WithHandler<DidChangeTextDocumentHandler>()
             .WithHandler<DidCloseTextDocumentHandler>()
             .WithHandler<DidChangeWatchedFilesHandler>()
-            .WithHandler<DidChangeWorkspaceFoldersHandler>()
             .WithHandler<WorkspaceSymbolsHandler>()
             .WithHandler<DocumentSymbolHandler>()
             .WithHandler<HoverHandler>()

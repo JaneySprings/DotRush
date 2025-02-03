@@ -6,7 +6,6 @@ using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
-using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.CodeAnalysis;
 
@@ -18,13 +17,13 @@ public class CompilationHost {
     public event EventHandler<DiagnosticsCollectionChangedEventArgs>? DiagnosticsChanged;
 
     public IEnumerable<Diagnostic>? GetDiagnostics(string documentPath) {
-        documentPath = FileSystemExtensions.NormalizePath(documentPath);
+        documentPath = documentPath.ToPlatformPath();
         if (!workspaceDiagnostics.TryGetValue(documentPath, out IEnumerable<DiagnosticHolder>? container))
             return null;
         return container.Select(d => d.Diagnostic);
     }
     public DiagnosticHolder? GetDiagnosticById(string documentPath, int diagnosticId) {
-        documentPath = FileSystemExtensions.NormalizePath(documentPath);
+        documentPath = documentPath.ToPlatformPath();
         if (!workspaceDiagnostics.TryGetValue(documentPath, out IEnumerable<DiagnosticHolder>? container))
             return null;
 
@@ -45,7 +44,7 @@ public class CompilationHost {
 
         var diagnosticsByDocument = allDiagnostics.Where(d => !string.IsNullOrEmpty(d.FilePath)).GroupBy(d => d.FilePath);
         foreach (var diagnostics in diagnosticsByDocument) {
-            workspaceDiagnostics[FileSystemExtensions.NormalizePath(diagnostics.Key!)] = diagnostics;
+            workspaceDiagnostics[diagnostics.Key!.ToPlatformPath()] = diagnostics;
             DiagnosticsChanged?.Invoke(this, new DiagnosticsCollectionChangedEventArgs(diagnostics.Key!, diagnostics.Select(d => d.Diagnostic)));
         }
 

@@ -2,6 +2,7 @@ using DotRush.Roslyn.Common;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
+using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -26,7 +27,7 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
 
     public override Task<SignatureHelp?> Handle(SignatureHelpParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
-            var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+            var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
             if (documentIds == null)
                 return null;
 

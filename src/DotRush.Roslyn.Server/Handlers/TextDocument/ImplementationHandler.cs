@@ -1,6 +1,7 @@
 using DotRush.Roslyn.Server.Containers;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
+using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -23,7 +24,7 @@ public class ImplementationHandler : ImplementationHandlerBase {
     }
 
     public override async Task<LocationOrLocationLinks?> Handle(ImplementationParams request, CancellationToken cancellationToken) {
-        var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
         if (documentIds == null)
             return null;
 
