@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Text;
@@ -23,7 +24,7 @@ public static class ExternalTypeResolver {
     );
     // This method was copied from MonoDevelop
     public static string? Handle(string identifierName, SourceLocation location, Solution? solution) {
-        var documentId = solution?.GetDocumentIdsWithFilePath(location.FileName).FirstOrDefault();
+        var documentId = solution?.GetDocumentIdsWithFilePathV2(location.FileName).FirstOrDefault();
         var document = solution?.GetDocument(documentId);
         if (document == null)
             return null;

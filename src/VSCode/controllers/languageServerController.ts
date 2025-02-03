@@ -39,7 +39,7 @@ export class LanguageServerController {
             options: { cwd: Extensions.getCurrentWorkingDirectory() }
         };
         LanguageServerController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
-            diagnosticCollectionName: res.microsoftProblemMatcherId,
+            diagnosticCollectionName: res.extensionId,
             progressOnInitialization: true,
             synchronize: { 
                 configurationSection: res.extensionId,

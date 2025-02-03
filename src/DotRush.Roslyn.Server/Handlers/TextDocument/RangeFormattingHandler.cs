@@ -1,5 +1,6 @@
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
+using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Formatting;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -23,7 +24,7 @@ public class RangeFormattingHandler : DocumentRangeFormattingHandlerBase {
 
     public override async Task<TextEditContainer> Handle(DocumentRangeFormattingParams request, CancellationToken cancellationToken) {
         var edits = new List<TextEdit>();
-        var documentId = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
+        var documentId = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
         var document = solutionService.Solution?.GetDocument(documentId);
         if (document == null)
             return new TextEditContainer();

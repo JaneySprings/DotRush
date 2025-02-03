@@ -28,7 +28,7 @@ public class HoverHandler : HoverHandlerBase {
 
     public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
-            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
             if (documentIds == null)
                 return null;
 

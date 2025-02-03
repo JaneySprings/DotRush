@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Navigation.Decompilation;
 using Microsoft.CodeAnalysis;
@@ -51,7 +52,7 @@ public class NavigationHost {
     }
 
     private void CreateDocument(string documentPath, SourceText? sourceText, Project project) {
-        if (project.Documents.Any(d => FileSystemExtensions.PathEquals(d.FilePath, documentPath)))
+        if (project.Documents.Any(d => PathExtensions.Equals(d.FilePath, documentPath)))
             return;
         if (sourceText == null)
             sourceText = SourceText.From(File.ReadAllText(documentPath));

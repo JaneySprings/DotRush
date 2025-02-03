@@ -10,7 +10,6 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using CodeAnalysisCodeAction = Microsoft.CodeAnalysis.CodeActions.CodeAction;
-using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -90,7 +89,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
                 return result;
             }
 
-            var document = project.Documents.FirstOrDefault(it => FileSystemExtensions.PathEquals(it.FilePath, filePath));
+            var document = project.Documents.FirstOrDefault(it => PathExtensions.Equals(it.FilePath, filePath));
             if (document == null) {
                 currentClassLogger.Debug($"Document not found for file path '{filePath}'");
                 return result;

@@ -1,5 +1,6 @@
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
+using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Rename;
@@ -30,7 +31,7 @@ public class RenameHandler : RenameHandlerBase {
     }
     public override async Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken cancellationToken) {
         var workspaceEdits = new Dictionary<string, HashSet<TextEdit>>();
-        var documentIds = workspaceService.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath());
+        var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
         if (documentIds == null)
             return null;
 

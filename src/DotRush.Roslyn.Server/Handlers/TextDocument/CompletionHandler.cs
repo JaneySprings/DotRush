@@ -11,6 +11,7 @@ using RoslynCompletionService = Microsoft.CodeAnalysis.Completion.CompletionServ
 using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.Logging;
+using DotRush.Roslyn.Workspaces.Extensions;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -38,7 +39,7 @@ public class CompletionHandler : CompletionHandlerBase {
 
     public override Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(new CompletionList(), async () => {
-            var documentId = solutionService.Solution?.GetDocumentIdsWithFilePath(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
+            var documentId = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath()).FirstOrDefault();
             targetDocument = solutionService.Solution?.GetDocument(documentId);
             roslynCompletionService = RoslynCompletionService.GetService(targetDocument);
             if (roslynCompletionService == null || targetDocument == null)

@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.External;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.CodeAnalysis;
@@ -22,7 +23,7 @@ public static class WorkspaceExtensions {
         return solution.Projects.SelectMany(project => project.GetAdditionalDocumentIdsWithFolderPath(folderPath));
     }
     public static IEnumerable<ProjectId> GetProjectIdsMayContainsFilePath(this Solution solution, string documentPath) {
-        var projects = solution.Projects.Where(p => documentPath.StartsWith(Path.GetDirectoryName(p.FilePath) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
+        var projects = solution.Projects.Where(p => PathExtensions.StartsWith(documentPath, Path.GetDirectoryName(p.FilePath) + Path.DirectorySeparatorChar));
         if (!projects.Any())
             return Enumerable.Empty<ProjectId>();
 
@@ -43,6 +44,13 @@ public static class WorkspaceExtensions {
         return projects.Select(p => p.Id);
     }
     
+    public static IEnumerable<DocumentId> GetDocumentIdsWithFilePathV2(this Solution solution, string? filePath) {
+        return solution.Projects.SelectMany(it => it.GetDocumentIdsWithFilePath(filePath)) ?? Enumerable.Empty<DocumentId>();
+    }
+    public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePathV2(this Solution solution, string? filePath) {
+        return solution.Projects.SelectMany(it => it.GetAdditionalDocumentIdsWithFilePath(filePath)) ?? Enumerable.Empty<DocumentId>();
+    }
+
     public static async Task<ProcessResult> RestoreProjectAsync(this MSBuildWorkspace workspace, string projectPath, CancellationToken cancellationToken) {
         var processInfo = ProcessRunner.CreateProcess("dotnet", $"restore \"{projectPath}\"", captureOutput: true, displayWindow: false, cancellationToken: cancellationToken);
         var restoreResult = await processInfo.Result;

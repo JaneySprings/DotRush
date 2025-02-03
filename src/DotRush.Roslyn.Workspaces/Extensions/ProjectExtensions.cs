@@ -1,3 +1,4 @@
+using DotRush.Roslyn.Common.Extensions;
 using Microsoft.CodeAnalysis;
 using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 
@@ -24,7 +25,7 @@ public static class ProjectExtensions {
         var filteredDocuments = project.Documents.Where(document => {
             if (document.Folders.Count > 0 && document.Folders[0].Equals("obj", StringComparison.OrdinalIgnoreCase))
                 return false;
-            return document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true;
+            return PathExtensions.StartsWith(document.FilePath, folderPathFixed);
         });
         
         return filteredDocuments.Select(document => document.Id);
@@ -34,16 +35,16 @@ public static class ProjectExtensions {
         var filteredDocuments = project.AdditionalDocuments.Where(document => {
             if (document.Folders.Count > 0 && document.Folders[0].Equals("obj", StringComparison.OrdinalIgnoreCase))
                 return false;
-            return document.FilePath?.StartsWith(folderPathFixed, StringComparison.OrdinalIgnoreCase) == true;
+            return PathExtensions.StartsWith(document.FilePath, folderPathFixed);
         });
         
         return filteredDocuments.Select(document => document.Id);
     }
-    public static IEnumerable<DocumentId> GetDocumentIdsWithFilePath(this Project project, string filePath) {
-        return project.Documents.Where(it => FileSystemExtensions.PathEquals(it.FilePath, filePath)).Select(it => it.Id);
+    public static IEnumerable<DocumentId> GetDocumentIdsWithFilePath(this Project project, string? filePath) {
+        return project.Documents.Where(it => PathExtensions.Equals(it.FilePath, filePath)).Select(it => it.Id);
     }
-    public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(this Project project, string filePath) {
-        return project.AdditionalDocuments.Where(it => FileSystemExtensions.PathEquals(it.FilePath, filePath)).Select(it => it.Id);
+    public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(this Project project, string? filePath) {
+        return project.AdditionalDocuments.Where(it => PathExtensions.Equals(it.FilePath, filePath)).Select(it => it.Id);
     }
 
     public static IEnumerable<string> GetFolders(this Project project, string documentPath) {
@@ -58,7 +59,7 @@ public static class ProjectExtensions {
 
     internal static string FirstFolderOrDefault(string? projectPath, string? targetPath, string fallbackFolder) {
         var projectDirectory = Path.GetDirectoryName(projectPath) + Path.DirectorySeparatorChar;
-        if (targetPath == null || !targetPath.StartsWith(projectDirectory))
+        if (targetPath == null || !PathExtensions.StartsWith(targetPath, projectDirectory))
             return Path.Combine(projectDirectory, fallbackFolder);
 
         var relativePath = targetPath.Replace(projectDirectory, string.Empty);
