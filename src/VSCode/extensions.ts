@@ -32,10 +32,10 @@ export class Extensions {
             vscode.window.showErrorMessage(res.messageNoProjectFileFound);
             return undefined;
         }
-        if (projectFiles.length === 1 && solutionFiles.length === 0)
-            return projectFiles[0].fsPath;
-        if (projectFiles.length === 0 && solutionFiles.length === 1)
+        if (solutionFiles.length === 1)
             return solutionFiles[0].fsPath;
+        if (projectFiles.length === 1)
+            return projectFiles[0].fsPath;
 
         const items: vscode.QuickPickItem[] = [];
         if (solutionFiles.length > 0) {
