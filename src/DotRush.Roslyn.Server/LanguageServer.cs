@@ -1,83 +1,93 @@
 ﻿using System.Diagnostics;
+using System.Reflection;
 using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
-using DotRush.Roslyn.Server.Handlers.TextDocument;
-using DotRush.Roslyn.Server.Handlers.Workspace;
 using DotRush.Roslyn.Server.Services;
-using Microsoft.Extensions.DependencyInjection;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using OmniSharp.Extensions.LanguageServer.Server;
-using OmniSharpLanguageServer = OmniSharp.Extensions.LanguageServer.Server.LanguageServer;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Initialize;
+using EmmyLua.LanguageServer.Framework.Server;
+using EmmyLuaLanguageServer = EmmyLua.LanguageServer.Framework.Server.LanguageServer;
 
 namespace DotRush.Roslyn.Server;
 
 public class LanguageServer {
-    public static TextDocumentSelector SelectorForAllDocuments => TextDocumentSelector.ForPattern("**/*.cs", "**/*.xaml");
-    public static TextDocumentSelector SelectorForSourceCodeDocuments => TextDocumentSelector.ForPattern("**/*.cs");
+    private static EmmyLuaLanguageServer server = null!;
+    private static InitializeParams initializeParameters = null!;
 
-    public static async Task Main(string[] args) {
-        var server = await OmniSharpLanguageServer.From(options => options
-            .AddDefaultLoggingProvider()
-            .WithInput(Console.OpenStandardInput())
-            .WithOutput(Console.OpenStandardOutput())
-            .WithServices(services => services
-                .AddSingleton<ConfigurationService>()
-                .AddSingleton<WorkspaceService>()
-                .AddSingleton<CodeAnalysisService>()
-                .AddSingleton<NavigationService>()
-                .AddSingleton<ExternalAccessService>())
-            .WithHandler<DidOpenTextDocumentHandler>()
-            .WithHandler<DidChangeTextDocumentHandler>()
-            .WithHandler<DidCloseTextDocumentHandler>()
-            .WithHandler<DidChangeWatchedFilesHandler>()
-            .WithHandler<WorkspaceSymbolsHandler>()
-            .WithHandler<DocumentSymbolHandler>()
-            .WithHandler<HoverHandler>()
-            .WithHandler<FoldingRangeHandler>()
-            .WithHandler<SignatureHelpHandler>()
-            .WithHandler<FormattingHandler>()
-            .WithHandler<RangeFormattingHandler>()
-            .WithHandler<RenameHandler>()
-            .WithHandler<CompletionHandler>()
-            .WithHandler<CodeActionHandler>()
-            .WithHandler<ReferencesHandler>()
-            .WithHandler<ImplementationHandler>()
-            .WithHandler<DefinitionHandler>()
-            .WithHandler<TypeDefinitionHandler>()
-            .OnStarted(StartedHandlerAsync)
-        ).ConfigureAwait(false);
+    private static ConfigurationService configurationService = null!;
+    private static WorkspaceService workspaceService = null!;
+    private static CodeAnalysisService codeAnalysisService = null!;
+    private static NavigationService navigationService = null!;
+    private static ExternalAccessService externalAccessService = null!;
 
-        await server.WaitForExit.ConfigureAwait(false);
+    public static ClientProxy Proxy => server.Client;
+    public static EmmyLuaLanguageServer Server => server;
+    // public static TextDocumentSelector SelectorForAllDocuments => TextDocumentSelector.ForPattern("**/*.cs", "**/*.xaml");
+    // public static TextDocumentSelector SelectorForSourceCodeDocuments => TextDocumentSelector.ForPattern("**/*.cs");
+
+    public static Task Main(string[] args) {
+        server = EmmyLuaLanguageServer
+            .From(Console.OpenStandardInput(), Console.OpenStandardOutput());
+            // .WithHandler<DidOpenTextDocumentHandler>()
+            // .WithHandler<DidChangeTextDocumentHandler>()
+            // .WithHandler<DidCloseTextDocumentHandler>()
+            // .WithHandler<DidChangeWatchedFilesHandler>()
+            // .WithHandler<WorkspaceSymbolsHandler>()
+            // .WithHandler<DocumentSymbolHandler>()
+            // .WithHandler<HoverHandler>()
+            // .WithHandler<FoldingRangeHandler>()5
+            // .WithHandler<SignatureHelpHandler>()
+            // .WithHandler<FormattingHandler>()
+            // .WithHandler<RangeFormattingHandler>()
+            // .WithHandler<RenameHandler>()
+            // .WithHandler<CompletionHandler>()
+            // .WithHandler<CodeActionHandler>()
+            // .WithHandler<ReferencesHandler>()
+            // .WithHandler<ImplementationHandler>()
+            // .WithHandler<DefinitionHandler>()
+            // .WithHandler<TypeDefinitionHandler>()
+
+        server.OnInitialize(OnInitializeAsync);
+        server.OnInitialized(OnInitializedAsync);
+        return server.Run();
     }
-    private static async Task StartedHandlerAsync(ILanguageServer server, CancellationToken cancellationToken) {
-        var clientSettings = server.Workspace.ClientSettings;
-        ObserveClientProcess(clientSettings.ProcessId);
-        
-        var configurationService = server.Services.GetService<ConfigurationService>()!;
-        var navigationService = server.Services.GetService<NavigationService>()!;
-        var workspaceService = server.Services.GetService<WorkspaceService>()!;
-        var externalAccessService = server.Services.GetService<ExternalAccessService>()!;
-
+    private static Task OnInitializeAsync(InitializeParams parameters, ServerInfo serverInfo) {
+        initializeParameters = parameters;
+        ObserveClientProcess(parameters.ProcessId);
+        ConfigureServerInfo(serverInfo);
+        ConfigureServices();
+        return Task.CompletedTask;
+    }
+    private static async Task OnInitializedAsync(InitializedParams parameters) {
         await configurationService.InitializeAsync().ConfigureAwait(false);
         if (!workspaceService.InitializeWorkspace())
-            server.ShowError(Resources.DotNetRegistrationFailed);
+            LanguageServer.Proxy.ShowError(Resources.DotNetRegistrationFailed);
 
         workspaceService.WorkspaceStateChanged += (_, _) => navigationService.UpdateSolution(workspaceService.Solution);
-        _ = workspaceService.LoadAsync(CancellationToken.None);
-        _ = externalAccessService.StartListeningAsync(CancellationToken.None);
+        _ = workspaceService.LoadAsync(initializeParameters.WorkspaceFolders, CancellationToken.None);
+        _ = externalAccessService.StartListeningAsync(initializeParameters.ProcessId, CancellationToken.None);
     }
-
-    private static void ObserveClientProcess(long? pid) {
+ 
+    private static void ObserveClientProcess(int? pid) {
         if (pid == null || pid <= 0)
             return;
 
-        var ideProcess = Process.GetProcessById((int)pid.Value);
+        var ideProcess = Process.GetProcessById(pid.Value);
         ideProcess.EnableRaisingEvents = true;
         ideProcess.Exited += (_, _) => {
             CurrentSessionLogger.Debug($"Shutting down server because client process has exited");
             Environment.Exit(0);
         };
         CurrentSessionLogger.Debug($"Server is observing client process {ideProcess.ProcessName} (PID: {pid})");
+    }
+    private static void ConfigureServerInfo(ServerInfo serverInfo) {
+        serverInfo.Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
+        serverInfo.Name  = Assembly.GetExecutingAssembly().GetName().Name ?? string.Empty;
+    }
+    private static void ConfigureServices() {
+        configurationService = new ConfigurationService();
+        navigationService = new NavigationService();
+        workspaceService = new WorkspaceService(configurationService);
+        codeAnalysisService = new CodeAnalysisService(configurationService, workspaceService);
+        externalAccessService = new ExternalAccessService(workspaceService);
     }
 }

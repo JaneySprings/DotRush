@@ -1,20 +1,16 @@
 using Microsoft.CodeAnalysis;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using OmniSharp.Extensions.LanguageServer.Protocol;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Workspaces.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.CodeAnalysis;
-using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
+using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model;
 
 namespace DotRush.Roslyn.Server.Services;
 
 public class CodeAnalysisService {
     private const int AnalysisFrequencyMs = 500;
 
-    private readonly ILanguageServerFacade? serverFacade;
     private readonly ConfigurationService configurationService;
     private readonly WorkspaceService workspaceService;
     private CancellationTokenSource compilationTokenSource;
@@ -22,10 +18,9 @@ public class CodeAnalysisService {
     public CompilationHost CompilationHost { get; init; }
     public CodeActionHost CodeActionHost { get; init; }
 
-    public CodeAnalysisService(ILanguageServerFacade? serverFacade, ConfigurationService configurationService, WorkspaceService workspaceService) {
+    public CodeAnalysisService(ConfigurationService configurationService, WorkspaceService workspaceService) {
         this.configurationService = configurationService;
         this.workspaceService = workspaceService;
-        this.serverFacade = serverFacade;
 
         compilationTokenSource = new CancellationTokenSource();
         CodeActionHost = new CodeActionHost();
@@ -61,17 +56,17 @@ public class CodeAnalysisService {
         return diagnostics != null && diagnostics.Any();
     }
     public void ResetClientDiagnostics(string documentPath) {
-        serverFacade?.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
-            Diagnostics = new Container<ProtocolModels.Diagnostic>(),
-            Uri = DocumentUri.FromFileSystemPath(documentPath),
-        });
+        // _ = LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+        //     Diagnostics = new List<ProtocolModels.Diagnostic.Diagnostic>(),
+        //     Uri = documentPath,
+        // });
     }
 
     private void OnDiagnosticsCollectionChanged(object? sender, DiagnosticsCollectionChangedEventArgs e) {
-        serverFacade?.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
-            Diagnostics = new Container<ProtocolModels.Diagnostic>(e.Diagnostics.Select(d => d.ToServerDiagnostic())),
-            Uri = DocumentUri.FromFileSystemPath(e.FilePath),
-        });
+        // _ = LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+        //     Diagnostics = e.Diagnostics.Select(d => d.ToServerDiagnostic()),
+        //     Uri = e.FilePath,
+        // });
     }
     private void ResetClientDiagnostics(IEnumerable<Project> projects) {
         var documentPaths = projects.SelectMany(p => p.Documents).Select(d => d.FilePath).Distinct().Where(p => p != null);

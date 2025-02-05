@@ -2,19 +2,14 @@ using System.Collections.ObjectModel;
 using DotRush.Roslyn.Common.External;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces;
-using OmniSharp.Extensions.LanguageServer.Protocol;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
 
 namespace DotRush.Roslyn.Server.Services;
 
 public class WorkspaceService : DotRushWorkspace {
     private readonly ConfigurationService configurationService;
-    private readonly ILanguageServerFacade? serverFacade;
-    private readonly IServerWorkDoneManager? workDoneManager;
-    private IWorkDoneObserver? workDoneObserver;
 
     protected override ReadOnlyDictionary<string, string> WorkspaceProperties => configurationService.WorkspaceProperties;
     protected override bool LoadMetadataForReferencedProjects => configurationService.LoadMetadataForReferencedProjects;
@@ -23,16 +18,14 @@ public class WorkspaceService : DotRushWorkspace {
     protected override bool CompileProjectsAfterLoading => configurationService.CompileProjectsAfterLoading;
     protected override bool ApplyWorkspaceChanges => configurationService.ApplyWorkspaceChanges;
 
-    public WorkspaceService(ConfigurationService configurationService, ILanguageServerFacade? serverFacade, IServerWorkDoneManager? workDoneManager) {
+    public WorkspaceService(ConfigurationService configurationService) {
         this.configurationService = configurationService;
-        this.workDoneManager = workDoneManager;
-        this.serverFacade = serverFacade;
     }
 
-    public async Task LoadAsync(CancellationToken cancellationToken) {
-        var targets = TryGetTargets();
+    public async Task LoadAsync(IEnumerable<WorkspaceFolder>? workspaceFolders, CancellationToken cancellationToken) {
+        var targets = TryGetTargets(workspaceFolders);
         if (targets == null) {
-            serverFacade?.ShowError("Found more than one project or solution file. Specify the `dotrush.roslyn.projectOrSolutionFiles` configuration property.");
+            LanguageServer.Proxy.ShowError("Found more than one project or solution file. Specify the `dotrush.roslyn.projectOrSolutionFiles` configuration property.");
             return;
         }
 
@@ -49,47 +42,43 @@ public class WorkspaceService : DotRushWorkspace {
     }
 
     public override async Task OnLoadingStartedAsync(CancellationToken cancellationToken) {
-        if (workDoneManager == null)
-            return;
-        workDoneObserver = await workDoneManager.Create(new WorkDoneProgressBegin(), cancellationToken: cancellationToken).ConfigureAwait(false);
+        await LanguageServer.Server.CreateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken).ConfigureAwait(false);
     }
-    public override Task OnLoadingCompletedAsync(CancellationToken cancellationToken) {
-        workDoneObserver?.OnCompleted();
-        workDoneObserver?.Dispose();
-        return Task.CompletedTask;
+    public override async Task OnLoadingCompletedAsync(CancellationToken cancellationToken) {
+        await LanguageServer.Server.EndWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken).ConfigureAwait(false);
     }
     public override void OnProjectRestoreStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(null, Resources.ProjectRestoreCompositeFormat, projectName) });
+        _ = LanguageServer.Server.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectRestoreCompositeFormat, projectName));
     }
     public override void OnProjectLoadStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(null, Resources.ProjectIndexCompositeFormat, projectName) });
+        _ = LanguageServer.Server.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectIndexCompositeFormat, projectName));
     }
     public override void OnProjectCompilationStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(null, Resources.ProjectCompileCompositeFormat, projectName) });
+        _ = LanguageServer.Server.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectCompileCompositeFormat, projectName));
     }
     public override void OnProjectRestoreFailed(string documentPath, ProcessResult result) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
         var message = string.Join(Environment.NewLine, result.ErrorLines.Count == 0 ? result.OutputLines : result.ErrorLines);
-        serverFacade?.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
-            Uri = DocumentUri.FromFileSystemPath(documentPath),
-            Diagnostics = new Container<Diagnostic>([new Diagnostic() {
+        _ = LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+            Uri = documentPath,
+            Diagnostics = [new Diagnostic() {
                 Message = string.Format(null, Resources.ProjectRestoreFailedCompositeFormat, projectName, message),
                 Range = PositionExtensions.EmptyRange,
                 Severity = DiagnosticSeverity.Error,
                 Source = projectName,
                 Code = "NU0000",
-            }]),
+            }],
         });
     }
 
-    private IEnumerable<string>? TryGetTargets() {
+    private IEnumerable<string>? TryGetTargets(IEnumerable<WorkspaceFolder>? workspaceFolderUris) {
         if (configurationService.ProjectOrSolutionFiles.Count != 0)
             return configurationService.ProjectOrSolutionFiles;
 
-        var workspaceFolders = serverFacade?.Client.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
+        var workspaceFolders = workspaceFolderUris?.Select(it => it.Uri.FileSystemPath);
         if (workspaceFolders == null)
             return null;
         var solutionFiles = workspaceFolders.SelectMany(it => Directory.GetFiles(it, "*.sln", SearchOption.AllDirectories));
