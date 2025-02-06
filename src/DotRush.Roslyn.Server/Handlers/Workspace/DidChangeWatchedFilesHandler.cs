@@ -1,40 +1,32 @@
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Services;
-using MediatR;
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.WorkspaceServerCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.WorkspaceWatchedFile;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.WorkspaceWatchedFile.Watch;
+using EmmyLua.LanguageServer.Framework.Server.Handler;
 
 namespace DotRush.Roslyn.Server.Handlers.Workspace;
 
 public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     private readonly WorkspaceService workspaceService;
-    private readonly CodeAnalysisService codeAnalysisService;
     private bool shouldApplyWorkspaceChanges;
 
-    public DidChangeWatchedFilesHandler(WorkspaceService workspaceService, CodeAnalysisService codeAnalysisService) {
+    public DidChangeWatchedFilesHandler(WorkspaceService workspaceService) {
         this.workspaceService = workspaceService;
-        this.codeAnalysisService = codeAnalysisService;
     }
 
-    protected override DidChangeWatchedFilesRegistrationOptions CreateRegistrationOptions(DidChangeWatchedFilesCapability capability, ClientCapabilities clientCapabilities) {
-        return new DidChangeWatchedFilesRegistrationOptions() {
-            Watchers = new[] {
-                new OmniSharp.Extensions.LanguageServer.Protocol.Models.FileSystemWatcher() {
-                    Kind = WatchKind.Create | WatchKind.Change | WatchKind.Delete,
-                    GlobPattern = new GlobPattern("**/*")
-                },
-            }
-        };
+    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+        serverCapabilities.Workspace ??= new WorkspaceServerCapabilities();
     }
-
-    public override Task<Unit> Handle(DidChangeWatchedFilesParams request, CancellationToken cancellationToken) {
+    protected override Task Handle(DidChangeWatchedFilesParams request, CancellationToken token) {
         if (workspaceService.Solution == null)
-            return Unit.Task;
+            return Task.CompletedTask;
 
         shouldApplyWorkspaceChanges = false;
         foreach (var change in request.Changes) {
-            var path = change.Uri.GetFileSystemPath();
+            var path = change.Uri.FileSystemPath;
             HandleFileChange(path, change.Type);
 
             if (change.Type == FileChangeType.Created && Directory.Exists(path)) {
@@ -46,8 +38,9 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         if (shouldApplyWorkspaceChanges)
             workspaceService.ApplyChanges();
 
-        return Unit.Task;
+        return Task.CompletedTask;
     }
+
 
     private void HandleFileChange(string path, FileChangeType changeType) {
         if (LanguageExtensions.IsProjectFile(path) && changeType == FileChangeType.Changed)
@@ -56,7 +49,6 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         if (changeType == FileChangeType.Deleted) {
             workspaceService.DeleteDocument(path);
             workspaceService.DeleteFolder(path);
-            codeAnalysisService.ResetClientDiagnostics(path);
             shouldApplyWorkspaceChanges = true;
             return;
         }

@@ -2,6 +2,8 @@
 using System.Reflection;
 using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
+using DotRush.Roslyn.Server.Handlers.TextDocument;
+using DotRush.Roslyn.Server.Handlers.Workspace;
 using DotRush.Roslyn.Server.Services;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Initialize;
 using EmmyLua.LanguageServer.Framework.Server;
@@ -21,31 +23,29 @@ public class LanguageServer {
 
     public static ClientProxy Proxy => server.Client;
     public static EmmyLuaLanguageServer Server => server;
-    // public static TextDocumentSelector SelectorForAllDocuments => TextDocumentSelector.ForPattern("**/*.cs", "**/*.xaml");
-    // public static TextDocumentSelector SelectorForSourceCodeDocuments => TextDocumentSelector.ForPattern("**/*.cs");
 
     public static Task Main(string[] args) {
+        ConfigureServices();
+
         server = EmmyLuaLanguageServer
-            .From(Console.OpenStandardInput(), Console.OpenStandardOutput());
-            // .WithHandler<DidOpenTextDocumentHandler>()
-            // .WithHandler<DidChangeTextDocumentHandler>()
-            // .WithHandler<DidCloseTextDocumentHandler>()
-            // .WithHandler<DidChangeWatchedFilesHandler>()
-            // .WithHandler<WorkspaceSymbolsHandler>()
-            // .WithHandler<DocumentSymbolHandler>()
-            // .WithHandler<HoverHandler>()
-            // .WithHandler<FoldingRangeHandler>()5
-            // .WithHandler<SignatureHelpHandler>()
-            // .WithHandler<FormattingHandler>()
-            // .WithHandler<RangeFormattingHandler>()
-            // .WithHandler<RenameHandler>()
-            // .WithHandler<CompletionHandler>()
+            .From(Console.OpenStandardInput(), Console.OpenStandardOutput())
+            .AddHandler(new TextDocumentHandler(workspaceService))
+            .AddHandler(new DidChangeWatchedFilesHandler(workspaceService))
+            .AddHandler(new WorkspaceSymbolHandler(workspaceService))
+            .AddHandler(new DocumentFormattingHandler(workspaceService))
+            .AddHandler(new RenameHandler(workspaceService))
+            .AddHandler(new SignatureHelpHandler(workspaceService))
+            .AddHandler(new DocumentSymbolHandler(navigationService))
+            .AddHandler(new HoverHandler(navigationService))
+            .AddHandler(new FoldingRangeHandler(navigationService))
+            // .AddHandler(new DocumentDiagnosticsHandler(workspaceService, codeAnalysisService))
             // .WithHandler<CodeActionHandler>()
+            .AddHandler(new CompletionHandler(workspaceService, configurationService))
             // .WithHandler<ReferencesHandler>()
             // .WithHandler<ImplementationHandler>()
             // .WithHandler<DefinitionHandler>()
             // .WithHandler<TypeDefinitionHandler>()
-
+        ;
         server.OnInitialize(OnInitializeAsync);
         server.OnInitialized(OnInitializedAsync);
         return server.Run();
@@ -54,7 +54,6 @@ public class LanguageServer {
         initializeParameters = parameters;
         ObserveClientProcess(parameters.ProcessId);
         ConfigureServerInfo(serverInfo);
-        ConfigureServices();
         return Task.CompletedTask;
     }
     private static async Task OnInitializedAsync(InitializedParams parameters) {

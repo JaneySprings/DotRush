@@ -56,17 +56,17 @@ public class CodeAnalysisService {
         return diagnostics != null && diagnostics.Any();
     }
     public void ResetClientDiagnostics(string documentPath) {
-        // _ = LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
-        //     Diagnostics = new List<ProtocolModels.Diagnostic.Diagnostic>(),
-        //     Uri = documentPath,
-        // });
+        _ = LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+            Diagnostics = new List<ProtocolModels.Diagnostic.Diagnostic>(),
+            Uri = documentPath,
+        });
     }
 
     private void OnDiagnosticsCollectionChanged(object? sender, DiagnosticsCollectionChangedEventArgs e) {
-        // _ = LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
-        //     Diagnostics = e.Diagnostics.Select(d => d.ToServerDiagnostic()),
-        //     Uri = e.FilePath,
-        // });
+        _ = LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+            Diagnostics = e.Diagnostics.Select(d => d.ToServerDiagnostic()).ToList(),
+            Uri = e.FilePath,
+        });
     }
     private void ResetClientDiagnostics(IEnumerable<Project> projects) {
         var documentPaths = projects.SelectMany(p => p.Documents).Select(d => d.FilePath).Distinct().Where(p => p != null);

@@ -1,51 +1,48 @@
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis;
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common;
 using DotRush.Roslyn.Workspaces.Extensions;
+using EmmyLua.LanguageServer.Framework.Server.Handler;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
-    
-
     private readonly NavigationService navigationService;
 
     public DocumentSymbolHandler(NavigationService navigationService) {
         this.navigationService = navigationService;
     }
 
-    protected override DocumentSymbolRegistrationOptions CreateRegistrationOptions(DocumentSymbolCapability capability, ClientCapabilities clientCapabilities) {
-        return new DocumentSymbolRegistrationOptions() {
-            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments
-        };
+    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+        serverCapabilities.DocumentSymbolProvider = true;
     }
-    public override Task<SymbolInformationOrDocumentSymbolContainer?> Handle(DocumentSymbolParams request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync(async () => {
-            var documentPath = request.TextDocument.Uri.GetFileSystemPath();
+    protected override Task<DocumentSymbolResponse> Handle(DocumentSymbolParams request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync(new DocumentSymbolResponse(new List<DocumentSymbol>()), async () => {
+            var documentPath = request.TextDocument.Uri.FileSystemPath;
             var documentId = navigationService?.Solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
             var document = navigationService?.Solution?.GetDocument(documentId);
             if (documentId == null || document == null)
-                return null;
+                return new DocumentSymbolResponse(new List<DocumentSymbol>());
 
-            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+            var semanticModel = await document.GetSemanticModelAsync(token);
             if (semanticModel == null)
-                return null;
+                return new DocumentSymbolResponse(new List<DocumentSymbol>());
 
-            var root = await semanticModel.SyntaxTree.GetRootAsync(cancellationToken);
+            var root = await semanticModel.SyntaxTree.GetRootAsync(token);
             if (root == null)
-                return null;
+                return new DocumentSymbolResponse(new List<DocumentSymbol>());
 
             var documentSymbols = TraverseSyntaxTree(root.ChildNodes(), semanticModel);
             if (documentSymbols == null)
-                return null;
+                return new DocumentSymbolResponse(new List<DocumentSymbol>());
 
-            return new SymbolInformationOrDocumentSymbolContainer(documentSymbols.Select(it => new SymbolInformationOrDocumentSymbol(it)));
+            return new DocumentSymbolResponse(documentSymbols);
         });
     }
 

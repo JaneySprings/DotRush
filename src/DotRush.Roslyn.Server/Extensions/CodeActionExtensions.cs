@@ -1,11 +1,13 @@
 using Microsoft.CodeAnalysis.CodeActions;
 using DotRush.Roslyn.Server.Services;
-using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol;
+using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
-using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.Union;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
@@ -25,7 +27,7 @@ public static class CodeActionExtensions {
         if (solutionService.Solution == null)
             return null;
 
-        var textDocumentEdits = new List<ProtocolModels.TextDocumentEdit>();
+        var textDocumentEdits = new List<TextDocumentEdit>();
         var operations = await codeAction.GetOperationsAsync(cancellationToken).ConfigureAwait(false);
         foreach (var operation in operations) {
             if (operation is ApplyChangesOperation applyChangesOperation) {
@@ -38,9 +40,9 @@ public static class CodeActionExtensions {
                             continue;
 
                         var sourceText = await oldDocument.GetTextAsync(cancellationToken).ConfigureAwait(false);
-                        var textEdits = new List<ProtocolModels.TextEdit>();
+                        var textEdits = new List<TextEdit>();
                         var textChanges = await newDocument.GetTextChangesAsync(oldDocument, cancellationToken).ConfigureAwait(false);
-                        textEdits.AddRange(textChanges.Select(x => new ProtocolModels.TextEdit() {
+                        textEdits.AddRange(textChanges.Select(x => new TextEdit() {
                             NewText = x.NewText ?? string.Empty,
                             Range = x.Span.ToRange(sourceText),
                         }));
@@ -48,11 +50,9 @@ public static class CodeActionExtensions {
                         if (textEdits.Count == 0)
                             continue;
 
-                        textDocumentEdits.Add(new ProtocolModels.TextDocumentEdit() {
+                        textDocumentEdits.Add(new TextDocumentEdit() {
                             Edits = textEdits,
-                            TextDocument = new ProtocolModels.OptionalVersionedTextDocumentIdentifier() {
-                                Uri = DocumentUri.FromFileSystemPath(newDocument.FilePath)
-                            }
+                            TextDocument = new OptionalVersionedTextDocumentIdentifier(newDocument.FilePath, null)
                         });
                     }
                 }
@@ -62,10 +62,8 @@ public static class CodeActionExtensions {
         return new ProtocolModels.CodeAction() {
             Kind = ProtocolModels.CodeActionKind.QuickFix,
             Title = codeAction.Title,
-            Edit = new ProtocolModels.WorkspaceEdit() {
-                DocumentChanges = new ProtocolModels.Container<ProtocolModels.WorkspaceEditDocumentChange>(
-                    textDocumentEdits.Select(x => new ProtocolModels.WorkspaceEditDocumentChange(x))
-                ),
+            Edit = new WorkspaceEdit() {
+                DocumentChanges = new WorkspaceEditDocumentChanges(textDocumentEdits.ToList()),
             },
         };
     }

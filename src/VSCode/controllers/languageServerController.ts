@@ -39,10 +39,14 @@ export class LanguageServerController {
             options: { cwd: Extensions.getCurrentWorkingDirectory() }
         };
         LanguageServerController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
-            diagnosticCollectionName: res.extensionId,
-            progressOnInitialization: true,
+            documentSelector: [
+                { pattern: '**/*.cs' },
+                { pattern: '**/*.xaml' }
+            ],
+            progressOnInitialization: true, 
             synchronize: { 
                 configurationSection: res.extensionId,
+                fileEvents: vscode.workspace.createFileSystemWatcher('**/*.*'),
             },
             connectionOptions: {
                 maxRestartCount: 2,
