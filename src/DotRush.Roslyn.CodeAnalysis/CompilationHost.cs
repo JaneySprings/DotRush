@@ -1,8 +1,7 @@
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using DotRush.Roslyn.CodeAnalysis.Components;
-using DotRush.Roslyn.CodeAnalysis.Extensions;
-using DotRush.Roslyn.Common.Extensions;
+using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.Common.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -11,47 +10,60 @@ namespace DotRush.Roslyn.CodeAnalysis;
 
 public class CompilationHost {
     private readonly DiagnosticAnalyzersLoader diagnosticAnalyzersLoader = new DiagnosticAnalyzersLoader();
-    private readonly Dictionary<string, IEnumerable<DiagnosticHolder>> workspaceDiagnostics = new Dictionary<string, IEnumerable<DiagnosticHolder>>();
+    private readonly DiagnosticCollection workspaceDiagnostics = new DiagnosticCollection();
     private readonly CurrentClassLogger currentClassLogger = new CurrentClassLogger(nameof(CompilationHost));
 
-    public event EventHandler<DiagnosticsCollectionChangedEventArgs>? DiagnosticsChanged;
 
-    public IEnumerable<Diagnostic>? GetDiagnostics(string documentPath) {
-        documentPath = documentPath.ToPlatformPath();
-        if (!workspaceDiagnostics.TryGetValue(documentPath, out IEnumerable<DiagnosticHolder>? container))
-            return null;
-        return container.Select(d => d.Diagnostic);
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
+        return workspaceDiagnostics.GetDiagnostics();
     }
-    public DiagnosticHolder? GetDiagnosticById(string documentPath, int diagnosticId) {
-        documentPath = documentPath.ToPlatformPath();
-        if (!workspaceDiagnostics.TryGetValue(documentPath, out IEnumerable<DiagnosticHolder>? container))
-            return null;
-
-        return container.FirstOrDefault(d => d.Id == diagnosticId);
+    public string GetCollectionToken() {
+        return workspaceDiagnostics.GetCollectionToken();
     }
+    // public IEnumerable<Diagnostic>? GetDiagnostics(string documentPath) {
+    //     documentPath = documentPath.ToPlatformPath();
+    //     if (!workspaceDiagnostics.TryGetValue(documentPath, out IEnumerable<DiagnosticHolder>? container))
+    //         return null;
+    //     return container.Select(d => d.Diagnostic);
+    // }
+    // public DiagnosticHolder? GetDiagnosticById(string documentPath, int diagnosticId) {
+    //     documentPath = documentPath.ToPlatformPath();
+    //     if (!workspaceDiagnostics.TryGetValue(documentPath, out IEnumerable<DiagnosticHolder>? container))
+    //         return null;
 
-    public async Task DiagnoseAsync(IEnumerable<Project> projects, CancellationToken cancellationToken) {
-        currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics started for {projects.Count()} projects");
+    //     return container.FirstOrDefault(d => d.Id == diagnosticId);
+    // }
 
-        var allDiagnostics = new HashSet<DiagnosticHolder>();
-        foreach (var project in projects) {
-            var diagnostics = await GetDiagnosticsAsync(project, cancellationToken);
-            if (diagnostics == null)
+    public async Task<ReadOnlyCollection<DiagnosticContext>> DiagnoseAsync(IEnumerable<ProjectId> projectIds, Solution solution, CancellationToken cancellationToken) {
+        currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics started for {projectIds.Count()} projects");
+
+        workspaceDiagnostics.Clear();
+
+        var diagnostics = new List<DiagnosticContext>();
+        var overwriteDiagnostic = true;
+        foreach (var projectId in projectIds) {
+            var project = solution.GetProject(projectId);
+            if (project == null)
                 continue;
 
-            allDiagnostics.AddRange(diagnostics.Value.Select(diagnostic => new DiagnosticHolder(diagnostic, project)));
-        }
+            currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {project.Name} started");
 
-        var diagnosticsByDocument = allDiagnostics.Where(d => !string.IsNullOrEmpty(d.FilePath)).GroupBy(d => d.FilePath);
-        foreach (var diagnostics in diagnosticsByDocument) {
-            workspaceDiagnostics[diagnostics.Key!.ToPlatformPath()] = diagnostics;
-            DiagnosticsChanged?.Invoke(this, new DiagnosticsCollectionChangedEventArgs(diagnostics.Key!, diagnostics.Select(d => d.Diagnostic)));
+            var projectDiagnostics = await GetDiagnosticsAsync(project, cancellationToken);
+            if (projectDiagnostics == null)
+                continue;
+
+            currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {project.Name} finished");
+
+            diagnostics.AddRange(projectDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+            workspaceDiagnostics.AddDiagnostics(diagnostics, overwriteDiagnostic);
+            overwriteDiagnostic = false;
         }
 
         currentClassLogger.Debug($"{nameof(CompilationHost)}[{cancellationToken.GetHashCode()}]: Diagnostics finished");
+        return new ReadOnlyCollection<DiagnosticContext>(diagnostics);
     }
 
-    public async Task<ImmutableArray<Diagnostic>?> GetDiagnosticsAsync(Project project, CancellationToken cancellationToken) {
+    private async Task<IEnumerable<Diagnostic>?> GetDiagnosticsAsync(Project project, CancellationToken cancellationToken) {
         var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
         if (compilation == null)
             return null;
@@ -62,37 +74,8 @@ public class CompilationHost {
 
         var compilationWithAnalyzers = compilation.WithAnalyzers(diagnosticAnalyzers, project.AnalyzerOptions);
         if (compilationWithAnalyzers == null)
-            return null;
+            return compilation.GetDiagnostics(cancellationToken);;
 
         return await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken);
-    }
-}
-
-public class DiagnosticsCollectionChangedEventArgs : EventArgs {
-    public ReadOnlyCollection<Diagnostic> Diagnostics { get; private set; }
-    public string FilePath { get; private set; }
-
-    public DiagnosticsCollectionChangedEventArgs(string filePath, IEnumerable<Diagnostic> diagnostics) {
-        Diagnostics = new ReadOnlyCollection<Diagnostic>(diagnostics.ToList());
-        FilePath = filePath;
-    }
-}
-
-public sealed class DiagnosticHolder {
-    public Diagnostic Diagnostic { get; init; }
-    public Project Project { get; init; }
-    public int Id { get; init; }
-
-    public string? FilePath => Diagnostic.Location.SourceTree?.FilePath;
-
-    public DiagnosticHolder(Diagnostic diagnostic, Project project) {
-        Diagnostic = diagnostic;
-        Project = project;
-        Id = diagnostic.GetUniqueId();
-    }
-
-    public override int GetHashCode() => Id;
-    public override bool Equals(object? obj) {
-        return this.GetHashCode() == obj?.GetHashCode();
     }
 }

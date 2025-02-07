@@ -2,6 +2,7 @@ using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
+using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
@@ -28,13 +29,14 @@ public static class DiagnosticExtensions {
                 return ProtocolModels.DiagnosticSeverity.Information;
         }
     }
-    public static ProtocolModels.Diagnostic ToServerDiagnostic(this Diagnostic diagnostic) {
+    public static ProtocolModels.Diagnostic ToServerDiagnostic(this DiagnosticContext context) {
         return new ProtocolModels.Diagnostic() {
-            Code = diagnostic.Id,
-            Message = diagnostic.GetSubject(),
-            Range = diagnostic.Location.ToRange(),
-            Severity = diagnostic.Severity.ToServerSeverity(),
-            Data = diagnostic.GetUniqueId(),
+            Code = context.Diagnostic.Id,
+            Message = context.Diagnostic.GetSubject(),
+            Range = context.Diagnostic.Location.ToRange(),
+            Severity = context.Diagnostic.Severity.ToServerSeverity(),
+            Source = context.Source,
+            Data = context.GetHashCode(),
         };
     }
     public static ProtocolModels.Diagnostic ToServerDiagnostic(this WorkspaceDiagnostic diagnostic) {
