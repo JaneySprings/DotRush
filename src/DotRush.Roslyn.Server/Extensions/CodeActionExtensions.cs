@@ -23,19 +23,16 @@ public static class CodeActionExtensions {
         };
     }
 
-    public static async Task<ProtocolModels.CodeAction?> ResolveCodeActionAsync(this CodeAction codeAction, WorkspaceService solutionService, CancellationToken cancellationToken) {
-        if (solutionService.Solution == null)
-            return null;
-
+    public static async Task<ProtocolModels.CodeAction?> ResolveCodeActionAsync(this CodeAction codeAction, Solution solution, CancellationToken cancellationToken) {
         var textDocumentEdits = new List<TextDocumentEdit>();
         var operations = await codeAction.GetOperationsAsync(cancellationToken).ConfigureAwait(false);
         foreach (var operation in operations) {
             if (operation is ApplyChangesOperation applyChangesOperation) {
-                var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solutionService.Solution);
+                var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solution);
                 foreach (var projectChanges in solutionChanges.GetProjectChanges()) {
                     foreach (var documentChanges in projectChanges.GetChangedDocuments()) {
                         var newDocument = projectChanges.NewProject.GetDocument(documentChanges);
-                        var oldDocument = solutionService.Solution.GetDocument(newDocument?.Id);
+                        var oldDocument = solution.GetDocument(newDocument?.Id);
                         if (oldDocument?.FilePath == null || newDocument?.FilePath == null)
                             continue;
 

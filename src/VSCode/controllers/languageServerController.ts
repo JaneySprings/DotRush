@@ -43,6 +43,7 @@ export class LanguageServerController {
                 { pattern: '**/*.cs' },
                 { pattern: '**/*.xaml' }
             ],
+            diagnosticCollectionName: res.extensionId,
             progressOnInitialization: true, 
             synchronize: { 
                 configurationSection: res.extensionId,

@@ -20,6 +20,7 @@ public class ConfigurationService {
     public bool CompileProjectsAfterLoading => configuration?.CompileProjectsAfterLoading ?? true;
     public bool ApplyWorkspaceChanges => configuration?.ApplyWorkspaceChanges ?? false;
     public bool UseMultitargetDiagnostics => configuration?.UseMultitargetDiagnostics ?? true;
+    public bool EnableAnalyzers => configuration?.EnableAnalyzers ?? true;
     public ReadOnlyDictionary<string, string> WorkspaceProperties => (configuration?.WorkspaceProperties ?? new List<string>()).ToPropertiesDictionary();
     public ReadOnlyCollection<string> ProjectOrSolutionFiles => (configuration?.ProjectOrSolutionFiles ?? new List<string>()).AsReadOnly();
 
@@ -65,6 +66,9 @@ internal class Configuration {
 
     [JsonPropertyName("useMultitargetDiagnostics")]
     public bool UseMultitargetDiagnostics { get; set; }
+
+    [JsonPropertyName("enableAnalyzers")]
+    public bool EnableAnalyzers { get; set; }
 
     [JsonPropertyName("workspaceProperties")]
     public List<string>? WorkspaceProperties { get; set; }

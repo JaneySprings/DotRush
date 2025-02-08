@@ -35,12 +35,14 @@ public class DiagnosticCollection {
     public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
         return workspaceDiagnostics.Values.SelectMany(c => c).ToList().AsReadOnly();
     }
+    public DiagnosticContext? GetById(int diagnosticId) {
+        return workspaceDiagnostics.Values.SelectMany(c => c).FirstOrDefault(c => c.GetHashCode() == diagnosticId);
+    }
     public string GetCollectionToken() {
         return collectionToken;
     }
     public void Clear() {
         workspaceDiagnostics.Clear();
-        collectionToken = GenerateNewCollectionToken();
     }
 
     private string GenerateNewCollectionToken() {

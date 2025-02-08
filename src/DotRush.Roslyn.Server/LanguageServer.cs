@@ -38,15 +38,14 @@ public class LanguageServer {
             .AddHandler(new DocumentSymbolHandler(navigationService))
             .AddHandler(new HoverHandler(navigationService))
             .AddHandler(new FoldingRangeHandler(navigationService))
-            // .WithHandler<CodeActionHandler>()
+            .AddHandler(new ImplementationHandler(workspaceService))
+            .AddHandler(new ReferenceHandler(navigationService))
+            .AddHandler(new DefinitionHandler(navigationService))
+            .AddHandler(new TypeDefinitionHandler(navigationService))
+            .AddHandler(new CodeActionHandler(workspaceService, codeAnalysisService))
             .AddHandler(new CompletionHandler(workspaceService, configurationService))
-            // .WithHandler<ReferencesHandler>()
-            // .WithHandler<ImplementationHandler>()
-            // .WithHandler<DefinitionHandler>()
-            // .WithHandler<TypeDefinitionHandler>()
-            .AddHandler(new WorkspaceDiagnosticHandler(codeAnalysisService))
             .AddHandler(new DocumentDiagnosticsHandler(workspaceService, codeAnalysisService, configurationService))
-        ;
+            .AddHandler(new WorkspaceDiagnosticHandler(codeAnalysisService));
 
         server.SetScheduler(new AsyncDispatcher());
         server.OnInitialize(OnInitializeAsync);
@@ -88,7 +87,7 @@ public class LanguageServer {
     private static void ConfigureServices() {
         configurationService = new ConfigurationService();
         navigationService = new NavigationService();
-        codeAnalysisService = new CodeAnalysisService();
+        codeAnalysisService = new CodeAnalysisService(configurationService);
         workspaceService = new WorkspaceService(configurationService);
         externalAccessService = new ExternalAccessService(workspaceService);
     }

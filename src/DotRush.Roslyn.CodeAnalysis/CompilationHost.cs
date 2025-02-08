@@ -17,24 +17,14 @@ public class CompilationHost {
     public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
         return workspaceDiagnostics.GetDiagnostics();
     }
+    public DiagnosticContext? GetDiagnosticContextById(int diagnosticId) {
+        return workspaceDiagnostics.GetById(diagnosticId);
+    }
     public string GetCollectionToken() {
         return workspaceDiagnostics.GetCollectionToken();
     }
-    // public IEnumerable<Diagnostic>? GetDiagnostics(string documentPath) {
-    //     documentPath = documentPath.ToPlatformPath();
-    //     if (!workspaceDiagnostics.TryGetValue(documentPath, out IEnumerable<DiagnosticHolder>? container))
-    //         return null;
-    //     return container.Select(d => d.Diagnostic);
-    // }
-    // public DiagnosticHolder? GetDiagnosticById(string documentPath, int diagnosticId) {
-    //     documentPath = documentPath.ToPlatformPath();
-    //     if (!workspaceDiagnostics.TryGetValue(documentPath, out IEnumerable<DiagnosticHolder>? container))
-    //         return null;
 
-    //     return container.FirstOrDefault(d => d.Id == diagnosticId);
-    // }
-
-    public async Task<ReadOnlyCollection<DiagnosticContext>> DiagnoseAsync(IEnumerable<ProjectId> projectIds, Solution solution, CancellationToken cancellationToken) {
+    public async Task<ReadOnlyCollection<DiagnosticContext>> DiagnoseAsync(IEnumerable<ProjectId> projectIds, Solution solution, bool enableAnalyzers, CancellationToken cancellationToken) {
         currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics started for {projectIds.Count()} projects");
 
         workspaceDiagnostics.Clear();
@@ -48,7 +38,7 @@ public class CompilationHost {
 
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {project.Name} started");
 
-            var projectDiagnostics = await GetDiagnosticsAsync(project, cancellationToken);
+            var projectDiagnostics = await GetDiagnosticsAsync(project, enableAnalyzers, cancellationToken);
             if (projectDiagnostics == null)
                 continue;
 
@@ -63,10 +53,13 @@ public class CompilationHost {
         return new ReadOnlyCollection<DiagnosticContext>(diagnostics);
     }
 
-    private async Task<IEnumerable<Diagnostic>?> GetDiagnosticsAsync(Project project, CancellationToken cancellationToken) {
+    private async Task<IEnumerable<Diagnostic>?> GetDiagnosticsAsync(Project project, bool enableAnalyzers, CancellationToken cancellationToken) {
         var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
         if (compilation == null)
             return null;
+
+        if (!enableAnalyzers)
+            return compilation.GetDiagnostics(cancellationToken);
 
         var diagnosticAnalyzers = diagnosticAnalyzersLoader.GetComponents(project);
         if (diagnosticAnalyzers == null || diagnosticAnalyzers.Length == 0)
