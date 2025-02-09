@@ -29,7 +29,6 @@ public class LanguageServer {
 
         server = EmmyLuaLanguageServer
             .From(Console.OpenStandardInput(), Console.OpenStandardOutput())
-            .AddHandler(new TextDocumentHandler(workspaceService, codeAnalysisService))
             .AddHandler(new DidChangeWatchedFilesHandler(workspaceService))
             .AddHandler(new WorkspaceSymbolHandler(workspaceService))
             .AddHandler(new DocumentFormattingHandler(workspaceService))
@@ -42,6 +41,7 @@ public class LanguageServer {
             .AddHandler(new ReferenceHandler(navigationService))
             .AddHandler(new DefinitionHandler(navigationService))
             .AddHandler(new TypeDefinitionHandler(navigationService))
+            .AddHandler(new TextDocumentHandler(workspaceService, codeAnalysisService))
             .AddHandler(new CodeActionHandler(workspaceService, codeAnalysisService))
             .AddHandler(new CompletionHandler(workspaceService, configurationService))
             .AddHandler(new DocumentDiagnosticsHandler(workspaceService, codeAnalysisService, configurationService))
