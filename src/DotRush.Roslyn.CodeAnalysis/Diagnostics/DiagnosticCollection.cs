@@ -12,25 +12,19 @@ public class DiagnosticCollection {
         collectionToken = GenerateNewCollectionToken();
     }
 
-    public void AddDiagnostics(IEnumerable<DiagnosticContext> diagnostics, bool overwrite = false) {
-        var diagnosticByFile = diagnostics
-            .Where(c => !string.IsNullOrEmpty(c.FilePath))
-            .GroupBy(c => c.FilePath!)
-            .ToArray();
+    public IEnumerable<DiagnosticContext> AddDiagnostics(IEnumerable<DiagnosticContext> diagnostics) {
+        var validDiagnostics = diagnostics.Where(c => !string.IsNullOrEmpty(c.FilePath) && File.Exists(c.FilePath)).ToArray();
 
-        foreach (var diagnosticsGroup in diagnosticByFile) {
+        foreach (var diagnosticsGroup in validDiagnostics.GroupBy(c => c.FilePath!)) {
             if (!workspaceDiagnostics.TryGetValue(diagnosticsGroup.Key, out HashSet<DiagnosticContext>? container)) {
                 container = new HashSet<DiagnosticContext>();
                 workspaceDiagnostics[diagnosticsGroup.Key] = container;
             }
-
-            if (overwrite)
-                container.Clear();
-
             container.UnionWith(diagnosticsGroup);
         }
 
         collectionToken = GenerateNewCollectionToken();
+        return validDiagnostics;
     }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
         return workspaceDiagnostics.Values.SelectMany(c => c).ToList().AsReadOnly();

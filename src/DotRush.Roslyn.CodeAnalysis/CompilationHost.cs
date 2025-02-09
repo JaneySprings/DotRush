@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
@@ -25,12 +24,8 @@ public class CompilationHost {
     }
 
     public async Task<ReadOnlyCollection<DiagnosticContext>> DiagnoseAsync(IEnumerable<ProjectId> projectIds, Solution solution, bool enableAnalyzers, CancellationToken cancellationToken) {
-        currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics started for {projectIds.Count()} projects");
-
         workspaceDiagnostics.Clear();
 
-        var diagnostics = new List<DiagnosticContext>();
-        var overwriteDiagnostic = true;
         foreach (var projectId in projectIds) {
             var project = solution.GetProject(projectId);
             if (project == null)
@@ -38,37 +33,43 @@ public class CompilationHost {
 
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {project.Name} started");
 
-            var projectDiagnostics = await GetDiagnosticsAsync(project, enableAnalyzers, cancellationToken);
-            if (projectDiagnostics == null)
-                continue;
+            var compilation = await DiagnoseAsync(project, cancellationToken);
+            if (compilation != null && enableAnalyzers)
+                await DiagnoseWithAnalyzersAsync(project, compilation, cancellationToken);
 
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {project.Name} finished");
-
-            diagnostics.AddRange(projectDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
-            workspaceDiagnostics.AddDiagnostics(diagnostics, overwriteDiagnostic);
-            overwriteDiagnostic = false;
         }
 
-        currentClassLogger.Debug($"{nameof(CompilationHost)}[{cancellationToken.GetHashCode()}]: Diagnostics finished");
-        return new ReadOnlyCollection<DiagnosticContext>(diagnostics);
+        return new ReadOnlyCollection<DiagnosticContext>(workspaceDiagnostics.GetDiagnostics());
     }
 
-    private async Task<IEnumerable<Diagnostic>?> GetDiagnosticsAsync(Project project, bool enableAnalyzers, CancellationToken cancellationToken) {
+    private async Task<Compilation?> DiagnoseAsync(Project project, CancellationToken cancellationToken) {
         var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
+
         if (compilation == null)
             return null;
 
-        if (!enableAnalyzers)
-            return compilation.GetDiagnostics(cancellationToken);
+        var parseDiagnostics = compilation.GetParseDiagnostics(cancellationToken);
+        workspaceDiagnostics.AddDiagnostics(parseDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
 
+        var declarationDiagnostics = compilation.GetDeclarationDiagnostics(cancellationToken);
+        workspaceDiagnostics.AddDiagnostics(declarationDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+
+        var methodBodyDiagnostics = compilation.GetMethodBodyDiagnostics(cancellationToken);
+        workspaceDiagnostics.AddDiagnostics(methodBodyDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+
+        return compilation;
+    }
+    private async Task DiagnoseWithAnalyzersAsync(Project project, Compilation compilation, CancellationToken cancellationToken) {
         var diagnosticAnalyzers = diagnosticAnalyzersLoader.GetComponents(project);
         if (diagnosticAnalyzers == null || diagnosticAnalyzers.Length == 0)
-            return compilation.GetDiagnostics(cancellationToken);
+            return;
 
         var compilationWithAnalyzers = compilation.WithAnalyzers(diagnosticAnalyzers, project.AnalyzerOptions);
         if (compilationWithAnalyzers == null)
-            return compilation.GetDiagnostics(cancellationToken);;
+            return;
 
-        return await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken);
+        var analyzerDiagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
+        workspaceDiagnostics.AddDiagnostics(analyzerDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
     }
 }

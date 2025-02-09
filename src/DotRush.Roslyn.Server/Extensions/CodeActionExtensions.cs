@@ -24,7 +24,7 @@ public static class CodeActionExtensions {
     }
 
     public static async Task<ProtocolModels.CodeAction?> ResolveCodeActionAsync(this CodeAction codeAction, Solution solution, CancellationToken cancellationToken) {
-        var textDocumentEdits = new List<TextDocumentEdit>();
+        var textDocumentEdits = new Dictionary<DocumentUri, List<TextEdit>>();
         var operations = await codeAction.GetOperationsAsync(cancellationToken).ConfigureAwait(false);
         foreach (var operation in operations) {
             if (operation is ApplyChangesOperation applyChangesOperation) {
@@ -47,10 +47,7 @@ public static class CodeActionExtensions {
                         if (textEdits.Count == 0)
                             continue;
 
-                        textDocumentEdits.Add(new TextDocumentEdit() {
-                            Edits = textEdits,
-                            TextDocument = new OptionalVersionedTextDocumentIdentifier(newDocument.FilePath, null)
-                        });
+                        textDocumentEdits.Add(newDocument.FilePath, textEdits);
                     }
                 }
             }
@@ -60,8 +57,8 @@ public static class CodeActionExtensions {
             Kind = ProtocolModels.CodeActionKind.QuickFix,
             Title = codeAction.Title,
             Edit = new WorkspaceEdit() {
-                DocumentChanges = new WorkspaceEditDocumentChanges(textDocumentEdits.ToList()),
-            },
+                Changes = textDocumentEdits
+            }
         };
     }
 

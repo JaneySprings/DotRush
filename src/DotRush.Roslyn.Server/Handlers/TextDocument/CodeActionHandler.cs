@@ -6,6 +6,7 @@ using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
@@ -28,7 +29,10 @@ public class CodeActionHandler : CodeActionHandlerBase {
     }
 
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
-        serverCapabilities.CodeActionProvider = true;
+        serverCapabilities.CodeActionProvider = new CodeActionOptions {
+            CodeActionKinds = new List<CodeActionKind> { CodeActionKind.QuickFix },
+            // ResolveProvider = true
+        };
     }
     protected override Task<CodeActionResponse> Handle(CodeActionParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(new CodeActionResponse(new List<CommandOrCodeAction>()), async () => {

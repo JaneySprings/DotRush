@@ -24,6 +24,6 @@ public class AsyncDispatcher : IScheduler {
     }
 
     public void Schedule(Func<Message, Task> action, Message message) {
-        _tasks.Add(() => _ = action(message));
+        _tasks.Add(() => _ = Task.Run(async() => await action(message).ConfigureAwait(false)));
     }
 }
