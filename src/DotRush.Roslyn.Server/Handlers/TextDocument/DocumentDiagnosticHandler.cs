@@ -35,7 +35,7 @@ public class DocumentDiagnosticsHandler : DocumentDiagnosticHandlerBase {
             if (projectIds == null || workspaceService.Solution == null)
                 return new RelatedUnchangedDocumentDiagnosticReport();
 
-            var diagnostics = await codeAnalysisService.DiagnoseAsync(projectIds, workspaceService.Solution, token).ConfigureAwait(false);
+            var diagnostics = await codeAnalysisService.DiagnoseAsync(projectIds, workspaceService.Solution).ConfigureAwait(false);
             var curentFileDiagnostics = diagnostics.Where(d => PathExtensions.Equals(d.FilePath, request.TextDocument.Uri.FileSystemPath));
             var otherFileDiagnostics = diagnostics.Except(curentFileDiagnostics).GroupBy(d => d.FilePath);
             

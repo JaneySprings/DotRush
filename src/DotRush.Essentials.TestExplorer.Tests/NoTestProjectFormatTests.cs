@@ -2,25 +2,23 @@ using NUnit.Framework;
 
 namespace DotRush.Essentials.TestExplorer.Tests;
 
-public class LegacyProjectFormatTests : TestFixture {
+public class NoTestProjectFormatTests : TestFixture {
 
-    public LegacyProjectFormatTests() : base("LegacyProjectFormat") { 
-        TestProjectFileContent = $@"<Project ToolVersion=""8.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+    public NoTestProjectFormatTests() : base("NoTestProject") { 
+        TestProjectFileContent = $@"<Project Sdk=""Microsoft.NET.Sdk"">
             <PropertyGroup>
                 <OutputType>Exe</OutputType>
-                <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+                <TargetFramework>net8.0</TargetFramework>
             </PropertyGroup>
 
             <ItemGroup>
-                <PackageReference Include=""Microsoft.NET.Test.Sdk"" />
-                <PackageReference Include=""NUnit"" />
-                <PackageReference Include=""NUnit3TestAdapter"" />
+                <PackageReference Include=""MyPackage"" />
             </ItemGroup>
         </Project>";
     }
 
     [Test]
-    public void LegacyProjectFilesShouldBeSkippedTest() {
+    public void ProjectFilesShouldBeSkippedTest() {
         CreateProjectFile("SingleFixture.cs", @"namespace TestProject;
         [TestFixture]
         public class MyFixture {

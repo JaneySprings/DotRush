@@ -12,6 +12,12 @@ public class TestFixture {
             <OutputType>Exe</OutputType>
             <TargetFramework>net8.0</TargetFramework>
         </PropertyGroup>
+
+        <ItemGroup Condition=""'$(TargetFramework)' == 'net8.0'"">
+            <PackageReference Include=""Microsoft.NET.Test.Sdk"" Version=""16.9.4"" />
+            <PackageReference Include=""NUnit"" Version=""3.13.2"" />
+            <PackageReference Include=""NUnit3TestAdapter"" Version=""4.0.0"" />
+        </ItemGroup>
     </Project>";
 
     public TestFixture(string testProjectName = "SomeProject") {
