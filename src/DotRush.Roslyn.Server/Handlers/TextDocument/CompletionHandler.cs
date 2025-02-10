@@ -125,7 +125,7 @@ public class CompletionHandler : CompletionHandlerBase {
             .ToList();
 
         var currentLineTextEdit = changes
-            .First(x => x.Span.IntersectsWith(completionItem.Span))
+            .FirstOrDefault(x => x.Span.IntersectsWith(completionItem.Span))
             .ToTextEdit(sourceText);
 
         // Remove previous text manualy because fucking vscode bydesign

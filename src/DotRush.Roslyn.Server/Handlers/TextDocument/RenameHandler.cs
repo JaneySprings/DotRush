@@ -33,7 +33,7 @@ public class RenameHandler : RenameHandlerBase {
         return Task.FromResult(new PrepareRenameResponse(false));
     }
     protected override async Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken token) {
-        var workspaceEdits = new Dictionary<DocumentUri, HashSet<TextEdit>>();
+        var workspaceEdits = new Dictionary<DocumentUri, List<TextEdit>>();
         var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
         if (documentIds == null)
             return null;
@@ -67,13 +67,16 @@ public class RenameHandler : RenameHandlerBase {
                         continue;
 
                     if (!workspaceEdits.ContainsKey(newDocument.FilePath))
-                        workspaceEdits.Add(newDocument.FilePath, new HashSet<TextEdit>());
+                        workspaceEdits.Add(newDocument.FilePath, new List<TextEdit>());
 
-                    workspaceEdits[newDocument.FilePath].UnionWith(textEdits);
+                    foreach (var textEdit in textEdits) {
+                        if (!workspaceEdits[newDocument.FilePath].Any(x => x.Range.OverlapsWith(textEdit.Range)))
+                            workspaceEdits[newDocument.FilePath].Add(textEdit);
+                    }
                 }
             }
         }
 
-        return new WorkspaceEdit() { Changes = workspaceEdits.ToDictionary(k => k.Key, v => v.Value.ToList()) };
+        return new WorkspaceEdit() { Changes = workspaceEdits };
     }
 }

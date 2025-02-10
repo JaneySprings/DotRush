@@ -83,4 +83,11 @@ public static class PositionExtensions {
         new ProtocolModels.Position(0, 0), 
         new ProtocolModels.Position(0, 0)
     );
+
+    public static bool OverlapsWith(this ProtocolModels.DocumentRange baseRange, ProtocolModels.DocumentRange otherRange) {
+        return baseRange.Start.Line <= otherRange.End.Line
+            && baseRange.End.Line >= otherRange.Start.Line
+            && baseRange.Start.Character <= otherRange.End.Character
+            && baseRange.End.Character >= otherRange.Start.Character;
+    }
 }

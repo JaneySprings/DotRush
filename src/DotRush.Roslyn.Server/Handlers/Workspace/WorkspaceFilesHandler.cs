@@ -10,6 +10,7 @@ using EmmyLua.LanguageServer.Framework.Server.Handler;
 
 namespace DotRush.Roslyn.Server.Handlers.Workspace;
 
+[Obsolete("Not working by some reason", true)]
 public class WorkspaceFilesHandler : WorkspaceFilesHandlerBase {
     private readonly WorkspaceService workspaceService;
 

@@ -10,11 +10,9 @@ namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class TextDocumentHandler : TextDocumentHandlerBase {
     private readonly WorkspaceService solutionService;
-    private readonly CodeAnalysisService codeAnalysisService;
 
-    public TextDocumentHandler(WorkspaceService solutionService, CodeAnalysisService codeAnalysisService) {
+    public TextDocumentHandler(WorkspaceService solutionService) {
         this.solutionService = solutionService;
-        this.codeAnalysisService = codeAnalysisService;
     }
 
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
@@ -32,7 +30,6 @@ public class TextDocumentHandler : TextDocumentHandlerBase {
         var text = request.ContentChanges.First().Text;
 
         solutionService.UpdateDocument(filePath, text);
-        codeAnalysisService.CancelPendingDiagnostics();
         return Task.CompletedTask;
     }
     protected override Task Handle(DidCloseTextDocumentParams request, CancellationToken token) {
