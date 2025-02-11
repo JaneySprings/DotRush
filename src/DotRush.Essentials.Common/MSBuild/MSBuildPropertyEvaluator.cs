@@ -16,6 +16,9 @@ public static class MSBuildPropertyEvaluator {
 
         return propertyValue;
     }
+    public static bool HasPackage(this MSBuildProject project, string packageName) {
+        return project.HasPackageMatches(project.Path, packageName);
+    }
 
     private static MatchCollection? GetPropertyMatches(this MSBuildProject project, string projectPath, string propertyName, bool isEndPoint = false) {
         if (!File.Exists(projectPath))
@@ -48,6 +51,47 @@ public static class MSBuildPropertyEvaluator {
 
         return project.GetPropertyMatches(propsFile, propertyName, true);
     }
+    private static bool HasPackageMatches(this MSBuildProject project, string projectPath, string packageName, bool isEndPoint = false) {
+        if (!File.Exists(projectPath))
+            return false;
+
+        string content = File.ReadAllText(projectPath);
+        content = Regex.Replace(content, "<!--.*?-->", string.Empty, RegexOptions.Singleline);
+        /* Find in current project */
+        var packageMatch = new Regex($@"<PackageReference Include=""{packageName}""\s?.*>").Matches(content);
+        if (packageMatch.Count > 0)
+            return true;
+        var importRegex = new Regex(@"<Import\s+Project\s*=\s*""(.*?)""");
+        /* Find in imported project */
+        foreach (Match importMatch in importRegex.Matches(content)) {
+            var importedProjectPath = ResolveImportPath(projectPath, importMatch.Groups[1].Value);
+            if (!File.Exists(importedProjectPath))
+                return false;
+
+            if (project.HasPackageMatches(importedProjectPath, packageName, isEndPoint))
+                return true;
+        }
+        var projectRefRegex = new Regex(@"<ProjectReference\s+Include\s*=\s*""(.*?)""\s?.*>");
+        /* Find in project references */
+        foreach (Match importMatch in projectRefRegex.Matches(content)) {
+            var projectReferencePath = ResolveImportPath(projectPath, importMatch.Groups[1].Value);
+            if (!File.Exists(projectReferencePath))
+                return false;
+
+            if (project.HasPackageMatches(projectReferencePath, packageName, isEndPoint))
+                return true;
+        }
+        /* Already at the end of the import chain */
+        if (isEndPoint)
+            return false;
+        /* Find in Directory.Build.props */
+        var propsFile = GetDirectoryPropsPath(Path.GetDirectoryName(projectPath)!);
+        if (propsFile == null)
+            return false;
+
+        return project.HasPackageMatches(propsFile, packageName, true);
+    }
+    
     private static string GetPropertyValue(this MSBuildProject project, string propertyName, MatchCollection matches) {
         var includeRegex = new Regex(@"\$\((?<inc>.*?)\)");
         var resultSequence = new StringBuilder();
