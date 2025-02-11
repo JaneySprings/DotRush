@@ -10,5 +10,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
+
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(CodeAnalysisVersion)" />
 	</ItemGroup>
 </Project>
