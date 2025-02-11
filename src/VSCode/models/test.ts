@@ -1,11 +1,18 @@
 import { Range, TestItem, TestController, Uri, TestMessage } from "vscode";
 
-export interface TestCase {
+export interface TestFixture {
     id: string;
     name: string;
     filePath: string;
     range: Range | null;
     children: TestCase[] | null;
+}
+
+export interface TestCase {
+    id: string;
+    name: string;
+    filePath: string;
+    range: Range | null;
 }
 
 export interface TestResult {
@@ -17,12 +24,12 @@ export interface TestResult {
 }
 
 export class TestExtensions {
-    public static toTestItem(test: TestCase, controller: TestController): TestItem {
-        const item = controller.createTestItem(test.id, test.name, Uri.file(test.filePath));
-        if (test.range !== null)
-            item.range = test.range;
-        if (test.children !== null)
-            item.children.replace(test.children.map(c => TestExtensions.toTestItem(c, controller)));
+    public static toTestItem(fixture: any, controller: TestController): TestItem {
+        const item = controller.createTestItem(fixture.id, fixture.name, Uri.file(fixture.filePath));
+        if (fixture.range !== null)
+            item.range = fixture.range;
+        if (fixture.children !== null && fixture.children !== undefined)
+            item.children.replace(fixture.children.map((c : any) => TestExtensions.toTestItem(c, controller)));
         return item;
     }
     public static toTestMessage(testResult: TestResult): TestMessage {

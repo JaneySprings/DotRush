@@ -3,7 +3,7 @@ import { ProcessRunner } from './processRunner';
 import { Project } from '../models/project';
 import { Process } from '../models/process';
 import { Status } from '../models/status';
-import { TestCase, TestResult } from '../models/test';
+import { TestFixture, TestResult } from '../models/test';
 import * as path from 'path';
 
 
@@ -24,8 +24,8 @@ export class Interop {
             .append("--project")
             .append(projectFile));
     }
-    public static async getTests(projectFile: string): Promise<TestCase[]> {
-        return await ProcessRunner.runAsync<TestCase[]>(new ProcessArgumentBuilder(Interop.testExplorerToolPath)
+    public static async getTests(projectFile: string): Promise<TestFixture[]> {
+        return await ProcessRunner.runAsync<TestFixture[]>(new ProcessArgumentBuilder(Interop.testExplorerToolPath)
             .append("--list-tests")
             .append(projectFile));
     }
