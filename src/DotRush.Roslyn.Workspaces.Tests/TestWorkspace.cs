@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using DotRush.Roslyn.Common.External;
 using Microsoft.CodeAnalysis;
-using NUnit.Framework;
 
 namespace DotRush.Roslyn.Workspaces.Tests;
 
@@ -31,11 +30,11 @@ public class TestWorkspace : DotRushWorkspace {
         this.applyWorkspaceChanges = applyWorkspaceChanges;
 
         if (!InitializeWorkspace())
-            Assert.Fail("Failed to initialize workspace");
+            throw new InvalidOperationException("Failed to initialize workspace");
     }
 
     public override void OnProjectRestoreFailed(string documentPath, ProcessResult result) {
-        Assert.Fail($"[{documentPath}]: Project restore failed with exit code {result.ExitCode}");
+        throw new InvalidOperationException($"[{documentPath}]: Project restore failed with exit code {result.ExitCode}");
     }
 
     public void SetSolution(Solution solution) {
