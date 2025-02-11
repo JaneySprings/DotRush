@@ -1,46 +1,46 @@
 using System.Reflection;
 using Microsoft.CodeAnalysis.Completion;
-using Xunit;
+using NUnit.Framework;
 
-namespace DotRush.Roslyn.Tests.CodeAnalysisTests;
+namespace DotRush.Roslyn.CodeAnalysis.Tests;
 
-public class ReflectionApiTests : TestFixtureBase {
+public class ReflectionApiTests : TestFixture {
 
-    [Fact]
+    [Test]
     public void CompletionOptionsTest() {
         var completionOptionsType = typeof(CompletionService).Assembly.GetType("Microsoft.CodeAnalysis.Completion.CompletionOptions");
-        Assert.NotNull(completionOptionsType);
+        Assert.That(completionOptionsType, Is.Not.Null);
 
         var completionOptions = Activator.CreateInstance(completionOptionsType);
         var sifunProperty = completionOptionsType.GetProperty("ShowItemsFromUnimportedNamespaces");
-        Assert.NotNull(sifunProperty);
+        Assert.That(sifunProperty, Is.Not.Null);
         sifunProperty.SetValue(completionOptions, false);
     }
 
-    [Fact]
+    [Test]
     public void GetCompletionsInternalMethodTest() {
         var getCompletionsAsyncMethod = typeof(CompletionService).GetMethod("GetCompletionsAsync", BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(getCompletionsAsyncMethod);
+        Assert.That(getCompletionsAsyncMethod, Is.Not.Null);
         
         var parameters = getCompletionsAsyncMethod.GetParameters();
-        Assert.Equal(7, parameters.Length);
-        Assert.Equal("document", parameters[0].Name);
-        Assert.Equal("caretPosition", parameters[1].Name);
-        Assert.Equal("options", parameters[2].Name);
-        Assert.Equal("passThroughOptions", parameters[3].Name);
-        Assert.Equal("trigger", parameters[4].Name);
-        Assert.Equal("roles", parameters[5].Name);
-        Assert.Equal("cancellationToken", parameters[6].Name);
+        Assert.That(parameters, Has.Length.EqualTo(7));
+        Assert.That(parameters[0].Name, Is.EqualTo("document"));
+        Assert.That(parameters[1].Name, Is.EqualTo("caretPosition"));
+        Assert.That(parameters[2].Name, Is.EqualTo("options"));
+        Assert.That(parameters[3].Name, Is.EqualTo("passThroughOptions"));
+        Assert.That(parameters[4].Name, Is.EqualTo("trigger"));
+        Assert.That(parameters[5].Name, Is.EqualTo("roles"));
+        Assert.That(parameters[6].Name, Is.EqualTo("cancellationToken"));
     }
 
-    [Fact]
+    [Test]
     public void GenerateTypeCodeActionIsNewFileFieldTest() {
         var generateTypeCodeActionType = Assembly
             .Load("Microsoft.CodeAnalysis.Features")
             .GetType("Microsoft.CodeAnalysis.GenerateType.AbstractGenerateTypeService`6+GenerateTypeCodeAction");
-        Assert.NotNull(generateTypeCodeActionType);
+        Assert.That(generateTypeCodeActionType, Is.Not.Null);
         
         var inNewFileField = generateTypeCodeActionType.GetField("_inNewFile", BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(inNewFileField);
+        Assert.That(inNewFileField, Is.Not.Null);
     }
 }

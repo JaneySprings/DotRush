@@ -63,6 +63,14 @@ Task("test")
 			Loggers = new[] { "trx" }
 		}
 	))
+	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.CodeAnalysis.Tests", "DotRush.Roslyn.CodeAnalysis.Tests.csproj"),
+		new DotNetTestSettings {  
+			Configuration = configuration,
+			Verbosity = DotNetVerbosity.Quiet,
+			ResultsDirectory = ArtifactsDirectory,
+			Loggers = new[] { "trx" }
+		}
+	))
 	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Essentials.TestExplorer.Tests", "DotRush.Essentials.TestExplorer.Tests.csproj"),
 		new DotNetTestSettings {  
 			Configuration = configuration,
