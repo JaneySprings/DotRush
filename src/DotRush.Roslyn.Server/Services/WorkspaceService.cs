@@ -26,10 +26,11 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
         this.fileWatcher = new WorkspaceFilesWatcher(this);
     }
 
-    public async Task LoadAsync(IEnumerable<WorkspaceFolder>? workspaceFolders, CancellationToken cancellationToken) {
-        var targets = TryGetTargets(workspaceFolders);
+    public async Task LoadAsync(IEnumerable<WorkspaceFolder>? workspaceFolderUris, CancellationToken cancellationToken) {
+        var workspaceFolders = workspaceFolderUris?.Select(it => it.Uri.FileSystemPath).ToArray();
+        var targets = GetProjectOrSolutionFiles(workspaceFolders);
         if (targets == null) {
-            LanguageServer.Proxy.ShowError("Found more than one project or solution file. Specify the `dotrush.roslyn.projectOrSolutionFiles` configuration property.");
+            LanguageServer.Proxy.ShowError(Resources.MultipleSolutionsOrProjectsFound);
             return;
         }
 
@@ -43,10 +44,10 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
         var projectFiles = targets.Where(it => Path.GetExtension(it).Equals(".csproj", StringComparison.OrdinalIgnoreCase));
         if (projectFiles.Any())
             await LoadProjectsAsync(projectFiles, cancellationToken).ConfigureAwait(false);
-        
+
         if (workspaceFolders != null) {
-            CurrentSessionLogger.Debug("Start observing workspace folders");
-            fileWatcher.StartObserving(workspaceFolders.Select(f => f.Uri.FileSystemPath).ToArray());
+            CurrentSessionLogger.Debug($"Start observing workspace folders: {string.Join("; ", workspaceFolders)}");
+            fileWatcher.StartObserving(workspaceFolders);
         }
     }
 
@@ -83,11 +84,10 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
         });
     }
 
-    private IEnumerable<string>? TryGetTargets(IEnumerable<WorkspaceFolder>? workspaceFolderUris) {
+    private IEnumerable<string>? GetProjectOrSolutionFiles(IEnumerable<string>? workspaceFolders) {
         if (configurationService.ProjectOrSolutionFiles.Count != 0)
             return configurationService.ProjectOrSolutionFiles;
 
-        var workspaceFolders = workspaceFolderUris?.Select(it => it.Uri.FileSystemPath);
         if (workspaceFolders == null)
             return null;
         var solutionFiles = workspaceFolders.SelectMany(it => Directory.GetFiles(it, "*.sln", SearchOption.AllDirectories));
