@@ -46,6 +46,25 @@ public abstract class TestFixture {
         File.WriteAllText(projectFile, projectContent);
         return projectFile;
     }
+    protected string CreateSolution(string name, params string[] projects) {
+        var solutionFile = Path.Combine(SandboxDirectory, $"{name}.sln");
+        var solutionContent = @"Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31105.104
+MinimumVisualStudioVersion = 10.0.40219.1
+Global
+    GlobalSection(SolutionProperties) = preSolution
+        HideSolutionNode = FALSE
+    EndGlobalSection
+EndGlobal";
+
+        File.WriteAllText(solutionFile, solutionContent);
+
+        foreach (var project in projects)
+            File.AppendAllText(solutionFile, $"\nProject(\"{{9A19103F-16F7-4668-BE54-9A1E7A4F7556}}\") = \"{Path.GetFileNameWithoutExtension(project)}\", \"{project}\", \"{{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}}\"\nEndProject");
+
+        return solutionFile;
+    }
 
     protected string CreateFileInProject(string project, string name, string content) {
         if (project.EndsWith(".csproj"))
