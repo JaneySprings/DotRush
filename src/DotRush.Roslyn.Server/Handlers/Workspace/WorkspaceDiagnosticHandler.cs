@@ -12,9 +12,11 @@ namespace DotRush.Roslyn.Server.Handlers.Workspace;
 
 public class WorkspaceDiagnosticHandler : WorkspaceDiagnosticHandlerBase {
     private readonly CodeAnalysisService codeAnalysisService;
+    private readonly WorkspaceDiagnosticReport emptyReport;
 
     public WorkspaceDiagnosticHandler(CodeAnalysisService codeAnalysisService) {
         this.codeAnalysisService = codeAnalysisService;
+        this.emptyReport = new WorkspaceDiagnosticReport { Items = new List<WorkspaceDocumentDiagnosticReport>() };
     }
     
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
@@ -22,35 +24,37 @@ public class WorkspaceDiagnosticHandler : WorkspaceDiagnosticHandlerBase {
         serverCapabilities.DiagnosticProvider.WorkspaceDiagnostics = true;
     }
     protected override Task<WorkspaceDiagnosticReport> Handle(WorkspaceDiagnosticParams request, CancellationToken token) {
-        var collectionToken = codeAnalysisService.CompilationHost.GetCollectionToken();
-        var previousToken = request.PreviousResultIds.FirstOrDefault()?.Value;
-        if (previousToken == collectionToken)
-            return Task.FromResult(new WorkspaceDiagnosticReport { Items = new List<WorkspaceDocumentDiagnosticReport>() });
-        
-        var result = new List<WorkspaceDocumentDiagnosticReport>();
-        var diagnostics = codeAnalysisService.CompilationHost.GetDiagnostics();
-        
-        foreach (var group in diagnostics.GroupBy(d => d.FilePath)) {
-            if (group.Key == null)
-                continue;
+        return Task.FromResult(SafeExtensions.Invoke(emptyReport, () => {
+            var collectionToken = codeAnalysisService.CompilationHost.GetCollectionToken();
+            var previousToken = request.PreviousResultIds.FirstOrDefault()?.Value;
+            if (previousToken == collectionToken)
+                return emptyReport;
+            
+            var result = new List<WorkspaceDocumentDiagnosticReport>();
+            var diagnostics = codeAnalysisService.CompilationHost.GetDiagnostics();
+            
+            foreach (var group in diagnostics.GroupBy(d => d.FilePath)) {
+                if (group.Key == null)
+                    continue;
 
-            result.Add(new WorkspaceFullDocumentDiagnosticReport {
-                Uri = group.Key,
-                ResultId = collectionToken,
-                Diagnostics = group.Select(c => c.ToServerDiagnostic()).ToList()
-            });
-        }
-        foreach (var previousResult in request.PreviousResultIds) {
-            if (result.Any(r => PathExtensions.Equals(((WorkspaceFullDocumentDiagnosticReport?)r.Report)?.Uri.FileSystemPath, previousResult.Uri.FileSystemPath)))
-                continue;
+                result.Add(new WorkspaceFullDocumentDiagnosticReport {
+                    Uri = group.Key,
+                    ResultId = collectionToken,
+                    Diagnostics = group.Select(c => c.ToServerDiagnostic()).ToList()
+                });
+            }
+            foreach (var previousResult in request.PreviousResultIds) {
+                if (result.Any(r => PathExtensions.Equals(((WorkspaceFullDocumentDiagnosticReport?)r.Report)?.Uri.FileSystemPath, previousResult.Uri.FileSystemPath)))
+                    continue;
 
-            result.Add(new WorkspaceFullDocumentDiagnosticReport {
-                Uri = previousResult.Uri,
-                ResultId = collectionToken,
-                Diagnostics = new List<Diagnostic>()
-            });
-        }
+                result.Add(new WorkspaceFullDocumentDiagnosticReport {
+                    Uri = previousResult.Uri,
+                    ResultId = collectionToken,
+                    Diagnostics = new List<Diagnostic>()
+                });
+            }
 
-        return Task.FromResult(new WorkspaceDiagnosticReport { Items = result });
+            return new WorkspaceDiagnosticReport { Items = result };
+        }));
     }
 }

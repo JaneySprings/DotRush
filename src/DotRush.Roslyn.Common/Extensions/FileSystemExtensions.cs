@@ -55,4 +55,14 @@ public static class FileSystemExtensions {
 
         File.WriteAllText(filePath, content);
     }
+    public static string TryReadText(string filePath) {
+        if (!File.Exists(filePath))
+            return string.Empty;
+
+        try {
+            return File.ReadAllText(filePath);
+        } catch {
+            return string.Empty;
+        }
+    }
 }

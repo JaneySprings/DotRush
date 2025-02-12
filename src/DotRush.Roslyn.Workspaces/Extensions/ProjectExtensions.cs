@@ -1,6 +1,5 @@
 using DotRush.Roslyn.Common.Extensions;
 using Microsoft.CodeAnalysis;
-using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Workspaces.Extensions;
 

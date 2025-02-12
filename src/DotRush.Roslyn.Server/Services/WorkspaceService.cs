@@ -1,15 +1,18 @@
 using System.Collections.ObjectModel;
 using DotRush.Roslyn.Common.External;
+using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces;
+using DotRush.Roslyn.Workspaces.FileSystem;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
 
 namespace DotRush.Roslyn.Server.Services;
 
-public class WorkspaceService : DotRushWorkspace {
+public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
     private readonly ConfigurationService configurationService;
+    private readonly WorkspaceFilesWatcher fileWatcher;
 
     protected override ReadOnlyDictionary<string, string> WorkspaceProperties => configurationService.WorkspaceProperties;
     protected override bool LoadMetadataForReferencedProjects => configurationService.LoadMetadataForReferencedProjects;
@@ -20,6 +23,7 @@ public class WorkspaceService : DotRushWorkspace {
 
     public WorkspaceService(ConfigurationService configurationService) {
         this.configurationService = configurationService;
+        this.fileWatcher = new WorkspaceFilesWatcher(this);
     }
 
     public async Task LoadAsync(IEnumerable<WorkspaceFolder>? workspaceFolders, CancellationToken cancellationToken) {
@@ -39,6 +43,11 @@ public class WorkspaceService : DotRushWorkspace {
         var projectFiles = targets.Where(it => Path.GetExtension(it).Equals(".csproj", StringComparison.OrdinalIgnoreCase));
         if (projectFiles.Any())
             await LoadProjectsAsync(projectFiles, cancellationToken).ConfigureAwait(false);
+        
+        if (workspaceFolders != null) {
+            CurrentSessionLogger.Debug("Start observing workspace folders");
+            fileWatcher.StartObserving(workspaceFolders.Select(f => f.Uri.FileSystemPath).ToArray());
+        }
     }
 
     public override async Task OnLoadingStartedAsync(CancellationToken cancellationToken) {
@@ -89,5 +98,15 @@ public class WorkspaceService : DotRushWorkspace {
             return projectFiles;
 
         return null;
+    }
+
+    void IWorkspaceChangeListener.OnDocumentsCreated(IEnumerable<string> documentPaths) {
+        CreateDocuments(documentPaths.ToArray());
+    }
+    void IWorkspaceChangeListener.OnDocumentsDeleted(IEnumerable<string> documentPaths) {
+        DeleteDocuments(documentPaths.ToArray());
+    }
+    void IWorkspaceChangeListener.OnCommitChanges() {
+        ApplyChanges();
     }
 }

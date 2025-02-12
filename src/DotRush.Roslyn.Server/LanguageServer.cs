@@ -30,7 +30,6 @@ public class LanguageServer {
         server = EmmyLuaLanguageServer
             .From(Console.OpenStandardInput(), Console.OpenStandardOutput())
             .AddHandler(new TextDocumentHandler(workspaceService))
-            .AddHandler(new DidChangeWatchedFilesHandler(workspaceService))
             .AddHandler(new WorkspaceSymbolHandler(workspaceService))
             .AddHandler(new DocumentFormattingHandler(workspaceService))
             .AddHandler(new RenameHandler(workspaceService))

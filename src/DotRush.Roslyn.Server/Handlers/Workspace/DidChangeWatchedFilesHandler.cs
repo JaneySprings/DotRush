@@ -9,6 +9,7 @@ using EmmyLua.LanguageServer.Framework.Server.Handler;
 
 namespace DotRush.Roslyn.Server.Handlers.Workspace;
 
+[Obsolete("Not working correctly for folders", true)]
 public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     private readonly WorkspaceService workspaceService;
     private bool shouldApplyWorkspaceChanges;
@@ -48,7 +49,7 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
 
         if (changeType == FileChangeType.Deleted) {
             workspaceService.DeleteDocument(path);
-            workspaceService.DeleteFolder(path);
+            // workspaceService.DeleteFolder(path);
             shouldApplyWorkspaceChanges = true;
             return;
         }

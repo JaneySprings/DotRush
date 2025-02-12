@@ -46,8 +46,7 @@ export class LanguageServerController {
             diagnosticCollectionName: res.extensionId,
             progressOnInitialization: true, 
             synchronize: { 
-                configurationSection: res.extensionId,
-                fileEvents: vscode.workspace.createFileSystemWatcher('**/*.*'),
+                configurationSection: res.extensionId
             },
             connectionOptions: {
                 maxRestartCount: 2,

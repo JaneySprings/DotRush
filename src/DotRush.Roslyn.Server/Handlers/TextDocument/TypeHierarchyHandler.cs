@@ -27,24 +27,21 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
     protected override async Task<TypeHierarchyResponse?> Handle(TypeHierarchyPrepareParams typeHierarchyPrepareParams, CancellationToken cancellationToken) {
         typeHierarchyCache.Clear();
         
-        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(typeHierarchyPrepareParams.TextDocument.Uri.FileSystemPath);
-        if (documentIds == null || navigationService.Solution == null)
+        var documentId = navigationService.Solution?.GetDocumentIdsWithFilePathV2(typeHierarchyPrepareParams.TextDocument.Uri.FileSystemPath).FirstOrDefault();
+        if (documentId == null || navigationService.Solution == null)
             return null;
 
         var result = new List<TypeHierarchyItem>();
-        foreach (var documentId in documentIds) {
-            var document = navigationService.Solution.GetDocument(documentId);
-            if (document == null)
-                continue;
+        var document = navigationService.Solution.GetDocument(documentId);
+        if (document == null)
+            return null;
 
-            var sourceText = await document.GetTextAsync(cancellationToken);
-            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, typeHierarchyPrepareParams.Position.ToOffset(sourceText), cancellationToken);
-            if (symbol == null || symbol is not INamedTypeSymbol namedTypeSymbol)
-                continue;
+        var sourceText = await document.GetTextAsync(cancellationToken);
+        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, typeHierarchyPrepareParams.Position.ToOffset(sourceText), cancellationToken);
+        if (symbol == null || symbol is not INamedTypeSymbol namedTypeSymbol)
+            return null;
 
-            result.Add(CreateTypeHierarchyItem(namedTypeSymbol, typeHierarchyPrepareParams.TextDocument.Uri.FileSystemPath));
-        }
-
+        result.Add(CreateTypeHierarchyItem(namedTypeSymbol, typeHierarchyPrepareParams.TextDocument.Uri.FileSystemPath));
         return new TypeHierarchyResponse(result);
     }
 
