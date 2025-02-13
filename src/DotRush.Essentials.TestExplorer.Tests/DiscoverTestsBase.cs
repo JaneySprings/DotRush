@@ -16,7 +16,7 @@ public abstract class DiscoverTestsBase : TestFixture {
     }
     [Test]
     public void DiscoverSingleFixtureTest() {
-        CreateProjectFile("SingleFixture.cs", $@"namespace TestProject;
+        CreateFileInProject("SingleFixture.cs", $@"namespace TestProject;
         [{TestFixtureAttr}]
         public class MyFixture {{}}
         ");
@@ -25,7 +25,7 @@ public abstract class DiscoverTestsBase : TestFixture {
     }
     [Test]
     public void DiscoverSingleFixtureWithOneTestTest() {
-        CreateProjectFile("SingleFixture.cs", $@"namespace TestProject;
+        CreateFileInProject("SingleFixture.cs", $@"namespace TestProject;
         [{TestFixtureAttr}]
         public class MyFixture {{
             [{TestCaseAttr}]
@@ -57,7 +57,7 @@ public abstract class DiscoverTestsBase : TestFixture {
     }
     [Test]
     public void DiscoverSingleFixtureWithThreeTestsTest() {
-        CreateProjectFile("SingleFixture.cs", $@"namespace TestProject;
+        CreateFileInProject("SingleFixture.cs", $@"namespace TestProject;
         [{TestFixtureAttr}]
         public class MyFixture {{
             [{TestCaseAttr}]
@@ -104,7 +104,7 @@ public abstract class DiscoverTestsBase : TestFixture {
     }
     [Test]
     public void DiscoverSingleFixtureWithBlockScopedNamespaceTest() {
-        CreateProjectFile("SingleFixture.cs", $@"namespace TestProject {{
+        CreateFileInProject("SingleFixture.cs", $@"namespace TestProject {{
             [{TestFixtureAttr}]
             public class MyFixture {{
                 [{TestCaseAttr}]
@@ -141,7 +141,7 @@ public abstract class DiscoverTestsBase : TestFixture {
     }
     [Test]
     public void DiscoverMultipleFixturesInSingleFileTest() {
-        CreateProjectFile("SingleFixture.cs", $@"namespace TestProject;
+        CreateFileInProject("SingleFixture.cs", $@"namespace TestProject;
         [{TestFixtureAttr}]
         public class MyFixture {{
             [{TestCaseAttr}]
@@ -190,7 +190,7 @@ public abstract class DiscoverTestsBase : TestFixture {
     }
     [Test]
     public void DiscoverFixturesInsideDirectivesTest() {
-        CreateProjectFile("SingleFixture.cs", $@"#if DEBUGTEST
+        CreateFileInProject("SingleFixture.cs", $@"#if DEBUGTEST
         namespace TestProject;
 
         [{TestFixtureAttr}]
@@ -221,7 +221,7 @@ public abstract class DiscoverTestsBase : TestFixture {
     }
     [Test]
     public void DiscoverFixturesWithDuplicateTestsTest() {
-        CreateProjectFile("SingleFixture.cs", $@"namespace TestProject;
+        CreateFileInProject("SingleFixture.cs", $@"namespace TestProject;
         [{TestFixtureAttr}]
         public class MyFixture {{
             [{TestCaseAttr}]
@@ -245,7 +245,7 @@ public abstract class DiscoverTestsBase : TestFixture {
     }
     [Test]
     public void DiscoverFixturesWithTestCasesTest() {
-        CreateProjectFile("SingleFixture.cs", $@"namespace TestProject;
+        CreateFileInProject("SingleFixture.cs", $@"namespace TestProject;
         [{TestFixtureAttr}]
         public class MyFixture {{
             [{TestCaseAttr}]
@@ -285,7 +285,7 @@ public abstract class DiscoverTestsBase : TestFixture {
     }
     [Test]
     public void DiscoverMultipleFixturesTest() {
-        CreateProjectFile("SingleFixture.cs", $@"namespace TestProject;
+        CreateFileInProject("SingleFixture.cs", $@"namespace TestProject;
         [{TestFixtureAttr}]
         public class MyFixture {{
             [{TestCaseAttr}]
@@ -294,7 +294,7 @@ public abstract class DiscoverTestsBase : TestFixture {
             public void MyTest2() {{ Assert.Pass(); }}
         }}
         ");
-        CreateProjectFile("SingleFixture2.cs", $@"namespace TestProject;
+        CreateFileInProject("SingleFixture2.cs", $@"namespace TestProject;
         [{TestFixtureAttr}]
         public class MyFixture2 {{
             [{TestCaseAttr}]
@@ -336,14 +336,14 @@ public abstract class DiscoverTestsBase : TestFixture {
     }
     [Test]
     public void DiscoverMultipleFixturesWithSingleNameTest() {
-        CreateProjectFile("SingleFixture.cs", $@"namespace TestProject;
+        CreateFileInProject("SingleFixture.cs", $@"namespace TestProject;
         [{TestFixtureAttr}]
         public partial class MyFixture {{
             [{TestCaseAttr}]
             public void MyTest() {{}}
         }}
         ");
-        CreateProjectFile("SingleFixture2.cs", $@"namespace TestProject;
+        CreateFileInProject("SingleFixture2.cs", $@"namespace TestProject;
         [{TestFixtureAttr}]
         public partial class MyFixture {{
             [{TestCaseAttr}]

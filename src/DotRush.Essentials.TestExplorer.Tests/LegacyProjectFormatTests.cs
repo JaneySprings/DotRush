@@ -21,7 +21,7 @@ public class LegacyProjectFormatTests : TestFixture {
 
     [Test]
     public void LegacyProjectFilesShouldBeSkippedTest() {
-        CreateProjectFile("SingleFixture.cs", @"namespace TestProject;
+        CreateFileInProject("SingleFixture.cs", @"namespace TestProject;
         [TestFixture]
         public class MyFixture {
             [Test]

@@ -19,7 +19,7 @@ public class NoTestProjectFormatTests : TestFixture {
 
     [Test]
     public void ProjectFilesShouldBeSkippedTest() {
-        CreateProjectFile("SingleFixture.cs", @"namespace TestProject;
+        CreateFileInProject("SingleFixture.cs", @"namespace TestProject;
         [TestFixture]
         public class MyFixture {
             [Test]

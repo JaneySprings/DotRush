@@ -43,7 +43,7 @@ public class TestFixture {
     protected void CreateProject(string projectFilePath) {
         File.WriteAllText(projectFilePath, TestProjectFileContent);
     }
-    protected void CreateProjectFile(string fileName, string fileContent) {
+    protected void CreateFileInProject(string fileName, string fileContent) {
         var filePath = Path.Combine(TestProjectPath, fileName);
         File.WriteAllText(filePath, fileContent);
     }

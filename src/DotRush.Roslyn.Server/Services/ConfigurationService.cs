@@ -30,11 +30,8 @@ public class ConfigurationService {
     }
 
     public async Task InitializeAsync() {
-        var sectionList = await LanguageServer.Proxy.GetConfiguration(new ConfigurationParams { 
-            Items = new List<ConfigurationItem> { new ConfigurationItem { Section = $"{ExtensionId}.{RoslynId}" }
-        }}, CancellationToken.None).ConfigureAwait(false);
-
-        var section = sectionList.FirstOrDefault()?.Value;
+        var sectionList = await LanguageServer.Proxy.GetConfigurationAsync($"{ExtensionId}.{RoslynId}", 3, CancellationToken.None).ConfigureAwait(false);
+        var section = sectionList?.FirstOrDefault()?.Value;
         if (section == null) {
             CurrentSessionLogger.Error("ConfigurationService failed to initialize");
             return;

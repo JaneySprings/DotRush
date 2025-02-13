@@ -3,6 +3,7 @@ using System.Text.Json;
 using DotRush.Roslyn.Common.Logging;
 using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.ShowMessage;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Configuration;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Progress;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.WorkDoneProgress;
@@ -56,6 +57,21 @@ public static class ServerExtensions {
         })));
     }
 
+    public static async Task<List<LSPAny>?> GetConfigurationAsync(this ClientProxy clientProxy, string section, int retryCount, CancellationToken cancellationToken) {
+        List<LSPAny>? result = null;
+        
+        for (int i = 0; i < retryCount; i++) {
+            try {
+                result = await clientProxy.GetConfiguration(new ConfigurationParams { 
+                    Items = new List<ConfigurationItem> { new ConfigurationItem { Section = section }}
+                }, cancellationToken).WaitAsync(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
+            } catch (Exception ex) {
+                CurrentSessionLogger.Error(ex);
+            }
+        }
+
+        return result;
+    }
     public static T GetValue<T>(this List<LSPAny>? configuration, string key, T defaultValue) {
         if (configuration == null)
             return defaultValue;

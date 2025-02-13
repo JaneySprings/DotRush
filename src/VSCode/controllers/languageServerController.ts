@@ -73,6 +73,9 @@ export class LanguageServerController {
 
     private static async showQuickPickTargets(): Promise<void> {
         const result = await Extensions.selectProjectOrSolutionFiles();
+        if (result === undefined)
+            return;
+
         await Extensions.putSetting(res.configIdRoslynProjectOrSolutionFiles, result, vscode.ConfigurationTarget.Workspace);
         if (LanguageServerController.isRunning())
             LanguageServerController.restart();
