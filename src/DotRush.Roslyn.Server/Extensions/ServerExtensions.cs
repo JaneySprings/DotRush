@@ -64,7 +64,7 @@ public static class ServerExtensions {
             try {
                 result = await clientProxy.GetConfiguration(new ConfigurationParams { 
                     Items = new List<ConfigurationItem> { new ConfigurationItem { Section = section }}
-                }, cancellationToken).WaitAsync(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
+                }, cancellationToken).WaitAsync(TimeSpan.FromSeconds(5), cancellationToken).ConfigureAwait(false);
             } catch (Exception ex) {
                 CurrentSessionLogger.Error(ex);
             }
