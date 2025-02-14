@@ -98,6 +98,9 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
         return null;
     }
 
+    bool IWorkspaceChangeListener.IsGitEventsSupported {
+        get => configurationService.ApplyWorkspaceChanges;
+    }
     void IWorkspaceChangeListener.OnDocumentsCreated(IEnumerable<string> documentPaths) {
         CreateDocuments(documentPaths.ToArray());
     }

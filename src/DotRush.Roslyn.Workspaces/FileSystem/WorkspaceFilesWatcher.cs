@@ -19,7 +19,7 @@ public class WorkspaceFilesWatcher {
         workspaceFolders = Enumerable.Empty<string>();
         workspaceFiles = new HashSet<string>();
         workerThread = new Thread(() => {
-            while(true) {
+            while (true) {
                 Thread.Sleep(UpdateTreshold);
                 CheckWorkspaceChanges();
             }
@@ -38,7 +38,7 @@ public class WorkspaceFilesWatcher {
     }
 
     private void CheckWorkspaceChanges() {
-        if (GitExtensions.IsRepositoryLocked(repositoryPath)) {
+        if (listener.IsGitEventsSupported && GitExtensions.IsRepositoryLocked(repositoryPath)) {
             currentClassLogger.Debug($"Repository '{repositoryPath}' is locked, skipping workspace changes check");
             workspaceFiles.Clear();
             return;
@@ -48,9 +48,9 @@ public class WorkspaceFilesWatcher {
         foreach (var folder in workspaceFolders) {
             if (!Directory.Exists(folder))
                 continue;
-            
-            if (string.IsNullOrEmpty(repositoryPath))
-               repositoryPath = GitExtensions.GetRepositoryFolder(folder);
+
+            if (listener.IsGitEventsSupported && string.IsNullOrEmpty(repositoryPath))
+                repositoryPath = GitExtensions.GetRepositoryFolder(folder);
 
             foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
                 newWorkspaceFiles.Add(file);
