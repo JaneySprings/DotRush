@@ -31,7 +31,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
         serverCapabilities.CodeActionProvider = new CodeActionOptions {
             CodeActionKinds = new List<CodeActionKind> { CodeActionKind.QuickFix },
-            // ResolveProvider = true
+            ResolveProvider = true
         };
     }
     protected override Task<CodeActionResponse> Handle(CodeActionParams request, CancellationToken token) {
