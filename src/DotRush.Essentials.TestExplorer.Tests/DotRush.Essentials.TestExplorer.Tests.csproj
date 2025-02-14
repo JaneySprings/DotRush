@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\Common.Build.props" />
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+		<PackageReference Include="NUnit" Version="4.1.0" />
+		<PackageReference Include="NUnit.Analyzers" Version="4.2.0" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\DotRush.Essentials.TestExplorer\DotRush.Essentials.TestExplorer.csproj" />
+	</ItemGroup>
+</Project>

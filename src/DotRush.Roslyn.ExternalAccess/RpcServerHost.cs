@@ -8,15 +8,13 @@ namespace DotRush.Roslyn.ExternalAccess;
 public class RpcServerHost {
     private readonly CurrentClassLogger currentClassLogger;
     private readonly ServerMessageHandler messageHandler;
-    private readonly string transportId;
 
-    public RpcServerHost(DotRushWorkspace workspace, string transportId) {
+    public RpcServerHost(DotRushWorkspace workspace) {
         this.currentClassLogger = new CurrentClassLogger(nameof(RpcServerHost));
         this.messageHandler = new ServerMessageHandler(workspace);
-        this.transportId = transportId;
     }
 
-    public async Task RunAsync(CancellationToken cancellationToken) {
+    public async Task RunAsync(string transportId, CancellationToken cancellationToken) {
         while (!cancellationToken.IsCancellationRequested) {
             using var pipeStream = new NamedPipeServerStream(transportId, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
             currentClassLogger.Debug($"Server created with transport id: '{transportId}'");

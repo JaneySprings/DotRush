@@ -51,11 +51,9 @@ public abstract class SolutionController : ProjectsController {
         CurrentSessionLogger.Debug($"Projects loading completed, loaded {workspace.CurrentSolution.ProjectIds.Count} projects");
     }
 
-    public void DeleteFolder(string path) {
-        var csharpDocumentIds = Solution?.GetDocumentIdsWithFolderPath(path);
-        var additionalDocumentIds = Solution?.GetAdditionalDocumentIdsWithFolderPath(path);
-        DeleteSourceCodeDocument(csharpDocumentIds);
-        DeleteAdditionalDocument(additionalDocumentIds);
+    public void CreateDocuments(string[] files) {
+        foreach (var file in files)
+            CreateDocument(file);
     }
     public void CreateDocument(string file) {
         if (LanguageExtensions.IsAdditionalDocument(file))
@@ -63,17 +61,21 @@ public abstract class SolutionController : ProjectsController {
         if (LanguageExtensions.IsSourceCodeDocument(file))
             CreateSourceCodeDocument(file);
     }
-    public void DeleteDocument(string file) {
-        if (LanguageExtensions.IsAdditionalDocument(file))
-            DeleteAdditionalDocument(file);
-        if (LanguageExtensions.IsSourceCodeDocument(file))
-            DeleteSourceCodeDocument(file);
-    }
     public void UpdateDocument(string file, string? text = null) {
         if (LanguageExtensions.IsAdditionalDocument(file))
             UpdateAdditionalDocument(file, text);
         if (LanguageExtensions.IsSourceCodeDocument(file))
             UpdateSourceCodeDocument(file, text);
+    }
+    public void DeleteDocuments(string[] files) {
+        foreach (var file in files)
+            DeleteDocument(file);
+    }
+    public void DeleteDocument(string file) {
+        if (LanguageExtensions.IsAdditionalDocument(file))
+            DeleteAdditionalDocument(file);
+        if (LanguageExtensions.IsSourceCodeDocument(file))
+            DeleteSourceCodeDocument(file);
     }
 
     private void CreateSourceCodeDocument(string file) {
@@ -91,7 +93,7 @@ public abstract class SolutionController : ProjectsController {
             if (project.GetDocumentIdsWithFilePath(file).Any())
                 continue;
 
-            var sourceText = SourceText.From(File.ReadAllText(file));
+            var sourceText = SourceText.From(FileSystemExtensions.TryReadText(file));
             var folders = project.GetFolders(file);
             var updates = project.AddDocument(Path.GetFileName(file), sourceText, folders, file);
             OnWorkspaceStateChanged(updates.Project.Solution);
@@ -106,7 +108,7 @@ public abstract class SolutionController : ProjectsController {
         if (documentIds == null || !File.Exists(file))
             return;
 
-        var sourceText = SourceText.From(text ?? File.ReadAllText(file));
+        var sourceText = SourceText.From(text ?? FileSystemExtensions.TryReadText(file));
         foreach (var documentId in documentIds) {
             var document = Solution?.GetDocument(documentId);
             if (document == null || document.Project == null)
@@ -131,7 +133,7 @@ public abstract class SolutionController : ProjectsController {
             if (project.GetAdditionalDocumentIdsWithFilePath(file).Any())
                 continue;
 
-            var sourceText = SourceText.From(File.ReadAllText(file));
+            var sourceText = SourceText.From(FileSystemExtensions.TryReadText(file));
             var folders = project.GetFolders(file);
             var updates = project.AddAdditionalDocument(Path.GetFileName(file), sourceText, folders, file);
             OnWorkspaceStateChanged(updates.Project.Solution);
@@ -146,7 +148,7 @@ public abstract class SolutionController : ProjectsController {
         if (documentIds == null || !File.Exists(file))
             return;
 
-        var sourceText = SourceText.From(text ?? File.ReadAllText(file));
+        var sourceText = SourceText.From(text ?? FileSystemExtensions.TryReadText(file));
         foreach (var documentId in documentIds) {
             var project = Solution?.GetProject(documentId.ProjectId);
             if (project == null)

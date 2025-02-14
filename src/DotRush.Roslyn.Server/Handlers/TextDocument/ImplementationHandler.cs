@@ -1,12 +1,14 @@
-using DotRush.Roslyn.Server.Containers;
+using DotRush.Roslyn.Common.Collections;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Implementation;
+using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -17,18 +19,15 @@ public class ImplementationHandler : ImplementationHandlerBase {
         this.solutionService = solutionService;
     }
 
-    protected override ImplementationRegistrationOptions CreateRegistrationOptions(ImplementationCapability capability, ClientCapabilities clientCapabilities) {
-        return new ImplementationRegistrationOptions() {
-            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments
-        };
+    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+        serverCapabilities.ImplementationProvider = true;
     }
-
-    public override async Task<LocationOrLocationLinks?> Handle(ImplementationParams request, CancellationToken cancellationToken) {
-        var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
+    protected override async Task<ImplementationResponse?> Handle(ImplementationParams request, CancellationToken cancellationToken) {
+        var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
         if (documentIds == null)
             return null;
 
-        var result = new LocationsContainer();
+        var result = new NullableValueCollection<ProtocolModels.Location>();
         foreach (var documentId in documentIds) {
             var document = solutionService.Solution?.GetDocument(documentId);
             if (document == null)
@@ -59,6 +58,6 @@ public class ImplementationHandler : ImplementationHandlerBase {
             }
         }
 
-        return result.ToLocationOrLocationLinks();
+        return new ImplementationResponse(result.ToNonNullableList());
     }
 }

@@ -1,16 +1,18 @@
 using DotRush.Roslyn.ExternalAccess;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 
 namespace DotRush.Roslyn.Server.Services;
 
 public class ExternalAccessService {
     private readonly RpcServerHost rpcServerHost;
 
-    public ExternalAccessService(ILanguageServerFacade serverFacade, WorkspaceService workspaceService) {
-        rpcServerHost = new RpcServerHost(workspaceService, $"dotrush-{serverFacade.Workspace.ClientSettings.ProcessId}");  
+    public ExternalAccessService(WorkspaceService workspaceService) {
+        rpcServerHost = new RpcServerHost(workspaceService);  
     }
 
-    public Task StartListeningAsync(CancellationToken cancellationToken) {
-        return rpcServerHost.RunAsync(cancellationToken);
+    public Task StartListeningAsync(int? transportId, CancellationToken cancellationToken) {
+        if (transportId == null || transportId <= 0)
+            return Task.CompletedTask;
+
+        return rpcServerHost.RunAsync($"dotrush-{transportId}", cancellationToken);
     }
 }

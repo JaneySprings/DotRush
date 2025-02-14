@@ -1,20 +1,18 @@
 using System.Collections.ObjectModel;
 using DotRush.Roslyn.Common.External;
+using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces;
-using OmniSharp.Extensions.LanguageServer.Protocol;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
+using DotRush.Roslyn.Workspaces.FileSystem;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
 
 namespace DotRush.Roslyn.Server.Services;
 
-public class WorkspaceService : DotRushWorkspace {
+public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
     private readonly ConfigurationService configurationService;
-    private readonly ILanguageServerFacade? serverFacade;
-    private readonly IServerWorkDoneManager? workDoneManager;
-    private IWorkDoneObserver? workDoneObserver;
+    private readonly WorkspaceFilesWatcher fileWatcher;
 
     protected override ReadOnlyDictionary<string, string> WorkspaceProperties => configurationService.WorkspaceProperties;
     protected override bool LoadMetadataForReferencedProjects => configurationService.LoadMetadataForReferencedProjects;
@@ -23,16 +21,16 @@ public class WorkspaceService : DotRushWorkspace {
     protected override bool CompileProjectsAfterLoading => configurationService.CompileProjectsAfterLoading;
     protected override bool ApplyWorkspaceChanges => configurationService.ApplyWorkspaceChanges;
 
-    public WorkspaceService(ConfigurationService configurationService, ILanguageServerFacade? serverFacade, IServerWorkDoneManager? workDoneManager) {
+    public WorkspaceService(ConfigurationService configurationService) {
         this.configurationService = configurationService;
-        this.workDoneManager = workDoneManager;
-        this.serverFacade = serverFacade;
+        this.fileWatcher = new WorkspaceFilesWatcher(this);
     }
 
-    public async Task LoadAsync(CancellationToken cancellationToken) {
-        var targets = TryGetTargets();
+    public async Task LoadAsync(IEnumerable<WorkspaceFolder>? workspaceFolderUris, CancellationToken cancellationToken) {
+        var workspaceFolders = workspaceFolderUris?.Select(it => it.Uri.FileSystemPath).ToArray();
+        var targets = GetProjectOrSolutionFiles(workspaceFolders);
         if (targets == null) {
-            serverFacade?.ShowError("Found more than one project or solution file. Specify the `dotrush.roslyn.projectOrSolutionFiles` configuration property.");
+            LanguageServer.Proxy.ShowError(Resources.MultipleSolutionsOrProjectsFound);
             return;
         }
 
@@ -46,50 +44,48 @@ public class WorkspaceService : DotRushWorkspace {
         var projectFiles = targets.Where(it => Path.GetExtension(it).Equals(".csproj", StringComparison.OrdinalIgnoreCase));
         if (projectFiles.Any())
             await LoadProjectsAsync(projectFiles, cancellationToken).ConfigureAwait(false);
+
+        if (workspaceFolders != null)
+            fileWatcher.StartObserving(workspaceFolders);
     }
 
     public override async Task OnLoadingStartedAsync(CancellationToken cancellationToken) {
-        if (workDoneManager == null)
-            return;
-        workDoneObserver = await workDoneManager.Create(new WorkDoneProgressBegin(), cancellationToken: cancellationToken).ConfigureAwait(false);
+        await LanguageServer.Server.CreateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken).ConfigureAwait(false);
     }
-    public override Task OnLoadingCompletedAsync(CancellationToken cancellationToken) {
-        workDoneObserver?.OnCompleted();
-        workDoneObserver?.Dispose();
-        return Task.CompletedTask;
+    public override async Task OnLoadingCompletedAsync(CancellationToken cancellationToken) {
+        await LanguageServer.Server.EndWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken).ConfigureAwait(false);
     }
     public override void OnProjectRestoreStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(null, Resources.ProjectRestoreCompositeFormat, projectName) });
+        _ = LanguageServer.Server.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectRestoreCompositeFormat, projectName));
     }
     public override void OnProjectLoadStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(null, Resources.ProjectIndexCompositeFormat, projectName) });
+        _ = LanguageServer.Server.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectIndexCompositeFormat, projectName));
     }
     public override void OnProjectCompilationStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        workDoneObserver?.OnNext(new WorkDoneProgressReport { Message = string.Format(null, Resources.ProjectCompileCompositeFormat, projectName) });
+        _ = LanguageServer.Server.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectCompileCompositeFormat, projectName));
     }
     public override void OnProjectRestoreFailed(string documentPath, ProcessResult result) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
         var message = string.Join(Environment.NewLine, result.ErrorLines.Count == 0 ? result.OutputLines : result.ErrorLines);
-        serverFacade?.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams() {
-            Uri = DocumentUri.FromFileSystemPath(documentPath),
-            Diagnostics = new Container<Diagnostic>([new Diagnostic() {
+        _ = LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams() {
+            Uri = documentPath,
+            Diagnostics = [new Diagnostic() {
                 Message = string.Format(null, Resources.ProjectRestoreFailedCompositeFormat, projectName, message),
                 Range = PositionExtensions.EmptyRange,
                 Severity = DiagnosticSeverity.Error,
                 Source = projectName,
                 Code = "NU0000",
-            }]),
+            }],
         });
     }
 
-    private IEnumerable<string>? TryGetTargets() {
+    private IEnumerable<string>? GetProjectOrSolutionFiles(IEnumerable<string>? workspaceFolders) {
         if (configurationService.ProjectOrSolutionFiles.Count != 0)
             return configurationService.ProjectOrSolutionFiles;
 
-        var workspaceFolders = serverFacade?.Client.ClientSettings.WorkspaceFolders?.Select(it => it.Uri.GetFileSystemPath());
         if (workspaceFolders == null)
             return null;
         var solutionFiles = workspaceFolders.SelectMany(it => Directory.GetFiles(it, "*.sln", SearchOption.AllDirectories));
@@ -100,5 +96,18 @@ public class WorkspaceService : DotRushWorkspace {
             return projectFiles;
 
         return null;
+    }
+
+    bool IWorkspaceChangeListener.IsGitEventsSupported {
+        get => configurationService.ApplyWorkspaceChanges;
+    }
+    void IWorkspaceChangeListener.OnDocumentsCreated(IEnumerable<string> documentPaths) {
+        CreateDocuments(documentPaths.ToArray());
+    }
+    void IWorkspaceChangeListener.OnDocumentsDeleted(IEnumerable<string> documentPaths) {
+        DeleteDocuments(documentPaths.ToArray());
+    }
+    void IWorkspaceChangeListener.OnCommitChanges() {
+        ApplyChanges();
     }
 }

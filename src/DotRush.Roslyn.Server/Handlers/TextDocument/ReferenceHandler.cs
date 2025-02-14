@@ -1,33 +1,31 @@
-using DotRush.Roslyn.Server.Containers;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Reference;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis.FindSymbols;
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
-public class ReferencesHandler : ReferencesHandlerBase {
+public class ReferenceHandler : ReferenceHandlerBase {
     private readonly NavigationService navigationService;
 
-    public ReferencesHandler(NavigationService navigationService) {
+    public ReferenceHandler(NavigationService navigationService) {
         this.navigationService = navigationService;
     }
 
-    protected override ReferenceRegistrationOptions CreateRegistrationOptions(ReferenceCapability capability, ClientCapabilities clientCapabilities) {
-        return new ReferenceRegistrationOptions() {
-            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments
-        };
+    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+        serverCapabilities.ReferencesProvider = true;
     }
-
-    public override async Task<LocationContainer?> Handle(ReferenceParams request, CancellationToken cancellationToken) {
-        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
+    protected override async Task<ReferenceResponse?> Handle(ReferenceParams request, CancellationToken cancellationToken) {
+        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
         if (documentIds == null || navigationService.Solution == null)
             return null;
 
-        var result = new LocationsContainer();
+        var result = new List<Location>();
         foreach (var documentId in documentIds) {
             var document = navigationService.Solution.GetDocument(documentId);
             if (document == null)
@@ -47,10 +45,10 @@ public class ReferencesHandler : ReferencesHandlerBase {
                 var locationSourceText = await location.Document.GetTextAsync(cancellationToken);
                 var referenceLocation = location.ToLocation(locationSourceText);
                 if (referenceLocation != null)
-                    result.Add(referenceLocation);
+                    result.Add(referenceLocation.Value);
             }
         }
 
-        return result.ToLocationContainer();
+        return new ReferenceResponse(result);
     }
 }

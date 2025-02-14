@@ -1,12 +1,14 @@
-using DotRush.Roslyn.Server.Containers;
+using DotRush.Roslyn.Common.Collections;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.TypeDefinition;
+using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -17,18 +19,15 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
         this.navigationService = navigationService;
     }
 
-    protected override TypeDefinitionRegistrationOptions CreateRegistrationOptions(TypeDefinitionCapability capability, ClientCapabilities clientCapabilities) {
-        return new TypeDefinitionRegistrationOptions() {
-            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments
-        };
+    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+        serverCapabilities.TypeDefinitionProvider = true;
     }
-
-    public override async Task<LocationOrLocationLinks?> Handle(TypeDefinitionParams request, CancellationToken cancellationToken) {
-        var result = new LocationsContainer();
-        var decompiledResult = new LocationsContainer();
+    protected override async Task<TypeDefinitionResponse?> Handle(TypeDefinitionParams request, CancellationToken cancellationToken) {
+        var result = new NullableValueCollection<ProtocolModels.Location>();
+        var decompiledResult = new NullableValueCollection<ProtocolModels.Location>();
         var isDecompiled = false;
 
-        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
+        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
         if (documentIds == null)
             return null;
 
@@ -79,8 +78,9 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
             goto handle;
         }
 
-        return result.IsEmpty && !decompiledResult.IsEmpty 
-            ? decompiledResult.ToLocationOrLocationLinks()
-            : result.ToLocationOrLocationLinks();
+        return new TypeDefinitionResponse(result.IsEmpty && !decompiledResult.IsEmpty 
+            ? decompiledResult.ToNonNullableList()
+            : result.ToNonNullableList()
+        );
     }
 }

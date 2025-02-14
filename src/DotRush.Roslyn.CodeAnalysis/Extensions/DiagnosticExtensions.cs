@@ -1,4 +1,3 @@
-
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
@@ -12,15 +11,6 @@ public static class DiagnosticsExtensions {
 
         return message;
     }
-    public static string ToDisplayString(this Diagnostic diagnostic) {
-        var span = $"{diagnostic.Location.GetLineSpan().StartLinePosition.Line + 1}:{diagnostic.Location.GetLineSpan().StartLinePosition.Character + 1}";
-        var sourcePath = diagnostic.Location.SourceTree?.FilePath ?? string.Empty;
-        return $"{sourcePath}({span}): {diagnostic.Severity} {diagnostic.Id}: {diagnostic.GetSubject()}";
-    }
-    public static int GetUniqueId(this Diagnostic diagnostic) {
-        return diagnostic.ToDisplayString().GetHashCode();
-    }
-
     public static bool CanFixDiagnostic(this ImmutableArray<string> array, string item) {
         if (item == "CS8019")
             return array.Contains("RemoveUnnecessaryImportsFixable");

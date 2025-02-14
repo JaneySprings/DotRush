@@ -39,10 +39,14 @@ export class LanguageServerController {
             options: { cwd: Extensions.getCurrentWorkingDirectory() }
         };
         LanguageServerController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
+            documentSelector: [
+                { pattern: '**/*.cs' },
+                { pattern: '**/*.xaml' }
+            ],
             diagnosticCollectionName: res.extensionId,
-            progressOnInitialization: true,
+            progressOnInitialization: true, 
             synchronize: { 
-                configurationSection: res.extensionId,
+                configurationSection: res.extensionId
             },
             connectionOptions: {
                 maxRestartCount: 2,
@@ -69,6 +73,9 @@ export class LanguageServerController {
 
     private static async showQuickPickTargets(): Promise<void> {
         const result = await Extensions.selectProjectOrSolutionFiles();
+        if (result === undefined)
+            return;
+
         await Extensions.putSetting(res.configIdRoslynProjectOrSolutionFiles, result, vscode.ConfigurationTarget.Workspace);
         if (LanguageServerController.isRunning())
             LanguageServerController.restart();

@@ -361,6 +361,11 @@
             "default": true,
             "description": "%configuration.description.roslyn.useMultitargetDiagnostics%"
           },
+          "dotrush.roslyn.enableAnalyzers": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.description.roslyn.enableAnalyzers%"
+          },
           "dotrush.debugger.projectAssembliesOnly": {
             "type": "boolean",
             "default": false,

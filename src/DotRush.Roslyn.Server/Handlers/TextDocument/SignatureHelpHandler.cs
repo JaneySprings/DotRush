@@ -3,11 +3,13 @@ using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.SignatureHelp;
+using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -18,27 +20,25 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
         this.solutionService = solutionService;
     }
 
-    protected override SignatureHelpRegistrationOptions CreateRegistrationOptions(SignatureHelpCapability capability, ClientCapabilities clientCapabilities) {
-        return new SignatureHelpRegistrationOptions {
-            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments,
-            TriggerCharacters = new Container<string>("(", ",")
+    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+        serverCapabilities.SignatureHelpProvider = new SignatureHelpOptions {
+            TriggerCharacters = new List<string> { "(", "," }
         };
     }
-
-    public override Task<SignatureHelp?> Handle(SignatureHelpParams request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync(async () => {
-            var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
+    protected override Task<SignatureHelp> Handle(SignatureHelpParams request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync(new SignatureHelp(), async () => {
+            var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
             if (documentIds == null)
-                return null;
+                return new SignatureHelp();
 
             foreach (var documentId in documentIds) {
                 var document = solutionService.Solution?.GetDocument(documentId);
                 if (document == null)
                     continue;
 
-                var sourceText = await document.GetTextAsync(cancellationToken);
-                var tree = await document.GetSyntaxTreeAsync(cancellationToken);
-                var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+                var sourceText = await document.GetTextAsync(token);
+                var tree = await document.GetSyntaxTreeAsync(token);
+                var semanticModel = await document.GetSemanticModelAsync(token);
                 if (sourceText == null || tree == null || semanticModel == null)
                     continue;
 
@@ -46,33 +46,33 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
                 var root = await tree.GetRootAsync();
                 var node = root.FindToken(position).Parent;
 
-                var invocationInfo = GetInvokationInfo(node, semanticModel, position, cancellationToken);
+                var invocationInfo = GetInvokationInfo(node, semanticModel, position, token);
                 if (invocationInfo == null)
                     continue;
 
                 var (invocation, argumentsCount) = invocationInfo.Value;
-                var signatures = new Container<SignatureInformation>(semanticModel
-                    .GetMemberGroup(invocation, cancellationToken)
+                var signatures = new List<SignatureInformation>(semanticModel
+                    .GetMemberGroup(invocation, token)
                     .OfType<IMethodSymbol>()
                     .Where(x => x.Parameters.Length >= argumentsCount)
                     .Select(x => new SignatureInformation {
                         Label = x.ToDisplayString(DisplayFormat.Minimal),
-                        Parameters = new Container<ParameterInformation>(x.Parameters.Select(y => new ParameterInformation {
+                        Parameters = new List<ParameterInformation>(x.Parameters.Select(y => new ParameterInformation {
                             Label = y.ToDisplayString(DisplayFormat.Minimal)
                         }))
                     })
                 );
 
-                if (signatures.Count() == 1 && signatures.First().Parameters?.Count() == 0)
-                    return null;
+                if (signatures.Count == 1 && signatures.First().Parameters.Count == 0)
+                    return new SignatureHelp();
 
                 return new SignatureHelp {
-                    ActiveParameter = argumentsCount - 1,
+                    ActiveParameter = (uint)argumentsCount - 1,
                     Signatures = signatures
                 };
             }
 
-            return null;
+            return new SignatureHelp();
         });
     }
 

@@ -55,7 +55,7 @@ public class NavigationHost {
         if (project.Documents.Any(d => PathExtensions.Equals(d.FilePath, documentPath)))
             return;
         if (sourceText == null)
-            sourceText = SourceText.From(File.ReadAllText(documentPath));
+            sourceText = SourceText.From(FileSystemExtensions.TryReadText(documentPath));
         
         var documentName = Path.GetFileName(documentPath);
         var document = project.AddDocument(documentName, sourceText, filePath: documentPath);
