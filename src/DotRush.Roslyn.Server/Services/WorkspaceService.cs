@@ -45,10 +45,8 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
         if (projectFiles.Any())
             await LoadProjectsAsync(projectFiles, cancellationToken).ConfigureAwait(false);
 
-        if (workspaceFolders != null) {
-            CurrentSessionLogger.Debug($"Start observing workspace folders: {string.Join("; ", workspaceFolders)}");
+        if (workspaceFolders != null)
             fileWatcher.StartObserving(workspaceFolders);
-        }
     }
 
     public override async Task OnLoadingStartedAsync(CancellationToken cancellationToken) {

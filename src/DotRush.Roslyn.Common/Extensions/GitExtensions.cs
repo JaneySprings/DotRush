@@ -17,9 +17,9 @@ public static class GitExtensions {
         if (string.IsNullOrEmpty(gitPath))
             return false;
 
-        return GitExtensions.IsMergeState(gitPath) 
-            || GitExtensions.IsRebaseState(gitPath) 
-            || GitExtensions.IsCheckoutState(gitPath);
+        return IsLockedState(gitPath) 
+            || IsMergeState(gitPath)
+            || IsRebaseState(gitPath);
     }
 
     public static bool IsMergeState(string gitPath) {
@@ -27,11 +27,12 @@ public static class GitExtensions {
         return File.Exists(mergeHeadPath);
     }
     public static bool IsRebaseState(string gitPath) {
-        var rebaseApplyPath = Path.Combine(gitPath, "rebase-apply");
-        return Directory.Exists(rebaseApplyPath);
+        var rebaseMergePath = Path.Combine(gitPath, "rebase-merge");
+        var rebaseHeadPath = Path.Combine(gitPath, "REBASE_HEAD");
+        return Directory.Exists(rebaseMergePath) || File.Exists(rebaseHeadPath);
     }
-    public static bool IsCheckoutState(string gitPath) {
-        var headPath = Path.Combine(gitPath, "HEAD");
-        return File.Exists(headPath);
+    public static bool IsLockedState(string gitPath) {
+        var lockPath = Path.Combine(gitPath, "index.lock");
+        return File.Exists(lockPath);
     }
 }
