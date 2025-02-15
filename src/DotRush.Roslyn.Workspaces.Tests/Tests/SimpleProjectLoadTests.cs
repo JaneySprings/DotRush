@@ -5,9 +5,6 @@ using NUnit.Framework;
 namespace DotRush.Roslyn.Workspaces.Tests;
 
 public class SimpleProjectLoadTests : TestFixture {
-    private const string SingleTFM = "net8.0";
-    private const string MultiTFM = "net8.0;net9.0";
-
     public SimpleProjectLoadTests() {
         SafeExtensions.ThrowOnExceptions = true;
     }

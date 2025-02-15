@@ -5,6 +5,9 @@ namespace DotRush.Roslyn.Workspaces.Tests;
 
 [TestFixture]
 public abstract class TestFixture {
+    protected const string SingleTFM = "net8.0";
+    protected const string MultiTFM = "net8.0;net9.0";
+
     protected string SandboxDirectory { get; set; }
     
     public TestFixture() {
