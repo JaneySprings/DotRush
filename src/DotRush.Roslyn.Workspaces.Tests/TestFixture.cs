@@ -1,3 +1,4 @@
+using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.Workspaces.Tests;
@@ -73,5 +74,15 @@ EndGlobal";
         var file = Path.Combine(project, name);
         File.WriteAllText(file, content);
         return file;
+    }
+
+    protected int GetProjectDocumentsCount(Project project) {
+        return project.Documents.Count();
+    }
+    protected int GetProjectAdditionalDocumentsCount(Project project) {
+        return project.AdditionalDocuments.Count();
+    }
+    protected int GetProjectFilesCount(Project project) {
+        return GetProjectDocumentsCount(project) + GetProjectAdditionalDocumentsCount(project);
     }
 }
