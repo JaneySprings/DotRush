@@ -101,6 +101,25 @@ public class ManipulationTests : TestFixture {
         Assert.That(project1.GetDocumentIdsWithFilePath(document5Path), Is.Empty);
         Assert.That(project2.GetDocumentIdsWithFilePath(document5Path).Count(), Is.EqualTo(1));
     }
+    [Test]
+    public async Task NoSyncInIntermediateDirectoryTest() {
+        var workspace = new TestWorkspace();
+        var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
+
+        await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
+        
+        var documentPath = CreateFileInProject(projectPath, $"obj/Debug/{SingleTFM}/Document.cs", "class Document {}");
+        workspace.CreateDocument(documentPath);
+        Assert.That(workspace.Solution!.GetDocumentIdsWithFilePathV2(documentPath), Is.Empty);
+
+        var objDocument = workspace.Solution!.Projects.Single().Documents.First(d => d.FilePath!.Contains($"obj{Path.DirectorySeparatorChar}Debug{Path.DirectorySeparatorChar}{SingleTFM}"));
+        workspace.DeleteDocument(objDocument.FilePath!);
+        Assert.That(workspace.Solution!.GetDocumentIdsWithFilePathV2(objDocument.FilePath!), Is.Not.Empty);
+
+        var document2Path = CreateFileInProject(projectPath, $"objects/Document2.cs", "class Document2 {}");
+        workspace.CreateDocument(document2Path);
+        Assert.That(workspace.Solution!.GetDocumentIdsWithFilePathV2(document2Path), Is.Not.Empty);
+    }
 
     private (string tfm1, string tfm2) GetTFMs(string tfm) {
         var tfms = tfm.Split(';');

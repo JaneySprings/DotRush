@@ -79,6 +79,8 @@ public abstract class SolutionController : ProjectsController {
     }
 
     private void CreateSourceCodeDocument(string file) {
+        if (Solution != null && Solution.GetDocumentIdsWithFilePathV2(file).Any())
+            return;
         var projectIds = Solution?.GetProjectIdsMayContainsFilePath(file);
         if (projectIds == null || Solution == null)
             return;
@@ -88,9 +90,7 @@ public abstract class SolutionController : ProjectsController {
             if (project?.FilePath == null || !File.Exists(file))
                 continue;
 
-            if (!FileSystemExtensions.IsFileVisible(Path.GetDirectoryName(project.FilePath), project.GetFolders(file), Path.GetFileName(file)))
-                continue;
-            if (project.GetDocumentIdsWithFilePath(file).Any())
+            if (!CanBeProcessed(file, project))
                 continue;
 
             var sourceText = SourceText.From(FileSystemExtensions.TryReadText(file));
@@ -119,6 +119,8 @@ public abstract class SolutionController : ProjectsController {
         }
     }
     private void CreateAdditionalDocument(string file) {
+        if (Solution != null && Solution.GetAdditionalDocumentIdsWithFilePathV2(file).Any())
+            return;
         var projectIds = Solution?.GetProjectIdsMayContainsFilePath(file);
         if (projectIds == null || Solution == null)
             return;
@@ -128,9 +130,7 @@ public abstract class SolutionController : ProjectsController {
             if (project?.FilePath == null || !File.Exists(file))
                 continue;
 
-            if (!FileSystemExtensions.IsFileVisible(Path.GetDirectoryName(project.FilePath), project.GetFolders(file), Path.GetFileName(file)))
-                continue;
-            if (project.GetAdditionalDocumentIdsWithFilePath(file).Any())
+            if (!CanBeProcessed(file, project))
                 continue;
 
             var sourceText = SourceText.From(FileSystemExtensions.TryReadText(file));
@@ -171,6 +171,9 @@ public abstract class SolutionController : ProjectsController {
             if (project == null || document?.FilePath == null)
                 continue;
 
+            if (!CanBeProcessed(document.FilePath, project))
+                continue;
+
             var updates = project.RemoveDocument(documentId);
             OnWorkspaceStateChanged(updates.Solution);
         }
@@ -185,8 +188,22 @@ public abstract class SolutionController : ProjectsController {
             if (project == null || document?.FilePath == null)
                 continue;
 
+            if (!CanBeProcessed(document.FilePath, project))
+                continue;
+
             var updates = project.RemoveAdditionalDocument(documentId);
             OnWorkspaceStateChanged(updates.Solution);
         }
+    }
+
+    private bool CanBeProcessed(string file, Project project) {
+        if (PathExtensions.StartsWith(file, project.GetIntermediateOutputPath()))
+            return false;
+
+        var folders = project.GetFolders(file);
+        if (folders.Any() && folders.Any(f => f.StartsWith('.')))
+            return false;
+
+        return true;
     }
 }

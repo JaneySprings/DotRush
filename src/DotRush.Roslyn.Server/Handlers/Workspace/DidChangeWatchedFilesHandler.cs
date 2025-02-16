@@ -22,22 +22,22 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         serverCapabilities.Workspace ??= new WorkspaceServerCapabilities();
     }
     protected override Task Handle(DidChangeWatchedFilesParams request, CancellationToken token) {
-        if (workspaceService.Solution == null)
-            return Task.CompletedTask;
+        // if (workspaceService.Solution == null)
+        //     return Task.CompletedTask;
 
-        shouldApplyWorkspaceChanges = false;
-        foreach (var change in request.Changes) {
-            var path = change.Uri.FileSystemPath;
-            HandleFileChange(path, change.Type);
+        // shouldApplyWorkspaceChanges = false;
+        // foreach (var change in request.Changes) {
+        //     var path = change.Uri.FileSystemPath;
+        //     HandleFileChange(path, change.Type);
 
-            if (change.Type == FileChangeType.Created && Directory.Exists(path)) {
-                foreach (var filePath in FileSystemExtensions.GetVisibleFilesRecursive(path))
-                    HandleFileChange(filePath, FileChangeType.Created);
-            }
-        }
+        //     if (change.Type == FileChangeType.Created && Directory.Exists(path)) {
+        //         foreach (var filePath in FileSystemExtensions.GetVisibleFilesRecursive(path))
+        //             HandleFileChange(filePath, FileChangeType.Created);
+        //     }
+        // }
         
-        if (shouldApplyWorkspaceChanges)
-            workspaceService.ApplyChanges();
+        // if (shouldApplyWorkspaceChanges)
+        //     workspaceService.ApplyChanges();
 
         return Task.CompletedTask;
     }
