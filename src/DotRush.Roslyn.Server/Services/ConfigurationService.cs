@@ -1,75 +1,75 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
-using Microsoft.Extensions.Configuration;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Configuration;
 
 namespace DotRush.Roslyn.Server.Services;
 
 public class ConfigurationService {
-    private readonly ILanguageServerConfiguration? configuration;
     private const string ExtensionId = "dotrush";
     private const string RoslynId = "roslyn";
+    
+    private Configuration? configuration;
 
-    private bool? showItemsFromUnimportedNamespaces;
-    public bool ShowItemsFromUnimportedNamespaces => showItemsFromUnimportedNamespaces ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:showItemsFromUnimportedNamespaces", false);
+    public bool ShowItemsFromUnimportedNamespaces => configuration?.ShowItemsFromUnimportedNamespaces ?? false;
+    public bool SkipUnrecognizedProjects => configuration?.SkipUnrecognizedProjects ?? true;
+    public bool LoadMetadataForReferencedProjects => configuration?.LoadMetadataForReferencedProjects ?? false;
+    public bool RestoreProjectsBeforeLoading => configuration?.RestoreProjectsBeforeLoading ?? true;
+    public bool CompileProjectsAfterLoading => configuration?.CompileProjectsAfterLoading ?? true;
+    public bool ApplyWorkspaceChanges => configuration?.ApplyWorkspaceChanges ?? false;
+    public bool UseMultitargetDiagnostics => configuration?.UseMultitargetDiagnostics ?? true;
+    public bool EnableAnalyzers => configuration?.EnableAnalyzers ?? true;
+    public ReadOnlyDictionary<string, string> WorkspaceProperties => (configuration?.WorkspaceProperties ?? new List<string>()).ToPropertiesDictionary();
+    public ReadOnlyCollection<string> ProjectOrSolutionFiles => (configuration?.ProjectOrSolutionFiles ?? new List<string>()).AsReadOnly();
 
-    private bool? skipUnrecognizedProjects;
-    public bool SkipUnrecognizedProjects => skipUnrecognizedProjects ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:skipUnrecognizedProjects", true);
-
-    private bool? loadMetadataForReferencedProjects;
-    public bool LoadMetadataForReferencedProjects => loadMetadataForReferencedProjects ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:loadMetadataForReferencedProjects", false);
-
-    private bool? restoreProjectsBeforeLoading;
-    public bool RestoreProjectsBeforeLoading => restoreProjectsBeforeLoading ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:restoreProjectsBeforeLoading", true);
-
-    private bool? compileProjectsAfterLoading;
-    public bool CompileProjectsAfterLoading => compileProjectsAfterLoading ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:compileProjectsAfterLoading", true);
-
-    private bool? applyWorkspaceChanges;
-    public bool ApplyWorkspaceChanges => applyWorkspaceChanges ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:applyWorkspaceChanges", false);
-
-    private bool? useMultitargetDiagnostics;
-    public bool UseMultitargetDiagnostics => useMultitargetDiagnostics ??= configuration.GetValue($"{ExtensionId}:{RoslynId}:useMultitargetDiagnostics", true);
-
-    private ReadOnlyDictionary<string, string>? workspaceProperties;
-    public ReadOnlyDictionary<string, string> WorkspaceProperties => workspaceProperties ??= ServerExtensions.GetKeyValuePairs(configuration, $"{ExtensionId}:{RoslynId}:workspaceProperties");
-
-    private ReadOnlyCollection<string>? projectOrSolutionFiles;
-    public ReadOnlyCollection<string> ProjectOrSolutionFiles => projectOrSolutionFiles ??= ServerExtensions.GetArray(configuration, $"{ExtensionId}:{RoslynId}:projectOrSolutionFiles");
-
-
-    public ConfigurationService(ILanguageServerConfiguration configuration) {
+    public ConfigurationService() {}
+    internal ConfigurationService(Configuration configuration) {
         this.configuration = configuration;
-    }
-    internal ConfigurationService(
-        bool showItemsFromUnimportedNamespaces,
-        bool skipUnrecognizedProjects,
-        bool loadMetadataForReferencedProjects,
-        bool restoreProjectsBeforeLoading,
-        bool compileProjectsAfterLoading,
-        bool useMultitargetDiagnostics,
-        ReadOnlyDictionary<string, string> workspaceProperties,
-        ReadOnlyCollection<string> projectOrSolutionFiles
-    ) {
-        this.showItemsFromUnimportedNamespaces = showItemsFromUnimportedNamespaces;
-        this.skipUnrecognizedProjects = skipUnrecognizedProjects;
-        this.loadMetadataForReferencedProjects = loadMetadataForReferencedProjects;
-        this.restoreProjectsBeforeLoading = restoreProjectsBeforeLoading;
-        this.compileProjectsAfterLoading = compileProjectsAfterLoading;
-        this.useMultitargetDiagnostics = useMultitargetDiagnostics;
-        this.workspaceProperties = workspaceProperties;
-        this.projectOrSolutionFiles = projectOrSolutionFiles;
     }
 
     public async Task InitializeAsync() {
-        var retryCount = 0;
-        await Task.Run(() => {
-            while (!configuration.AsEnumerable().Any() && retryCount < 25) {
-                Thread.Sleep(200);
-                retryCount++;
-            }
-        }).ConfigureAwait(false);
+        var sectionList = await LanguageServer.Proxy.GetConfigurationAsync($"{ExtensionId}.{RoslynId}", 3, CancellationToken.None).ConfigureAwait(false);
+        var section = sectionList?.FirstOrDefault()?.Value;
+        if (section == null) {
+            CurrentSessionLogger.Error("ConfigurationService failed to initialize");
+            return;
+        }
+
+        configuration = JsonSerializer.Deserialize<Configuration>((JsonDocument)section);
         CurrentSessionLogger.Debug("ConfigurationService initialized");
     }
+}
+
+internal class Configuration {
+    [JsonPropertyName("showItemsFromUnimportedNamespaces")]
+    public bool ShowItemsFromUnimportedNamespaces { get; set; }
+
+    [JsonPropertyName("skipUnrecognizedProjects")]
+    public bool SkipUnrecognizedProjects { get; set; }
+
+    [JsonPropertyName("loadMetadataForReferencedProjects")]
+    public bool LoadMetadataForReferencedProjects { get; set; }
+
+    [JsonPropertyName("restoreProjectsBeforeLoading")]
+    public bool RestoreProjectsBeforeLoading { get; set; }
+
+    [JsonPropertyName("compileProjectsAfterLoading")]
+    public bool CompileProjectsAfterLoading { get; set; }
+        
+    [JsonPropertyName("applyWorkspaceChanges")]
+    public bool ApplyWorkspaceChanges { get; set; }
+
+    [JsonPropertyName("useMultitargetDiagnostics")]
+    public bool UseMultitargetDiagnostics { get; set; }
+
+    [JsonPropertyName("enableAnalyzers")]
+    public bool EnableAnalyzers { get; set; }
+
+    [JsonPropertyName("workspaceProperties")]
+    public List<string>? WorkspaceProperties { get; set; }
+    
+    [JsonPropertyName("projectOrSolutionFiles")]
+    public List<string>? ProjectOrSolutionFiles { get; set; }
 }

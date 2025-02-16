@@ -28,9 +28,6 @@ public static class WorkspaceExtensions {
             return Enumerable.Empty<ProjectId>();
 
         var documentFolders = projects.First().GetFolders(documentPath); // 'First()' - Implementation uses only project file path
-        if (documentFolders.Any() && (documentFolders.First().Equals("obj", StringComparison.OrdinalIgnoreCase) || documentFolders.First().Equals("bin", StringComparison.OrdinalIgnoreCase)))
-            return Enumerable.Empty<ProjectId>();
-
         var filteredProjects = projects.ToList();
         foreach (var documentFolder in documentFolders) { 
             if (filteredProjects.Count == 0)

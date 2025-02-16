@@ -129,8 +129,7 @@ class StartupProjectDecorationProvider implements vscode.FileDecorationProvider 
     public provideFileDecoration(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<vscode.FileDecoration> {
         if (this.startupProjectUri === undefined)
             return undefined;
-
-        if (!this.startupProjectUri.fsPath.startsWith(uri.fsPath))
+        if (this.startupProjectUri.fsPath !== uri.fsPath && !this.startupProjectUri.fsPath.startsWith(`${uri.fsPath}${path.sep}`))
             return undefined;
 
         return { 
