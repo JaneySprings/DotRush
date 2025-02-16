@@ -28,10 +28,10 @@ stages:
           vmImage: ubuntu-latest
         timeoutInMinutes: 6
         steps:
-        - task: UseDotNet@2
-          inputs:
-            version: '9.x'
-            includePreviewVersions: true
+        # - task: UseDotNet@2
+        #   inputs:
+        #     version: '9.x'
+        #     includePreviewVersions: true
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
         - script: npm install -g vsce webpack webpack-cli
@@ -53,10 +53,10 @@ stages:
           vmImage: macos-latest
         timeoutInMinutes: 6
         steps:
-        - task: UseDotNet@2
-          inputs:
-            version: '9.x'
-            includePreviewVersions: true
+        # - task: UseDotNet@2
+        #   inputs:
+        #     version: '9.x'
+        #     includePreviewVersions: true
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
         - script: npm install -g vsce webpack webpack-cli
@@ -78,10 +78,10 @@ stages:
           vmImage: windows-latest
         timeoutInMinutes: 10
         steps:
-        - task: UseDotNet@2
-          inputs:
-            version: '9.x'
-            includePreviewVersions: true
+        # - task: UseDotNet@2
+        #   inputs:
+        #     version: '9.x'
+        #     includePreviewVersions: true
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
         - script: npm install -g vsce webpack webpack-cli
@@ -147,10 +147,10 @@ stages:
           vmImage: macos-latest
         timeoutInMinutes: 10
         steps:
-        - task: UseDotNet@2
-          inputs:
-            version: '9.x'
-            includePreviewVersions: true
+        # - task: UseDotNet@2
+        #   inputs:
+        #     version: '9.x'
+        #     includePreviewVersions: true
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
         - script: dotnet cake --target=test --configuration=release
@@ -170,10 +170,10 @@ stages:
           vmImage: ubuntu-latest
         timeoutInMinutes: 10
         steps:
-        - task: UseDotNet@2
-          inputs:
-            version: '9.x'
-            includePreviewVersions: true
+        # - task: UseDotNet@2
+        #   inputs:
+        #     version: '9.x'
+        #     includePreviewVersions: true
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
         - script: dotnet cake --target=test --configuration=release
@@ -193,10 +193,10 @@ stages:
           vmImage: windows-latest
         timeoutInMinutes: 10
         steps:
-        - task: UseDotNet@2
-          inputs:
-            version: '9.x'
-            includePreviewVersions: true
+        # - task: UseDotNet@2
+        #   inputs:
+        #     version: '9.x'
+        #     includePreviewVersions: true
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
         - script: dotnet cake --target=test --configuration=release

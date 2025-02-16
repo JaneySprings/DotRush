@@ -1,6 +1,7 @@
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis.Tags;
-using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
+using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.Completion;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
@@ -48,8 +49,14 @@ public static class CompletionExtensions {
         return ProtocolModels.CompletionItemKind.Text;
     }
 
-    public static ProtocolModels.TextEdit ToTextEdit(this TextChange change, SourceText sourceText) {
-        return new ProtocolModels.TextEdit() {
+    public static TextEdit ToTextEdit(this TextChange change, SourceText sourceText) {
+        return new TextEdit() {
+            NewText = change.NewText ?? string.Empty,
+            Range = change.Span.ToRange(sourceText)
+        };
+    }
+    public static AnnotatedTextEdit ToAnnotatedTextEdit(this TextChange change, SourceText sourceText) {
+        return new AnnotatedTextEdit() {
             NewText = change.NewText ?? string.Empty,
             Range = change.Span.ToRange(sourceText)
         };

@@ -17,7 +17,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
+		<!-- <PackageReference Include="EmmyLua.LanguageServer.Framework" Version="0.7.1" /> -->
+		<PackageReference Include="DotRush.LanguageServer.Framework" Version="0.7.2" />
 
 		<ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
 		<ProjectReference Include="..\DotRush.Roslyn.CodeAnalysis\DotRush.Roslyn.CodeAnalysis.csproj" />

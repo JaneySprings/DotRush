@@ -1,10 +1,8 @@
 using System.Collections.ObjectModel;
 using DotRush.Roslyn.Common.External;
-using DotRush.Roslyn.Workspaces;
 using Microsoft.CodeAnalysis;
-using Xunit;
 
-namespace DotRush.Roslyn.Tests.WorkspaceTests;
+namespace DotRush.Roslyn.Workspaces.Tests;
 
 public class TestWorkspace : DotRushWorkspace {
     private readonly ReadOnlyDictionary<string, string> workspaceProperties;
@@ -12,31 +10,46 @@ public class TestWorkspace : DotRushWorkspace {
     private readonly bool skipUnrecognizedProjects;
     private readonly bool restoreProjectsBeforeLoading;
     private readonly bool compileProjectsAfterLoading;
+    private readonly bool applyWorkspaceChanges;
 
     protected override ReadOnlyDictionary<string, string> WorkspaceProperties => workspaceProperties;
     protected override bool LoadMetadataForReferencedProjects => loadMetadataForReferencedProjects;
     protected override bool SkipUnrecognizedProjects => skipUnrecognizedProjects;
     protected override bool RestoreProjectsBeforeLoading => restoreProjectsBeforeLoading;
     protected override bool CompileProjectsAfterLoading => compileProjectsAfterLoading;
+    protected override bool ApplyWorkspaceChanges => applyWorkspaceChanges;
 
-    public TestWorkspace(string[] targets, Dictionary<string, string>? workspaceProperties = null, bool loadMetadataForReferencedProjects = true, bool skipUnrecognizedProjects = false, bool restoreProjectsBeforeLoading = true, bool compileProjectsAfterLoading = false) {
+
+    public TestWorkspace(Dictionary<string, string>? workspaceProperties = null) : this(workspaceProperties, true, false, true, false, false) {}
+    public TestWorkspace(Dictionary<string, string>? workspaceProperties, bool loadMetadataForReferencedProjects, bool skipUnrecognizedProjects, bool restoreProjectsBeforeLoading, bool compileProjectsAfterLoading , bool applyWorkspaceChanges) {
         this.workspaceProperties = new ReadOnlyDictionary<string, string>(workspaceProperties ?? new Dictionary<string, string>());
         this.loadMetadataForReferencedProjects = loadMetadataForReferencedProjects;
         this.skipUnrecognizedProjects = skipUnrecognizedProjects;
         this.restoreProjectsBeforeLoading = restoreProjectsBeforeLoading;
         this.compileProjectsAfterLoading = compileProjectsAfterLoading;
+        this.applyWorkspaceChanges = applyWorkspaceChanges;
 
         if (!InitializeWorkspace())
-            Assert.Fail("Failed to initialize workspace");
-    
-        AddTargets(targets);
+            throw new InvalidOperationException("Failed to initialize workspace");
     }
 
     public override void OnProjectRestoreFailed(string documentPath, ProcessResult result) {
-        Assert.Fail($"[{documentPath}]: Project restore failed with exit code {result.ExitCode}");
+        throw new InvalidOperationException($"[{documentPath}]: Project restore failed with exit code {result.ExitCode}");
     }
 
     public void SetSolution(Solution solution) {
         Solution = solution;
+    }
+    public async Task LoadAsync(string[] targets, CancellationToken cancellationToken) {
+        var solutionFiles = targets.Where(it => 
+            Path.GetExtension(it).Equals(".sln", StringComparison.OrdinalIgnoreCase) ||
+            Path.GetExtension(it).Equals(".slnf", StringComparison.OrdinalIgnoreCase)
+        );
+        if (solutionFiles.Any())
+            await LoadSolutionAsync(solutionFiles, cancellationToken).ConfigureAwait(false);
+
+        var projectFiles = targets.Where(it => Path.GetExtension(it).Equals(".csproj", StringComparison.OrdinalIgnoreCase));
+        if (projectFiles.Any())
+            await LoadProjectsAsync(projectFiles, cancellationToken).ConfigureAwait(false);
     }
 }

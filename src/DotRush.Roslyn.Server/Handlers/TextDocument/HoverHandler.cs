@@ -4,11 +4,13 @@ using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Hover;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.Markup;
+using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using SymbolKind = Microsoft.CodeAnalysis.SymbolKind;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
@@ -20,15 +22,12 @@ public class HoverHandler : HoverHandlerBase {
         this.navigationService = navigationService;
     }
 
-    protected override HoverRegistrationOptions CreateRegistrationOptions(HoverCapability capability, ClientCapabilities clientCapabilities) {
-        return new HoverRegistrationOptions {
-            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments,
-        };
+    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+        serverCapabilities.HoverProvider = true;
     }
-
-    public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken) {
+    protected override Task<HoverResponse?> Handle(HoverParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(async () => {
-            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
+            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
             if (documentIds == null)
                 return null;
 
@@ -38,10 +37,10 @@ public class HoverHandler : HoverHandlerBase {
                 if (document == null)
                     continue;
 
-                var sourceText = await document.GetTextAsync(cancellationToken);
-                var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+                var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
+                var semanticModel = await document.GetSemanticModelAsync(token).ConfigureAwait(false);
                 var offset = request.Position.ToOffset(sourceText);
-                var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset);
+                var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset).ConfigureAwait(false);
                 if (symbol == null || semanticModel == null)
                     continue;
 
@@ -59,24 +58,23 @@ public class HoverHandler : HoverHandlerBase {
             }
 
             if (displayStrings.Count == 1) {
-                return new Hover {
-                    Contents = new MarkedStringsOrMarkupContent(new MarkedString("csharp", displayStrings.Keys.First()))
-                };
+                return new HoverResponse { Contents = new MarkupContent {
+                    Kind = MarkupKind.Markdown,
+                    Value = MarkdownExtensions.Create(displayStrings.Keys.First(), "csharp")
+                }};
             }
 
             if (displayStrings.Count > 1) {
                 var builder = new StringBuilder();
                 foreach (var pair in displayStrings) {
                     var frameworks = string.Join(", ", pair.Value);
-                    builder.AppendLine($"```csharp\n{pair.Key}  ({frameworks})\n```");
+                    builder.AppendLine(MarkdownExtensions.Create($"{pair.Key}  ({frameworks})", "csharp"));
                 }
 
-                return new Hover {
-                    Contents = new MarkedStringsOrMarkupContent(new MarkupContent {
-                        Kind = MarkupKind.Markdown,
-                        Value = builder.ToString()
-                    })
-                };
+                return new HoverResponse { Contents = new MarkupContent {
+                    Kind = MarkupKind.Markdown,
+                    Value = builder.ToString()
+                }};
             }
 
             return null;

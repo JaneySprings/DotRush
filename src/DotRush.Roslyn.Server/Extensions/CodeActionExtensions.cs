@@ -1,11 +1,13 @@
 using Microsoft.CodeAnalysis.CodeActions;
 using DotRush.Roslyn.Server.Services;
-using ProtocolModels = OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol;
+using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
-using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.Union;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
@@ -21,26 +23,23 @@ public static class CodeActionExtensions {
         };
     }
 
-    public static async Task<ProtocolModels.CodeAction?> ResolveCodeActionAsync(this CodeAction codeAction, WorkspaceService solutionService, CancellationToken cancellationToken) {
-        if (solutionService.Solution == null)
-            return null;
-
-        var textDocumentEdits = new List<ProtocolModels.TextDocumentEdit>();
+    public static async Task<ProtocolModels.CodeAction?> ResolveCodeActionAsync(this CodeAction codeAction, Solution solution, CancellationToken cancellationToken) {
+        var textDocumentEdits = new Dictionary<DocumentUri, List<TextEdit>>();
         var operations = await codeAction.GetOperationsAsync(cancellationToken).ConfigureAwait(false);
         foreach (var operation in operations) {
             if (operation is ApplyChangesOperation applyChangesOperation) {
-                var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solutionService.Solution);
+                var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solution);
                 foreach (var projectChanges in solutionChanges.GetProjectChanges()) {
                     foreach (var documentChanges in projectChanges.GetChangedDocuments()) {
                         var newDocument = projectChanges.NewProject.GetDocument(documentChanges);
-                        var oldDocument = solutionService.Solution.GetDocument(newDocument?.Id);
+                        var oldDocument = solution.GetDocument(newDocument?.Id);
                         if (oldDocument?.FilePath == null || newDocument?.FilePath == null)
                             continue;
 
                         var sourceText = await oldDocument.GetTextAsync(cancellationToken).ConfigureAwait(false);
-                        var textEdits = new List<ProtocolModels.TextEdit>();
+                        var textEdits = new List<TextEdit>();
                         var textChanges = await newDocument.GetTextChangesAsync(oldDocument, cancellationToken).ConfigureAwait(false);
-                        textEdits.AddRange(textChanges.Select(x => new ProtocolModels.TextEdit() {
+                        textEdits.AddRange(textChanges.Select(x => new TextEdit() {
                             NewText = x.NewText ?? string.Empty,
                             Range = x.Span.ToRange(sourceText),
                         }));
@@ -48,12 +47,7 @@ public static class CodeActionExtensions {
                         if (textEdits.Count == 0)
                             continue;
 
-                        textDocumentEdits.Add(new ProtocolModels.TextDocumentEdit() {
-                            Edits = textEdits,
-                            TextDocument = new ProtocolModels.OptionalVersionedTextDocumentIdentifier() {
-                                Uri = DocumentUri.FromFileSystemPath(newDocument.FilePath)
-                            }
-                        });
+                        textDocumentEdits.Add(newDocument.FilePath, textEdits);
                     }
                 }
             }
@@ -62,11 +56,9 @@ public static class CodeActionExtensions {
         return new ProtocolModels.CodeAction() {
             Kind = ProtocolModels.CodeActionKind.QuickFix,
             Title = codeAction.Title,
-            Edit = new ProtocolModels.WorkspaceEdit() {
-                DocumentChanges = new ProtocolModels.Container<ProtocolModels.WorkspaceEditDocumentChange>(
-                    textDocumentEdits.Select(x => new ProtocolModels.WorkspaceEditDocumentChange(x))
-                ),
-            },
+            Edit = new WorkspaceEdit() {
+                Changes = textDocumentEdits
+            }
         };
     }
 

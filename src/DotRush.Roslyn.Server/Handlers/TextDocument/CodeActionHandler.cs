@@ -4,11 +4,13 @@ using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
+using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using CodeAnalysisCodeAction = Microsoft.CodeAnalysis.CodeActions.CodeAction;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
@@ -26,40 +28,39 @@ public class CodeActionHandler : CodeActionHandlerBase {
         this.codeAnalysisService = codeAnalysisService;
     }
 
-    protected override CodeActionRegistrationOptions CreateRegistrationOptions(CodeActionCapability capability, ClientCapabilities clientCapabilities) {
-        return new CodeActionRegistrationOptions() {
-            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments,
-            CodeActionKinds = new Container<CodeActionKind>(CodeActionKind.QuickFix),
-            ResolveProvider = true,
+    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+        serverCapabilities.CodeActionProvider = new CodeActionOptions {
+            CodeActionKinds = new List<CodeActionKind> { CodeActionKind.QuickFix },
+            ResolveProvider = true
         };
     }
-    public override Task<CommandOrCodeActionContainer?> Handle(CodeActionParams request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync(async () => {
+    protected override Task<CodeActionResponse> Handle(CodeActionParams request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync(new CodeActionResponse(new List<CommandOrCodeAction>()), async () => {
             codeActionsCache.Clear();
 
-            var filePath = request.TextDocument.Uri.GetFileSystemPath();
-            var serverDiagnostics = request.Context.Diagnostics?.Where(it => it.Data?.ToObject<int>() != null);
-            var diagnosticIds = serverDiagnostics?.Select(it => it.Data!.ToObject<int>());
+            var filePath = request.TextDocument.Uri.FileSystemPath;
+            var serverDiagnostics = request.Context.Diagnostics?.Where(it => it.Data?.Value != null);
+            var diagnosticIds = serverDiagnostics?.Select(it => (int)it.Data!.Value!);
 
             return diagnosticIds == null || !diagnosticIds.Any()
-                ? await GetRefactoringsAsync(filePath, cancellationToken).ConfigureAwait(false)
-                : await GetQuickFixesAsync(filePath, diagnosticIds, cancellationToken).ConfigureAwait(false);
+                ? await GetRefactoringsAsync(filePath, token).ConfigureAwait(false)
+                : await GetQuickFixesAsync(filePath, diagnosticIds, token).ConfigureAwait(false);
         });
     }
-    public override Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken) {
+    protected override Task<CodeAction> Resolve(CodeAction request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(request, async () => {
-            if (request.Data == null) {
-                currentClassLogger.Error($"CodeAction '{request.Title}' data is null");
+            if (request.Data?.Value == null || workspaceService.Solution == null) {
+                currentClassLogger.Error($"CodeAction '{request.Title}' data is null or solution is null");
                 return request;
             }
 
-            var codeActionId = request.Data.ToObject<int>();
+            var codeActionId = (int)request.Data.Value;
             if (!codeActionsCache.TryGetValue(codeActionId, out var codeAction)) {
                 currentClassLogger.Error($"CodeAction '{request.Title}' with id '{codeActionId}' not found");
                 return request;
             }
 
-            var result = await codeAction.ResolveCodeActionAsync(workspaceService, cancellationToken).ConfigureAwait(false);
+            var result = await codeAction.ResolveCodeActionAsync(workspaceService.Solution, token).ConfigureAwait(false);
             if (result == null) {
                 currentClassLogger.Error($"CodeAction '{request.Title}' with id '{codeActionId}' failed to resolve");
                 return request;
@@ -69,15 +70,15 @@ public class CodeActionHandler : CodeActionHandlerBase {
         });
     }
 
-    private async Task<CommandOrCodeActionContainer> GetQuickFixesAsync(string filePath, IEnumerable<int> diagnosticIds, CancellationToken cancellationToken) {
+    private async Task<CodeActionResponse> GetQuickFixesAsync(string filePath, IEnumerable<int> diagnosticIds, CancellationToken cancellationToken) {
         var result = new List<CommandOrCodeAction>();
-        var diagnosticHolderGroups = diagnosticIds
-            .Select(id => codeAnalysisService.CompilationHost.GetDiagnosticById(filePath, id))
+        var diagnosticContexts = diagnosticIds
+            .Select(id => codeAnalysisService.CompilationHost.GetDiagnosticContextById(id))
             .Where(it => it != null)
             .GroupBy(it => it!.Diagnostic.Id);
 
-        foreach (var group in diagnosticHolderGroups) {
-            var project = group.FirstOrDefault()?.Project;
+        foreach (var group in diagnosticContexts) {
+            var project = group.FirstOrDefault()?.RelatedProject;
             if (project == null) {
                 currentClassLogger.Debug($"Project not found for diagnostic id '{group.Key}'");
                 continue;
@@ -86,13 +87,13 @@ public class CodeActionHandler : CodeActionHandlerBase {
             var codeFixProviders = codeAnalysisService.CodeActionHost.GetCodeFixProvidersForDiagnosticId(group.Key, project);
             if (codeFixProviders == null) {
                 currentClassLogger.Debug($"CodeFixProviders not found for diagnostic id '{group.Key}'");
-                return result;
+                return new CodeActionResponse(result);
             }
 
             var document = project.Documents.FirstOrDefault(it => PathExtensions.Equals(it.FilePath, filePath));
             if (document == null) {
                 currentClassLogger.Debug($"Document not found for file path '{filePath}'");
-                return result;
+                return new CodeActionResponse(result);
             }
 
             foreach (var codeFixProvider in codeFixProviders) {
@@ -105,15 +106,21 @@ public class CodeActionHandler : CodeActionHandlerBase {
                     var singleCodeActions = action.ToSingleCodeActions().Where(x => !x.IsBlacklisted());
                     foreach (var singleCodeAction in singleCodeActions) {
                         if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
-                            result.Add(singleCodeAction.ToCodeAction(CodeActionKind.QuickFix));
+                            result.Add(new CommandOrCodeAction(singleCodeAction.ToCodeAction(CodeActionKind.QuickFix)));
                     }
                 }, cancellationToken)).ConfigureAwait(false);
             }
         }
 
-        return result;
+        return new CodeActionResponse(result);
     }
-    private async Task<CommandOrCodeActionContainer> GetRefactoringsAsync(string filePath, CancellationToken cancellationToken) {
-        return new CommandOrCodeActionContainer();
+
+    //TODO
+    #pragma warning disable CS1998 
+    #pragma warning disable CA1822
+    private async Task<CodeActionResponse> GetRefactoringsAsync(string filePath, CancellationToken cancellationToken) {
+        return new CodeActionResponse(new List<CommandOrCodeAction>());
     }
+    #pragma warning restore CS1998
+    #pragma warning restore CA1822
 }

@@ -1,6 +1,5 @@
 using DotRush.Roslyn.Common.Extensions;
 using Microsoft.CodeAnalysis;
-using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Workspaces.Extensions;
 
@@ -14,10 +13,22 @@ public static class ProjectExtensions {
         return project.Name.Substring(frameworkStartIndex + 1, project.Name.Length - frameworkStartIndex - 2);
     }
     public static string GetOutputPath(this Project project) {
-        return FirstFolderOrDefault(project.FilePath, project.OutputFilePath, $"bin{Path.DirectorySeparatorChar}");
+        var fallbackPath = Path.Combine(Path.GetDirectoryName(project.FilePath)!, "bin");
+        if (string.IsNullOrEmpty(project.OutputFilePath))
+            return fallbackPath;
+
+        return Path.GetDirectoryName(project.OutputFilePath) ?? fallbackPath;
     }
     public static string GetIntermediateOutputPath(this Project project) {
-        return FirstFolderOrDefault(project.FilePath, project.OutputRefFilePath, $"obj{Path.DirectorySeparatorChar}");
+        var fallbackPath = Path.Combine(Path.GetDirectoryName(project.FilePath)!, "obj");
+        if (string.IsNullOrEmpty(project.OutputRefFilePath))
+            return fallbackPath;
+
+        var directory = new DirectoryInfo(Path.GetDirectoryName(project.OutputRefFilePath)!);
+        if (directory.Name.Equals("ref", StringComparison.OrdinalIgnoreCase))
+            return directory.Parent?.FullName ?? fallbackPath;
+
+        return directory.FullName;
     }
 
     public static IEnumerable<DocumentId> GetDocumentIdsWithFolderPath(this Project project, string folderPath) {
@@ -57,17 +68,6 @@ public static class ProjectExtensions {
         return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
     }
 
-    internal static string FirstFolderOrDefault(string? projectPath, string? targetPath, string fallbackFolder) {
-        var projectDirectory = Path.GetDirectoryName(projectPath) + Path.DirectorySeparatorChar;
-        if (targetPath == null || !PathExtensions.StartsWith(targetPath, projectDirectory))
-            return Path.Combine(projectDirectory, fallbackFolder);
-
-        var relativePath = targetPath.Replace(projectDirectory, string.Empty);
-        if (string.IsNullOrEmpty(relativePath))
-            return Path.Combine(projectDirectory, fallbackFolder);
-
-        return projectDirectory + relativePath.Split(Path.DirectorySeparatorChar).First() + Path.DirectorySeparatorChar;
-    }
     internal static bool HasFolder(this Project project, string folderName) {
         return project.Documents.Any(it => it.Folders.Contains(folderName, StringComparer.OrdinalIgnoreCase));
     }

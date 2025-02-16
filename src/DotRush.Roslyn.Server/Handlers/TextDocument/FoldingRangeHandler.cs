@@ -1,13 +1,14 @@
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Server.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using DotRush.Roslyn.Common.Extensions;
 using DotRush.Roslyn.Workspaces.Extensions;
+using EmmyLua.LanguageServer.Framework.Server.Handler;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -18,27 +19,25 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
         this.navigationService = navigationService;
     }
 
-    protected override FoldingRangeRegistrationOptions CreateRegistrationOptions(FoldingRangeCapability capability, ClientCapabilities clientCapabilities) {
-        return new FoldingRangeRegistrationOptions {
-            DocumentSelector = LanguageServer.SelectorForSourceCodeDocuments,
-        };
+    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+        serverCapabilities.FoldingRangeProvider = true;
     }
+    protected override Task<FoldingRangeResponse> Handle(FoldingRangeParams request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync(new FoldingRangeResponse(new List<FoldingRange>()), async () => {
+            var result = new List<FoldingRange>();
 
-    public override Task<Container<FoldingRange>?> Handle(FoldingRangeRequestParam request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync(async () => {
-            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.GetFileSystemPath());
+            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
             var documentId = documentIds?.FirstOrDefault();
             var document = navigationService.Solution?.GetDocument(documentId);
             if (document == null)
-                return null;
+                return new FoldingRangeResponse(result);
 
-            var sourceText = await document.GetTextAsync(cancellationToken);
-            var syntaxTree = await document.GetSyntaxTreeAsync(cancellationToken);
+            var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
+            var syntaxTree = await document.GetSyntaxTreeAsync(token).ConfigureAwait(false);
             if (syntaxTree == null)
-                return null;
+                return new FoldingRangeResponse(result);
 
-            var result = new List<FoldingRange>();
-            var root = await syntaxTree.GetRootAsync(cancellationToken);
+            var root = await syntaxTree.GetRootAsync(token).ConfigureAwait(false);
 
             var commonNodes = root.DescendantNodes().Where(node =>
                 node is BaseTypeDeclarationSyntax
@@ -58,7 +57,7 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
                 if (node is MemberDeclarationSyntax memberDeclarationSyntax && memberDeclarationSyntax.AttributeLists.Count > 0)
                     startLine = memberDeclarationSyntax.AttributeLists.FullSpan.ToRange(sourceText).End.Line;
 
-                result.Add(new FoldingRange { StartLine = startLine, EndLine = endLine });
+                result.Add(new FoldingRange { StartLine = (uint)startLine, EndLine = (uint)endLine });
             }
 
             var directiveNodes = root.DescendantTrivia().Where(it => it.IsDirective).Select(it => it.GetStructure());
@@ -67,7 +66,7 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
             result.AddRange(GetFoldingDirectivesOfType<ElifDirectiveTriviaSyntax, EndIfDirectiveTriviaSyntax>(directiveNodes, sourceText));
             result.AddRange(GetFoldingDirectivesOfType<RegionDirectiveTriviaSyntax, EndRegionDirectiveTriviaSyntax>(directiveNodes, sourceText));
 
-            return new Container<FoldingRange>(result);
+            return new FoldingRangeResponse(result);
         });
     }
 
@@ -83,8 +82,8 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
             var endRange = endDirectiveSyntax.Span.ToRange(sourceText);
             result.Add(new FoldingRange {
                 Kind = FoldingRangeKind.Region,
-                StartLine = startRange.Start.Line,
-                EndLine = endRange.End.Line
+                StartLine = (uint)startRange.Start.Line,
+                EndLine = (uint)endRange.End.Line
             });
         }
 
