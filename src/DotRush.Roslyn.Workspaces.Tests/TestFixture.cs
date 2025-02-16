@@ -28,20 +28,18 @@ public abstract class TestFixture {
     }
 
     protected string CreateProject(string name, string tfm, string outputType) {
-        return CreateProject(name, new string[] { tfm }, outputType);
+        return CreateProject(name, Path.GetFileNameWithoutExtension(name), tfm, outputType);
     }
-    protected string CreateProject(string name, string[] tfm, string outputType) {
-        if (tfm.Length == 0)
-            throw new ArgumentException("At least one target framework must be specified", nameof(tfm));
-
-        var projectDirectory = Path.Combine(SandboxDirectory, name);
-        Directory.CreateDirectory(projectDirectory);
+    protected string CreateProject(string name, string directory, string tfm, string outputType) {
+        var projectDirectory = Path.Combine(SandboxDirectory, directory);
+        if (!Directory.Exists(projectDirectory))
+            Directory.CreateDirectory(projectDirectory);
 
         var projectFile = Path.Combine(projectDirectory, $"{name}.csproj");
         var projectContent = $@"<Project Sdk=""Microsoft.NET.Sdk"">
             <PropertyGroup>
                 <OutputType>{outputType}</OutputType>
-                <TargetFrameworks>{string.Join(";", tfm)}</TargetFrameworks>
+                <TargetFrameworks>{tfm}</TargetFrameworks>
                 <ImplicitUsings>enable</ImplicitUsings>
                 <Nullable>enable</Nullable>
             </PropertyGroup>
@@ -75,6 +73,10 @@ EndGlobal";
             project = Path.GetDirectoryName(project)!;
         
         var file = Path.Combine(project, name);
+        var directory = Path.GetDirectoryName(file);
+        if (!Directory.Exists(directory))
+            Directory.CreateDirectory(directory!);
+
         File.WriteAllText(file, content);
         return file;
     }
