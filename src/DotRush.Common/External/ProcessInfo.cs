@@ -8,13 +8,13 @@ namespace DotRush.Common.External;
 public readonly struct ProcessInfo {
     public Process Process { get; }
     public ProcessStartInfo StartInfo { get; }
-    public Task<ProcessResult> Result { get; }
+    public Task<ProcessResult> Task { get; }
 
     public int Id => Process.Id;
 
-    public ProcessInfo(Process process, ProcessStartInfo startInfo, Task<ProcessResult> result) {
+    public ProcessInfo(Process process, ProcessStartInfo startInfo, Task<ProcessResult> task) {
         Process = process;
         StartInfo = startInfo;
-        Result = result;
+        Task = task;
     }
 }

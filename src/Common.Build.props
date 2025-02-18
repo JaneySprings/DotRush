@@ -1,6 +1,6 @@
 <Project>
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <RollForward>major</RollForward>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -12,5 +12,7 @@
         
         <AssetsPath>$(MSBuildThisFileDirectory)..\extension\bin\</AssetsPath>
         <!-- <PublishDir>$(OutputPath)</PublishDir> -->
+
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     </PropertyGroup>
 </Project>
