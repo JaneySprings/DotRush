@@ -11,7 +11,7 @@
         <PublishTrimmed>false</PublishTrimmed>
         
         <AssetsPath>$(MSBuildThisFileDirectory)..\extension\bin\</AssetsPath>
-        <!-- <PublishDir>$(OutputPath)</PublishDir> -->
+        <ServerTargetFramework>net9.0</ServerTargetFramework>
 
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     </PropertyGroup>
