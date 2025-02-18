@@ -1,0 +1,3 @@
+[submodule "src/DotRush.Debugging.Mono"]
+	path = src/DotRush.Debugging.Mono
+	url = https://github.com/JaneySprings/Mono.Debugger
