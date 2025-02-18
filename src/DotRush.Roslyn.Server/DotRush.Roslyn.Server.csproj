@@ -2,23 +2,18 @@
 	<Import Project="..\Common.Build.props" />
 
 	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
 		<OutputType>Exe</OutputType>
 		<AssemblyName>DotRush</AssemblyName>
 		<SelfContained>true</SelfContained>
-		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-        <PublishDir>$(OutputPath)</PublishDir>
 		<NoWarn>$(NoWarn);MSB3277</NoWarn>
+
+		<OutputPath>$(AssetsPath)LanguageServer</OutputPath>
+        <PublishDir>$(OutputPath)</PublishDir>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<InternalsVisibleTo Include="DotRush.Roslyn.Tests" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<!-- <PackageReference Include="EmmyLua.LanguageServer.Framework" Version="0.7.1" /> -->
-		<PackageReference Include="DotRush.LanguageServer.Framework" Version="0.7.2" />
+		<PackageReference Include="DotRush.LanguageServer.Framework" />
 
 		<ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
 		<ProjectReference Include="..\DotRush.Roslyn.CodeAnalysis\DotRush.Roslyn.CodeAnalysis.csproj" />

@@ -1,9 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using DotRush.Roslyn.Common.Logging;
+using DotRush.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Configuration;
 
 namespace DotRush.Roslyn.Server.Services;
 
@@ -42,7 +41,7 @@ public class ConfigurationService {
     }
 }
 
-internal class Configuration {
+internal sealed class Configuration {
     [JsonPropertyName("showItemsFromUnimportedNamespaces")]
     public bool ShowItemsFromUnimportedNamespaces { get; set; }
 

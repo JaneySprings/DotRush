@@ -6,10 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ICSharpCode.Decompiler" Version="$(DecompilerVersion)" />
-        <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(CodeAnalysisVersion)" />
-
-        <ProjectReference Include="..\DotRush.Roslyn.Common\DotRush.Roslyn.Common.csproj" />
+        <PackageReference Include="ICSharpCode.Decompiler" />
+        <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" />
+        <ProjectReference Include="..\DotRush.Common\DotRush.Common.csproj" />
     </ItemGroup>
-
 </Project>
