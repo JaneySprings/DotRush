@@ -1,4 +1,4 @@
-using DotRush.Roslyn.Common.Extensions;
+using DotRush.Common.Extensions;
 using Microsoft.CodeAnalysis;
 
 namespace DotRush.Roslyn.Workspaces.Extensions;

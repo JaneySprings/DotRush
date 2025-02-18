@@ -1,4 +1,4 @@
-using DotRush.Roslyn.Common.Extensions;
+using DotRush.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;

@@ -6,15 +6,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-		<PackageReference Include="NUnit" Version="4.1.0" />
-		<PackageReference Include="NUnit.Analyzers" Version="4.2.0" />
-		<PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
-
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(CodeAnalysisVersion)" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="NUnit" />
+		<PackageReference Include="NUnit.Analyzers" />
+		<PackageReference Include="NUnit3TestAdapter" />
 	</ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 using System.IO.Pipes;
-using DotRush.Roslyn.Common.Logging;
+using DotRush.Common.Logging;
 using DotRush.Roslyn.Workspaces;
 using StreamJsonRpc;
 

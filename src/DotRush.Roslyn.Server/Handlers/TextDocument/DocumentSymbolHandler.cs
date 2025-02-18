@@ -1,10 +1,10 @@
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
+using DotRush.Common.Extensions;
+using DotRush.Roslyn.Workspaces.Extensions;
+using DotRush.Roslyn.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using DotRush.Roslyn.Common.Extensions;
-using DotRush.Roslyn.Common;
-using DotRush.Roslyn.Workspaces.Extensions;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;

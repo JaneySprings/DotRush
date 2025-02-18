@@ -1,10 +1,16 @@
 <Project>
     <PropertyGroup>
-        <CodeAnalysisVersion>4.12.0</CodeAnalysisVersion>
-		<DecompilerVersion>9.0.0.7876-RC</DecompilerVersion>
-
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
+        <RollForward>major</RollForward>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+        <SelfContained>false</SelfContained>
+        <PublishTrimmed>false</PublishTrimmed>
+        
+        <AssetsPath>$(MSBuildThisFileDirectory)..\extension\bin\</AssetsPath>
+        <!-- <PublishDir>$(OutputPath)</PublishDir> -->
     </PropertyGroup>
 </Project>
