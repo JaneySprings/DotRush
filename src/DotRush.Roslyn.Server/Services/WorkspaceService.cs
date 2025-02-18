@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
-using DotRush.Roslyn.Common.External;
-using DotRush.Roslyn.Common.Logging;
+using DotRush.Common.External;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces;
 using DotRush.Roslyn.Workspaces.FileSystem;

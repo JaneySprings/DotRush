@@ -1,5 +1,5 @@
-using DotRush.Roslyn.Common.Extensions;
-using DotRush.Roslyn.Common.Logging;
+using DotRush.Common.Extensions;
+using DotRush.Common.Logging;
 
 namespace DotRush.Roslyn.Workspaces.FileSystem;
 

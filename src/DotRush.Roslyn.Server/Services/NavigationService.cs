@@ -1,4 +1,4 @@
-using DotRush.Roslyn.Common.Extensions;
+using DotRush.Common.Extensions;
 using DotRush.Roslyn.Navigation;
 using Microsoft.CodeAnalysis;
 

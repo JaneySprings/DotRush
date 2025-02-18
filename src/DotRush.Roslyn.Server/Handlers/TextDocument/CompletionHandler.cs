@@ -1,14 +1,14 @@
 using System.Text;
+using DotRush.Common.Extensions;
+using DotRush.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
+using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using RoslynCompletionItem = Microsoft.CodeAnalysis.Completion.CompletionItem;
 using RoslynCompletionService = Microsoft.CodeAnalysis.Completion.CompletionService;
 using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model;
-using DotRush.Roslyn.Common.Extensions;
-using DotRush.Roslyn.Common.Logging;
-using DotRush.Roslyn.Workspaces.Extensions;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Completion;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;

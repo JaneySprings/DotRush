@@ -11,10 +11,10 @@ public class ReflectionApiTests : TestFixture {
         var completionOptionsType = typeof(CompletionService).Assembly.GetType("Microsoft.CodeAnalysis.Completion.CompletionOptions");
         Assert.That(completionOptionsType, Is.Not.Null);
 
-        var completionOptions = Activator.CreateInstance(completionOptionsType);
-        var sifunProperty = completionOptionsType.GetProperty("ShowItemsFromUnimportedNamespaces");
+        var completionOptions = Activator.CreateInstance(completionOptionsType!);
+        var sifunProperty = completionOptionsType!.GetProperty("ShowItemsFromUnimportedNamespaces");
         Assert.That(sifunProperty, Is.Not.Null);
-        sifunProperty.SetValue(completionOptions, false);
+        sifunProperty!.SetValue(completionOptions, false);
     }
 
     [Test]
@@ -22,7 +22,7 @@ public class ReflectionApiTests : TestFixture {
         var getCompletionsAsyncMethod = typeof(CompletionService).GetMethod("GetCompletionsAsync", BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.That(getCompletionsAsyncMethod, Is.Not.Null);
         
-        var parameters = getCompletionsAsyncMethod.GetParameters();
+        var parameters = getCompletionsAsyncMethod!.GetParameters();
         Assert.That(parameters, Has.Length.EqualTo(7));
         Assert.That(parameters[0].Name, Is.EqualTo("document"));
         Assert.That(parameters[1].Name, Is.EqualTo("caretPosition"));
@@ -40,7 +40,7 @@ public class ReflectionApiTests : TestFixture {
             .GetType("Microsoft.CodeAnalysis.GenerateType.AbstractGenerateTypeService`6+GenerateTypeCodeAction");
         Assert.That(generateTypeCodeActionType, Is.Not.Null);
         
-        var inNewFileField = generateTypeCodeActionType.GetField("_inNewFile", BindingFlags.Instance | BindingFlags.NonPublic);
+        var inNewFileField = generateTypeCodeActionType!.GetField("_inNewFile", BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.That(inNewFileField, Is.Not.Null);
     }
 }
