@@ -8,6 +8,10 @@ public static class GitExtensions {
             if (gitFolder != null)
                 return gitFolder.FullName;
 
+            var gitFile = directory.GetFiles(".git").FirstOrDefault();
+            if (gitFile != null)
+                return GetRepositoryFromFile(gitFile.FullName);
+
             directory = directory.Parent;
         }
 
@@ -22,17 +26,24 @@ public static class GitExtensions {
             || IsRebaseState(gitPath);
     }
 
-    public static bool IsMergeState(string gitPath) {
+    private static bool IsMergeState(string gitPath) {
         var mergeHeadPath = Path.Combine(gitPath, "MERGE_HEAD");
         return File.Exists(mergeHeadPath);
     }
-    public static bool IsRebaseState(string gitPath) {
+    private static bool IsRebaseState(string gitPath) {
         var rebaseMergePath = Path.Combine(gitPath, "rebase-merge");
         var rebaseHeadPath = Path.Combine(gitPath, "REBASE_HEAD");
         return Directory.Exists(rebaseMergePath) || File.Exists(rebaseHeadPath);
     }
-    public static bool IsLockedState(string gitPath) {
+    private static bool IsLockedState(string gitPath) {
         var lockPath = Path.Combine(gitPath, "index.lock");
         return File.Exists(lockPath);
+    }
+    private static string? GetRepositoryFromFile(string gitFile) {
+        var gitPath = File.ReadAllText(gitFile).Trim();
+        if (gitPath.StartsWith("gitdir: ", StringComparison.OrdinalIgnoreCase))
+            return gitPath.Substring(8).ToPlatformPath();
+
+        return null;
     }
 }
