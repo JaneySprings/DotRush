@@ -21,6 +21,10 @@ export class TestExplorerController {
         context.subscriptions.push(TestExplorerController.controller.createRunProfile('Run NUnit/XUnit Tests', vscode.TestRunProfileKind.Run, TestExplorerController.runTests, true));
         context.subscriptions.push(TestExplorerController.controller.createRunProfile('Debug NUnit/XUnit Tests', vscode.TestRunProfileKind.Debug, TestExplorerController.debugTests, true));
         TestExplorerController.refreshTests();
+
+        /* Internal API */
+        if (Extensions.getSetting('testExplorer.skipInitialPauseEvent', false))
+            context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerVsdbgId, new ContinueAfterInitialPauseTracker()));
     }
 
     private static async refreshTests(): Promise<void> {
@@ -133,5 +137,28 @@ export class TestExplorerController {
             vscode.workspace.fs.delete(vscode.Uri.file(testReport));
 
         return testReport;
+    }
+}
+
+/* Internal API */
+// https://github.com/microsoft/vstest/blob/06101ef5feb95048cbe850472ed49604863d54ff/src/vstest.console/Program.cs#L37
+class ContinueAfterInitialPauseTracker implements vscode.DebugAdapterTrackerFactory {
+    private isInitialStoppedEvent: boolean = false;
+    
+    public createDebugAdapterTracker(session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
+        const self = this;
+        return {
+            onDidSendMessage(message: any) {
+                if (!session.name.startsWith('Debug'))
+                    return;
+ 
+                if (message.type == 'response' && message.command == 'initialize')
+                    self.isInitialStoppedEvent = true;
+                if (message.type == 'event' && message.event == 'stopped' && self.isInitialStoppedEvent) {
+                    session.customRequest('continue', { threadId: message.body.threadId });
+                    self.isInitialStoppedEvent = false;
+                }
+            }
+        }
     }
 }
