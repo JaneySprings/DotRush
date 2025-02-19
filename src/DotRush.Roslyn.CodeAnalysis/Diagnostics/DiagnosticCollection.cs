@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using DotRush.Roslyn.Common.Extensions;
 using Microsoft.CodeAnalysis;
 
 namespace DotRush.Roslyn.CodeAnalysis.Diagnostics;
@@ -20,7 +21,7 @@ public class DiagnosticCollection {
                 container = new HashSet<DiagnosticContext>();
                 workspaceDiagnostics[diagnosticsGroup.Key] = container;
             }
-            container.UnionWith(diagnosticsGroup);
+            container.AddRange(diagnosticsGroup);
         }
 
         collectionToken = GenerateNewCollectionToken();
