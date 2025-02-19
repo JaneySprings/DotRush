@@ -42,7 +42,7 @@ public class DebugSession : Session {
     #region Initialize
     protected override InitializeResponse HandleInitializeRequest(InitializeArguments arguments) {
         return new InitializeResponse() {
-            SupportsTerminateRequest = true,
+            // SupportsTerminateRequest = true, // Only for 'launch' requests
             SupportsEvaluateForHovers = true,
             SupportsExceptionInfoRequest = true,
             SupportsConditionalBreakpoints = true,
@@ -74,20 +74,21 @@ public class DebugSession : Session {
         });
     }
     #endregion Attach
-    #region Terminate
-    protected override TerminateResponse HandleTerminateRequest(TerminateArguments arguments) {
-        if (!session.HasExited)
-            session.Exit();
+    // #region Terminate
+    // protected override TerminateResponse HandleTerminateRequest(TerminateArguments arguments) {
+    //     if (!session.HasExited)
+    //         session.Exit();
 
-        launchAgent?.Dispose();
-        if (launchAgent is not DebugLaunchAgent)
-            Protocol.SendEvent(new TerminatedEvent());
+    //     launchAgent?.Dispose();
+    //     if (launchAgent is not DebugLaunchAgent)
+    //         Protocol.SendEvent(new TerminatedEvent());
 
-        return new TerminateResponse();
-    }
-    #endregion Terminate
+    //     return new TerminateResponse();
+    // }
+    // #endregion Terminate
     #region Disconnect
     protected override DisconnectResponse HandleDisconnectRequest(DisconnectArguments arguments) {
+        session.Detach();
         session.Dispose();
         launchAgent?.Dispose();
         return new DisconnectResponse();

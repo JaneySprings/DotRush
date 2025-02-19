@@ -3,7 +3,7 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<AssemblyName>unitydbg</AssemblyName>
+		<AssemblyName>monodbg</AssemblyName>
 		<OutputPath>$(AssetsPath)DebuggerMono</OutputPath>
         <PublishDir>$(OutputPath)</PublishDir>
 	</PropertyGroup>

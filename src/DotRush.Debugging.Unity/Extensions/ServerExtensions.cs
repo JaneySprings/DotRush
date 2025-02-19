@@ -123,7 +123,7 @@ public static class ServerExtensions {
     }
     public static DebugProtocol.Module ToModule(this Assembly assembly) {
         return new DebugProtocol.Module {
-	        Id = assembly.GetHashCode(),
+	        Id = assembly.Name.GetHashCode(),
 	        Name = assembly.Name,
             Path = assembly.Path,
             IsOptimized = assembly.Optimized,
