@@ -8,7 +8,7 @@ public static class ProjectExtensions {
     public static string GetTargetFramework(this Project project) {
         var frameworkStartIndex = project.Name.LastIndexOf('(');
         if (frameworkStartIndex == -1)
-            return string.Empty;
+            return project.Name;
 
         return project.Name.Substring(frameworkStartIndex + 1, project.Name.Length - frameworkStartIndex - 2);
     }
