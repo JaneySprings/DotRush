@@ -1,5 +1,5 @@
 using System.Reflection;
-using DotRush.Roslyn.Common.Logging;
+using DotRush.Common.Logging;
 
 namespace DotRush.Roslyn.CodeAnalysis.Extensions;
 

@@ -3,7 +3,7 @@ using DotRush.Roslyn.Server.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using DotRush.Roslyn.Common.Extensions;
+using DotRush.Common.Extensions;
 using DotRush.Roslyn.Workspaces.Extensions;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;

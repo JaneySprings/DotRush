@@ -2,15 +2,15 @@ export const extensionId = "dotrush";
 export const extensionPublisher = "nromanov";
 
 export const extensionMicrosoftId = "ms-dotnettools.csharp";
-export const extensionMeteorId = "nromanov.dotnet-meteor";
 export const microsoftProblemMatcherId = "msCompile";
 export const debuggerVsdbgId = "coreclr";
 export const debuggerVsdbgTitle = ".NET Core Debugger";
+export const debuggerUnityId = "unity";
+export const debuggerUnityTitle = "Unity Debugger";
 
 export const commandIdRestartServer = "dotrush.restartServer";
 export const commandIdPickProcess = "dotrush.pickProcess";
 export const commandIdPickTargets = "dotrush.pickProjectOrSolutionFiles";
-export const commandIdTestProject = "dotrush.test";
 export const commandIdBuildProject = "dotrush.build";
 export const commandIdRestoreProject = "dotrush.restore";
 export const commandIdCleanProject = "dotrush.clean";
@@ -40,3 +40,9 @@ export const messageSelectTargetTitle = "Select Project or Solution files";
 export const messageReload = "Reload";
 
 export const configIdRoslynProjectOrSolutionFiles = "roslyn.projectOrSolutionFiles";
+export const configIdDebuggerProjectAssembliesOnly = "debugger.projectAssembliesOnly";
+export const configIdDebuggerStepOverPropertiesAndOperators = "debugger.stepOverPropertiesAndOperators";
+export const configIdDebuggerConsole = "debugger.console";
+export const configIdDebuggerSymbolSearchPaths = "debugger.symbolSearchPaths";
+export const configIdDebuggerSearchMicrosoftSymbolServer = "debugger.searchMicrosoftSymbolServer";
+export const configIdDebuggerAutomaticSourcelinkDownload = "debugger.automaticSourcelinkDownload";

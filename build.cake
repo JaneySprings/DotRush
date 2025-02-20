@@ -27,7 +27,6 @@ Task("clean").Does(() => {
 Task("server")
 	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server", "DotRush.Roslyn.Server.csproj"), new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
-		OutputDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "LanguageServer"),
 		Configuration = configuration,
 		Runtime = runtime,
 	}))
@@ -37,18 +36,16 @@ Task("server")
 		Zip(input, output);
 	});
 
-Task("workspaces")
-	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Essentials.Workspaces", "DotRush.Essentials.Workspaces.csproj"), new DotNetPublishSettings {
+Task("netcore")
+	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.NetCore", "DotRush.Debugging.NetCore.csproj"), new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
-		OutputDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "Workspaces"),
 		Configuration = configuration,
 		Runtime = runtime,
 	}));
 
-Task("explorer")
-	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Essentials.TestExplorer", "DotRush.Essentials.TestExplorer.csproj"), new DotNetPublishSettings {
+Task("unity")
+	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Unity", "DotRush.Debugging.Unity.csproj"), new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
-		OutputDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "TestExplorer"),
 		Configuration = configuration,
 		Runtime = runtime,
 	}));
@@ -71,7 +68,7 @@ Task("test")
 			Loggers = new[] { "trx" }
 		}
 	))
-	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Essentials.TestExplorer.Tests", "DotRush.Essentials.TestExplorer.Tests.csproj"),
+	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.NetCore.Tests", "DotRush.Debugging.NetCore.Tests.csproj"),
 		new DotNetTestSettings {  
 			Configuration = configuration,
 			Verbosity = DotNetVerbosity.Quiet,
@@ -83,8 +80,8 @@ Task("test")
 Task("vsix")
 	.IsDependentOn("clean")
 	.IsDependentOn("server")
-	.IsDependentOn("workspaces")
-	.IsDependentOn("explorer")
+	.IsDependentOn("netcore")
+	.IsDependentOn("unity")
 	.Does(() => {
 		var vsruntime = runtime.Replace("win-", "win32-").Replace("osx-", "darwin-");
 		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{vsruntime}.vsix");

@@ -1,6 +1,6 @@
-using DotRush.Roslyn.Common.Extensions;
-using DotRush.Roslyn.Common.External;
-using DotRush.Roslyn.Common.Logging;
+using DotRush.Common.Extensions;
+using DotRush.Common.External;
+using DotRush.Common.Logging;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;

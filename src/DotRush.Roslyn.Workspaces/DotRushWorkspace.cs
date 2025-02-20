@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using DotRush.Roslyn.Common.Logging;
+using DotRush.Common.Logging;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis.MSBuild;
 

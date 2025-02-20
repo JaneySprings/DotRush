@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="..\Common.Build.props" />
+
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+    
+    <ItemGroup>
+   	    <PackageReference Include="NLog" />
+        <InternalsVisibleTo Include="DotRush.Roslyn.Workspaces.Tests" />
+    </ItemGroup>
+</Project>
