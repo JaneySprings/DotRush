@@ -40,3 +40,9 @@ export const messageSelectTargetTitle = "Select Project or Solution files";
 export const messageReload = "Reload";
 
 export const configIdRoslynProjectOrSolutionFiles = "roslyn.projectOrSolutionFiles";
+export const configIdDebuggerProjectAssembliesOnly = "debugger.projectAssembliesOnly";
+export const configIdDebuggerStepOverPropertiesAndOperators = "debugger.stepOverPropertiesAndOperators";
+export const configIdDebuggerConsole = "debugger.console";
+export const configIdDebuggerSymbolSearchPaths = "debugger.symbolSearchPaths";
+export const configIdDebuggerSearchMicrosoftSymbolServer = "debugger.searchMicrosoftSymbolServer";
+export const configIdDebuggerAutomaticSourcelinkDownload = "debugger.automaticSourcelinkDownload";

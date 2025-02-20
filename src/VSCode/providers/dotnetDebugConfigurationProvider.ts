@@ -28,19 +28,19 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
 
 	private static provideDebuggerOptions(options: vscode.DebugConfiguration): vscode.DebugConfiguration {
         if (options.justMyCode === undefined)
-            options.justMyCode = Extensions.getSetting('debugger.projectAssembliesOnly', false);
+            options.justMyCode = Extensions.getSetting(res.configIdDebuggerProjectAssembliesOnly, false);
         if (options.enableStepFiltering === undefined)
-            options.enableStepFiltering = Extensions.getSetting('debugger.stepOverPropertiesAndOperators', false);
+            options.enableStepFiltering = Extensions.getSetting(res.configIdDebuggerStepOverPropertiesAndOperators, false);
         if (options.console === undefined)
-            options.console = Extensions.getSetting('debugger.console');
+            options.console = Extensions.getSetting(res.configIdDebuggerConsole);
         if (options.symbolOptions === undefined)
             options.symbolOptions = {
-                searchPaths: Extensions.getSetting('debugger.symbolSearchPaths'),
-                searchMicrosoftSymbolServer: Extensions.getSetting('debugger.searchMicrosoftSymbolServer', false),
+                searchPaths: Extensions.getSetting(res.configIdDebuggerSymbolSearchPaths),
+                searchMicrosoftSymbolServer: Extensions.getSetting(res.configIdDebuggerSearchMicrosoftSymbolServer, false),
             };
         if (options.sourceLinkOptions === undefined)
             options.sourceLinkOptions = {
-                "*": { enabled: Extensions.getSetting('debugger.automaticSourcelinkDownload', true) }
+                "*": { enabled: Extensions.getSetting(res.configIdDebuggerAutomaticSourcelinkDownload, true) }
             }
 
         return options;
