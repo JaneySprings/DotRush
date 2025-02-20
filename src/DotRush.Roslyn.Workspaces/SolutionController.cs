@@ -1,10 +1,10 @@
-using DotRush.Roslyn.Common.Extensions;
-using DotRush.Roslyn.Common.Logging;
+using DotRush.Common.Extensions;
+using DotRush.Common.Logging;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
-using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
+using FileSystemExtensions = DotRush.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Workspaces;
 
@@ -56,15 +56,15 @@ public abstract class SolutionController : ProjectsController {
             CreateDocument(file);
     }
     public void CreateDocument(string file) {
-        if (LanguageExtensions.IsAdditionalDocument(file))
+        if (IsAdditionalDocument(file))
             CreateAdditionalDocument(file);
-        if (LanguageExtensions.IsSourceCodeDocument(file))
+        if (IsSourceCodeDocument(file))
             CreateSourceCodeDocument(file);
     }
     public void UpdateDocument(string file, string? text = null) {
-        if (LanguageExtensions.IsAdditionalDocument(file))
+        if (IsAdditionalDocument(file))
             UpdateAdditionalDocument(file, text);
-        if (LanguageExtensions.IsSourceCodeDocument(file))
+        if (IsSourceCodeDocument(file))
             UpdateSourceCodeDocument(file, text);
     }
     public void DeleteDocuments(string[] files) {
@@ -72,10 +72,23 @@ public abstract class SolutionController : ProjectsController {
             DeleteDocument(file);
     }
     public void DeleteDocument(string file) {
-        if (LanguageExtensions.IsAdditionalDocument(file))
+        if (IsAdditionalDocument(file))
             DeleteAdditionalDocument(file);
-        if (LanguageExtensions.IsSourceCodeDocument(file))
+        if (IsSourceCodeDocument(file))
             DeleteSourceCodeDocument(file);
+    }
+
+    public static bool IsSourceCodeDocument(string filePath) {
+        var allowedExtensions = new[] { ".cs", /* .fs .vb */};
+        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
+    }
+    public static bool IsAdditionalDocument(string filePath) {
+        var allowedExtensions = new[] { ".xaml", /* maybe '.razor' ? */};
+        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
+    }
+    public static bool IsProjectFile(string filePath) {
+        var allowedExtensions = new[] { ".csproj", /* fsproj vbproj */};
+        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
     }
 
     private void CreateSourceCodeDocument(string file) {

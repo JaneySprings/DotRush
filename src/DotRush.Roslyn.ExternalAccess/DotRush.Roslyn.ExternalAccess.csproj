@@ -6,8 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="StreamJsonRpc" Version="2.19.27" />
+        <PackageReference Include="StreamJsonRpc" />
         <ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
     </ItemGroup>
-
 </Project>

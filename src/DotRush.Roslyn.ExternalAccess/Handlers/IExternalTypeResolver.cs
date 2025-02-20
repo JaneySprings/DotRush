@@ -1,17 +1,10 @@
+using DotRush.Roslyn.ExternalAccess.Models;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.ExternalAccess.Handlers;
-
-public class SourceLocation {
-    public string? FileName { get; set; }
-    public int Line { get; set; }
-    public int Column { get; set; }
-    public int EndLine { get; set; }
-    public int EndColumn { get; set; }
-}
 
 public interface IExternalTypeResolver {
     string? HandleResolveType(string identifierName, SourceLocation location);

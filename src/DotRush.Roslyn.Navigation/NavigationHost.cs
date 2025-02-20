@@ -1,9 +1,9 @@
-using DotRush.Roslyn.Common.Extensions;
-using DotRush.Roslyn.Common.Logging;
+using DotRush.Common.Extensions;
+using DotRush.Common.Logging;
 using DotRush.Roslyn.Navigation.Decompilation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using FileSystemExtensions = DotRush.Roslyn.Common.Extensions.FileSystemExtensions;
+using FileSystemExtensions = DotRush.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Navigation;
 

@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
-using DotRush.Roslyn.Common.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 

@@ -1,9 +1,8 @@
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
-using DotRush.Roslyn.Common;
-using DotRush.Roslyn.Common.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 

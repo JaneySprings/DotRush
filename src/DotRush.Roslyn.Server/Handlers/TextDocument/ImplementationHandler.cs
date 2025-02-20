@@ -1,4 +1,4 @@
-using DotRush.Roslyn.Common.Collections;
+using DotRush.Common.Collections;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;

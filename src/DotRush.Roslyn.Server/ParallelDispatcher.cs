@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using DotRush.Roslyn.Common.Logging;
+using DotRush.Common.Logging;
 using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Server.Scheduler;
 
@@ -12,7 +12,6 @@ public class ParallelDispatcher : IScheduler {
         "textDocument/didOpen",
         "textDocument/didChange",
         "textDocument/didClose",
-        "workspace/didChangeWatchedFiles"
     };
 
     public ParallelDispatcher() {

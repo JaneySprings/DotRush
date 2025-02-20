@@ -1,4 +1,4 @@
-using DotRush.Roslyn.Common.Extensions;
+using DotRush.Common.Extensions;
 using DotRush.Roslyn.Server.Services;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
@@ -12,7 +12,7 @@ namespace DotRush.Roslyn.Server.Handlers.Workspace;
 [Obsolete("Not working correctly for folders", true)]
 public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
     private readonly WorkspaceService workspaceService;
-    private bool shouldApplyWorkspaceChanges;
+    // private bool shouldApplyWorkspaceChanges;
 
     public DidChangeWatchedFilesHandler(WorkspaceService workspaceService) {
         this.workspaceService = workspaceService;
@@ -42,27 +42,26 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase {
         return Task.CompletedTask;
     }
 
+    // private void HandleFileChange(string path, FileChangeType changeType) {
+    //     if (LanguageExtensions.IsProjectFile(path) && changeType == FileChangeType.Changed)
+    //         return; // Handled from IDE
 
-    private void HandleFileChange(string path, FileChangeType changeType) {
-        if (LanguageExtensions.IsProjectFile(path) && changeType == FileChangeType.Changed)
-            return; // Handled from IDE
+    //     if (changeType == FileChangeType.Deleted) {
+    //         workspaceService.DeleteDocument(path);
+    //         // workspaceService.DeleteFolder(path);
+    //         shouldApplyWorkspaceChanges = true;
+    //         return;
+    //     }
 
-        if (changeType == FileChangeType.Deleted) {
-            workspaceService.DeleteDocument(path);
-            // workspaceService.DeleteFolder(path);
-            shouldApplyWorkspaceChanges = true;
-            return;
-        }
+    //     if (changeType == FileChangeType.Changed) {
+    //         workspaceService.UpdateDocument(path);
+    //         return;
+    //     }
 
-        if (changeType == FileChangeType.Changed) {
-            workspaceService.UpdateDocument(path);
-            return;
-        }
-
-        if (changeType == FileChangeType.Created && File.Exists(path)) {
-            workspaceService.CreateDocument(path);
-            shouldApplyWorkspaceChanges = true;
-            return;
-        }
-    }
+    //     if (changeType == FileChangeType.Created && File.Exists(path)) {
+    //         workspaceService.CreateDocument(path);
+    //         shouldApplyWorkspaceChanges = true;
+    //         return;
+    //     }
+    // }
 }

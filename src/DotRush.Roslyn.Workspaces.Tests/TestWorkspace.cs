@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using DotRush.Roslyn.Common.External;
+using DotRush.Common.External;
 using Microsoft.CodeAnalysis;
 
 namespace DotRush.Roslyn.Workspaces.Tests;

@@ -109,7 +109,7 @@
         {
           "id": "dotrush.modulesView",
           "name": "Modules",
-          "when": "debugType == coreclr"
+          "when": "debugType == coreclr || debugType == unity"
         }
       ]
     },
@@ -271,6 +271,51 @@
                 "type": "object"
               },
               "sourceLinkOptions": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      {
+        "program": "extension/bin/DebuggerMono/monodbg",
+        "windows": {
+          "program": "extension/bin/DebuggerMono/monodbg.exe"
+        },
+        "type": "unity",
+        "label": "Unity Debugger",
+        "languages": [
+          "csharp",
+          "fsharp"
+        ],
+        "initialConfigurations": [
+          {
+            "name": "Unity Debugger",
+            "type": "unity",
+            "request": "attach"
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Unity Debugger",
+            "description": "Attach Unity Debugger",
+            "body": {
+              "name": "Unity Debugger",
+              "type": "unity",
+              "request": "attach"
+            }
+          }
+        ],
+        "configurationAttributes": {
+          "attach": {
+            "properties": {
+              "processId": {
+                "type": "string"
+              },
+              "cwd": {
+                "type": "string"
+              },
+              "env": {
                 "type": "object"
               }
             }

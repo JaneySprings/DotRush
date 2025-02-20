@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
+using DotRush.Common.Extensions;
+using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
-using DotRush.Roslyn.Common.Extensions;
-using DotRush.Roslyn.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;

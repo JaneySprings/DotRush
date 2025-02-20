@@ -1,4 +1,5 @@
 ﻿using DotRush.Roslyn.ExternalAccess.Handlers;
+using DotRush.Roslyn.ExternalAccess.Models;
 using DotRush.Roslyn.Workspaces;
 
 namespace DotRush.Roslyn.ExternalAccess;

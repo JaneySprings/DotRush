@@ -1,8 +1,7 @@
 import { DotNetDebugConfigurationProvider } from '../providers/dotnetDebugConfigurationProvider';
+import { MonoDebugConfigurationProvider } from '../providers/monoDebugConfigurationProvider';
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
-import { StatusBarController } from './statusbarController';
 import { ProcessItem } from '../models/process';
-import { Extensions } from '../extensions';
 import { Interop } from '../interop/interop';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
@@ -15,43 +14,11 @@ export class DebugAdapterController {
 
         context.subscriptions.push(vscode.tasks.registerTaskProvider(res.taskDefinitionId, new DotNetTaskProvider()));
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerVsdbgId, new DotNetDebugConfigurationProvider()));
+        context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerUnityId, new MonoDebugConfigurationProvider()));
 
         if (!fs.existsSync(path.join(context.extensionPath, 'extension', 'bin', 'Debugger')))
-            await DebugAdapterController.installDebugger(context);
+            await DebugAdapterController.installNetCoreDebugger(context);
     }
-
-    public static provideDebuggerOptions(options: vscode.DebugConfiguration): vscode.DebugConfiguration {
-        if (options.justMyCode === undefined)
-            options.justMyCode = Extensions.getSetting('debugger.projectAssembliesOnly', false);
-        if (options.enableStepFiltering === undefined)
-            options.enableStepFiltering = Extensions.getSetting('debugger.stepOverPropertiesAndOperators', false);
-        if (options.console === undefined)
-            options.console = Extensions.getSetting('debugger.console');
-        if (options.symbolOptions === undefined)
-            options.symbolOptions = {
-                searchPaths: Extensions.getSetting('debugger.symbolSearchPaths'),
-                searchMicrosoftSymbolServer: Extensions.getSetting('debugger.searchMicrosoftSymbolServer', false),
-            };
-        if (options.sourceLinkOptions === undefined)
-            options.sourceLinkOptions = {
-                "*": { enabled: Extensions.getSetting('debugger.automaticSourcelinkDownload', true) }
-            }
-
-        return options;
-    }
-    public static async getProgramPath(): Promise<string | undefined> {
-        if (StatusBarController.activeProject === undefined || StatusBarController.activeConfiguration === undefined)
-            return await DebugAdapterController.showQuickPickProgram();
-
-        const assemblyPath = Interop.getPropertyValue('TargetPath', StatusBarController.activeProject.path, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
-		if (!assemblyPath)
-			return await DebugAdapterController.showQuickPickProgram();
-
-        const programDirectory = path.dirname(assemblyPath);
-        const programFile = path.basename(assemblyPath, '.dll');
-        const programPath = path.join(programDirectory, programFile + Interop.execExtension);
-		return programPath;
-	}
 
     public static async showQuickPickProgram(): Promise<string | undefined> {
         const programPath = await vscode.window.showOpenDialog({
@@ -67,7 +34,8 @@ export class DebugAdapterController {
         const selectedItem = await vscode.window.showQuickPick(processes.map(p => new ProcessItem(p)), { placeHolder: res.messageSelectProcessTitle });
         return selectedItem?.item.id.toString();
     }
-    private static async installDebugger(context: vscode.ExtensionContext): Promise<void> {
+    
+    private static async installNetCoreDebugger(context: vscode.ExtensionContext): Promise<void> {
         const channel = vscode.window.createOutputChannel(res.extensionId);
         context.subscriptions.push(channel);
 
