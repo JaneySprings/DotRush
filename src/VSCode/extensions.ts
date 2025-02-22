@@ -102,8 +102,10 @@ export class Extensions {
         if (baseUri?.fsPath !== undefined && path.extname(baseUri.fsPath) === extension)
             return [baseUri];
 
-        return baseUri?.fsPath === undefined 
+        const result = baseUri?.fsPath === undefined 
             ? await vscode.workspace.findFiles(`**/*${extension}`)
             : await vscode.workspace.findFiles(new vscode.RelativePattern(baseUri, `**/*${extension}`));
+
+        return result.sort((a, b) => path.basename(a.fsPath).localeCompare(path.basename(b.fsPath)));
     }
 }

@@ -36,4 +36,31 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 
 
 ## Running and Debugging .NET Core Applications
+&emsp;To run and debug your .NET Core applications, you can use the built-in .NET Core Debugger. You can start debugging by pressing **F5** and select the **.NET Core Debugger** configuration. You can also create a `launch.json` file with the following content:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": ".NET Core Debugger (launch)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "dotrush: Build"
+        },
+        {
+            "name": ".NET Core Debugger (attach)",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:dotrush.pickProcess}"
+        }
+    ]
+}
+```
+&emsp;You can change the startup project by clicking on it and executing the `Set as Startup Project` command from the context menu:
+
+![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image2.jpg)
+
+
+## Debugging Unity Projects
 &emsp;TODO

@@ -1,31 +1,34 @@
 using System.Collections.ObjectModel;
-using DotRush.Roslyn.Common.Extensions;
+using DotRush.Common.Extensions;
 using Microsoft.CodeAnalysis;
 
 namespace DotRush.Roslyn.CodeAnalysis.Diagnostics;
 
 public class DiagnosticCollection {
     private readonly Dictionary<string, HashSet<DiagnosticContext>> workspaceDiagnostics;
-    private string collectionToken = string.Empty;
+    private readonly object lockObject;
+    private string collectionToken;
 
     public DiagnosticCollection() {
         workspaceDiagnostics = new Dictionary<string, HashSet<DiagnosticContext>>();
+        lockObject = new object();
         collectionToken = GenerateNewCollectionToken();
     }
 
     public IEnumerable<DiagnosticContext> AddDiagnostics(IEnumerable<DiagnosticContext> diagnostics) {
-        var validDiagnostics = diagnostics.Where(c => !string.IsNullOrEmpty(c.FilePath) && File.Exists(c.FilePath)).ToArray();
-
-        foreach (var diagnosticsGroup in validDiagnostics.GroupBy(c => c.FilePath!)) {
-            if (!workspaceDiagnostics.TryGetValue(diagnosticsGroup.Key, out HashSet<DiagnosticContext>? container)) {
-                container = new HashSet<DiagnosticContext>();
-                workspaceDiagnostics[diagnosticsGroup.Key] = container;
+        lock (lockObject) {
+            var validDiagnostics = diagnostics.Where(c => !string.IsNullOrEmpty(c.FilePath) && File.Exists(c.FilePath)).ToArray();
+            foreach (var diagnosticsGroup in validDiagnostics.GroupBy(c => c.FilePath!)) {
+                if (!workspaceDiagnostics.TryGetValue(diagnosticsGroup.Key, out HashSet<DiagnosticContext>? container)) {
+                    container = new HashSet<DiagnosticContext>();
+                    workspaceDiagnostics[diagnosticsGroup.Key] = container;
+                }
+                container.AddRange(diagnosticsGroup);
             }
-            container.AddRange(diagnosticsGroup);
-        }
 
-        collectionToken = GenerateNewCollectionToken();
-        return validDiagnostics;
+            collectionToken = GenerateNewCollectionToken();
+            return validDiagnostics;
+        }
     }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
         return workspaceDiagnostics.Values.SelectMany(c => c).ToList().AsReadOnly();
@@ -37,7 +40,9 @@ public class DiagnosticCollection {
         return collectionToken;
     }
     public void Clear() {
-        workspaceDiagnostics.Clear();
+        lock (lockObject) {
+            workspaceDiagnostics.Clear();
+        }
     }
 
     private string GenerateNewCollectionToken() {
