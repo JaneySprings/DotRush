@@ -1,9 +1,10 @@
-using DotRush.Debugging.NetCore.Testing;
+using DotRush.Debugging.NetCore.Testing.Explorer;
 using NUnit.Framework;
 
 namespace DotRush.Debugging.NetCore.Tests;
 
 public class NoTestProjectFormatTests : TestFixture {
+    private TestExplorer TestExplorer = null!;
 
     public NoTestProjectFormatTests() : base("NoTestProject") { 
         TestProjectFileContent = $@"<Project Sdk=""Microsoft.NET.Sdk"">
@@ -16,6 +17,11 @@ public class NoTestProjectFormatTests : TestFixture {
                 <PackageReference Include=""MyPackage"" />
             </ItemGroup>
         </Project>";
+    }
+
+    [SetUp]
+    public void SetUp() {
+        TestExplorer = new TestExplorer();
     }
 
     [Test]

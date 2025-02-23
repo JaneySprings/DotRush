@@ -1,9 +1,10 @@
-using DotRush.Debugging.NetCore.Testing;
+using DotRush.Debugging.NetCore.Testing.Explorer;
 using NUnit.Framework;
 
 namespace DotRush.Debugging.NetCore.Tests;
 
 public class LegacyProjectFormatTests : TestFixture {
+    private TestExplorer TestExplorer = null!;
 
     public LegacyProjectFormatTests() : base("LegacyProjectFormat") { 
         TestProjectFileContent = $@"<Project ToolVersion=""8.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
@@ -18,6 +19,11 @@ public class LegacyProjectFormatTests : TestFixture {
                 <PackageReference Include=""NUnit3TestAdapter"" />
             </ItemGroup>
         </Project>";
+    }
+
+    [SetUp]
+    public void SetUp() {
+        TestExplorer = new TestExplorer();
     }
 
     [Test]

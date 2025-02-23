@@ -4,6 +4,7 @@ using DotRush.Common.Logging;
 using DotRush.Common.MSBuild;
 using DotRush.Debugging.NetCore.Models;
 using DotRush.Debugging.NetCore.Testing;
+using DotRush.Debugging.NetCore.Testing.Explorer;
 
 namespace DotRush.Debugging.NetCore;
 
@@ -53,7 +54,7 @@ public class Program {
         Console.WriteLine(JsonSerializer.Serialize(project));
     }
     public static void DiscoverTests(string[] args) {
-        var tests = TestExplorer.DiscoverTests(args[1]);
+        var tests = new TestExplorer().DiscoverTests(args[1]);
         Console.WriteLine(JsonSerializer.Serialize(tests));
     }
     public static void ConvertReport(string[] args) {
