@@ -1,5 +1,5 @@
 using System.Xml;
-using DotRush.Debugging.NetCore.Models;
+using DotRush.Debugging.NetCore.Testing.Models;
 
 namespace DotRush.Debugging.NetCore.Testing;
 

@@ -1,36 +1,19 @@
-using DotRush.Common.Logging;
-using DotRush.Common.MSBuild;
-using DotRush.Debugging.NetCore.Models;
+using DotRush.Common.Extensions;
+using DotRush.Debugging.NetCore.Testing.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Range = DotRush.Debugging.NetCore.Models.Range;
+using Range = DotRush.Debugging.NetCore.Testing.Models.Range;
 
-namespace DotRush.Debugging.NetCore.Testing;
+namespace DotRush.Debugging.NetCore.Testing.Explorer;
 
-public static class TestExplorer {
-    private static readonly string[] preprocessorSymbols = new[] { "DEBUG", "DEBUGTEST" };
+public abstract class TestExplorerSyntaxWalker {
+    private readonly string[] preprocessorSymbols = new[] { "DEBUG", "DEBUGTEST" };
 
-    public static IEnumerable<TestFixture> DiscoverTests(string projectFile) {
-        var project = MSBuildProjectsLoader.LoadProject(projectFile);
-        if (project != null && project.IsLegacyFormat) {
-            CurrentSessionLogger.Debug($"Project {projectFile} is in legacy format. Skipping test discovery.");
-            return Enumerable.Empty<TestFixture>();
-        }
-        if (project != null && !project.HasPackage("NUnit") && !project.HasPackage("NUnitLite") && !project.HasPackage("xunit")) {
-            CurrentSessionLogger.Debug($"Project {projectFile} does not have NUnit or xUnit package. Skipping test discovery.");
-            return Enumerable.Empty<TestFixture>();
-        }
-
-        var testProjectDirectory = Path.GetDirectoryName(projectFile)!;
-        return GetFixtures(testProjectDirectory);
-    }
-
-
-    private static IEnumerable<TestFixture> GetFixtures(string projectPath) {
+    protected IEnumerable<TestFixture> GetFixtures(string projectDirectory) {
         var result = new Dictionary<string, TestFixture>();
         var options = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols);
-        var documentPaths = Directory.GetFiles(projectPath, "*.cs", SearchOption.AllDirectories); // TODO: Skip bin/obj folders
+        var documentPaths = Directory.GetFiles(projectDirectory, "*.cs", SearchOption.AllDirectories);
         foreach (var documentPath in documentPaths) {
             var tree = CSharpSyntaxTree.ParseText(File.ReadAllText(documentPath), options);
             var root = tree.GetRoot();
@@ -38,28 +21,25 @@ public static class TestExplorer {
             var namespaces = root.DescendantNodes().OfType<BaseNamespaceDeclarationSyntax>();
             foreach (var nspace in namespaces) {
                 var classes = nspace.DescendantNodes().OfType<ClassDeclarationSyntax>();
-                foreach (var @class in classes) {
-                    var fixtureId = $"{nspace.Name}.{@class.Identifier.Text}";
-                    
+                foreach (var klass in classes) {
+                    var fixtureId = $"{nspace.Name}.{klass.Identifier.Text}";
                     if (!result.TryGetValue(fixtureId, out var fixture)) {
-                        fixture = new TestFixture(fixtureId, @class.Identifier.Text, documentPath);
-                        fixture.Range = GetRange(@class);
-                        
+                        fixture = new TestFixture(fixtureId, klass.Identifier.Text, documentPath);
+                        fixture.IsAbstract = klass.Modifiers.Any(p => p.IsKind(SyntaxKind.AbstractKeyword));
+                        fixture.Range = GetRange(klass);
                     }
-                    
-                    var testCases = GetTestCases(@class, fixtureId, documentPath);
-                    if (!testCases.Any())
-                        continue;
 
-                    fixture.Children.UnionWith(testCases);
-                    result.TryAdd(fixtureId, fixture);
+                    fixture.BaseFixtureName ??= GetBaseClassName(klass);
+
+                    var testCases = GetTestCases(klass, fixture, documentPath);
+                    fixture.TestCases.AddRange(testCases);
+                    result.TryAdd(fixture.Id, fixture);
                 }
             }
-                        
         }
         return result.Values;
     }
-    private static IEnumerable<TestCase> GetTestCases(ClassDeclarationSyntax fixture, string fixtureId, string filePath) {
+    protected IEnumerable<TestCase> GetTestCases(ClassDeclarationSyntax fixture, TestFixture parent, string documentPath) {
         var methods = fixture.DescendantNodes().OfType<MethodDeclarationSyntax>().Where(node => {
             // XUnit
             var hasFactAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().EndsWith("Fact", StringComparison.InvariantCulture)));
@@ -74,12 +54,11 @@ public static class TestExplorer {
         if (!methods.Any())
             return Enumerable.Empty<TestCase>();
 
-        return methods.Select(p => new TestCase($"{fixtureId}.{p.Identifier.Text}", p.Identifier.Text, filePath) {
+        return methods.Select(p => new TestCase($"{parent.Id}.{p.Identifier.Text}", p.Identifier.Text, documentPath) {
             Range = GetRange(p)
         });
     }
-
-    private static Range GetRange(SyntaxNode node) {
+    protected Range GetRange(SyntaxNode node) {
         return new Range {
             Start = new Position {
                 Line = node.GetLocation().GetLineSpan().StartLinePosition.Line,
@@ -90,5 +69,8 @@ public static class TestExplorer {
                 Character = node.GetLocation().GetLineSpan().EndLinePosition.Character
             }
         };
+    }
+    protected string? GetBaseClassName(ClassDeclarationSyntax klass) {
+        return klass.BaseList?.Types.Where(p => !p.ToString().StartsWith('I')).FirstOrDefault()?.ToString();
     }
 }

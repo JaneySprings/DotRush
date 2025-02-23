@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DotRush.Debugging.NetCore.Models;
+namespace DotRush.Debugging.NetCore.Testing.Models;
 
 public class TestResult {
 
