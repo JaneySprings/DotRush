@@ -1,7 +1,7 @@
 {
   "name": "dotrush",
   "publisher": "nromanov",
-  "version": "25.1.15",
+  "version": "1.0.0",
   "description": "Lightweight C# development environment for Visual Studio Code.",
   "displayName": "DotRush",
   "author": "Nikita Romanov",
