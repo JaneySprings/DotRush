@@ -9,7 +9,7 @@ var target = Argument("target", "vsix");
 var version = Argument("release-version", "1.0.0");
 var configuration = Argument("configuration", "debug");
 var runtime = Argument("arch", RuntimeInformation.RuntimeIdentifier);
-
+var bundle = HasArgument("bundle");
 
 Setup(context => {
 	var date = DateTime.Now;
@@ -29,19 +29,18 @@ Task("server")
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 		Configuration = configuration,
 		Runtime = runtime,
-	}))
-	.Does(() => {
-		var input = _Path.Combine(VSCodeExtensionDirectory, "bin", "LanguageServer");
-		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.Roslyn.Server.v{version}_{runtime}.zip");
-		Zip(input, output);
-	});
+	}));
 
 Task("netcore")
 	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.NetCore", "DotRush.Debugging.NetCore.csproj"), new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 		Configuration = configuration,
 		Runtime = runtime,
-	}));
+	}))
+	.Does(() => {
+		if (!bundle) return;
+		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestExplorer", "dotrushde.dll")} --install-vsdbg");
+	});
 
 Task("unity")
 	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Unity", "DotRush.Debugging.Unity.csproj"), new DotNetPublishSettings {
@@ -84,7 +83,8 @@ Task("vsix")
 	.IsDependentOn("unity")
 	.Does(() => {
 		var vsruntime = runtime.Replace("win-", "win32-").Replace("osx-", "darwin-");
-		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}_{vsruntime}.vsix");
+		var suffix = bundle ? ".Bundle" : string.Empty;
+		var output = _Path.Combine(ArtifactsDirectory, $"DotRush{suffix}.v{version}_{vsruntime}.vsix");
 		ExecuteCommand("npm", "install");
 		ExecuteCommand("vsce", $"package --target {vsruntime} --out {output} --no-git-tag-version {version}");
 	});

@@ -41,6 +41,8 @@ stages:
           displayName: 'Build VSIX (linux-x64)'
         - script: dotnet cake --target=vsix --configuration=release --arch=linux-arm64
           displayName: 'Build VSIX (linux-arm64)'
+        - script: dotnet cake --target=vsix --configuration=release --bundle
+          displayName: 'Build VSIX (bundle)'
 
         - publish: '$(System.DefaultWorkingDirectory)/artifacts'
           displayName: 'Publish Artifacts'
@@ -66,6 +68,8 @@ stages:
           displayName: 'Build VSIX (osx-x64)'
         - script: dotnet cake --target=vsix --configuration=release --arch=osx-arm64
           displayName: 'Build VSIX (osx-arm64)'
+        - script: dotnet cake --target=vsix --configuration=release --bundle
+          displayName: 'Build VSIX (bundle)'
 
         - publish: '$(System.DefaultWorkingDirectory)/artifacts'
           displayName: 'Publish Artifacts'
@@ -91,6 +95,8 @@ stages:
           displayName: 'Build VSIX (win-x64)'
         - script: dotnet cake --target=vsix --configuration=release --arch=win-arm64
           displayName: 'Build VSIX (win-arm64)'
+        - script: dotnet cake --target=vsix --configuration=release --bundle
+          displayName: 'Build VSIX (bundle)'
 
         - publish: '$(System.DefaultWorkingDirectory)/artifacts'
           displayName: 'Publish Artifacts'
@@ -119,7 +125,7 @@ stages:
             repositoryName: '$(Build.Repository.Name)'
             action: 'create'
             tagSource: 'gitTag'
-            assets: '$(Pipeline.Workspace)/**/*.zip'
+            assets: '$(Pipeline.Workspace)/**/DotRush.Bundle.*.vsix'
         - script: npm install -g vsce
           displayName: 'Install VSCode builder'
         - task: Bash@3
@@ -129,7 +135,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              for filename in $(Pipeline.Workspace)/**/*.vsix; do
+              for filename in $(Pipeline.Workspace)/**/DotRush.v*.vsix; do
                 vsce publish --packagePath "$filename" -p $VS_TOKEN
               done
 
