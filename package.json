@@ -21,13 +21,16 @@
   "categories": [
     "Programming Languages",
     "Linters",
-    "Snippets"
+    "Snippets",
+    "Debuggers",
+    "Testing"
   ],
   "keywords": [
     "C#",
     ".NET",
     "csharp",
-    "dotnet"
+    "dotnet",
+    "Unity"
   ],
   "engines": {
     "vscode": "^1.73.0"

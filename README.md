@@ -13,6 +13,9 @@ Roslyn-based autocompletion, suggestions, and code navigation to help you write 
 - **.NET Core Debugger** </br>
 Debug your C# applications with the built-in .NET Core Debugger.
 
+- **Unity Debugger** </br>
+Debug your Unity projects with the integrated Mono Debugger.
+
 - **Test Explorer** </br>
 Run and debug your unit tests with the integrated Test Explorer.
 
@@ -57,10 +60,33 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
     ]
 }
 ```
-&emsp;You can change the startup project by clicking on it and executing the `Set as Startup Project` command from the context menu:
+&emsp;You can change the startup project by clicking on it and executing the `Set as Startup Project` command from the context menu. You can also change the debugger options in the VSCode settings.
 
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image2.jpg)
 
 
+## Running and Debugging NUnit / xUnit Tests
+&emsp;To run and debug your **NUnit** or **xUnit** tests, you can use the integrated Test Explorer in VSCode. Run test by clicking on the run button next to the test or debug it by right-clicking on the run button and selecting the `Debug Test` option in the context menu.
+
+![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image3.jpg)
+
+
 ## Debugging Unity Projects
-&emsp;TODO
+&emsp;To debug your Unity project, you can use the integrated Mono Debugger. Open the Unity project in VSCode (for example, by opening it from the Unity Editor) and start debugging by pressing **F5** and select the **Unity Debugger** configuration. You can also create a `launch.json` file with the following content:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Unity Debugger",
+            "type": "unity",
+            "request": "attach"
+        }
+    ]
+}
+```
+
+&emsp;You can change the debugger options in the VSCode settings.
+
+![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image4.jpg)
