@@ -53,10 +53,11 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
         const assemblyPath = Interop.getPropertyValue('TargetPath', StatusBarController.activeProject.path, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
 		if (!assemblyPath)
 			return await DebugAdapterController.showQuickPickProgram();
-
-        const programDirectory = path.dirname(assemblyPath);
-        const programFile = path.basename(assemblyPath, '.dll');
-        const programPath = path.join(programDirectory, programFile + Interop.execExtension);
-		return programPath;
+        
+        return assemblyPath;
+        // const programDirectory = path.dirname(assemblyPath);
+        // const programFile = path.basename(assemblyPath, '.dll');
+        // const programPath = path.join(programDirectory, programFile + Interop.execExtension);
+		// return programPath;
 	}
 }

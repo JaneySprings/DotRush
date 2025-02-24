@@ -2,28 +2,37 @@ using System.Collections.Immutable;
 using System.IO.Compression;
 using System.Text.Json;
 using DotRush.Common;
+using DotRush.Common.Extensions;
 using DotRush.Common.External;
 using DotRush.Common.Logging;
 using DotRush.Debugging.NetCore.Models;
 
-namespace DotRush.Debugging.NetCore;
+namespace DotRush.Debugging.NetCore.Installers;
 
-public static class NetCoreDebugger {
+public class VsdbgInstaller : IDebuggerInstaller {
     //vsDbgUrl = "https://aka.ms/getvsdbgsh";
     private const string OmnisharpPackageConfigUrl = "https://raw.githubusercontent.com/dotnet/vscode-csharp/main/package.json";
     private const string OmnisharpDebuggerId = "Debugger";
+    private readonly string debuggerDirectory;
 
-    public static async Task<string?> ObtainDebuggerLinkAsync() {
+    public VsdbgInstaller(string workingDirectory) {
+        debuggerDirectory = Path.Combine(workingDirectory, "Debugger");
+    }
+
+    void IDebuggerInstaller.BeginInstallation() {
+        FileSystemExtensions.TryDeleteDirectory(debuggerDirectory);
+    } 
+    string? IDebuggerInstaller.GetDownloadLink() {
         CurrentSessionLogger.Debug($"Obtaining vsdbg via link: {OmnisharpPackageConfigUrl}");
 
         using var httpClient = new HttpClient();
-        var response = await httpClient.GetAsync(OmnisharpPackageConfigUrl);
+        var response = httpClient.GetAsync(OmnisharpPackageConfigUrl).Result;
         if (!response.IsSuccessStatusCode) {
             CurrentSessionLogger.Error($"Failed to fetch omnisharp package config: {response.StatusCode}");
             return null;
         }
 
-        var content = await response.Content.ReadAsStringAsync();
+        var content = response.Content.ReadAsStringAsync().Result;
         var packageModel = JsonSerializer.Deserialize<PackageInfo>(content);
         if (packageModel == null) {
             CurrentSessionLogger.Error("Failed to deserialize omnisharp package config");
@@ -52,25 +61,21 @@ public static class NetCoreDebugger {
 
         return result.Url;
     }
-    public static async Task<string?> InstallDebuggerAsync(string downloadUrl) {
-        var workingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".."));
-        var downloadPath = Path.Combine(workingDirectory, "vsdbg.zip");
-        var extractPath = Path.Combine(workingDirectory, "Debugger");
-
+    string? IDebuggerInstaller.Install(string downloadUrl) {
         CurrentSessionLogger.Debug($"Downloading debugger from '{downloadUrl}'");
 
         using var httpClient = new HttpClient();
-        var response = await httpClient.GetAsync(downloadUrl);
+        var response = httpClient.GetAsync(downloadUrl).Result;
         if (!response.IsSuccessStatusCode) {
             CurrentSessionLogger.Error($"Failed to download debugger: {response.StatusCode}");
             return null;
         }
 
-        CurrentSessionLogger.Debug($"Extracting debugger to '{extractPath}'");
+        CurrentSessionLogger.Debug($"Extracting debugger to '{debuggerDirectory}'");
 
         using var archive = new ZipArchive(response.Content.ReadAsStream());
         foreach (var entry in archive.Entries) {
-            var targetPath = Path.Combine(extractPath, entry.FullName);
+            var targetPath = Path.Combine(debuggerDirectory, entry.FullName);
             var targetDirectory = Path.GetDirectoryName(targetPath)!;
 
             if (string.IsNullOrEmpty(Path.GetFileName(targetPath)))
@@ -83,18 +88,20 @@ public static class NetCoreDebugger {
             stream.CopyTo(fileStream);
         }
 
-        var executable = Path.Combine(extractPath, "vsdbg" + RuntimeInfo.ExecExtension);
+        var executable = Path.Combine(debuggerDirectory, "vsdbg" + RuntimeInfo.ExecExtension);
         if (!File.Exists(executable)) {
             CurrentSessionLogger.Error($"Debugger executable not found: '{executable}'");
             return null;
         }
 
-        if (!RuntimeInfo.IsWindows) {
-            var registrationResult = ProcessRunner.CreateProcess("chmod", $"+x \"{executable}\"", captureOutput: true, displayWindow: false).Task.Result;
-            if (!registrationResult.Success)
-                CurrentSessionLogger.Error($"Failed to register debugger executable: {registrationResult.GetError()}");
-        }
-
         return executable;
+    }
+    void IDebuggerInstaller.EndInstallation(string executablePath) {
+        if (RuntimeInfo.IsWindows)
+            return;
+
+        var registrationResult = ProcessRunner.CreateProcess("chmod", $"+x \"{executablePath}\"", captureOutput: true, displayWindow: false).Task.Result;
+        if (!registrationResult.Success)
+            CurrentSessionLogger.Error($"Failed to register debugger executable: {registrationResult.GetError()}");
     }
 }
