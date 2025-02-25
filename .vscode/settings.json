@@ -2,12 +2,12 @@
     "dotrush.roslyn.workspaceProperties": [
     ],
     "dotrush.roslyn.projectOrSolutionFiles": [
-        "c:\\Users\\nromanov\\Work\\DotRush\\src\\DotRush.Roslyn.Server\\DotRush.Roslyn.Server.csproj",
-        "c:\\Users\\nromanov\\Work\\DotRush\\src\\DotRush.Debugging.Unity\\DotRush.Debugging.Unity.csproj",
+        "src\\DotRush.Roslyn.Server\\DotRush.Roslyn.Server.csproj",
+        "src\\DotRush.Debugging.Unity\\DotRush.Debugging.Unity.csproj",
 
-        "c:\\Users\\nromanov\\Work\\DotRush\\src\\DotRush.Roslyn.Workspaces.Tests\\DotRush.Roslyn.Workspaces.Tests.csproj",
-        "c:\\Users\\nromanov\\Work\\DotRush\\src\\DotRush.Roslyn.CodeAnalysis.Tests\\DotRush.Roslyn.CodeAnalysis.Tests.csproj",
-        "c:\\Users\\nromanov\\Work\\DotRush\\src\\DotRush.Debugging.NetCore.Tests\\DotRush.Debugging.NetCore.Tests.csproj"
+        "src\\DotRush.Roslyn.Workspaces.Tests\\DotRush.Roslyn.Workspaces.Tests.csproj",
+        "src\\DotRush.Roslyn.CodeAnalysis.Tests\\DotRush.Roslyn.CodeAnalysis.Tests.csproj",
+        "src\\DotRush.Debugging.NetCore.Tests\\DotRush.Debugging.NetCore.Tests.csproj"
     ],
     "files.exclude": {
         "src/DotRush.*/bin": true,
