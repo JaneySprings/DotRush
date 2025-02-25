@@ -159,6 +159,9 @@
         "windows": {
           "program": "extension/bin/Debugger/vsdbg.exe"
         },
+        "args": [
+          "--interpreter=vscode"
+        ],
         "type": "coreclr",
         "label": ".NET Core Debugger",
         "languages": [

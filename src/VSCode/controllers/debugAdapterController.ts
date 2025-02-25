@@ -3,6 +3,7 @@ import { MonoDebugConfigurationProvider } from '../providers/monoDebugConfigurat
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
 import { ProcessItem } from '../models/process';
 import { Interop } from '../interop/interop';
+import { Extensions } from '../extensions';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -17,7 +18,7 @@ export class DebugAdapterController {
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerUnityId, new MonoDebugConfigurationProvider()));
 
         if (!fs.existsSync(path.join(context.extensionPath, 'extension', 'bin', 'Debugger')))
-            await DebugAdapterController.installNetCoreDebugger(context);
+            await DebugAdapterController.installDebugger(Extensions.onVSCode(res.debuggerInstallVsdbgId, res.debuggerInstallNcdbgId));
     }
 
     public static async showQuickPickProgram(): Promise<string | undefined> {
@@ -35,15 +36,15 @@ export class DebugAdapterController {
         return selectedItem?.item.id.toString();
     }
     
-    private static async installNetCoreDebugger(context: vscode.ExtensionContext): Promise<void> {
-        const channel = vscode.window.createOutputChannel(res.extensionId);
-        context.subscriptions.push(channel);
-
-        channel.appendLine('Installing VSDBG debugger. This may take a few minutes...');
-        const result = await Interop.installDebugger();
-        if (!result.isSuccess)
-            channel.appendLine(`Failed to install debugger: ${result.message}`);
-        else
-            channel.appendLine('Debugger installed successfully.');
+    private static async installDebugger(id: string): Promise<void> {
+        const displayName = id === res.debuggerInstallVsdbgId ? 'vsdbg' : 'netcoredbg';
+        const options : vscode.ProgressOptions = {
+            location: vscode.ProgressLocation.Notification,
+            cancellable: false
+        };
+        await vscode.window.withProgress(options, (progress, _) => {
+            progress.report({ message: res.messageInstallingDebugger.replace('{0}', displayName) });
+            return Interop.installDebugger(id);
+        })
     }
 }
