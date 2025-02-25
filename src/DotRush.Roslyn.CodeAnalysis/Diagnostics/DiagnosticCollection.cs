@@ -6,17 +6,24 @@ namespace DotRush.Roslyn.CodeAnalysis.Diagnostics;
 
 public class DiagnosticCollection {
     private readonly Dictionary<string, HashSet<DiagnosticContext>> workspaceDiagnostics;
+    private readonly Dictionary<ProjectId, HashSet<string>> diagnosticRelations;
     private readonly object lockObject;
     private string collectionToken;
 
     public DiagnosticCollection() {
         workspaceDiagnostics = new Dictionary<string, HashSet<DiagnosticContext>>();
+        diagnosticRelations = new Dictionary<ProjectId, HashSet<string>>();
         lockObject = new object();
         collectionToken = GenerateNewCollectionToken();
     }
 
-    public IEnumerable<DiagnosticContext> AddDiagnostics(IEnumerable<DiagnosticContext> diagnostics) {
+    public IEnumerable<DiagnosticContext> AddDiagnostics(ProjectId key, IEnumerable<DiagnosticContext> diagnostics) {
         lock (lockObject) {
+            if (!diagnosticRelations.TryGetValue(key, out HashSet<string>? relations)) {
+                relations = new HashSet<string>();
+                diagnosticRelations[key] = relations;
+            }
+
             var validDiagnostics = diagnostics.Where(c => !string.IsNullOrEmpty(c.FilePath) && File.Exists(c.FilePath)).ToArray();
             foreach (var diagnosticsGroup in validDiagnostics.GroupBy(c => c.FilePath!)) {
                 if (!workspaceDiagnostics.TryGetValue(diagnosticsGroup.Key, out HashSet<DiagnosticContext>? container)) {
@@ -24,6 +31,7 @@ public class DiagnosticCollection {
                     workspaceDiagnostics[diagnosticsGroup.Key] = container;
                 }
                 container.AddRange(diagnosticsGroup);
+                relations.Add(diagnosticsGroup.Key);
             }
 
             collectionToken = GenerateNewCollectionToken();
@@ -39,9 +47,12 @@ public class DiagnosticCollection {
     public string GetCollectionToken() {
         return collectionToken;
     }
-    public void Clear() {
+    public void ClearWithKey(ProjectId key) {
         lock (lockObject) {
-            workspaceDiagnostics.Clear();
+            if (diagnosticRelations.TryGetValue(key, out HashSet<string>? relations)) {
+                relations.ForEach(r => workspaceDiagnostics.Remove(r));
+                diagnosticRelations.Remove(key);
+            }
         }
     }
 

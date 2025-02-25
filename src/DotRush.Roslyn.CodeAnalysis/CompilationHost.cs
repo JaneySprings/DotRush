@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
@@ -24,7 +25,7 @@ public class CompilationHost {
     }
 
     public async Task<ReadOnlyCollection<DiagnosticContext>> DiagnoseAsync(IEnumerable<ProjectId> projectIds, Solution solution, bool enableAnalyzers, CancellationToken cancellationToken) {
-        workspaceDiagnostics.Clear();
+        projectIds.ForEach(id => workspaceDiagnostics.ClearWithKey(id));
 
         foreach (var projectId in projectIds) {
             var project = solution.GetProject(projectId);
@@ -50,13 +51,13 @@ public class CompilationHost {
             return null;
 
         var parseDiagnostics = compilation.GetParseDiagnostics(cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(parseDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, parseDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
 
         var declarationDiagnostics = compilation.GetDeclarationDiagnostics(cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(declarationDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, declarationDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
 
         var methodBodyDiagnostics = compilation.GetMethodBodyDiagnostics(cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(methodBodyDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, methodBodyDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
 
         return compilation;
     }
@@ -70,6 +71,6 @@ public class CompilationHost {
             return;
 
         var analyzerDiagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(analyzerDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, analyzerDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
     }
 }
