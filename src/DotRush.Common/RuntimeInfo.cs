@@ -19,6 +19,9 @@ public static class RuntimeInfo {
     public static string GetArchitecture() {
         return IsAarch64 ? "arm64" : "x86_64";
     }
+    public static string GetArchitecture64() {
+        return IsAarch64 ? "arm64" : "x64";
+    }
     public static string GetOperationSystem() {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return "win32";

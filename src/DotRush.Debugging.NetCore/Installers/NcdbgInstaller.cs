@@ -18,15 +18,11 @@ public class NcdbgInstaller : IDebuggerInstaller {
         FileSystemExtensions.TryDeleteDirectory(debuggerDirectory);
     }
     string? IDebuggerInstaller.GetDownloadLink() {
-        var runtimeExtension = string.Empty;
-        if (RuntimeInfo.IsWindows)
-            runtimeExtension = "win64.zip";
-        if (RuntimeInfo.IsMacOS)
-            runtimeExtension = "osx-amd64.tar.gz";
-        if (RuntimeInfo.IsLinux)
-            runtimeExtension = "linux-amd64.tar.gz";
-
-        return $"https://github.com/Samsung/netcoredbg/releases/download/{LatestReleaseVersion}/netcoredbg-{runtimeExtension}";
+        var runtime = $"{RuntimeInfo.GetOperationSystem()}-{RuntimeInfo.GetArchitecture64()}";
+        if (RuntimeInfo.IsWindows && RuntimeInfo.IsAarch64)
+            runtime = $"{RuntimeInfo.GetOperationSystem()}-x64"; // Not supported by netcoredbg, but we can try to use x64 version
+    
+        return $"https://github.com/JaneySprings/netcoredbg/releases/download/{LatestReleaseVersion}/netcoredbg_{runtime}.zip";
     }
     string? IDebuggerInstaller.Install(string downloadUrl) {
         CurrentSessionLogger.Debug($"Downloading debugger from '{downloadUrl}'");
