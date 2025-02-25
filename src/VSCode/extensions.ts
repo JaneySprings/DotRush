@@ -97,6 +97,9 @@ export class Extensions {
 
         return undefined;
     }
+    public static onVSCode<TValue>(official: TValue, fork: TValue): TValue {
+        return vscode.env.appName.includes(res.vscodeAppName) ? official : fork;
+    }
 
     private static async findFiles(baseUri: vscode.Uri | undefined, extension: string): Promise<vscode.Uri[]> {
         if (baseUri?.fsPath !== undefined && path.extname(baseUri.fsPath) === extension)

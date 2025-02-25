@@ -39,7 +39,7 @@ Task("netcore")
 	}))
 	.Does(() => {
 		if (!bundle) return;
-		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestExplorer", "dotrushde.dll")} --install-vsdbg");
+		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestExplorer", "dotrushde.dll")} --install-ncdbg");
 	});
 
 Task("unity")

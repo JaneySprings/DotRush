@@ -3,10 +3,13 @@ export const extensionPublisher = "nromanov";
 
 export const extensionMicrosoftId = "ms-dotnettools.csharp";
 export const microsoftProblemMatcherId = "msCompile";
+export const vscodeAppName = "Visual Studio Code";
 export const debuggerVsdbgId = "coreclr";
 export const debuggerVsdbgTitle = ".NET Core Debugger";
 export const debuggerUnityId = "unity";
 export const debuggerUnityTitle = "Unity Debugger";
+export const debuggerInstallVsdbgId = 'vsdbg';
+export const debuggerInstallNcdbgId = 'ncdbg';
 
 export const commandIdRestartServer = "dotrush.restartServer";
 export const commandIdPickProcess = "dotrush.pickProcess";
@@ -38,6 +41,7 @@ export const messageSelectProjectTitle = "Select a project file";
 export const messageSelectProgramTitle = "Select a Program to Debug";
 export const messageSelectTargetTitle = "Select Project or Solution files";
 export const messageReload = "Reload";
+export const messageInstallingDebugger = "Installing '{0}' Debugger. This may take a few minutes...";
 
 export const configIdRoslynProjectOrSolutionFiles = "roslyn.projectOrSolutionFiles";
 export const configIdDebuggerProjectAssembliesOnly = "debugger.projectAssembliesOnly";

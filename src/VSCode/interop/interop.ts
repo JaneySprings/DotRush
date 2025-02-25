@@ -35,9 +35,9 @@ export class Interop {
         return await ProcessRunner.runAsync<Process[]>(new ProcessArgumentBuilder(Interop.toolPath)
             .append("--list-proc"));
     }
-    public static async installDebugger(): Promise<Status> {
+    public static async installDebugger(id: string): Promise<Status> {
         return await ProcessRunner.runAsync<Status>(new ProcessArgumentBuilder(Interop.toolPath)
-            .append("--install-vsdbg"));
+            .append(`--install-${id}`));
     }
     public static async runTestHost(projectFile: string, filter: string): Promise<number> {
         return await ProcessRunner.runDetached<number>(new ProcessArgumentBuilder(Interop.toolPath)

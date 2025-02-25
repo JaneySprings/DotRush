@@ -64,4 +64,15 @@ public static class FileSystemExtensions {
             return string.Empty;
         }
     }
+    public static bool TryDeleteDirectory(string directoryPath) {
+        if (!Directory.Exists(directoryPath))
+            return false;
+
+        try {
+            Directory.Delete(directoryPath, true);
+            return true;
+        } catch {
+            return false;
+        }
+    }
 }
