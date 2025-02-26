@@ -40,7 +40,6 @@ public class WorkspaceFilesWatcher {
     private void CheckWorkspaceChanges() {
         if (listener.IsGitEventsSupported && GitExtensions.IsRepositoryLocked(repositoryPath)) {
             currentClassLogger.Debug($"Repository '{repositoryPath}' is locked, skipping workspace changes check");
-            workspaceFiles.Clear();
             return;
         }
 
