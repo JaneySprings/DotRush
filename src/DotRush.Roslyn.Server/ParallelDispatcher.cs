@@ -1,39 +1,55 @@
 using System.Collections.Concurrent;
-using DotRush.Common.Logging;
+using DotRush.Common.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Server.Scheduler;
 
 namespace DotRush.Roslyn.Server;
 
 public class ParallelDispatcher : IScheduler {
-    private readonly Thread _workerThread;
-    private readonly BlockingCollection<Action> _tasks = new BlockingCollection<Action>();
-    private readonly string[] syncTable = new[] {
-        "textDocument/didOpen",
-        "textDocument/didChange",
-        "textDocument/didClose",
+    private readonly Thread mainThread;
+    private readonly Thread workerThread;
+    private readonly BlockingCollection<TaskInfo> mainTasks = new BlockingCollection<TaskInfo>();
+    private readonly BlockingCollection<Action> workerTasks = new BlockingCollection<Action>();
+    private readonly string[] workerHandlersTable = new[] {
+        "textDocument/diagnostic",
     };
 
     public ParallelDispatcher() {
-        _workerThread = new Thread(() => {
-            foreach (var task in _tasks.GetConsumingEnumerable()) {
-                try {
-                    task();
-                } catch(Exception e) {
-                    CurrentSessionLogger.Error(e);
+        mainThread = new Thread(() => {
+            foreach (var taskInfo in mainTasks.GetConsumingEnumerable()) {
+                if (taskInfo.IsWorkerTask) {
+                    workerTasks.Add(taskInfo.Task);
+                    continue;
                 }
+                SafeExtensions.Invoke(taskInfo.Task);
             }
         });
-        _workerThread.IsBackground = true;
-        _workerThread.Start();
+        workerThread = new Thread(() => {
+            foreach (var task in workerTasks.GetConsumingEnumerable())
+                SafeExtensions.Invoke(task);
+        });
+
+        mainThread.IsBackground = true;
+        workerThread.IsBackground = true;
+        mainThread.Start();
+        workerThread.Start();
     }
 
     public void Schedule(Func<Message, Task> action, Message message) {
-        if (message is MethodMessage methodMessage && syncTable.Contains(methodMessage.Method)) {
-            _tasks.Add(() => action(message).Wait());
-            return;
-        }
+        var taskInfo = new TaskInfo(() => action(message).Wait());
+        if (message is MethodMessage methodMessage && workerHandlersTable.Contains(methodMessage.Method))
+            taskInfo.IsWorkerTask = true;
+ 
+        mainTasks.Add(taskInfo);
+    }
 
-        _tasks.Add(() => _ = Task.Run(async() => await action(message).ConfigureAwait(false)));
+
+    private class TaskInfo {
+        public Action Task { get; set; }
+        public bool IsWorkerTask { get; set; }
+
+        public TaskInfo(Action task) {
+            Task = task;
+        }
     }
 }

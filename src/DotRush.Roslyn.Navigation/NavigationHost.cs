@@ -25,7 +25,7 @@ public class NavigationHost {
         using var decompiler = new AssemblyDecompiler();
         var isMetadataCollected = await decompiler.CollectAssemblyMetadataAsync(symbol.ContainingAssembly, project, cancellationToken).ConfigureAwait(false);
         if (!isMetadataCollected) {
-            currentClassLogger.Debug($"Failed to collect metadata for assembly '{symbol.ContainingAssembly.Name}'");
+            currentClassLogger.Debug($"Failed to collect metadata for assembly '{symbol?.ContainingAssembly?.Name}'");
             return null;
         }
 

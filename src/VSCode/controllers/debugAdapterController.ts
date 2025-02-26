@@ -18,7 +18,7 @@ export class DebugAdapterController {
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerUnityId, new MonoDebugConfigurationProvider()));
 
         if (!fs.existsSync(path.join(context.extensionPath, 'extension', 'bin', 'Debugger')))
-            await DebugAdapterController.installDebugger(Extensions.onVSCode(res.debuggerInstallVsdbgId, res.debuggerInstallNcdbgId));
+            await DebugAdapterController.installDebugger(Extensions.onVSCode(res.debuggerVsdbgInstallId, res.debuggerNcdbgInstallId));
     }
 
     public static async showQuickPickProgram(): Promise<string | undefined> {
@@ -37,14 +37,18 @@ export class DebugAdapterController {
     }
     
     private static async installDebugger(id: string): Promise<void> {
-        const displayName = id === res.debuggerInstallVsdbgId ? 'vsdbg' : 'netcoredbg';
+        const getNameByDebuggerId = (id: string) => {
+            switch (id) {
+                case res.debuggerVsdbgInstallId: return res.debuggerVsdbgDisplayName;
+                case res.debuggerNcdbgInstallId: return res.debuggerNcdbgDisplayName;
+                default: return id;
+            }
+        };
         const options : vscode.ProgressOptions = {
+            title: res.messageInstallingComponentTitle + getNameByDebuggerId(id),
             location: vscode.ProgressLocation.Notification,
             cancellable: false
         };
-        await vscode.window.withProgress(options, (progress, _) => {
-            progress.report({ message: res.messageInstallingDebugger.replace('{0}', displayName) });
-            return Interop.installDebugger(id);
-        })
+        await vscode.window.withProgress(options, (_p, _ct) => Interop.installDebugger(id));
     }
 }

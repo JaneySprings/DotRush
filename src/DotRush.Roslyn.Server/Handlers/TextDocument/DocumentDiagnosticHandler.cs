@@ -1,4 +1,5 @@
 using DotRush.Common.Extensions;
+using DotRush.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
@@ -37,6 +38,8 @@ public class DocumentDiagnosticsHandler : DocumentDiagnosticHandlerBase {
 
             var diagnostics = await codeAnalysisService.DiagnoseAsync(projectIds, workspaceService.Solution, token).ConfigureAwait(false);
             var curentFileDiagnostics = diagnostics.Where(d => PathExtensions.Equals(d.FilePath, request.TextDocument.Uri.FileSystemPath));
+
+            CurrentSessionLogger.Debug($"Publish Diagnostics: {request.TextDocument.Uri} - {curentFileDiagnostics.Count()}");
 
             return new RelatedFullDocumentDiagnosticReport {
                 Diagnostics = curentFileDiagnostics.Select(diagnostic => diagnostic.ToServerDiagnostic()).ToList(),
