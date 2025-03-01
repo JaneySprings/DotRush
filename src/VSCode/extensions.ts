@@ -69,6 +69,22 @@ export class Extensions {
         const selectedItems = await vscode.window.showQuickPick(items, { canPickMany: true, placeHolder: res.messageSelectTargetTitle });
         return selectedItems?.map((it: any) => it.item);
     }
+    public static async selectProjecFile(baseUri: vscode.Uri | undefined = undefined): Promise<string | undefined> {
+        if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath) === '.csproj')
+            return baseUri.fsPath;
+        
+        const projectFiles = await Extensions.findFiles(baseUri, Extensions.projectExtPattern);
+        if (projectFiles.length === 0) {
+            vscode.window.showErrorMessage(res.messageNoProjectFileFound);
+            return undefined;
+        }
+        if (projectFiles.length === 1)
+            return projectFiles[0].fsPath;
+
+        const items = projectFiles.map(it => new ProjectOrSolutionItem(it.fsPath));
+        const selectedItem = await vscode.window.showQuickPick<any>(items, { placeHolder: res.messageSelectProjectTitle });
+        return selectedItem?.item;
+    }
 
     public static async parallelForEach<T>(items: T[], action: (item: T) => Promise<void>): Promise<void> {
         const parallel = 4;
