@@ -34,7 +34,7 @@ public class TestWorkspace : DotRushWorkspace {
     }
 
     public override void OnProjectRestoreFailed(string documentPath, ProcessResult result) {
-        throw new InvalidOperationException($"[{documentPath}]: Project restore failed with exit code {result.ExitCode}:\n{result.GetError()}");
+        throw new InvalidOperationException($"[{documentPath}]: Project restore failed with exit code {result.ExitCode}:\nOutput: {result.GetOutput()}\nError: {result.GetError()}");
     }
 
     public void SetSolution(Solution solution) {
