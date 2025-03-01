@@ -12,24 +12,25 @@ public class NavigationHost {
     public string GeneratedCodeDirectory { get; private set; }
     public Solution? Solution { get; set; }
 
-    private CurrentClassLogger currentClassLogger;
+    private readonly CurrentClassLogger currentClassLogger;
+    private readonly AssemblyDecompiler assemblyDecompiler;
 
     public NavigationHost() {
         var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
         DecompiledCodeDirectory = Path.Combine(baseDirectory, "_decompiled_");
         GeneratedCodeDirectory = Path.Combine(baseDirectory, "_generated_");
         currentClassLogger = new CurrentClassLogger(nameof(NavigationHost));
+        assemblyDecompiler = new AssemblyDecompiler();
     }
 
     public async Task<string?> EmitDecompiledFileAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
-        using var decompiler = new AssemblyDecompiler();
-        var isMetadataCollected = await decompiler.CollectAssemblyMetadataAsync(symbol.ContainingAssembly, project, cancellationToken).ConfigureAwait(false);
-        if (!isMetadataCollected) {
+        var csharpDecompiler = await assemblyDecompiler.CreateDecompilerAsync(symbol.ContainingAssembly, project, cancellationToken).ConfigureAwait(false);
+        if (csharpDecompiler == null) {
             currentClassLogger.Debug($"Failed to collect metadata for assembly '{symbol?.ContainingAssembly?.Name}'");
             return null;
         }
 
-        var syntaxTree = decompiler.DecompileType(symbol);
+        var syntaxTree = assemblyDecompiler.DecompileType(csharpDecompiler, symbol);
         var outputFilePath = Path.Combine(DecompiledCodeDirectory, project.Name, symbol.ContainingAssembly.Name, syntaxTree.FileName);
         FileSystemExtensions.WriteAllText(outputFilePath, syntaxTree.ToString());
         CreateDocument(outputFilePath, null, project);

@@ -11,50 +11,78 @@ using SyntaxTree = ICSharpCode.Decompiler.CSharp.Syntax.SyntaxTree;
 
 namespace DotRush.Roslyn.Navigation.Decompilation;
 
-public class AssemblyDecompiler : IDisposable {
-    private readonly DecompilerSettings settings = new DecompilerSettings {
+public class AssemblyDecompiler {
+    public DecompilerSettings DecompilerSettings { get; set; } = new DecompilerSettings {
         ThrowOnAssemblyResolveErrors = false,
         RemoveDeadCode = false,
         RemoveDeadStores = false,
         ShowXmlDocumentation = true,
         UseNestedDirectoriesForNamespaces = false,
+        UseDebugSymbols = true,
     };
 
-    private UniversalAssemblyResolver? resolver;
-    private PEFile? module;
+    public async Task<CSharpDecompiler?> CreateDecompilerAsync(IAssemblySymbol assemblySymbol, Project project, CancellationToken cancellationToken) {
+        var peReference = await GetPEReference(assemblySymbol, project, cancellationToken);
+        if (peReference == null || peReference.FilePath == null)
+            return null;
 
-    public async Task<bool> CollectAssemblyMetadataAsync(IAssemblySymbol assemblySymbol, Project project, CancellationToken cancellationToken) {
-        var compilation = await project.GetCompilationAsync(cancellationToken);
-        var metadataReference = compilation?.GetMetadataReference(assemblySymbol);
-        var assemblyPath = (metadataReference as PortableExecutableReference)?.FilePath;
-        if (assemblyPath == null || metadataReference == null)
-            return false;
+        var module = new PEFile(peReference.FilePath, PEStreamOptions.PrefetchEntireImage);
+        var resolver = new UniversalAssemblyResolver(project.OutputFilePath, false, module.DetectTargetFrameworkId(), module.DetectRuntimePack());
+        var resolvedAssemblyPath = resolver.FindAssemblyFile(new AssemblyReference(assemblySymbol));
+        if (resolvedAssemblyPath != null) {
+            resolvedAssemblyPath = RedirectRuntimeAssemblyToCoreLib(resolvedAssemblyPath);
+            module = new PEFile(resolvedAssemblyPath, PEStreamOptions.PrefetchEntireImage);
+        }
 
-        module = new PEFile(assemblyPath, PEStreamOptions.PrefetchEntireImage);
-        resolver = new UniversalAssemblyResolver(assemblyPath, false, module.DetectTargetFrameworkId(), module.DetectRuntimePack());
-        resolver.AddSearchDirectory(Path.GetDirectoryName(project.OutputFilePath));
-        resolver.AddSearchDirectory(Path.GetDirectoryName(assemblyPath));
-        return true;
+        return new CSharpDecompiler(module, resolver, DecompilerSettings);
     }
-    public SyntaxTree DecompileType(ISymbol typeSymbol) {
+    public SyntaxTree DecompileType(CSharpDecompiler decompiler, ISymbol typeSymbol) {
         var typeName = typeSymbol.GetNamedTypeFullName();
-        if (resolver == null || module == null)
-            throw new InvalidOperationException("Assembly metadata is not collected");
         if (string.IsNullOrEmpty(typeName))
             throw new InvalidOperationException("Type name is empty");
-        
-        var decompiler = new CSharpDecompiler(module, resolver, settings);
+
         var fullTypeName = new FullTypeName(typeName);
         var result = decompiler.DecompileType(fullTypeName);
+        var metadataFile = decompiler.TypeSystem.MainModule.MetadataFile;
 
-        result.InsertChildBefore(result.Children.First(), new PreProcessorDirective(PreProcessorDirectiveType.Region, $"Assembly {module.FullName}"), Roles.PreProcessorDirective);
-        result.InsertChildAfter(result.Children.First(), new Comment(" " + module.FileName), Roles.Comment);
+        result.InsertChildBefore(result.Children.First(), new PreProcessorDirective(PreProcessorDirectiveType.Region, $"Assembly {metadataFile.FullName}"), Roles.PreProcessorDirective);
+        result.InsertChildAfter(result.Children.First(), new Comment(" " + metadataFile.FileName), Roles.Comment);
         result.InsertChildAfter(result.Children.Skip(1).First(), new PreProcessorDirective(PreProcessorDirectiveType.Endregion, "\n"), Roles.PreProcessorDirective);
         result.FileName = typeName + ".cs";
         return result;
     }
 
-    public void Dispose() {
-        module?.Dispose();
+    private async Task<PortableExecutableReference?> GetPEReference(IAssemblySymbol assemblySymbol, Project project, CancellationToken cancellationToken) {
+        var compilation = await project.GetCompilationAsync(cancellationToken);
+        var metadataReference = compilation?.GetMetadataReference(assemblySymbol);
+        return metadataReference as PortableExecutableReference;
+    }
+    private string RedirectRuntimeAssemblyToCoreLib(string assemblyPath) {
+        var assemblyName = Path.GetFileNameWithoutExtension(assemblyPath);
+        if (assemblyName.Equals("System.Runtime", StringComparison.OrdinalIgnoreCase)) {
+            var coreLibAssemblyPath = Path.Combine(Path.GetDirectoryName(assemblyPath)!, "System.Private.CoreLib.dll");
+            if (File.Exists(coreLibAssemblyPath))
+                return coreLibAssemblyPath;
+        }
+        return assemblyPath;
+    }
+
+    class AssemblyReference : IAssemblyReference {
+        public string Name { get; init; }
+        public string FullName { get; init; }
+        public Version? Version { get; init; }
+        public string? Culture { get; init; }
+        public byte[]? PublicKeyToken { get; init; }
+        public bool IsRetargetable { get; init; }
+        public bool IsWindowsRuntime => false;
+    
+        public AssemblyReference(IAssemblySymbol assemblySymbol) {
+            Name = assemblySymbol.Identity.Name;
+            FullName = assemblySymbol.Identity.GetDisplayName();
+            Version = assemblySymbol.Identity.Version;
+            Culture = assemblySymbol.Identity.CultureName;
+            PublicKeyToken = assemblySymbol.Identity.PublicKeyToken.ToArray();
+            IsRetargetable = assemblySymbol.Identity.IsRetargetable;
+        }
     }
 }
