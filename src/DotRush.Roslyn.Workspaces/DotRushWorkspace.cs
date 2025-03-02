@@ -43,9 +43,9 @@ public abstract class DotRushWorkspace : SolutionController {
             if (!MSBuildLocator.CanRegister || MSBuildLocator.IsRegistered)
                 return true;
 
-            var dotnetPath = Environment.GetEnvironmentVariable("DOTNET_ROOT");
-            if (!string.IsNullOrEmpty(dotnetPath)) {
-                MSBuildLocator.RegisterMSBuildPath(dotnetPath);
+            var dotnetSdk = Environment.GetEnvironmentVariable("DOTNET_SDK_PATH"); //TODO: addd option in settings
+            if (!string.IsNullOrEmpty(dotnetSdk)) {
+                MSBuildLocator.RegisterMSBuildPath(dotnetSdk);
                 return true;
             }
 
