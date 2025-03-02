@@ -1,12 +1,12 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
-    <CodeAnalysisVersion>4.12.0</CodeAnalysisVersion>
+    <CodeAnalysisVersion>4.13.0</CodeAnalysisVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageVersion Include="NLog" Version="5.4.0" />
-    <PackageVersion Include="ICSharpCode.Decompiler" Version="9.0.0.7876-RC" />
+    <PackageVersion Include="ICSharpCode.Decompiler" Version="9.0.0.7889" />
     <PackageVersion Include="StreamJsonRpc" Version="2.19.27" />
 		<PackageVersion Include="Mono.Cecil" Version="0.11.4" />
 		<PackageVersion Include="Mono.Options" Version="6.12.0.148" />
@@ -19,7 +19,7 @@
   
     <PackageVersion Include="Microsoft.VisualStudio.Shared.VSCodeDebugProtocol" Version="17.2.60629.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-    <PackageVersion Include="Microsoft.Build.Locator" Version="1.5.5" />
+    <PackageVersion Include="Microsoft.Build.Locator" Version="1.7.8" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(CodeAnalysisVersion)"/>
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(CodeAnalysisVersion)" />
