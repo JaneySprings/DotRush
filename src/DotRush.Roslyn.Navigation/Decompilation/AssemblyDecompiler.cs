@@ -29,10 +29,8 @@ public class AssemblyDecompiler {
         var module = new PEFile(peReference.FilePath, PEStreamOptions.PrefetchEntireImage);
         var resolver = new UniversalAssemblyResolver(project.OutputFilePath, false, module.DetectTargetFrameworkId(), module.DetectRuntimePack());
         var resolvedAssemblyPath = resolver.FindAssemblyFile(new AssemblyReference(assemblySymbol));
-        if (resolvedAssemblyPath != null) {
-            resolvedAssemblyPath = RedirectRuntimeAssemblyToCoreLib(resolvedAssemblyPath);
+        if (!string.IsNullOrEmpty(resolvedAssemblyPath))
             module = new PEFile(resolvedAssemblyPath, PEStreamOptions.PrefetchEntireImage);
-        }
 
         return new CSharpDecompiler(module, resolver, DecompilerSettings);
     }
@@ -42,6 +40,8 @@ public class AssemblyDecompiler {
             throw new InvalidOperationException("Type name is empty");
 
         var fullTypeName = new FullTypeName(typeName);
+        decompiler = ValidateDecompilerTypeSystem(decompiler, fullTypeName);
+
         var result = decompiler.DecompileType(fullTypeName);
         var metadataFile = decompiler.TypeSystem.MainModule.MetadataFile;
 
@@ -57,14 +57,16 @@ public class AssemblyDecompiler {
         var metadataReference = compilation?.GetMetadataReference(assemblySymbol);
         return metadataReference as PortableExecutableReference;
     }
-    private string RedirectRuntimeAssemblyToCoreLib(string assemblyPath) {
-        var assemblyName = Path.GetFileNameWithoutExtension(assemblyPath);
-        if (assemblyName.Equals("System.Runtime", StringComparison.OrdinalIgnoreCase)) {
-            var coreLibAssemblyPath = Path.Combine(Path.GetDirectoryName(assemblyPath)!, "System.Private.CoreLib.dll");
-            if (File.Exists(coreLibAssemblyPath))
-                return coreLibAssemblyPath;
+    private CSharpDecompiler ValidateDecompilerTypeSystem(CSharpDecompiler decompiler, FullTypeName fullTypeName) {
+        var type = decompiler.TypeSystem.FindType(fullTypeName.TopLevelTypeName).GetDefinition();
+    
+        if (type?.ParentModule != null && type.ParentModule != decompiler.TypeSystem.MainModule) {
+            var parentModulePath = type.ParentModule.MetadataFile?.FileName;
+            if (File.Exists(parentModulePath))
+                return new CSharpDecompiler(parentModulePath, DecompilerSettings);
         }
-        return assemblyPath;
+
+        return decompiler;
     }
 
     class AssemblyReference : IAssemblyReference {
