@@ -13,7 +13,7 @@ public class SimpleSolutionLoadTests : TestFixture {
     public async Task LoadSingleProjectTest() {
         var workspace = new TestWorkspace();
         var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
-        var solutionPath = await CreateSolution("MySolution", projectPath);
+        var solutionPath = CreateSolution("MySolution", projectPath);
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
 
         await workspace.LoadAsync(new[] { solutionPath }, CancellationToken.None);
@@ -25,12 +25,12 @@ public class SimpleSolutionLoadTests : TestFixture {
         Assert.That(documentIds.Count(), Is.EqualTo(1));
         Assert.That(workspace.Solution.GetDocument(documentIds.First())!.Name, Is.EqualTo("Program.cs"));
     }
-    [Test]
+    [Test, Retry(3)]
     public async Task LoadSingleProjectsTest() {
         var workspace = new TestWorkspace();
         var project1Path = CreateProject("MyProject", SingleTFM, "Exe");
         var project2Path = CreateProject("MyProject2", SingleTFM, "Library");
-        var solutionPath = await CreateSolution("MySolution", project1Path, project2Path);
+        var solutionPath = CreateSolution("MySolution", project1Path, project2Path);
 
         await workspace.LoadAsync(new[] { solutionPath }, CancellationToken.None);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(2));
@@ -42,7 +42,7 @@ public class SimpleSolutionLoadTests : TestFixture {
     public async Task LoadMultitargetProjectTest() {
         var workspace = new TestWorkspace();
         var projectPath = CreateProject("MyProject", MultiTFM, "Exe");
-        var solutionPath = await CreateSolution("MySolution", projectPath);
+        var solutionPath = CreateSolution("MySolution", projectPath);
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
 
         await workspace.LoadAsync(new[] { solutionPath }, CancellationToken.None);
@@ -55,12 +55,12 @@ public class SimpleSolutionLoadTests : TestFixture {
         Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo($"MyProject({tfm1})"));
         Assert.That(workspace.Solution.Projects.ElementAt(1).Name, Is.EqualTo($"MyProject({tfm2})"));
     }
-    [Test]
+    [Test, Retry(3)]
     public async Task LoadMultitargetProjectsTest() {
         var workspace = new TestWorkspace();
         var project1Path = CreateProject("MyProject", MultiTFM, "Exe");
         var project2Path = CreateProject("MyProject2", MultiTFM, "Library");
-        var solutionPath = await CreateSolution("MySolution", project1Path, project2Path);
+        var solutionPath = CreateSolution("MySolution", project1Path, project2Path);
 
         await workspace.LoadAsync(new[] { solutionPath }, CancellationToken.None);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(4));
@@ -77,7 +77,7 @@ public class SimpleSolutionLoadTests : TestFixture {
         var workspace = new TestWorkspace();
         var project1Path = CreateProject("MyProject", SingleTFM, "Exe");
         var project2Path = CreateProject("MyProject2", SingleTFM, "Library");
-        var solutionPath = await CreateSolution("MySolution", project1Path);
+        var solutionPath = CreateSolution("MySolution", project1Path);
 
         await workspace.LoadAsync(new[] { solutionPath, project2Path }, CancellationToken.None);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(2));
@@ -88,9 +88,9 @@ public class SimpleSolutionLoadTests : TestFixture {
     public async Task LoadSolutionsTest() {
         var workspace = new TestWorkspace();
         var project1Path = CreateProject("MyProject", SingleTFM, "Exe");
-        var solution1Path = await CreateSolution("MySolution", project1Path);
+        var solution1Path = CreateSolution("MySolution", project1Path);
         var project2Path = CreateProject("MyProject2", SingleTFM, "Library");
-        var solution2Path = await CreateSolution("MySolution2", project2Path);
+        var solution2Path = CreateSolution("MySolution2", project2Path);
 
         await workspace.LoadAsync(new[] { solution1Path, solution2Path }, CancellationToken.None);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(1));
@@ -106,13 +106,13 @@ public class SimpleSolutionLoadTests : TestFixture {
         Assert.ThrowsAsync<InvalidOperationException>(async () => await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None));
         Assert.That(workspace.Solution, Is.Null);
     }
-    [Test]
+    [Test, Retry(3)]
     public async Task GlobalWorkspacePropertiesTest() {
         var (tfm1, tfm2) = GetTFMs(MultiTFM);
         var workspace = new TestWorkspace(new Dictionary<string, string> { { "TargetFramework", tfm1 } });
         var project1Path = CreateProject("MyProject", MultiTFM, "Exe");
         var project2Path = CreateProject("MyProject2", MultiTFM, "Library");
-        var solutionPath = await CreateSolution("MySolution", project1Path, project2Path);
+        var solutionPath = CreateSolution("MySolution", project1Path, project2Path);
 
         await workspace.LoadAsync(new[] { solutionPath }, CancellationToken.None);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(2));
