@@ -49,14 +49,14 @@ public abstract class TestFixture {
         File.WriteAllText(projectFile, projectContent);
         return projectFile;
     }
-    protected string CreateSolution(string name, params string[] projects) {
+    protected async Task<string> CreateSolution(string name, params string[] projects) {
         var solutionFile = Path.Combine(SandboxDirectory, $"{name}.sln");
-        var newSlnTaskResult = ProcessRunner.CreateProcess("dotnet", $"new sln -n {name} -o {SandboxDirectory}", captureOutput: true, displayWindow: false).Task.Result;
+        var newSlnTaskResult = await ProcessRunner.CreateProcess("dotnet", $"new sln -n {name} -o {SandboxDirectory}", captureOutput: true, displayWindow: false).Task;
         if (newSlnTaskResult.ExitCode != 0)
             throw new InvalidOperationException($"Failed to create solution: {newSlnTaskResult.GetError()}");
 
         foreach (var project in projects) {
-            var addProjectTaskResult = ProcessRunner.CreateProcess("dotnet", $"sln {solutionFile} add {project}", captureOutput: true, displayWindow: false).Task.Result;
+            var addProjectTaskResult = await ProcessRunner.CreateProcess("dotnet", $"sln {solutionFile} add {project}", captureOutput: true, displayWindow: false).Task;
             if (addProjectTaskResult.ExitCode != 0)
                 throw new InvalidOperationException($"Failed to add project to solution: {addProjectTaskResult.GetError()}");
         }
