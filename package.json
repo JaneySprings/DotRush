@@ -379,7 +379,7 @@
           },
           "dotrush.roslyn.showItemsFromUnimportedNamespaces": {
             "type": "boolean",
-            "default": false,
+            "default": true,
             "description": "%configuration.description.roslyn.showItemsFromUnimportedNamespaces%"
           },
           "dotrush.roslyn.skipUnrecognizedProjects": {

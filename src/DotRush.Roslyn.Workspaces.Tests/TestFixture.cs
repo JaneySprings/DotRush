@@ -1,3 +1,4 @@
+using DotRush.Common.External;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
@@ -50,21 +51,15 @@ public abstract class TestFixture {
     }
     protected string CreateSolution(string name, params string[] projects) {
         var solutionFile = Path.Combine(SandboxDirectory, $"{name}.sln");
-        var solutionContent = @"Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31105.104
-MinimumVisualStudioVersion = 10.0.40219.1
-Global
-    GlobalSection(SolutionProperties) = preSolution
-        HideSolutionNode = FALSE
-    EndGlobalSection
-EndGlobal";
+        var newSlnTaskResult = ProcessRunner.CreateProcess("dotnet", $"new sln -n {name} -o {SandboxDirectory}", captureOutput: true, displayWindow: false).Task.Result;
+        if (newSlnTaskResult.ExitCode != 0)
+            throw new InvalidOperationException($"Failed to create solution: {newSlnTaskResult.GetError()}");
 
-        File.WriteAllText(solutionFile, solutionContent);
-
-        foreach (var project in projects)
-            File.AppendAllText(solutionFile, $"\nProject(\"{{{Guid.NewGuid}}}\") = \"{Path.GetFileNameWithoutExtension(project)}\", \"{project}\", \"{{{Guid.NewGuid}}}\"\nEndProject");
-
+        foreach (var project in projects) {
+            var addProjectTaskResult = ProcessRunner.CreateProcess("dotnet", $"sln {solutionFile} add {project}", captureOutput: true, displayWindow: false).Task.Result;
+            if (addProjectTaskResult.ExitCode != 0)
+                throw new InvalidOperationException($"Failed to add project to solution: {addProjectTaskResult.GetError()}");
+        }
         return solutionFile;
     }
 
