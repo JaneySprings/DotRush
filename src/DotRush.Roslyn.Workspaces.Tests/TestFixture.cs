@@ -1,4 +1,3 @@
-using DotRush.Common.External;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
@@ -49,17 +48,23 @@ public abstract class TestFixture {
         File.WriteAllText(projectFile, projectContent);
         return projectFile;
     }
-    protected async Task<string> CreateSolution(string name, params string[] projects) {
+    protected string CreateSolution(string name, params string[] projects) {
         var solutionFile = Path.Combine(SandboxDirectory, $"{name}.sln");
-        var newSlnTaskResult = await ProcessRunner.CreateProcess("dotnet", $"new sln -n {name} -o {SandboxDirectory}", captureOutput: true, displayWindow: false).Task;
-        if (newSlnTaskResult.ExitCode != 0)
-            throw new InvalidOperationException($"Failed to create solution: {newSlnTaskResult.GetError()}");
+        var solutionContent = @"Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31105.104
+MinimumVisualStudioVersion = 10.0.40219.1
+Global
+    GlobalSection(SolutionProperties) = preSolution
+        HideSolutionNode = FALSE
+    EndGlobalSection
+EndGlobal";
 
-        foreach (var project in projects) {
-            var addProjectTaskResult = await ProcessRunner.CreateProcess("dotnet", $"sln {solutionFile} add {project}", captureOutput: true, displayWindow: false).Task;
-            if (addProjectTaskResult.ExitCode != 0)
-                throw new InvalidOperationException($"Failed to add project to solution: {addProjectTaskResult.GetError()}");
-        }
+        File.WriteAllText(solutionFile, solutionContent);
+
+        foreach (var project in projects)
+            File.AppendAllText(solutionFile, $"\nProject(\"{{{Guid.NewGuid}}}\") = \"{Path.GetFileNameWithoutExtension(project)}\", \"{project}\", \"{{{Guid.NewGuid}}}\"\nEndProject");
+
         return solutionFile;
     }
 
