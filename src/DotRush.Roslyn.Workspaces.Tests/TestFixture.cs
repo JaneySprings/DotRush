@@ -63,7 +63,7 @@ EndGlobal";
         File.WriteAllText(solutionFile, solutionContent);
 
         foreach (var project in projects)
-            File.AppendAllText(solutionFile, $"\nProject(\"{{{Guid.NewGuid}}}\") = \"{Path.GetFileNameWithoutExtension(project)}\", \"{project}\", \"{{{Guid.NewGuid}}}\"\nEndProject");
+            File.AppendAllText(solutionFile, $"\nProject(\"{{9A19103F-16F7-4668-BE54-9A1E7A4F7556}}\") = \"{Path.GetFileNameWithoutExtension(project)}\", \"{project}\", \"{{{Guid.NewGuid}}}\"\nEndProject");
 
         return solutionFile;
     }
