@@ -19,6 +19,7 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
     protected override bool RestoreProjectsBeforeLoading => configurationService.RestoreProjectsBeforeLoading;
     protected override bool CompileProjectsAfterLoading => configurationService.CompileProjectsAfterLoading;
     protected override bool ApplyWorkspaceChanges => configurationService.ApplyWorkspaceChanges;
+    protected override string DotNetSdkDirectory => configurationService.DotNetSdkDirectory;
 
     public WorkspaceService(ConfigurationService configurationService) {
         this.configurationService = configurationService;

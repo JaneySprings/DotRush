@@ -18,6 +18,7 @@ public class TestWorkspace : DotRushWorkspace {
     protected override bool RestoreProjectsBeforeLoading => restoreProjectsBeforeLoading;
     protected override bool CompileProjectsAfterLoading => compileProjectsAfterLoading;
     protected override bool ApplyWorkspaceChanges => applyWorkspaceChanges;
+    protected override string DotNetSdkDirectory => string.Empty;
 
 
     public TestWorkspace(Dictionary<string, string>? workspaceProperties = null) : this(workspaceProperties, true, false, true, false, false) {}

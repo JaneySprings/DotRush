@@ -12,6 +12,7 @@ public abstract class DotRushWorkspace : SolutionController {
     protected abstract bool LoadMetadataForReferencedProjects { get; }
     protected abstract bool SkipUnrecognizedProjects { get; }
     protected abstract bool ApplyWorkspaceChanges { get; }
+    protected abstract string DotNetSdkDirectory { get; }
 
     public bool InitializeWorkspace() {
         var registrationResult = TryRegisterDotNetEnvironment();
@@ -38,14 +39,13 @@ public abstract class DotRushWorkspace : SolutionController {
         return LoadProjectsAsync(workspace, projectFiles, cancellationToken);
     }
 
-    private static bool TryRegisterDotNetEnvironment() {
+    private bool TryRegisterDotNetEnvironment() {
         try {
             if (!MSBuildLocator.CanRegister || MSBuildLocator.IsRegistered)
                 return true;
 
-            var dotnetSdk = Environment.GetEnvironmentVariable("DOTNET_SDK_PATH"); //TODO: addd option in settings
-            if (!string.IsNullOrEmpty(dotnetSdk)) {
-                MSBuildLocator.RegisterMSBuildPath(dotnetSdk);
+            if (!string.IsNullOrEmpty(DotNetSdkDirectory)) {
+                MSBuildLocator.RegisterMSBuildPath(DotNetSdkDirectory);
                 return true;
             }
 
