@@ -417,6 +417,10 @@
             "default": true,
             "description": "%configuration.description.roslyn.enableAnalyzers%"
           },
+          "dotrush.roslyn.dotnetSdkDirectory": {
+            "type": "string",
+            "description": "%configuration.description.roslyn.dotnetSdkDirectory%"
+          },
           "dotrush.debugger.projectAssembliesOnly": {
             "type": "boolean",
             "default": false,

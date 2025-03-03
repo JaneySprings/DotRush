@@ -21,6 +21,7 @@
 	"configuration.description.roslyn.projectOrSolutionFiles": "Paths to project or solution files to load.",
 	"configuration.description.roslyn.useMultitargetDiagnostics": "Determines if projects from all target frameworks are diagnosed.",
 	"configuration.description.roslyn.applyWorkspaceChanges": "Determines if changes made to the workspace are applied to the project files.",
+	"configuration.description.roslyn.dotnetSdkDirectory": "Path to the SDK directory to use for .NET projects (e.g. C:\\Program Files\\dotnet\\sdk\\9.0.201).",
 
 	"configuration.description.debugger.projectAssembliesOnly": "Use only project assemblies for debugging.",
 	"configuration.description.debugger.stepOverPropertiesAndOperators": "Step over properties and operators.",
