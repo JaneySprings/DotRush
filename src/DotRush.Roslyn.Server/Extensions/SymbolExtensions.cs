@@ -58,4 +58,21 @@ public static class SymbolExtensions {
 
         return ProtocolModels.SymbolKind.String;
     }
+    public static ITypeSymbol? GetTypeSymbol(this ISymbol symbol) {
+        if (symbol is ITypeSymbol typeSymbol)
+            return typeSymbol;
+
+        if (symbol is ILocalSymbol localSymbol)
+            return localSymbol.Type;
+        if (symbol is IFieldSymbol fieldSymbol)
+            return fieldSymbol.Type;
+        if (symbol is IPropertySymbol propertySymbol)
+            return propertySymbol.Type;
+        if (symbol is IParameterSymbol parameterSymbol)
+            return parameterSymbol.Type;
+        if (symbol is IMethodSymbol methodSymbol)
+            return methodSymbol.ContainingType;
+
+        return null;
+    }
 }

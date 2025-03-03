@@ -42,16 +42,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
             if (symbol == null)
                 continue;
 
-            ITypeSymbol? typeSymbol = null;
-            if (symbol is ILocalSymbol localSymbol)
-                typeSymbol = localSymbol.Type;
-            else if (symbol is IFieldSymbol fieldSymbol)
-                typeSymbol = fieldSymbol.Type;
-            else if (symbol is IPropertySymbol propertySymbol)
-                typeSymbol = propertySymbol.Type;
-            else if (symbol is IParameterSymbol parameterSymbol)
-                typeSymbol = parameterSymbol.Type;
-
+            var typeSymbol = symbol.GetTypeSymbol();
             if (typeSymbol == null || typeSymbol.Locations == null)
                 continue;
 

@@ -12,6 +12,9 @@ public static class PositionExtensions {
 
         return sourceText.Lines.GetPosition(new LinePosition(position.Line, position.Character));
     }
+    public static ProtocolModels.DocumentRange ToRange(this ProtocolModels.Position position) {
+        return new ProtocolModels.DocumentRange(position, position);
+    }
 
     public static ProtocolModels.Position ToPosition(this int offset, SourceText sourceText) {
         var linePosition = sourceText.Lines.GetLinePosition(offset);
@@ -79,10 +82,8 @@ public static class PositionExtensions {
         };
     }
 
-    public static ProtocolModels.DocumentRange EmptyRange => new ProtocolModels.DocumentRange(
-        new ProtocolModels.Position(0, 0), 
-        new ProtocolModels.Position(0, 0)
-    );
+    public static ProtocolModels.DocumentRange EmptyRange => new ProtocolModels.DocumentRange(EmptyPosition, EmptyPosition);
+    public static ProtocolModels.Position EmptyPosition => new ProtocolModels.Position(0, 0);
 
     public static bool OverlapsWith(this ProtocolModels.DocumentRange baseRange, ProtocolModels.DocumentRange otherRange) {
         return baseRange.Start.Line <= otherRange.End.Line
