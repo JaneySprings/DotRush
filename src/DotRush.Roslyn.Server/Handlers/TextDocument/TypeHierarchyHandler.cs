@@ -63,7 +63,29 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
         return Task.FromResult<TypeHierarchyResponse?>(new TypeHierarchyResponse(result));
     }
     protected override Task<TypeHierarchyResponse?> Handle(TypeHierarchySubtypesParams typeHierarchySubtypesParams, CancellationToken cancellationToken) {
-        return Task.FromResult<TypeHierarchyResponse?>(null);
+        return SafeExtensions.InvokeAsync(async () => {
+            if (typeHierarchySubtypesParams.Item.Data?.Value == null || navigationService.Solution == null)
+                return null;
+
+            var result = new List<TypeHierarchyItem>();
+            var symbol = typeHierarchyCache.GetValueOrDefault((int)typeHierarchySubtypesParams.Item.Data.Value);
+            if (symbol == null || symbol is not INamedTypeSymbol namedTypeSymbol)
+                return null;
+
+            var subtypes = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+            foreach (var subtype in subtypes)
+                result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item.Uri.FileSystemPath));
+
+            subtypes = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+            foreach (var subtype in subtypes)
+                result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item.Uri.FileSystemPath));
+
+            subtypes = await SymbolFinder.FindImplementationsAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+            foreach (var subtype in subtypes)
+                result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item.Uri.FileSystemPath));
+
+            return new TypeHierarchyResponse(result);
+        });
     }
 
     private TypeHierarchyItem CreateTypeHierarchyItem(ISymbol symbol, string filePath) {
