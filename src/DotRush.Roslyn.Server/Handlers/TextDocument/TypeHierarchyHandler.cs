@@ -9,6 +9,8 @@ using EmmyLua.LanguageServer.Framework.Protocol.Message.TypeHierarchy;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -39,10 +41,11 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
 
             var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
             var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, typeHierarchyPrepareParams.Position.ToOffset(sourceText), cancellationToken).ConfigureAwait(false);
-            if (symbol == null || symbol is not ITypeSymbol typeSymbol)
+            var typeSymbol = symbol.GetTypeSymbol();
+            if (typeSymbol == null)
                 return null;
-            
-            result.Add(CreateTypeHierarchyItem(typeSymbol, typeHierarchyPrepareParams.TextDocument.Uri.FileSystemPath));
+
+            result.Add(CreateTypeHierarchyItem(typeSymbol, typeHierarchyPrepareParams));
             return new TypeHierarchyResponse(result);
         });
     }
@@ -56,9 +59,9 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
             return Task.FromResult<TypeHierarchyResponse?>(null);
 
         if (typeSymbol.BaseType != null)
-            result.Add(CreateTypeHierarchyItem(typeSymbol.BaseType, typeHierarchySupertypesParams.Item.Uri.FileSystemPath));
+            result.Add(CreateTypeHierarchyItem(typeSymbol.BaseType, typeHierarchySupertypesParams.Item));
         foreach (var iface in typeSymbol.Interfaces)
-            result.Add(CreateTypeHierarchyItem(iface, typeHierarchySupertypesParams.Item.Uri.FileSystemPath));
+            result.Add(CreateTypeHierarchyItem(iface, typeHierarchySupertypesParams.Item));
 
         return Task.FromResult<TypeHierarchyResponse?>(new TypeHierarchyResponse(result));
     }
@@ -74,31 +77,38 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
 
             var subtypes = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
             foreach (var subtype in subtypes)
-                result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item.Uri.FileSystemPath));
+                result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item));
 
             subtypes = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
             foreach (var subtype in subtypes)
-                result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item.Uri.FileSystemPath));
+                result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item));
 
             subtypes = await SymbolFinder.FindImplementationsAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
             foreach (var subtype in subtypes)
-                result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item.Uri.FileSystemPath));
+                result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item));
 
             return new TypeHierarchyResponse(result);
         });
     }
 
-    private TypeHierarchyItem CreateTypeHierarchyItem(ISymbol symbol, string filePath) {
+    private TypeHierarchyItem CreateTypeHierarchyItem(ISymbol symbol, TextDocumentPositionParams fallbackParams) {
+        return CreateTypeHierarchyItem(symbol, fallbackParams.TextDocument.Uri.FileSystemPath, fallbackParams.Position.ToRange());
+    }
+    private TypeHierarchyItem CreateTypeHierarchyItem(ISymbol symbol, TypeHierarchyItem fallbackItem) {
+        return CreateTypeHierarchyItem(symbol, fallbackItem.Uri.FileSystemPath, PositionExtensions.EmptyRange);
+    }
+    private TypeHierarchyItem CreateTypeHierarchyItem(ISymbol symbol, string fallbackUri, DocumentRange fallbackRange) {
         var key = symbol.ToDisplayString().GetHashCode();
         typeHierarchyCache.TryAdd(key, symbol);
         
+        var location = symbol.Locations.FirstOrDefault();
         return new TypeHierarchyItem {
             Name = symbol.ToDisplayString(DisplayFormat.Member),
             Kind = symbol.ToSymbolKind(),
             Detail = symbol.ToDisplayString(DisplayFormat.Default),
-            Uri = symbol.Locations.FirstOrDefault()?.SourceTree?.FilePath ?? filePath,
-            Range = symbol.Locations.FirstOrDefault()?.ToRange() ?? PositionExtensions.EmptyRange,
-            SelectionRange = symbol.Locations.FirstOrDefault()?.ToRange() ?? PositionExtensions.EmptyRange,
+            Uri = location?.SourceTree?.FilePath ?? fallbackUri,
+            Range = location?.ToRange() ?? fallbackRange,
+            SelectionRange = location?.ToRange() ?? fallbackRange,
             Data = key
         };
     }
