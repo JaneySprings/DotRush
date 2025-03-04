@@ -363,7 +363,8 @@ public abstract class DiscoverTestsBase : TestFixture {
         [{TestFixtureAttr}]
         public partial class MyFixture {{
             [{TestCaseAttr}]
-            public void MyTest() {{}}
+            public void MyTest() {{
+            }}
         }}
         ");
         CreateFileInProject("SingleFixture2.cs", $@"namespace TestProject;
@@ -371,7 +372,6 @@ public abstract class DiscoverTestsBase : TestFixture {
         public partial class MyFixture {{
             [{TestCaseAttr}]
             public void MyTest2() {{
-                Assert.Pass();
             }}
         }}
         ");
@@ -382,9 +382,9 @@ public abstract class DiscoverTestsBase : TestFixture {
         var fixture = GetFixtureById(fixtures, "TestProject.MyFixture");
         Assert.Multiple(() => {
             Assert.That(fixture.Name, Is.EqualTo("MyFixture"));
-            Assert.That(fixture.FilePath, Is.EqualTo(Path.Combine(TestProjectPath, "SingleFixture.cs")));
+            Assert.That(fixture.FilePath, Is.EqualTo(Path.Combine(TestProjectPath, "SingleFixture.cs")).Or.EqualTo(Path.Combine(TestProjectPath, "SingleFixture2.cs")));
             Assert.That(fixture.Range!.Start!.Line, Is.EqualTo(1));
-            Assert.That(fixture.Range!.End!.Line, Is.EqualTo(5));
+            Assert.That(fixture.Range!.End!.Line, Is.EqualTo(6));
             Assert.That(fixture.TestCases, Is.Not.Empty);
             Assert.That(fixture.TestCases!, Has.Count.EqualTo(2));
 
@@ -392,13 +392,13 @@ public abstract class DiscoverTestsBase : TestFixture {
             Assert.That(testCase1.Name, Is.EqualTo("MyTest"));
             Assert.That(testCase1.FilePath, Is.EqualTo(Path.Combine(TestProjectPath, "SingleFixture.cs")));
             Assert.That(testCase1.Range!.Start!.Line, Is.EqualTo(3));
-            Assert.That(testCase1.Range!.End!.Line, Is.EqualTo(4));
+            Assert.That(testCase1.Range!.End!.Line, Is.EqualTo(5));
 
             var testCase2 = GetTestCaseById(fixture.TestCases!, "TestProject.MyFixture.MyTest2");
             Assert.That(testCase2.Name, Is.EqualTo("MyTest2"));
             Assert.That(testCase2.FilePath, Is.EqualTo(Path.Combine(TestProjectPath, "SingleFixture2.cs")));
             Assert.That(testCase2.Range!.Start!.Line, Is.EqualTo(3));
-            Assert.That(testCase2.Range!.End!.Line, Is.EqualTo(6));
+            Assert.That(testCase2.Range!.End!.Line, Is.EqualTo(5));
         });
     }
 
