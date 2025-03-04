@@ -18,8 +18,8 @@ export class TestExplorerController {
         TestExplorerController.controller.refreshHandler = TestExplorerController.refreshTests;
         
         context.subscriptions.push(TestExplorerController.controller);
-        context.subscriptions.push(TestExplorerController.controller.createRunProfile('Run NUnit/XUnit Tests', vscode.TestRunProfileKind.Run, TestExplorerController.runTests, true));
-        context.subscriptions.push(TestExplorerController.controller.createRunProfile('Debug NUnit/XUnit Tests', vscode.TestRunProfileKind.Debug, TestExplorerController.debugTests, true));
+        context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileRun, vscode.TestRunProfileKind.Run, TestExplorerController.runTests, true));
+        context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileDebug, vscode.TestRunProfileKind.Debug, TestExplorerController.debugTests, true));
         TestExplorerController.refreshTests();
 
         /* Internal API */
@@ -28,6 +28,7 @@ export class TestExplorerController {
     }
 
     private static async refreshTests(): Promise<void> {
+        await vscode.workspace.saveAll();
         TestExplorerController.controller.items.replace([]);
 
         const projectFiles = await Extensions.getProjectFiles();
@@ -53,7 +54,7 @@ export class TestExplorerController {
             
             const testRun = TestExplorerController.controller.createTestRun(request);
             await Extensions.waitForTask(DotNetTaskProvider.getTestTask(project.uri!.fsPath, testArguments));
-            await TestExplorerController.pushTestResults(testRun, project, testReport);
+            await TestExplorerController.publishTestResults(testRun, project, testReport);
         });
     }
     private static async debugTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
@@ -62,11 +63,12 @@ export class TestExplorerController {
             if (!executionSuccess || token.isCancellationRequested)
                 return;
             
+            const processId = await Interop.runTestHost(project.uri!.fsPath, filters.join('|'));
             await vscode.debug.startDebugging(TestExplorerController.getWorkspaceFolder(), {
-                name: request.profile?.label ?? 'Debug Tests',
+                name: res.testExplorerProfileDebug,
                 type: res.debuggerVsdbgId,
+                processId: processId,
                 request: 'attach',
-                processId: await Interop.runTestHost(project.uri!.fsPath, filters.join('|'))
             });
         });
     }
@@ -94,22 +96,20 @@ export class TestExplorerController {
 
         return testItems;
     }
-    private static pushTestResults(testRun: vscode.TestRun, project: vscode.TestItem, testReport: string): Promise<void> {
-        const getAllChildren = (root: vscode.TestItem) => {
-            const result = new Map<string, vscode.TestItem>();
-            const pushNodes = (node: vscode.TestItemCollection) => node.forEach(n => {
-                result.set(n.id, n);
-                pushNodes(n.children);
-            });
-            pushNodes(root.children);
-            return result;
+    private static publishTestResults(testRun: vscode.TestRun, project: vscode.TestItem, testReport: string): Promise<void> {
+        const findTestItem = (id: string) => {
+            const fixtureId = id.substring(0, id.lastIndexOf('.'));
+            const fixture = project.children.get(fixtureId);
+            if (fixture === undefined)
+                return undefined;
+
+            return fixture.children.get(id);
         }
         
-        const testNodes = getAllChildren(project);
         return Interop.getTestResults(testReport).then(testResults => {
             testResults.forEach(result => {
                 const duration = TestExtensions.toDurationNumber(result.duration);
-                const testItem = testNodes.get(result.fullName);
+                const testItem = findTestItem(result.fullName);
                 if (testItem === undefined)
                     return;
 
@@ -124,11 +124,8 @@ export class TestExplorerController {
         });
     }
     public static getWorkspaceFolder() : vscode.WorkspaceFolder | undefined {
-        if (vscode.workspace.workspaceFolders === undefined)
-            return undefined;
-        if (vscode.workspace.workspaceFolders.length === 1)
+        if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === 1)
             return vscode.workspace.workspaceFolders[0];
-
         return undefined;
     }
     public static getTestReportPath(project: vscode.TestItem): string {
@@ -149,7 +146,7 @@ class ContinueAfterInitialPauseTracker implements vscode.DebugAdapterTrackerFact
         const self = this;
         return {
             onDidSendMessage(message: any) {
-                if (!session.name.startsWith('Debug'))
+                if (session.name !== res.testExplorerProfileDebug)
                     return;
  
                 if (message.type == 'response' && message.command == 'initialize')

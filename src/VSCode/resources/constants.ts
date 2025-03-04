@@ -34,6 +34,8 @@ export const taskDefinitionId = "dotrush.task";
 export const extendedViewIdModules = "dotrush.modulesView";
 export const testExplorerViewId = "dotrush.testExplorer";
 export const testExplorerViewTitle = "DotRush Test Explorer";
+export const testExplorerProfileRun = "Run NUnit/XUnit Tests";
+export const testExplorerProfileDebug = "Debug NUnit/XUnit Tests";
 
 export const messageOmniSharpAlreadyInstalled = "The C# extension is already installed. Please uninstall or disable it to avoid conflicts.";
 export const messageProjectChanged = "Projects have changed. Reload the DotRush to apply changes.";
