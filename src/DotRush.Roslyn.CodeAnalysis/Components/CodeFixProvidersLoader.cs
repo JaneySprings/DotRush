@@ -32,7 +32,7 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
             try {
                 var attribute = providerInfo.GetCustomAttribute<ExportCodeFixProviderAttribute>();
                 if (attribute == null) {
-                    currentClassLogger.Debug($"Skipping code fix provider '{providerInfo.Name}' because it is missing the 'ExportCodeFixProviderAttribute'");
+                    currentClassLogger.Debug($"Skipping code fix provider '{providerInfo.Name}' because it is missing the '${nameof(ExportCodeFixProviderAttribute)}'");
                     continue;
                 }
                 if (Activator.CreateInstance(providerInfo.AsType()) is not CodeFixProvider instance) {
@@ -42,7 +42,7 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
                 result.Add(instance);
                 currentClassLogger.Debug($"Loaded code fix provider: {instance}");
             } catch (Exception ex) {
-                currentClassLogger.Error($"Creating instance of analyzer '{providerInfo.Name}' failed, error: {ex}");
+                currentClassLogger.Error($"Creating instance of '{providerInfo.Name}' failed, error: {ex}");
             }
         }
         currentClassLogger.Debug($"Loaded {result.Count} codeFixProviders form assembly '{assemblyName}'");

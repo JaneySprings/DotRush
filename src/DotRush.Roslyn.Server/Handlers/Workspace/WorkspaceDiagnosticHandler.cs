@@ -25,13 +25,13 @@ public class WorkspaceDiagnosticHandler : WorkspaceDiagnosticHandlerBase {
     }
     protected override Task<WorkspaceDiagnosticReport> Handle(WorkspaceDiagnosticParams request, CancellationToken token) {
         return Task.FromResult(SafeExtensions.Invoke(emptyReport, () => {
-            var collectionToken = codeAnalysisService.CompilationHost.GetCollectionToken();
+            var collectionToken = codeAnalysisService.GetDiagnosticsCollectionToken();
             var previousToken = request.PreviousResultIds.FirstOrDefault()?.Value;
             if (previousToken == collectionToken)
                 return emptyReport;
             
             var result = new List<WorkspaceDocumentDiagnosticReport>();
-            var diagnostics = codeAnalysisService.CompilationHost.GetDiagnostics();
+            var diagnostics = codeAnalysisService.GetDiagnostics();
             
             foreach (var group in diagnostics.GroupBy(d => d.FilePath)) {
                 if (group.Key == null)
