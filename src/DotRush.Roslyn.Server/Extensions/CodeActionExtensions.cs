@@ -1,13 +1,11 @@
 using Microsoft.CodeAnalysis.CodeActions;
-using DotRush.Roslyn.Server.Services;
 using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Union;
+using DotRush.Common.Extensions;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
@@ -21,6 +19,35 @@ public static class CodeActionExtensions {
             Title = codeAction.Title,
             Data = codeAction.GetUniqueId(),
         };
+    }
+    private static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction, ProtocolModels.CodeActionKind kind, string title) {
+        return new ProtocolModels.CodeAction() {
+            IsPreferred = codeAction.Priority == CodeActionPriority.High,
+            Kind = kind,
+            Title = title,
+            Data = codeAction.GetUniqueId(),
+        };
+    }
+
+    public static IEnumerable<Tuple<CodeAction, ProtocolModels.CodeAction>> ToFlattenCodeActions(this CodeAction codeAction, ProtocolModels.CodeActionKind kind) {
+        if (codeAction.NestedActions.IsEmpty)
+            return new[] { new Tuple<CodeAction, ProtocolModels.CodeAction>(codeAction, codeAction.ToCodeAction(kind)) };
+
+        return codeAction.NestedActions.SelectMany(it => it.ToFlattenCodeActionsCore(kind, codeAction.Title));
+    }
+    private static IEnumerable<Tuple<CodeAction, ProtocolModels.CodeAction>> ToFlattenCodeActionsCore(this CodeAction codeAction, ProtocolModels.CodeActionKind kind, string parentTitle) {
+        if (codeAction.NestedActions.IsEmpty)
+            return new[] { new Tuple<CodeAction, ProtocolModels.CodeAction>(codeAction, codeAction.ToCodeAction(kind, codeAction.GetSubject(parentTitle))) };
+
+        return codeAction.NestedActions.SelectMany(it => it.ToFlattenCodeActionsCore(kind, codeAction.GetSubject(parentTitle)));
+    }
+    private static string GetSubject(this CodeAction codeAction, string parentTitle) {
+        if (string.IsNullOrEmpty(parentTitle))
+            return codeAction.Title;
+        if (codeAction.Title.StartsWithUpper())
+            return codeAction.Title;
+
+        return $"{parentTitle} {codeAction.Title}";
     }
 
     public static async Task<ProtocolModels.CodeAction?> ResolveCodeActionAsync(this CodeAction codeAction, Solution solution, CancellationToken cancellationToken) {

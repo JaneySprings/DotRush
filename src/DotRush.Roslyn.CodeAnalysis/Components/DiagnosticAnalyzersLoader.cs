@@ -15,7 +15,9 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
         if (project == null)
             return ImmutableArray<DiagnosticAnalyzer>.Empty;
 
-        return ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project)).ToImmutableArray();
+        var projectAnalyzers = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
+        var dotRushAnalyzers = ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush());
+        return projectAnalyzers.Concat(dotRushAnalyzers).ToImmutableArray();
     }
 
     public ReadOnlyCollection<DiagnosticAnalyzer> LoadFromProject(Project project) {
@@ -52,5 +54,8 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
         }
         currentClassLogger.Debug($"Loaded {result.Count} analyzers form assembly '{assemblyName}'");
         return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
+    }
+    public ReadOnlyCollection<DiagnosticAnalyzer> LoadFromDotRush() {
+        return new ReadOnlyCollection<DiagnosticAnalyzer>(new List<DiagnosticAnalyzer>());
     }
 }

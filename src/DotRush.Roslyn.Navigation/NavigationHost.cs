@@ -33,7 +33,7 @@ public class NavigationHost {
         var syntaxTree = assemblyDecompiler.DecompileType(csharpDecompiler, symbol);
         var outputFilePath = Path.Combine(DecompiledCodeDirectory, project.Name, symbol.ContainingAssembly.Name, syntaxTree.FileName);
         FileSystemExtensions.WriteAllText(outputFilePath, syntaxTree.ToString());
-        FileSystemExtensions.MakeFileReadOnly(outputFilePath);
+        // FileSystemExtensions.MakeFileReadOnly(outputFilePath); // TODO: May be issues with deleting files if they are read-only
         CreateDocument(outputFilePath, null, project);
 
         currentClassLogger.Debug($"Emit decompiled file: {outputFilePath}");
@@ -47,7 +47,7 @@ public class NavigationHost {
         var outputFilePath = Path.Combine(GeneratedCodeDirectory, project.Name, documentPath);
         var sourceText = await location.SourceTree.GetTextAsync(cancellationToken).ConfigureAwait(false);
         FileSystemExtensions.WriteAllText(outputFilePath, sourceText.ToString());
-        FileSystemExtensions.MakeFileReadOnly(outputFilePath);
+        // FileSystemExtensions.MakeFileReadOnly(outputFilePath); // TODO: May be issues with deleting files if they are read-only
         CreateDocument(outputFilePath, sourceText, project);
 
         currentClassLogger.Debug($"Emit source generated file: {outputFilePath}");

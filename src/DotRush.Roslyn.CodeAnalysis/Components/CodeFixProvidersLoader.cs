@@ -18,7 +18,8 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
             return embeddedProviders.ToImmutableArray();
 
         var projectProviders = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
-        return embeddedProviders.Concat(projectProviders).ToImmutableArray();
+        var dotrushProviders = ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush());
+        return embeddedProviders.Concat(projectProviders).Concat(dotrushProviders).ToImmutableArray();
     }
 
     public ReadOnlyCollection<CodeFixProvider> LoadFromAssembly(string assemblyName) {
@@ -53,5 +54,8 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
         var result = analyzerReferenceAssemblies.SelectMany(it => LoadFromAssembly(it ?? string.Empty)).ToArray();
         currentClassLogger.Debug($"Loaded {result.Length} codeFixProviders from project '{project.Name}'");
         return new ReadOnlyCollection<CodeFixProvider>(result);
+    }
+    public ReadOnlyCollection<CodeFixProvider> LoadFromDotRush() {
+        return new ReadOnlyCollection<CodeFixProvider>(new List<CodeFixProvider>());
     }
 }
