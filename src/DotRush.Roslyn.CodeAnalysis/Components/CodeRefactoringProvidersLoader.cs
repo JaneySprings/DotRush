@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.CodeAnalysis.Embedded.Refactorings;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -12,6 +13,15 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
     public MemoryCache<CodeRefactoringProvider> ComponentsCache { get; } = new MemoryCache<CodeRefactoringProvider>();
     private readonly CurrentClassLogger currentClassLogger = new CurrentClassLogger(nameof(CodeRefactoringProvidersLoader));
 
+    public ImmutableArray<CodeRefactoringProvider> GetComponents(Project? project = null) {
+        var embeddedProviders = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
+        if (project == null)
+            return embeddedProviders.ToImmutableArray();
+
+        var projectProviders = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
+        var dotrushProviders = ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush());
+        return dotrushProviders.Concat(projectProviders).Concat(embeddedProviders).ToImmutableArray();
+    }
     public ReadOnlyCollection<CodeRefactoringProvider> LoadFromAssembly(string assemblyName) {
         var result = new List<CodeRefactoringProvider>();
         var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);
@@ -45,12 +55,9 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
         currentClassLogger.Debug($"Loaded {result.Length} codeRefactoringProviders from project '{project.Name}'");
         return new ReadOnlyCollection<CodeRefactoringProvider>(result);
     }
-    public ImmutableArray<CodeRefactoringProvider> GetComponents(Project? project = null) {
-        var embeddedProviders = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
-        if (project == null)
-            return embeddedProviders.ToImmutableArray();
-
-        var projectProviders = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
-        return embeddedProviders.Concat(projectProviders).ToImmutableArray();
+    public ReadOnlyCollection<CodeRefactoringProvider> LoadFromDotRush() {
+        return new ReadOnlyCollection<CodeRefactoringProvider>(new List<CodeRefactoringProvider>() {
+            // new ExtractToNewMethodRefactoringProvider(),
+        });
     }
 }

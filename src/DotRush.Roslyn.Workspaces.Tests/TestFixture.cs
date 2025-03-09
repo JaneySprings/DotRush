@@ -1,5 +1,7 @@
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
+using FileSystemExtensions = DotRush.Common.Extensions.FileSystemExtensions;
+
 
 namespace DotRush.Roslyn.Workspaces.Tests;
 
@@ -16,15 +18,12 @@ public abstract class TestFixture {
 
     [SetUp]
     public void Setup() {
-        if (Directory.Exists(SandboxDirectory))
-            Directory.Delete(SandboxDirectory, true);
-        
+        FileSystemExtensions.TryDeleteDirectory(SandboxDirectory);
         Directory.CreateDirectory(SandboxDirectory);
     }
     [TearDown]
     public void TearDown() {
-        if (Directory.Exists(SandboxDirectory))
-            Directory.Delete(SandboxDirectory, true);
+        FileSystemExtensions.TryDeleteDirectory(SandboxDirectory);
     }
 
     protected string CreateProject(string name, string tfm, string outputType) {

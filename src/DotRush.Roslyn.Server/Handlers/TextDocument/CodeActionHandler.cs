@@ -106,7 +106,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
                     if (cancellationToken.IsCancellationRequested)
                         return;
 
-                    var singleCodeActions = action.ToSingleCodeActions().Where(x => !x.IsBlacklisted());
+                    var singleCodeActions = action.ToFlattenCodeActions().Where(x => !x.IsBlacklisted());
                     foreach (var singleCodeAction in singleCodeActions) {
                         if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
                             result.Add(new CommandOrCodeAction(singleCodeAction.ToCodeAction(CodeActionKind.QuickFix)));
@@ -140,10 +140,10 @@ public class CodeActionHandler : CodeActionHandlerBase {
                     if (cancellationToken.IsCancellationRequested)
                         return;
 
-                    var singleCodeActions = action.ToSingleCodeActions().Where(x => !x.IsBlacklisted());
-                    foreach (var singleCodeAction in singleCodeActions) {
-                        if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
-                            result.Add(new CommandOrCodeAction(singleCodeAction.ToCodeAction(CodeActionKind.Refactor)));
+                    var codeActionPairs = action.ToFlattenCodeActions(CodeActionKind.Refactor);
+                    foreach (var pair in codeActionPairs) {
+                        if (codeActionsCache.TryAdd(pair.Item1.GetUniqueId(), pair.Item1))
+                            result.Add(new CommandOrCodeAction(pair.Item2));
                     }
                 }, cancellationToken)).ConfigureAwait(false);
             }
