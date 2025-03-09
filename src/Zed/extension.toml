@@ -1,0 +1,15 @@
+id = "dotrush"
+name = "DotRush"
+version = "1.0.0"
+schema_version = 1
+authors = ["Nikita Romanov"]
+description = "DotRush for Zed"
+repository = "https://github.com/JaneySprings/DotRush"
+
+[language_servers.dotrush]
+name = "DotRush"
+languages = ["CSharp"]
+
+[grammars.c_sharp]
+repository = "https://github.com/tree-sitter/tree-sitter-c-sharp"
+commit = "dd5e59721a5f8dae34604060833902b882023aaf"

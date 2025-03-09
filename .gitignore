@@ -4,7 +4,10 @@
 /binaries
 /artifacts
 /src/**/extension
+/src/Zed/target
+*.wasm
 
+Cargo.lock
 package-lock.json
 node_modules
 extension
