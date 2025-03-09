@@ -11,7 +11,6 @@ public static class FileSystemExtensions {
 
         File.WriteAllText(filePath, content);
     }
-
     public static string TryReadText(string filePath) {
         if (!File.Exists(filePath))
             return string.Empty;
@@ -43,5 +42,11 @@ public static class FileSystemExtensions {
         } catch {
             return false;
         }
+    }
+    public static void MakeFileReadOnly(string filePath) {
+        if (!File.Exists(filePath))
+            return;
+
+        File.SetAttributes(filePath, File.GetAttributes(filePath) | FileAttributes.ReadOnly);
     }
 }
