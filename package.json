@@ -471,6 +471,10 @@
       },
       "editor.quickSuggestions": {
         "strings": "on"
+      },
+      "files.readonlyInclude": {
+        "**/LanguageServer/_decompiled_/**": true,
+        "**/LanguageServer/_generated_/**": true
       }
     }
   }
