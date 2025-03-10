@@ -9,6 +9,8 @@ namespace DotRush.Roslyn.CodeAnalysis.Tests;
 public class CodeRefactoringProvidersLoaderTests : ComponentsLoaderTests<CodeRefactoringProvider> {
     private CodeRefactoringProvidersLoader loader = null!;
     protected override IComponentLoader<CodeRefactoringProvider> ComponentsLoader => loader;
+    protected override int EmbeddedComponentsCount => 77;
+    protected override int ProjectComponentsCount => 0;
 
     [SetUp]
     public void SetUp() {
@@ -18,6 +20,8 @@ public class CodeRefactoringProvidersLoaderTests : ComponentsLoaderTests<CodeRef
 public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider> {
     private CodeFixProvidersLoader loader = null!;
     protected override IComponentLoader<CodeFixProvider> ComponentsLoader => loader;
+    protected override int EmbeddedComponentsCount => 163;
+    protected override int ProjectComponentsCount => 132;
 
     [SetUp]
     public void SetUp() {
@@ -27,6 +31,8 @@ public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider
 public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAnalyzer> {
     private DiagnosticAnalyzersLoader loader = null!;
     protected override IComponentLoader<DiagnosticAnalyzer> ComponentsLoader => loader;
+    protected override int EmbeddedComponentsCount => 0;
+    protected override int ProjectComponentsCount => 274;
 
     [SetUp]
     public void SetUp() {
@@ -42,6 +48,8 @@ public abstract class ComponentsLoaderTests<TValue> : WorkspaceTestFixture where
     protected const string MultiTFM = "net8.0;net9.0";
 
     protected abstract IComponentLoader<TValue> ComponentsLoader { get; }
+    protected abstract int EmbeddedComponentsCount { get; }
+    protected abstract int ProjectComponentsCount { get; }
 
     protected override string CreateProject(string name, string tfm, string outputType) {
         return base.CreateProject("TestProjectCL", MultiTFM, "Library");
@@ -55,39 +63,35 @@ public abstract class ComponentsLoaderTests<TValue> : WorkspaceTestFixture where
         Assert.That(ComponentsLoader.ComponentsCache.Keys, Does.Contain(KnownAssemblies.CommonFeaturesAssemblyName));
         Assert.That(ComponentsLoader.ComponentsCache.Keys, Does.Contain(KnownAssemblies.CSharpFeaturesAssemblyName));
         Assert.That(ComponentsLoader.ComponentsCache.Keys, Does.Contain(KnownAssemblies.DotRushCodeAnalysis));
-        Assert.That(ComponentsLoader.ComponentsCache.Count, Is.Not.Zero);
+        Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(EmbeddedComponentsCount));
 
         var oldComponentsCount = components.Length;
-        var oldComponentsCacheCount = ComponentsLoader.ComponentsCache.Count;
         ComponentsLoader.ComponentsCache.ThrowOnCreation = true;
 
         components = ComponentsLoader.GetComponents(null);
         Assert.That(components, Has.Length.EqualTo(oldComponentsCount));
-        Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(oldComponentsCacheCount));
+        Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(EmbeddedComponentsCount));
     }
     [Test]
     public virtual void LoadProjectComponentsTest() {
         var projects = Workspace!.Solution!.Projects;
         Assert.That(projects.Count(), Is.EqualTo(2));
 
-        var globalComponentsCacheCount = 0;
         foreach (var project in projects) {
             ComponentsLoader.ComponentsCache.ThrowOnCreation = false;
             var components = ComponentsLoader.GetComponents(project);
             Assert.That(components, Is.Not.Empty);
             Assert.That(ComponentsLoader.ComponentsCache.Keys, Does.Contain(project.Name));
+            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(ProjectComponentsCount + EmbeddedComponentsCount));
 
-            var oldComponentsCacheCount = ComponentsLoader.ComponentsCache.Count;
+            var oldComponentsCount = components.Length;
             var oldComponentsKeysCount = ComponentsLoader.ComponentsCache.Keys.Count();
 
             ComponentsLoader.ComponentsCache.ThrowOnCreation = true;
             components = ComponentsLoader.GetComponents(project);
-            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(oldComponentsCacheCount));
+            Assert.That(components, Has.Length.EqualTo(oldComponentsCount));
+            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(ProjectComponentsCount + EmbeddedComponentsCount));
             Assert.That(ComponentsLoader.ComponentsCache.Keys.Count(), Is.EqualTo(oldComponentsKeysCount));
-
-            if (globalComponentsCacheCount != 0)
-                Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(globalComponentsCacheCount));
-            globalComponentsCacheCount = ComponentsLoader.ComponentsCache.Count;
         }
     }
 }
