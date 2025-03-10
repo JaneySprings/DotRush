@@ -71,6 +71,10 @@ public abstract class TestExplorerSyntaxWalker {
         };
     }
     protected string? GetBaseClassName(ClassDeclarationSyntax klass) {
-        return klass.BaseList?.Types.Where(p => !p.ToString().StartsWith('I')).FirstOrDefault()?.ToString();
+        if (klass.BaseList == null || !klass.BaseList.Types.Any())
+            return null;
+
+        var baseTypesIdentifierTexts = klass.BaseList.Types.Select(p => p.Type).OfType<SimpleNameSyntax>().Select(p => p.Identifier.Text);
+        return baseTypesIdentifierTexts.FirstOrDefault(it => !it.StartsWith("I", StringComparison.OrdinalIgnoreCase));
     }
 }
