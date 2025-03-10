@@ -13,13 +13,14 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
     private readonly CurrentClassLogger currentClassLogger = new CurrentClassLogger(nameof(CodeFixProvidersLoader));
 
     public ImmutableArray<CodeFixProvider> GetComponents(Project? project = null) {
-        var embeddedProviders = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
+        var dotrushComponents = ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush());
+        var roslynCoreComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName));
+        var roslynCSharpComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
         if (project == null)
-            return embeddedProviders.ToImmutableArray();
+            return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).ToImmutableArray();
 
         var projectProviders = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
-        var dotrushProviders = ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush());
-        return embeddedProviders.Concat(projectProviders).Concat(dotrushProviders).ToImmutableArray();
+        return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).Concat(projectProviders).ToImmutableArray();
     }
 
     public ReadOnlyCollection<CodeFixProvider> LoadFromAssembly(string assemblyName) {

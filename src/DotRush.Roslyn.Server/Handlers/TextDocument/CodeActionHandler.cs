@@ -142,6 +142,8 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
                     var codeActionPairs = action.ToFlattenCodeActions(CodeActionKind.Refactor);
                     foreach (var pair in codeActionPairs) {
+                        if (pair.Item1.IsBlacklisted())
+                            continue;
                         if (codeActionsCache.TryAdd(pair.Item1.GetUniqueId(), pair.Item1))
                             result.Add(new CommandOrCodeAction(pair.Item2));
                     }

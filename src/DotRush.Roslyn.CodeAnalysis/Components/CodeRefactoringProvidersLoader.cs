@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using DotRush.Common.Logging;
-using DotRush.Roslyn.CodeAnalysis.Embedded.Refactorings;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -14,14 +13,16 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
     private readonly CurrentClassLogger currentClassLogger = new CurrentClassLogger(nameof(CodeRefactoringProvidersLoader));
 
     public ImmutableArray<CodeRefactoringProvider> GetComponents(Project? project = null) {
-        var embeddedProviders = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
+        var dotrushComponents = ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush());
+        var roslynCoreComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName));
+        var roslynCSharpComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
         if (project == null)
-            return embeddedProviders.ToImmutableArray();
+            return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).ToImmutableArray();
 
         var projectProviders = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
-        var dotrushProviders = ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush());
-        return dotrushProviders.Concat(projectProviders).Concat(embeddedProviders).ToImmutableArray();
+        return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).Concat(projectProviders).ToImmutableArray();
     }
+    
     public ReadOnlyCollection<CodeRefactoringProvider> LoadFromAssembly(string assemblyName) {
         var result = new List<CodeRefactoringProvider>();
         var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);
@@ -56,8 +57,6 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
         return new ReadOnlyCollection<CodeRefactoringProvider>(result);
     }
     public ReadOnlyCollection<CodeRefactoringProvider> LoadFromDotRush() {
-        return new ReadOnlyCollection<CodeRefactoringProvider>(new List<CodeRefactoringProvider>() {
-            // new ExtractToNewMethodRefactoringProvider(),
-        });
+        return new ReadOnlyCollection<CodeRefactoringProvider>(new List<CodeRefactoringProvider>());
     }
 }
