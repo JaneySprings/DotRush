@@ -11,6 +11,7 @@ namespace DotRush.Roslyn.Server.Extensions;
 
 public static class CodeActionExtensions {
     private static FieldInfo? inNewFileField;
+    private const int MaxSubjectLength = 100;
 
     public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction, ProtocolModels.CodeActionKind kind) {
         return new ProtocolModels.CodeAction() {
@@ -47,7 +48,11 @@ public static class CodeActionExtensions {
         if (codeAction.Title.StartsWithUpper())
             return codeAction.Title;
 
-        return $"{parentTitle} {codeAction.Title}";
+        var subject = $"{parentTitle} {codeAction.Title}";
+        if (subject.Length > MaxSubjectLength)
+            return string.Concat(subject.AsSpan(0, MaxSubjectLength), "...");
+
+        return subject;
     }
 
     public static async Task<ProtocolModels.CodeAction?> ResolveCodeActionAsync(this CodeAction codeAction, Solution solution, CancellationToken cancellationToken) {
