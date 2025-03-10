@@ -562,7 +562,7 @@ public abstract class DiscoverTestsBase : TestFixture {
         });
     }
     [Test]
-    public void DiscoverFixturesWithHierarchy4Test() {
+    public void DiscoverFixturesWithNotExistsHierarchyTest() {
         CreateFileInProject("SingleFixture.cs", $@"namespace TestProject;
         [{TestFixtureAttr}]
         public class MyFixture : NotExistFixture {{
@@ -588,7 +588,7 @@ public abstract class DiscoverTestsBase : TestFixture {
         });
     }
     [Test]
-    public void DiscoverFixturesWithHierarchy5Test() {
+    public void DiscoverFixturesWithPartialHierarchyTest() {
         CreateFileInProject("SingleFixture.cs", $@"namespace TestProject;
         [{TestFixtureAttr}]
         public class MyFixture : MyBaseFixture {{
@@ -627,5 +627,43 @@ public abstract class DiscoverTestsBase : TestFixture {
             Assert.That(testCase2.Range!.Start!.Line, Is.EqualTo(12));
             Assert.That(testCase2.Range!.End!.Line, Is.EqualTo(13));
         });
+    }
+    [Test]
+    public void DiscoverFixturesWithHierarchyAndGenericTest() {
+        CreateFileInProject("SingleFixture.cs", $@"namespace TestProject;
+        [{TestFixtureAttr}]
+        public class MyFixture : MyBaseFixture<int> {{
+            [{TestCaseAttr}]
+            public void MyTest() {{}}
+        }}
+
+        public abstract class MyBaseFixture<T> {{
+            [{TestCaseAttr}]
+            public void MyTest2() {{
+                Assert.Pass();
+            }}
+        }}
+        ");
+
+        var fixtures = TestExplorer.DiscoverTests(TestProjectFilePath).ToArray();
+        Assert.That(fixtures, Is.Not.Empty);
+        Assert.That(fixtures.Count, Is.EqualTo(1));
+
+        var fixture = GetFixtureById(fixtures, "TestProject.MyFixture");
+        Assert.That(fixture.FilePath, Is.EqualTo(Path.Combine(TestProjectPath, "SingleFixture.cs")));
+        Assert.That(fixture.Range!.Start!.Line, Is.EqualTo(1));
+        Assert.That(fixture.Range!.End!.Line, Is.EqualTo(5));
+        Assert.That(fixture.TestCases, Is.Not.Empty);
+        Assert.That(fixture.TestCases!, Has.Count.EqualTo(2));
+
+        var testCase1 = GetTestCaseById(fixture.TestCases!, "TestProject.MyFixture.MyTest");
+        Assert.That(testCase1.FilePath, Is.EqualTo(Path.Combine(TestProjectPath, "SingleFixture.cs")));
+        Assert.That(testCase1.Range!.Start!.Line, Is.EqualTo(3));
+        Assert.That(testCase1.Range!.End!.Line, Is.EqualTo(4));
+
+        var testCase2 = GetTestCaseById(fixture.TestCases!, "TestProject.MyFixture.MyTest2");
+        Assert.That(testCase2.FilePath, Is.EqualTo(Path.Combine(TestProjectPath, "SingleFixture.cs")));
+        Assert.That(testCase2.Range!.Start!.Line, Is.EqualTo(8));
+        Assert.That(testCase2.Range!.End!.Line, Is.EqualTo(11));
     }
 }

@@ -10,10 +10,17 @@
         <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
         <SelfContained>false</SelfContained>
         <PublishTrimmed>false</PublishTrimmed>
+        <NoWarn>$(NoWarn);NUnit2045</NoWarn>
         
         <AssetsPath>$(MSBuildThisFileDirectory)..\extension\bin\</AssetsPath>
         <ServerTargetFramework>net9.0</ServerTargetFramework>
 
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+
     </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="DotRush.Roslyn.Workspaces.Tests" />
+        <InternalsVisibleTo Include="DotRush.Roslyn.CodeAnalysis.Tests" />
+    </ItemGroup>
 </Project>
