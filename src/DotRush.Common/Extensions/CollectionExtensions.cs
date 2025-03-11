@@ -9,4 +9,7 @@ public static class CollectionExtensions {
         foreach (var item in collection)
             action(item);
     }
+    public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> collection) where T : class {
+        return collection.Where(item => item != null)!;
+    }
 }

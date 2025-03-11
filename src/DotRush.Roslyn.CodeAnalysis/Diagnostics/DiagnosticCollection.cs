@@ -34,7 +34,7 @@ public class DiagnosticCollection {
                 relations.Add(diagnosticsGroup.Key);
             }
 
-            collectionToken = GenerateNewCollectionToken();
+            Invalidate();
             return validDiagnostics;
         }
     }
@@ -53,6 +53,11 @@ public class DiagnosticCollection {
                 relations.ForEach(r => workspaceDiagnostics.Remove(r));
                 diagnosticRelations.Remove(key);
             }
+        }
+    }
+    public void Invalidate() {
+        lock (lockObject) {
+            collectionToken = GenerateNewCollectionToken();
         }
     }
 
