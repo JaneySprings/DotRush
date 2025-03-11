@@ -18,8 +18,8 @@ public class CodeAnalysisService {
         this.compilationHost = new CompilationHost();
     }
 
-    public Task<ReadOnlyCollection<DiagnosticContext>> DiagnoseAsync(IEnumerable<ProjectId> projectIds, Solution solution, CancellationToken cancellationToken) {
-        return compilationHost.DiagnoseAsync(projectIds, solution, configurationService.EnableAnalyzers, cancellationToken);
+    public Task<ReadOnlyCollection<DiagnosticContext>> DiagnoseAsync(IEnumerable<Document> documents, CancellationToken cancellationToken) {
+        return compilationHost.DiagnoseAsync(documents, configurationService.EnableAnalyzers, cancellationToken);
     }
     public DiagnosticContext? GetDiagnosticContextById(int diagnosticId) {
         return compilationHost.GetDiagnosticContextById(diagnosticId);

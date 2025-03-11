@@ -7,7 +7,6 @@ using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabi
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentDiagnostic;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 
@@ -27,19 +26,20 @@ public class DocumentDiagnosticsHandler : DocumentDiagnosticHandlerBase {
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
         serverCapabilities.DiagnosticProvider ??= new DiagnosticOptions();
         serverCapabilities.DiagnosticProvider.Identifier = "dotrush";
-        serverCapabilities.DiagnosticProvider.InterFileDependencies = true;
+        serverCapabilities.DiagnosticProvider.InterFileDependencies = false;
     }
 
     protected override Task<DocumentDiagnosticReport> Handle(DocumentDiagnosticParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync<DocumentDiagnosticReport>(new RelatedUnchangedDocumentDiagnosticReport(), async () => {
-            var projectIds = GetProjectIdsWithDocumentFilePath(request.TextDocument.Uri.FileSystemPath);
-            if (projectIds == null || workspaceService.Solution == null)
+            var documentIds = GetDocumentIdsWithFilePath(request.TextDocument.Uri.FileSystemPath);
+            if (documentIds == null || workspaceService.Solution == null)
                 return new RelatedUnchangedDocumentDiagnosticReport();
 
-            var diagnostics = await codeAnalysisService.DiagnoseAsync(projectIds, workspaceService.Solution, token).ConfigureAwait(false);
+            var documents = documentIds.Select(id => workspaceService.Solution.GetDocument(id)).WhereNotNull();
+            var diagnostics = await codeAnalysisService.DiagnoseAsync(documents, token).ConfigureAwait(false);
             var curentFileDiagnostics = diagnostics.Where(d => PathExtensions.Equals(d.FilePath, request.TextDocument.Uri.FileSystemPath));
 
-            CurrentSessionLogger.Debug($"Publish Diagnostics: {request.TextDocument.Uri} - {curentFileDiagnostics.Count()}");
+            CurrentSessionLogger.Debug($"Publish Diagnostics: {request.TextDocument.Uri.FileSystemPath} - {curentFileDiagnostics.Count()}");
 
             return new RelatedFullDocumentDiagnosticReport {
                 Diagnostics = curentFileDiagnostics.Select(diagnostic => diagnostic.ToServerDiagnostic()).ToList(),
@@ -47,14 +47,14 @@ public class DocumentDiagnosticsHandler : DocumentDiagnosticHandlerBase {
         });
     }
 
-    private IEnumerable<ProjectId>? GetProjectIdsWithDocumentFilePath(string filePath) {
-        var projectIds = workspaceService.Solution?.GetProjectIdsWithDocumentFilePath(filePath);
-        if (projectIds == null || !projectIds.Any())
+    private IEnumerable<DocumentId>? GetDocumentIdsWithFilePath(string filePath) {
+        var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
+        if (documentIds == null || !documentIds.Any())
             return null;
-        
-        if (configurationService.UseMultitargetDiagnostics)
-            return projectIds;
 
-        return projectIds.Take(1);
+        if (configurationService.UseMultitargetDiagnostics)
+            return documentIds;
+
+        return documentIds.Take(1);
     }
 }
