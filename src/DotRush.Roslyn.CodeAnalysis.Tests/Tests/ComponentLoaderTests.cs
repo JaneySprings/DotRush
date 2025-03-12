@@ -58,18 +58,17 @@ public abstract class ComponentsLoaderTests<TValue> : WorkspaceTestFixture where
     [Test]
     public virtual void LoadEmbeddedComponentsTest() {
         var components = ComponentsLoader.GetComponents(null);
-        Assert.That(components, Is.Not.Empty);
+        Assert.That(components, Has.Length.EqualTo(EmbeddedComponentsCount));
         Assert.That(ComponentsLoader.ComponentsCache.Keys.Count(), Is.EqualTo(3));
         Assert.That(ComponentsLoader.ComponentsCache.Keys, Does.Contain(KnownAssemblies.CommonFeaturesAssemblyName));
         Assert.That(ComponentsLoader.ComponentsCache.Keys, Does.Contain(KnownAssemblies.CSharpFeaturesAssemblyName));
         Assert.That(ComponentsLoader.ComponentsCache.Keys, Does.Contain(KnownAssemblies.DotRushCodeAnalysis));
         Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(EmbeddedComponentsCount));
 
-        var oldComponentsCount = components.Length;
         ComponentsLoader.ComponentsCache.ThrowOnCreation = true;
 
         components = ComponentsLoader.GetComponents(null);
-        Assert.That(components, Has.Length.EqualTo(oldComponentsCount));
+        Assert.That(components, Has.Length.EqualTo(EmbeddedComponentsCount));
         Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(EmbeddedComponentsCount));
     }
     [Test]
@@ -80,16 +79,15 @@ public abstract class ComponentsLoaderTests<TValue> : WorkspaceTestFixture where
         foreach (var project in projects) {
             ComponentsLoader.ComponentsCache.ThrowOnCreation = false;
             var components = ComponentsLoader.GetComponents(project);
-            Assert.That(components, Is.Not.Empty);
+            Assert.That(components, Has.Length.EqualTo(ProjectComponentsCount + EmbeddedComponentsCount));
             Assert.That(ComponentsLoader.ComponentsCache.Keys, Does.Contain(project.Name));
             Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(ProjectComponentsCount + EmbeddedComponentsCount));
 
-            var oldComponentsCount = components.Length;
             var oldComponentsKeysCount = ComponentsLoader.ComponentsCache.Keys.Count();
 
             ComponentsLoader.ComponentsCache.ThrowOnCreation = true;
             components = ComponentsLoader.GetComponents(project);
-            Assert.That(components, Has.Length.EqualTo(oldComponentsCount));
+            Assert.That(components, Has.Length.EqualTo(ProjectComponentsCount + EmbeddedComponentsCount));
             Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(ProjectComponentsCount + EmbeddedComponentsCount));
             Assert.That(ComponentsLoader.ComponentsCache.Keys.Count(), Is.EqualTo(oldComponentsKeysCount));
         }

@@ -1,4 +1,5 @@
 using System.Reflection;
+using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis.Completion;
 using NUnit.Framework;
 
@@ -16,7 +17,6 @@ public class ReflectionApiTests : TestFixture {
         Assert.That(sifunProperty, Is.Not.Null);
         sifunProperty!.SetValue(completionOptions, false);
     }
-
     [Test]
     public void GetCompletionsInternalMethodTest() {
         var getCompletionsAsyncMethod = typeof(CompletionService).GetMethod("GetCompletionsAsync", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -31,5 +31,15 @@ public class ReflectionApiTests : TestFixture {
         Assert.That(parameters[4].Name, Is.EqualTo("trigger"));
         Assert.That(parameters[5].Name, Is.EqualTo("roles"));
         Assert.That(parameters[6].Name, Is.EqualTo("cancellationToken"));
+    }
+    [TestCase("example.dll", "example")]
+    [TestCase("path/to\\example.dll", "example")]
+    [TestCase("example", "example")]
+    [TestCase("path/to/example", "example")]
+    [TestCase("Microsoft.CodeAnalysis.Features", "Microsoft.CodeAnalysis.Features")]
+    [TestCase("Microsoft.CodeAnalysis.dll", "Microsoft.CodeAnalysis")]
+    public void GetAssemblyNameTest(string input, string expected) {
+        var result = ReflectionExtensions.GetAssemblyName(input);
+        Assert.That(result, Is.EqualTo(expected));
     }
 }
