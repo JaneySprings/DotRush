@@ -197,7 +197,7 @@ stages:
       - job: Windows
         pool:
           vmImage: windows-latest
-        timeoutInMinutes: 10
+        timeoutInMinutes: 15
         steps:
         # - task: UseDotNet@2
         #   inputs:
