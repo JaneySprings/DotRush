@@ -45,9 +45,12 @@ public class CodeActionHandler : CodeActionHandlerBase {
             var serverDiagnostics = request.Context.Diagnostics?.Where(it => it.Data?.Value != null);
             var diagnosticIds = serverDiagnostics?.Select(it => (int)it.Data!.Value!);
 
-            return diagnosticIds == null || !diagnosticIds.Any()
-                ? await GetRefactoringsAsync(filePath, request.Range, token).ConfigureAwait(false)
-                : await GetQuickFixesAsync(filePath, diagnosticIds, token).ConfigureAwait(false);
+            var result = new List<CommandOrCodeAction>();
+            if (diagnosticIds != null && diagnosticIds.Any())
+                result.AddRange(await GetQuickFixesAsync(filePath, diagnosticIds, token).ConfigureAwait(false));
+
+            result.AddRange(await GetRefactoringsAsync(filePath, request.Range, token).ConfigureAwait(false));
+            return new CodeActionResponse(result);
         });
     }
     protected override Task<CodeAction> Resolve(CodeAction request, CancellationToken token) {
@@ -63,7 +66,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
                 return request;
             }
 
-            var result = await codeAction.ResolveCodeActionAsync(workspaceService.Solution, token).ConfigureAwait(false);
+            var result = await codeAction.ResolveCodeActionAsync(workspaceService, token).ConfigureAwait(false);
             if (result == null) {
                 currentClassLogger.Error($"CodeAction '{request.Title}' with id '{codeActionId}' failed to resolve");
                 return request;
@@ -73,7 +76,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
         });
     }
 
-    private async Task<CodeActionResponse> GetQuickFixesAsync(string filePath, IEnumerable<int> diagnosticIds, CancellationToken cancellationToken) {
+    private async Task<IEnumerable<CommandOrCodeAction>> GetQuickFixesAsync(string filePath, IEnumerable<int> diagnosticIds, CancellationToken cancellationToken) {
         var result = new List<CommandOrCodeAction>();
         var diagnosticContexts = diagnosticIds
             .Select(id => codeAnalysisService.GetDiagnosticContextById(id))
@@ -90,13 +93,13 @@ public class CodeActionHandler : CodeActionHandlerBase {
             var codeFixProviders = codeAnalysisService.GetCodeFixProvidersForDiagnosticId(group.Key, project);
             if (codeFixProviders == null) {
                 currentClassLogger.Debug($"CodeFixProviders not found for diagnostic id '{group.Key}'");
-                return new CodeActionResponse(result);
+                continue;
             }
 
             var document = project.Documents.FirstOrDefault(it => PathExtensions.Equals(it.FilePath, filePath));
             if (document == null) {
                 currentClassLogger.Debug($"Document not found for file path '{filePath}'");
-                return new CodeActionResponse(result);
+                continue;
             }
 
             foreach (var codeFixProvider in codeFixProviders) {
@@ -115,17 +118,17 @@ public class CodeActionHandler : CodeActionHandlerBase {
             }
         }
 
-        return new CodeActionResponse(result);
+        return result;
     }
-    private async Task<CodeActionResponse> GetRefactoringsAsync(string filePath, DocumentRange range, CancellationToken cancellationToken) {
+    private async Task<IEnumerable<CommandOrCodeAction>> GetRefactoringsAsync(string filePath, DocumentRange range, CancellationToken cancellationToken) {
         var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
         if (documentIds == null)
-            return new CodeActionResponse(new List<CommandOrCodeAction>());
+            return Enumerable.Empty<CommandOrCodeAction>();
 
         foreach (var documentId in documentIds) {
             var document = workspaceService.Solution?.GetDocument(documentId);
             if (document == null)
-                return new CodeActionResponse(new List<CommandOrCodeAction>());
+                continue;
 
             var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
             var textSpan = range.ToTextSpan(sourceText);
@@ -133,7 +136,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
             var result = new List<CommandOrCodeAction>();
             var codeRefactoringProviders = codeAnalysisService.GetCodeRefactoringProvidersForProject(document.Project);
             if (codeRefactoringProviders == null)
-                return new CodeActionResponse(result);
+                continue;
 
             foreach (var refactoringProvider in codeRefactoringProviders) {
                 await refactoringProvider.ComputeRefactoringsAsync(new CodeRefactoringContext(document, textSpan, action => {
@@ -151,9 +154,9 @@ public class CodeActionHandler : CodeActionHandlerBase {
             }
 
             if (result.Count != 0)
-                return new CodeActionResponse(result);
+                return result;
         }
 
-        return new CodeActionResponse(new List<CommandOrCodeAction>());
+        return Enumerable.Empty<CommandOrCodeAction>();
     }
 }

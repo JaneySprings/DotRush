@@ -30,6 +30,9 @@ public static class ProjectExtensions {
 
         return directory.FullName;
     }
+    public static string GetProjectDirectory(this Project project) {
+        return Path.GetDirectoryName(project.FilePath) ?? string.Empty;
+    }
 
     public static IEnumerable<DocumentId> GetDocumentIdsWithFolderPath(this Project project, string folderPath) {
         var folderPathFixed = folderPath.EndsWith(Path.DirectorySeparatorChar) ? folderPath : folderPath + Path.DirectorySeparatorChar;

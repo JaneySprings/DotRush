@@ -17,6 +17,7 @@ public class ManipulationTests : TestFixture {
         await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
         foreach (var project in workspace.Solution!.Projects) {
             var tfm = project.GetTargetFramework();
+            Assert.That(project.GetProjectDirectory(), Is.EqualTo(Path.GetDirectoryName(projectPath)!));
             Assert.That(project.GetIntermediateOutputPath(), Is.EqualTo(Path.Combine(Path.GetDirectoryName(projectPath)!, "obj", "Debug", tfm)));
             Assert.That(project.GetOutputPath(), Is.EqualTo(Path.Combine(Path.GetDirectoryName(projectPath)!, "bin", "Debug", tfm)));
         }
