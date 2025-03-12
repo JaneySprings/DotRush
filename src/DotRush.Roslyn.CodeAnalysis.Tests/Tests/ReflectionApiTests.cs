@@ -33,7 +33,7 @@ public class ReflectionApiTests : TestFixture {
         Assert.That(parameters[6].Name, Is.EqualTo("cancellationToken"));
     }
     [TestCase("example.dll", "example")]
-    [TestCase("path/to\\example.dll", "example")]
+    [TestCase("path/to/example.dll", "example")]
     [TestCase("example", "example")]
     [TestCase("path/to/example", "example")]
     [TestCase("Microsoft.CodeAnalysis.Features", "Microsoft.CodeAnalysis.Features")]
