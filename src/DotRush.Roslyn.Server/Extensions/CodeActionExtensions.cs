@@ -1,16 +1,18 @@
 using Microsoft.CodeAnalysis.CodeActions;
 using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
-using System.Reflection;
 using Microsoft.CodeAnalysis;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using DotRush.Common.Extensions;
+using FileSystemExtensions = DotRush.Common.Extensions.FileSystemExtensions;
+using DotRush.Roslyn.Workspaces;
+using DotRush.Roslyn.Workspaces.Extensions;
+using DotRush.Common.Logging;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
 public static class CodeActionExtensions {
-    private static FieldInfo? inNewFileField;
     private const int MaxSubjectLength = 100;
 
     public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction, ProtocolModels.CodeActionKind kind) {
@@ -54,16 +56,30 @@ public static class CodeActionExtensions {
 
         return subject;
     }
+    // Requires a specific service to get operations (Not available in the current workspace)
+    public static bool IsBlacklisted(this CodeAction codeAction) {
+        var codeActionName = codeAction.GetType().Name;
+        return codeActionName == "GenerateTypeCodeActionWithOption"
+            || codeActionName == "ChangeSignatureCodeAction"
+            || codeActionName == "ExtractInterfaceCodeAction"
+            || codeActionName == "GenerateOverridesWithDialogCodeAction"
+            || codeActionName == "PullMemberUpWithDialogCodeAction";
+    }
 
-    public static async Task<ProtocolModels.CodeAction?> ResolveCodeActionAsync(this CodeAction codeAction, Solution solution, CancellationToken cancellationToken) {
+    public static async Task<ProtocolModels.CodeAction?> ResolveCodeActionAsync(this CodeAction codeAction, SolutionController solutionController, CancellationToken cancellationToken) {
+        if (solutionController.Solution == null)
+            return null;
+
+        var solution = solutionController.Solution;
         var textDocumentEdits = new Dictionary<DocumentUri, List<TextEdit>>();
         var operations = await codeAction.GetOperationsAsync(cancellationToken).ConfigureAwait(false);
         foreach (var operation in operations) {
             if (operation is ApplyChangesOperation applyChangesOperation) {
                 var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solution);
                 foreach (var projectChanges in solutionChanges.GetProjectChanges()) {
-                    foreach (var documentChanges in projectChanges.GetChangedDocuments()) {
-                        var newDocument = projectChanges.NewProject.GetDocument(documentChanges);
+                    // Changes
+                    foreach (var documentId in projectChanges.GetChangedDocuments()) {
+                        var newDocument = projectChanges.NewProject.GetDocument(documentId);
                         var oldDocument = solution.GetDocument(newDocument?.Id);
                         if (oldDocument?.FilePath == null || newDocument?.FilePath == null)
                             continue;
@@ -79,34 +95,45 @@ public static class CodeActionExtensions {
                         if (textEdits.Count == 0)
                             continue;
 
-                        textDocumentEdits.Add(newDocument.FilePath, textEdits);
+                        if (!textDocumentEdits.TryAdd(newDocument.FilePath, textEdits))
+                            CurrentSessionLogger.Error($"({codeAction.Title}): Duplicate changes for {newDocument.FilePath} [{projectChanges.NewProject.Name}]");
+                    }
+                    // New files
+                    foreach (var documentId in projectChanges.GetAddedDocuments()) {
+                        var newDocument = projectChanges.NewProject.GetDocument(documentId);
+                        if (newDocument == null)
+                            continue;
+
+                        var newDocumentFilePath = newDocument.FilePath;
+                        if (string.IsNullOrEmpty(newDocumentFilePath) && textDocumentEdits.Count != 0)
+                            newDocumentFilePath = Path.Combine(Path.GetDirectoryName(textDocumentEdits.Keys.First().FileSystemPath)!, newDocument.Name);
+                        if (string.IsNullOrEmpty(newDocumentFilePath))
+                            newDocumentFilePath = Path.Combine(projectChanges.NewProject.GetProjectDirectory(), newDocument.Name);
+
+                        var sourceText = await newDocument.GetTextAsync(cancellationToken).ConfigureAwait(false);
+                        FileSystemExtensions.WriteAllText(newDocumentFilePath, sourceText.ToString());
+                        solutionController.CreateDocument(newDocumentFilePath);
+                        CurrentSessionLogger.Debug($"File created via CodeAction: {newDocumentFilePath}");
+                    }
+                    // Removed files
+                    foreach (var documentId in projectChanges.GetRemovedDocuments()) {
+                        var oldDocument = projectChanges.OldProject.GetDocument(documentId);
+                        if (oldDocument?.FilePath == null)
+                            continue;
+
+                        solutionController.DeleteDocument(oldDocument.FilePath);
+                        FileSystemExtensions.TryDeleteFile(oldDocument.FilePath);
+                        CurrentSessionLogger.Debug($"File removed via CodeAction: {oldDocument.FilePath}");
                     }
                 }
             }
         }
 
         return new ProtocolModels.CodeAction() {
-            Kind = ProtocolModels.CodeActionKind.QuickFix,
             Title = codeAction.Title,
             Edit = new WorkspaceEdit() {
                 Changes = textDocumentEdits
             }
         };
-    }
-
-    public static bool IsBlacklisted(this CodeAction codeAction) {
-        var actionType = codeAction.GetType();
-        var actionName = actionType.Name;
-        if (actionName == "GenerateTypeCodeActionWithOption" || actionName == "ChangeSignatureCodeAction" || actionName == "PullMemberUpWithDialogCodeAction")
-            return true;
-
-        if (actionName != "GenerateTypeCodeAction")
-            return false;
-
-        if (inNewFileField == null)
-            inNewFileField = actionType.GetField("_inNewFile", BindingFlags.Instance | BindingFlags.NonPublic);
-
-        var isNewFile = inNewFileField?.GetValue(codeAction);
-        return isNewFile != null && (bool)isNewFile;
     }
 }
