@@ -457,6 +457,16 @@
               "integratedTerminal",
               "externalTerminal"
             ]
+          },
+          "dotrush.build.noRestore": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.build.noRestore%"
+          },
+          "dotrush.build.noDependencies": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.build.noDependencies%"
           }
         }
       }
