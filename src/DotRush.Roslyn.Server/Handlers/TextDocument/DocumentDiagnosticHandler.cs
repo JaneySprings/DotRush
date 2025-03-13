@@ -26,7 +26,7 @@ public class DocumentDiagnosticsHandler : DocumentDiagnosticHandlerBase {
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
         serverCapabilities.DiagnosticProvider ??= new DiagnosticOptions();
         serverCapabilities.DiagnosticProvider.Identifier = "dotrush";
-        serverCapabilities.DiagnosticProvider.InterFileDependencies = false;
+        serverCapabilities.DiagnosticProvider.InterFileDependencies = true;
     }
 
     protected override Task<DocumentDiagnosticReport> Handle(DocumentDiagnosticParams request, CancellationToken token) {

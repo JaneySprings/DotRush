@@ -63,6 +63,7 @@ public static class CodeActionExtensions {
             || codeActionName == "ChangeSignatureCodeAction"
             || codeActionName == "ExtractInterfaceCodeAction"
             || codeActionName == "GenerateOverridesWithDialogCodeAction"
+            || codeActionName == "GenerateConstructorWithDialogCodeAction"
             || codeActionName == "PullMemberUpWithDialogCodeAction";
     }
 

@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.CodeAnalysis.Embedded.Refactorings;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -57,6 +58,8 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
         return new ReadOnlyCollection<CodeRefactoringProvider>(result);
     }
     public ReadOnlyCollection<CodeRefactoringProvider> LoadFromDotRush() {
-        return new ReadOnlyCollection<CodeRefactoringProvider>(new List<CodeRefactoringProvider>());
+        return new ReadOnlyCollection<CodeRefactoringProvider>(new List<CodeRefactoringProvider> {
+            new ReorganizeUsingsRefactoringProvider(),
+        });
     }
 }
