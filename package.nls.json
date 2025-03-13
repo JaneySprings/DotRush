@@ -28,5 +28,8 @@
 	"configuration.description.debugger.searchMicrosoftSymbolServer": "Search Microsoft Symbol Server for missing PDBs.",
 	"configuration.description.debugger.automaticSourcelinkDownload": "Automatically download source files from SourceLink.",
 	"configuration.description.debugger.symbolSearchPaths": "Additional symbol search paths.",
-	"configuration.description.debugger.console": "Console to use for debugging console applications."
+	"configuration.description.debugger.console": "Console to use for debugging console applications.",
+
+	"configuration.description.build.noRestore": "Determines if the project will be restored before building.",
+	"configuration.description.build.noDependencies": "Determines if the project dependencies will be built."
 }

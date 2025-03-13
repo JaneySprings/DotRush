@@ -54,3 +54,5 @@ export const configIdDebuggerConsole = "debugger.console";
 export const configIdDebuggerSymbolSearchPaths = "debugger.symbolSearchPaths";
 export const configIdDebuggerSearchMicrosoftSymbolServer = "debugger.searchMicrosoftSymbolServer";
 export const configIdDebuggerAutomaticSourcelinkDownload = "debugger.automaticSourcelinkDownload";
+export const configIdBuildNoRestore = "build.noRestore";
+export const configIdBuildNoDependencies = "build.noDependencies";
