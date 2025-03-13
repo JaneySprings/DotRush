@@ -22,7 +22,6 @@ public class WorkspaceDiagnosticHandler : WorkspaceDiagnosticHandlerBase {
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
         serverCapabilities.DiagnosticProvider ??= new DiagnosticOptions();
         serverCapabilities.DiagnosticProvider.WorkspaceDiagnostics = true;
-        serverCapabilities.DiagnosticProvider.InterFileDependencies = false;
     }
     protected override Task<WorkspaceDiagnosticReport> Handle(WorkspaceDiagnosticParams request, CancellationToken token) {
         return Task.FromResult(SafeExtensions.Invoke(emptyReport, () => {
