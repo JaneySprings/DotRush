@@ -79,17 +79,17 @@
         {
           "command": "dotrush.build",
           "group": "dotnet_1@1",
-          "when": "(explorerResourceIsFolder || resourceExtname == .csproj || resourceExtname == .sln)"
+          "when": "dotrush.statusBarEnabled && (resourceExtname == .csproj || resourceExtname =~ /.sln*/)"
         },
         {
           "command": "dotrush.restore",
           "group": "dotnet_1@2",
-          "when": "(explorerResourceIsFolder || resourceExtname == .csproj || resourceExtname == .sln)"
+          "when": "dotrush.statusBarEnabled && (resourceExtname == .csproj || resourceExtname =~ /.sln*/)"
         },
         {
           "command": "dotrush.clean",
           "group": "dotnet_1@3",
-          "when": "(explorerResourceIsFolder || resourceExtname == .csproj || resourceExtname == .sln)"
+          "when": "dotrush.statusBarEnabled && (resourceExtname == .csproj || resourceExtname =~ /.sln*/)"
         }
       ],
       "commandPalette": [
@@ -458,15 +458,29 @@
               "externalTerminal"
             ]
           },
-          "dotrush.build.noRestore": {
+          "dotrush.msbuild.noRestore": {
             "type": "boolean",
             "default": false,
-            "description": "%configuration.description.build.noRestore%"
+            "description": "%configuration.description.msbuild.noRestore%"
           },
-          "dotrush.build.noDependencies": {
+          "dotrush.msbuild.noDependencies": {
             "type": "boolean",
             "default": false,
-            "description": "%configuration.description.build.noDependencies%"
+            "description": "%configuration.description.msbuild.noDependencies%"
+          },
+          "dotrush.msbuild.additionalBuildArguments": {
+            "type": "array",
+            "description": "%configuration.description.msbuild.additionalBuildArguments%",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dotrush.msbuild.additionalTestArguments": {
+            "type": "array",
+            "description": "%configuration.description.msbuild.additionalTestArguments%",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }

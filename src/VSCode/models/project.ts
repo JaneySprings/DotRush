@@ -29,9 +29,8 @@ export class ProjectOrSolutionItem implements QuickPickItem {
         this.description = workspace.asRelativePath(targetPath);
         this.item = targetPath;
 
-        const isSolution = targetPath.endsWith('sln') || targetPath.endsWith('slnf');
-        const icon = isSolution ? Icons.solution : Icons.project;
-        const name = isSolution ? path.basename(targetPath, '.sln') : path.basename(targetPath, '.csproj');
+        const icon = path.extname(targetPath).startsWith('.sln') ? Icons.solution : Icons.project;
+        const name = path.basename(targetPath, path.extname(targetPath));
         this.label = `${icon} ${name}`;
     }
 }

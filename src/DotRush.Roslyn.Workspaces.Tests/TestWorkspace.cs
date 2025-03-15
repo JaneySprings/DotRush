@@ -21,7 +21,8 @@ public class TestWorkspace : DotRushWorkspace {
     protected override string DotNetSdkDirectory => string.Empty;
 
 
-    public TestWorkspace(Dictionary<string, string>? workspaceProperties = null) : this(workspaceProperties, true, false, true, false, false) {}
+    public TestWorkspace(Dictionary<string, string>? workspaceProperties = null) : this(workspaceProperties, true, false, false, false, false) {}
+    public TestWorkspace(bool restore) : this(null, true, false, restore, false, false) {}
     public TestWorkspace(Dictionary<string, string>? workspaceProperties, bool loadMetadataForReferencedProjects, bool skipUnrecognizedProjects, bool restoreProjectsBeforeLoading, bool compileProjectsAfterLoading , bool applyWorkspaceChanges) {
         this.workspaceProperties = new ReadOnlyDictionary<string, string>(workspaceProperties ?? new Dictionary<string, string>());
         this.loadMetadataForReferencedProjects = loadMetadataForReferencedProjects;
@@ -40,17 +41,5 @@ public class TestWorkspace : DotRushWorkspace {
 
     public void SetSolution(Solution solution) {
         Solution = solution;
-    }
-    public async Task LoadAsync(string[] targets, CancellationToken cancellationToken) {
-        var solutionFiles = targets.Where(it => 
-            Path.GetExtension(it).Equals(".sln", StringComparison.OrdinalIgnoreCase) ||
-            Path.GetExtension(it).Equals(".slnf", StringComparison.OrdinalIgnoreCase)
-        );
-        if (solutionFiles.Any())
-            await LoadSolutionAsync(solutionFiles, cancellationToken).ConfigureAwait(false);
-
-        var projectFiles = targets.Where(it => Path.GetExtension(it).Equals(".csproj", StringComparison.OrdinalIgnoreCase));
-        if (projectFiles.Any())
-            await LoadProjectsAsync(projectFiles, cancellationToken).ConfigureAwait(false);
     }
 }

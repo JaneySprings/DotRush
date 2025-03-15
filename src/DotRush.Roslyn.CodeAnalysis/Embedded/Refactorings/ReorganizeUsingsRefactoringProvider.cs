@@ -30,12 +30,17 @@ public class ReorganizeUsingsRefactoringProvider : CodeRefactoringProvider {
         }
 
         context.RegisterRefactoring(CodeAction.Create(
-            "Sort Usings and place 'System' directives first",
+            "Sort usings",
+            c => SortUsingsAsync(context.Document, false, false, c),
+            equivalenceKey: "Sort usings alphabetically"
+        ));
+        context.RegisterRefactoring(CodeAction.Create(
+            "Sort usings and place 'System' directives first",
             c => SortUsingsAsync(context.Document, true, false, c),
             equivalenceKey: "Sort usings system first"
         ));
         context.RegisterRefactoring(CodeAction.Create(
-            "Sort Usings and separate groups",
+            "Sort usings and separate groups",
             c => SortUsingsAsync(context.Document, false, true, c),
             equivalenceKey: "Sort usings separate groups"
         ));

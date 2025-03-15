@@ -11,7 +11,7 @@ public class SimpleProjectLoadTests : TestFixture {
 
     [Test]
     public async Task LoadSingleProjectTest() {
-        var workspace = new TestWorkspace();
+        var workspace = new TestWorkspace(restore: true);
         var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
 
@@ -70,7 +70,7 @@ public class SimpleProjectLoadTests : TestFixture {
 
     [Test]
     public void ErrorOnRestoreTest() {
-        var workspace = new TestWorkspace();
+        var workspace = new TestWorkspace(restore: true);
         var projectPath = CreateProject("MyProject", "MyError>/<", "Exe");
 
         Assert.ThrowsAsync<InvalidOperationException>(async () => await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None));

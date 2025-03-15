@@ -5,7 +5,7 @@ import * as path from 'path';
 
 export class Extensions {
     public static readonly projectExtPattern: string = '.csproj';
-    public static readonly solutionExtPattern: string = '.{sln,slnf}';
+    public static readonly solutionExtPattern: string = '.sln*';
 
     public static async getProjectFiles(): Promise<string[]> {
         return (await Extensions.findFiles(undefined, Extensions.projectExtPattern)).map(x => x.fsPath);
@@ -21,7 +21,7 @@ export class Extensions {
     }
 
     public static async selectProjectOrSolutionFile(baseUri: vscode.Uri | undefined = undefined): Promise<string | undefined> {
-        if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath) === '.sln')
+        if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath).startsWith('.sln'))
             return baseUri.fsPath;
         if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath) === '.csproj')
             return baseUri.fsPath;
@@ -111,6 +111,11 @@ export class Extensions {
         if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length > 0)
             return vscode.workspace.workspaceFolders[0].uri.fsPath;
 
+        return undefined;
+    }
+    public static getWorkspaceFolder() : vscode.WorkspaceFolder | undefined {
+        if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === 1)
+            return vscode.workspace.workspaceFolders[0];
         return undefined;
     }
     public static onVSCode<TValue>(official: TValue, fork: TValue): TValue {
