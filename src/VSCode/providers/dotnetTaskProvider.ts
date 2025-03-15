@@ -1,6 +1,6 @@
 import { StatusBarController } from '../controllers/statusbarController';
-import { Extensions } from '../extensions';
 import { ProcessArgumentBuilder } from '../interop/processArgumentBuilder';
+import { Extensions } from '../extensions';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 
@@ -52,8 +52,12 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
             .conditional(`-p:TargetFramework=${framework}`, () => framework !== undefined);
 
         if (target === DotNetTarget.Build) {
-            builder.conditional('--no-restore', () => Extensions.getSetting<boolean>(res.configIdBuildNoRestore, false));
-            builder.conditional('--no-dependencies', () => Extensions.getSetting<boolean>(res.configIdBuildNoDependencies, false));
+            builder.conditional('--no-restore', () => Extensions.getSetting<boolean>(res.configIdMSBuildNoRestore, false));
+            builder.conditional('--no-dependencies', () => Extensions.getSetting<boolean>(res.configIdMSBuildNoDependencies, false));
+            Extensions.getSetting<string[]>(res.configIdMSBuildAdditionalBuildArguments)?.forEach(arg => builder.append(arg));
+        }
+        if (target === DotNetTarget.Test) {
+            Extensions.getSetting<string[]>(res.configIdMSBuildAdditionalTestArguments)?.forEach(arg => builder.append(arg));
         }
 
         definition.args?.forEach((arg: string) => builder.override(arg));

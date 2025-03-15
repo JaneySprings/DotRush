@@ -38,6 +38,15 @@ public abstract class DotRushWorkspace : SolutionController {
         ArgumentNullException.ThrowIfNull(workspace);
         return LoadProjectsAsync(workspace, projectFiles, cancellationToken);
     }
+    public async Task LoadAsync(IEnumerable<string> targets, CancellationToken cancellationToken) {
+        var solutionFiles = targets.Where(it => Path.GetExtension(it).StartsWith(".sln", StringComparison.OrdinalIgnoreCase));
+        if (solutionFiles.Any())
+            await LoadSolutionAsync(solutionFiles, cancellationToken).ConfigureAwait(false);
+
+        var projectFiles = targets.Where(it => Path.GetExtension(it).Equals(".csproj", StringComparison.OrdinalIgnoreCase));
+        if (projectFiles.Any())
+            await LoadProjectsAsync(projectFiles, cancellationToken).ConfigureAwait(false);
+    }
 
     private bool TryRegisterDotNetEnvironment() {
         try {

@@ -30,6 +30,8 @@
 	"configuration.description.debugger.symbolSearchPaths": "Additional symbol search paths.",
 	"configuration.description.debugger.console": "Console to use for debugging console applications.",
 
-	"configuration.description.build.noRestore": "Determines if the project will be restored before building.",
-	"configuration.description.build.noDependencies": "Determines if the project dependencies will be built."
+	"configuration.description.msbuild.noRestore": "Determines if the project will be restored before building.",
+	"configuration.description.msbuild.noDependencies": "Determines if the project dependencies will be built.",
+	"configuration.description.msbuild.additionalBuildArguments": "Additional arguments to pass to the build command.",
+	"configuration.description.msbuild.additionalTestArguments": "Additional arguments to pass to the test command."
 }

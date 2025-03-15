@@ -22,9 +22,17 @@ export class TestExplorerController {
         context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileDebug, vscode.TestRunProfileKind.Debug, TestExplorerController.debugTests, true));
         TestExplorerController.refreshTests();
 
-        /* Internal API */
-        if (Extensions.getSetting('testExplorer.skipInitialPauseEvent', false))
+        /* Experimental API */
+        if (Extensions.getSetting('testExplorer.skipInitialPauseEvent', false)) {
             context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerVsdbgId, new ContinueAfterInitialPauseTracker()));
+        }
+        if (Extensions.getSetting('testExplorer.autoRefreshTests', false)) {
+            context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(ev => {
+                const fileName = path.basename(ev.uri.fsPath);
+                if (fileName.endsWith('.cs') && fileName.includes('Tests'))
+                    TestExplorerController.refreshTests();
+            }));
+        }
     }
 
     private static async refreshTests(): Promise<void> {
@@ -64,7 +72,7 @@ export class TestExplorerController {
                 return;
             
             const processId = await Interop.runTestHost(project.uri!.fsPath, filters.join('|'));
-            await vscode.debug.startDebugging(TestExplorerController.getWorkspaceFolder(), {
+            await vscode.debug.startDebugging(Extensions.getWorkspaceFolder(), {
                 name: res.testExplorerProfileDebug,
                 type: res.debuggerVsdbgId,
                 processId: processId,
@@ -123,11 +131,6 @@ export class TestExplorerController {
             testRun.end();
         });
     }
-    public static getWorkspaceFolder() : vscode.WorkspaceFolder | undefined {
-        if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === 1)
-            return vscode.workspace.workspaceFolders[0];
-        return undefined;
-    }
     public static getTestReportPath(project: vscode.TestItem): string {
         const testReport = path.join(TestExplorerController.testsResultDirectory, `${project.label}.trx`);
         if (fs.existsSync(testReport))
@@ -137,7 +140,7 @@ export class TestExplorerController {
     }
 }
 
-/* Internal API */
+/* Experimental API */
 // https://github.com/microsoft/vstest/blob/06101ef5feb95048cbe850472ed49604863d54ff/src/vstest.console/Program.cs#L37
 class ContinueAfterInitialPauseTracker implements vscode.DebugAdapterTrackerFactory {
     private isInitialStoppedEvent: boolean = false;

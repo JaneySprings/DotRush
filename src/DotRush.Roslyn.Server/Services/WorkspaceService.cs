@@ -34,16 +34,7 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
             return;
         }
 
-        var solutionFiles = targets.Where(it => 
-            Path.GetExtension(it).Equals(".sln", StringComparison.OrdinalIgnoreCase) ||
-            Path.GetExtension(it).Equals(".slnf", StringComparison.OrdinalIgnoreCase)
-        );
-        if (solutionFiles.Any())
-            await LoadSolutionAsync(solutionFiles, cancellationToken).ConfigureAwait(false);
-
-        var projectFiles = targets.Where(it => Path.GetExtension(it).Equals(".csproj", StringComparison.OrdinalIgnoreCase));
-        if (projectFiles.Any())
-            await LoadProjectsAsync(projectFiles, cancellationToken).ConfigureAwait(false);
+        await LoadAsync(targets, cancellationToken).ConfigureAwait(false);
 
         if (workspaceFolders != null)
             fileWatcher.StartObserving(workspaceFolders);
@@ -88,7 +79,7 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
 
         if (workspaceFolders == null)
             return null;
-        var solutionFiles = workspaceFolders.SelectMany(it => Directory.GetFiles(it, "*.sln", SearchOption.AllDirectories));
+        var solutionFiles = workspaceFolders.SelectMany(it => Directory.GetFiles(it, "*.sln*", SearchOption.AllDirectories));
         if (solutionFiles.Count() == 1)
             return solutionFiles;
         var projectFiles = workspaceFolders.SelectMany(it => Directory.GetFiles(it, "*.csproj", SearchOption.AllDirectories));

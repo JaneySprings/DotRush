@@ -11,7 +11,7 @@ public class SimpleSolutionLoadTests : TestFixture {
 
     [Test]
     public async Task LoadSingleProjectTest() {
-        var workspace = new TestWorkspace();
+        var workspace = new TestWorkspace(restore: true);
         var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
         var solutionPath = CreateSolution("MySolution", projectPath);
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
@@ -36,6 +36,18 @@ public class SimpleSolutionLoadTests : TestFixture {
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(2));
         Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo("MyProject"));
         Assert.That(workspace.Solution.Projects.ElementAt(1).Name, Is.EqualTo("MyProject2"));
+    }
+    [Test]
+    public async Task LoadSingleProjectsWithFilterTest() {
+        var workspace = new TestWorkspace();
+        var project1Path = CreateProject("MyProject", SingleTFM, "Exe");
+        var project2Path = CreateProject("MyProject2", SingleTFM, "Library");
+        var solutionPath = CreateSolution("MySolution", project1Path, project2Path);
+        var solutionFilterPath = CreateSolutionFilter(solutionPath, project2Path);
+
+        await workspace.LoadAsync(new[] { solutionFilterPath }, CancellationToken.None);
+        Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(1));
+        Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo("MyProject2"));
     }
 
     [Test]
@@ -99,7 +111,7 @@ public class SimpleSolutionLoadTests : TestFixture {
 
     [Test]
     public void ErrorOnRestoreTest() {
-        var workspace = new TestWorkspace();
+        var workspace = new TestWorkspace(restore: true);
         var projectPath = CreateProject("MyProject", "MyError>/<", "Exe");
         var solutionPath = CreateSolution("MySolution", projectPath);
 
@@ -119,6 +131,13 @@ public class SimpleSolutionLoadTests : TestFixture {
 
         Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo("MyProject"));
         Assert.That(workspace.Solution.Projects.ElementAt(1).Name, Is.EqualTo("MyProject2"));
+    }
+    [Test] // https://github.com/dotnet/msbuild/issues/10266
+    public void CheckMSBuildWorkspaceSlnxSupportTest() {
+        var projectPath = CreateProject("MyProject2", MultiTFM, "Library");
+        var solutionPath = CreateSolutionX("MySolution", projectPath);
+        var workspace = new TestWorkspace();
+        Assert.ThrowsAsync<Microsoft.Build.Exceptions.InvalidProjectFileException>(async () => await workspace.LoadAsync(new[] { solutionPath }, CancellationToken.None));
     }
 
 

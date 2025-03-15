@@ -1,7 +1,8 @@
+using System.Text;
+using System.Text.Json;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 using FileSystemExtensions = DotRush.Common.Extensions.FileSystemExtensions;
-
 
 namespace DotRush.Roslyn.Workspaces.Tests;
 
@@ -65,6 +66,30 @@ EndGlobal";
             File.AppendAllText(solutionFile, $"\nProject(\"{{9A19103F-16F7-4668-BE54-9A1E7A4F7556}}\") = \"{Path.GetFileNameWithoutExtension(project)}\", \"{project}\", \"{{{Guid.NewGuid}}}\"\nEndProject");
 
         return solutionFile;
+    }
+    protected string CreateSolutionX(string name, params string[] projects) {
+        var solutionFile = Path.Combine(SandboxDirectory, $"{name}.slnx");
+        var solutionContent = new StringBuilder();
+        solutionContent.AppendLine("<Solution>");
+        foreach (var project in projects)
+            solutionContent.AppendLine($"  <Project Path=\"{project}\" />");
+        solutionContent.AppendLine("</Solution>");
+        
+        File.WriteAllText(solutionFile, solutionContent.ToString());
+        return solutionFile;
+    }
+    protected string CreateSolutionFilter(string solutionPath, params string[] projects) {
+        var solutionDirectory = Path.GetDirectoryName(solutionPath)!;
+        var solutionFilterFile = Path.Combine(solutionDirectory, $"{Path.GetFileNameWithoutExtension(solutionPath)}.slnf");
+        var slnFilterObject = new {
+            solution = new {
+                path = solutionPath,
+                projects = projects
+            }
+        };
+
+        File.WriteAllText(solutionFilterFile, JsonSerializer.Serialize(slnFilterObject));
+        return solutionFilterFile;
     }
 
     protected string CreateFileInProject(string project, string name, string content) {
