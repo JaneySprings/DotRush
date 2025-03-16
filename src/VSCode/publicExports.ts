@@ -5,18 +5,14 @@ export class PublicExports {
     public onActiveProjectChanged: EventHandler;
     public onActiveConfigurationChanged: EventHandler;
     public onActiveFrameworkChanged: EventHandler;
+    public onProjectLoaded: EventHandler;
 
     constructor() {
         PublicExports.instance = this;
         this.onActiveProjectChanged = new EventHandler();
         this.onActiveConfigurationChanged = new EventHandler();
         this.onActiveFrameworkChanged = new EventHandler();
-    }
-
-    public invokeAll() {
-        this.onActiveProjectChanged.invoke(undefined);
-        this.onActiveConfigurationChanged.invoke(undefined);
-        this.onActiveFrameworkChanged.invoke(undefined);
+        this.onProjectLoaded = new EventHandler();
     }
 }
 

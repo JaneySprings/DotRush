@@ -4,7 +4,7 @@ using DotRush.Common.Logging;
 namespace DotRush.Roslyn.Workspaces.FileSystem;
 
 public class WorkspaceFilesWatcher {
-    private const int UpdateTreshold = 1500;
+    private const int UpdateTreshold = 1200;
 
     private readonly CurrentClassLogger currentClassLogger;
     private readonly IWorkspaceChangeListener listener;

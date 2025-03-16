@@ -5,7 +5,7 @@ export interface TestFixture {
     name: string;
     filePath: string;
     range: Range | null;
-    children: TestCase[] | null;
+    children: TestCase[];
 }
 
 export interface TestCase {
@@ -24,12 +24,18 @@ export interface TestResult {
 }
 
 export class TestExtensions {
-    public static toTestItem(fixture: any, controller: TestController): TestItem {
+    public static fixtureToTestItem(fixture: TestFixture, controller: TestController): TestItem {
         const item = controller.createTestItem(fixture.id, fixture.name, Uri.file(fixture.filePath));
         if (fixture.range !== null)
             item.range = fixture.range;
         if (fixture.children !== null && fixture.children !== undefined)
-            item.children.replace(fixture.children.map((c : any) => TestExtensions.toTestItem(c, controller)));
+            item.children.replace(fixture.children.map(tc => TestExtensions.testCaseToTestItem(tc, controller)));
+        return item;
+    }
+    public static testCaseToTestItem(testCase: TestCase, controller: TestController): TestItem {
+        const item = controller.createTestItem(testCase.id, testCase.name, Uri.file(testCase.filePath));
+        if (testCase.range !== null)
+            item.range = testCase.range;
         return item;
     }
     public static toTestMessage(testResult: TestResult): TestMessage {

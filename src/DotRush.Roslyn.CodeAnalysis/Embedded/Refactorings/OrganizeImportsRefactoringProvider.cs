@@ -11,8 +11,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace DotRush.Roslyn.CodeAnalysis.Embedded.Refactorings;
 
-[ExportCodeRefactoringProvider(LanguageNames.CSharp, Name = nameof(ReorganizeUsingsRefactoringProvider)), Shared]
-public class ReorganizeUsingsRefactoringProvider : CodeRefactoringProvider {
+[ExportCodeRefactoringProvider(LanguageNames.CSharp, Name = nameof(OrganizeImportsRefactoringProvider)), Shared]
+public class OrganizeImportsRefactoringProvider : CodeRefactoringProvider {
     private static Type? organizeImportsOptionsType;
     private static MethodInfo? organizeImportsServiceMethod;
     private static object? organizeImportsService;

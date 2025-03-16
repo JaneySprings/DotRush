@@ -1,13 +1,17 @@
 namespace DotRush.Common.Extensions;
 
 public static class CollectionExtensions {
-    public static void AddRange<T>(this ICollection<T> collection, IEnumerable<T> items) {
+    public static IEnumerable<T> AddRange<T>(this ICollection<T> collection, IEnumerable<T> items) {
         foreach (var item in items)
             collection.Add(item);
+
+        return collection;
     }
-    public static void ForEach<T>(this IEnumerable<T> collection, Action<T> action) {
+    public static IEnumerable<T> ForEach<T>(this IEnumerable<T> collection, Action<T> action) {
         foreach (var item in collection)
             action(item);
+
+        return collection;
     }
     public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> collection) where T : class {
         return collection.Where(item => item != null)!;

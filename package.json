@@ -79,17 +79,17 @@
         {
           "command": "dotrush.build",
           "group": "dotnet_1@1",
-          "when": "dotrush.statusBarEnabled && (resourceExtname == .csproj || resourceExtname =~ /.sln*/)"
+          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname == .csproj || resourceExtname =~ /.sln*/)"
         },
         {
           "command": "dotrush.restore",
           "group": "dotnet_1@2",
-          "when": "dotrush.statusBarEnabled && (resourceExtname == .csproj || resourceExtname =~ /.sln*/)"
+          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname == .csproj || resourceExtname =~ /.sln*/)"
         },
         {
           "command": "dotrush.clean",
           "group": "dotnet_1@3",
-          "when": "dotrush.statusBarEnabled && (resourceExtname == .csproj || resourceExtname =~ /.sln*/)"
+          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname == .csproj || resourceExtname =~ /.sln*/)"
         }
       ],
       "commandPalette": [

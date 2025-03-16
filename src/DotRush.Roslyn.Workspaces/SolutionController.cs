@@ -33,7 +33,7 @@ public abstract class SolutionController : ProjectsController {
 
                 OnProjectLoadStarted(solutionFile);
                 var solution = await workspace.OpenSolutionAsync(solutionFile, null, cancellationToken);
-                OnProjectLoadCompleted(solutionFile);
+                solution.Projects.ForEach(project => OnProjectLoadCompleted(project.FilePath ?? string.Empty));
 
                 OnWorkspaceStateChanged(workspace.CurrentSolution);
 
@@ -48,7 +48,7 @@ public abstract class SolutionController : ProjectsController {
         }
 
         await OnLoadingCompletedAsync(cancellationToken);
-        CurrentSessionLogger.Debug($"Projects loading completed, loaded {workspace.CurrentSolution.ProjectIds.Count} projects");
+        CurrentSessionLogger.Debug($"Solution loading completed, loaded {workspace.CurrentSolution.ProjectIds.Count} projects");
     }
 
     public void CreateDocuments(string[] files) {
