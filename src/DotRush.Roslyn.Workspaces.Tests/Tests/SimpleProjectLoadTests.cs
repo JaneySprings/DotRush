@@ -16,6 +16,7 @@ public class SimpleProjectLoadTests : TestFixture {
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
 
         await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
+        workspace.AssertLoadedProjects(1);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(1));
         Assert.That(workspace.Solution.Projects.First().Name, Is.EqualTo("MyProject"));
 
@@ -31,9 +32,27 @@ public class SimpleProjectLoadTests : TestFixture {
         var project2Path = CreateProject("MyProject2", SingleTFM, "Library");
 
         await workspace.LoadAsync(new[] { project2Path, project1Path }, CancellationToken.None);
+        workspace.AssertLoadedProjects(2);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(2));
         Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo("MyProject2"));
         Assert.That(workspace.Solution.Projects.ElementAt(1).Name, Is.EqualTo("MyProject"));
+    }
+    [Test]
+    public async Task LoadSingleProjectWithRelativePathTest() {
+        var workspace = new TestWorkspace(restore: true);
+        var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
+        var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
+        projectPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), projectPath);
+
+        await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
+        workspace.AssertLoadedProjects(1);
+        Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(1));
+        Assert.That(workspace.Solution.Projects.First().Name, Is.EqualTo("MyProject"));
+
+        var documentIds = workspace.Solution.GetDocumentIdsWithFilePathV2(documentPath);
+
+        Assert.That(documentIds.Count(), Is.EqualTo(1));
+        Assert.That(workspace.Solution.GetDocument(documentIds.First())!.Name, Is.EqualTo("Program.cs"));
     }
 
     [Test]
@@ -43,6 +62,7 @@ public class SimpleProjectLoadTests : TestFixture {
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
 
         await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
+        workspace.AssertLoadedProjects(1);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(2));
 
         var documentIds = workspace.Solution.GetDocumentIdsWithFilePathV2(documentPath);
@@ -59,6 +79,7 @@ public class SimpleProjectLoadTests : TestFixture {
         var project2Path = CreateProject("MyProject2", MultiTFM, "Library");
 
         await workspace.LoadAsync(new[] { project2Path, project1Path }, CancellationToken.None);
+        workspace.AssertLoadedProjects(2);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(4));
 
         var (tfm1, tfm2) = GetTFMs(MultiTFM);
@@ -84,6 +105,7 @@ public class SimpleProjectLoadTests : TestFixture {
         var project2Path = CreateProject("MyProject2", MultiTFM, "Library");
 
         await workspace.LoadAsync(new[] { project2Path, project1Path }, CancellationToken.None);
+        workspace.AssertLoadedProjects(2);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(2));
 
         Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo("MyProject2"));

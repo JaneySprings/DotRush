@@ -39,7 +39,7 @@ public abstract class ProjectsController {
 
                 OnProjectLoadStarted(projectFile);
                 var project = await workspace.OpenProjectAsync(projectFile, null, cancellationToken);
-                OnProjectLoadCompleted(projectFile);
+                OnProjectLoadCompleted(project.FilePath ?? string.Empty);
 
                 OnWorkspaceStateChanged(workspace.CurrentSolution);
 

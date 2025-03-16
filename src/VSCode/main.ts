@@ -24,8 +24,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		StateController.activate(context);
 		StatusBarController.activate(context);
 		ContextMenuController.activate(context);
-		LanguageServerController.activate(context);
 		TestExplorerController.activate(context);
+		LanguageServerController.activate(context);
 	}
 
 	DebugAdapterController.activate(context);
