@@ -32,7 +32,7 @@ Task("server")
 	}))
 	.Does(() => {
 		var input = _Path.Combine(VSCodeExtensionDirectory, "bin", "LanguageServer");
-		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.Bundle.Server.v{version}_{runtime}.zip");
+		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.Bundle.Server_{runtime}.zip");
 		Zip(input, output);
 	});
 

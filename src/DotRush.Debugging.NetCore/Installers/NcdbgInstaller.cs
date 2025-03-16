@@ -66,7 +66,7 @@ public class NcdbgInstaller : IDebuggerInstaller {
                 CurrentSessionLogger.Error($"Failed to register debugger executable: {registrationResult.GetError()}");
         }
 
-        var linkPath = Path.Combine(Path.GetDirectoryName(executablePath)!, "vsdbg" + RuntimeInfo.ExecExtension);
+        var linkPath = Path.Combine(Path.GetDirectoryName(executablePath)!, "clrdbg" + RuntimeInfo.ExecExtension);
         File.Copy(executablePath, linkPath);
     }
 }

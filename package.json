@@ -155,9 +155,9 @@
     ],
     "debuggers": [
       {
-        "program": "extension/bin/Debugger/vsdbg",
+        "program": "extension/bin/Debugger/clrdbg",
         "windows": {
-          "program": "extension/bin/Debugger/vsdbg.exe"
+          "program": "extension/bin/Debugger/clrdbg.exe"
         },
         "args": [
           "--interpreter=vscode"

@@ -88,7 +88,7 @@ public class VsdbgInstaller : IDebuggerInstaller {
             stream.CopyTo(fileStream);
         }
 
-        var executable = Path.Combine(debuggerDirectory, "vsdbg" + RuntimeInfo.ExecExtension);
+        var executable = Path.Combine(debuggerDirectory, "vsdbg-ui" + RuntimeInfo.ExecExtension);
         if (!File.Exists(executable)) {
             CurrentSessionLogger.Error($"Debugger executable not found: '{executable}'");
             return null;
@@ -97,11 +97,13 @@ public class VsdbgInstaller : IDebuggerInstaller {
         return executable;
     }
     void IDebuggerInstaller.EndInstallation(string executablePath) {
-        if (RuntimeInfo.IsWindows)
-            return;
+        if (!RuntimeInfo.IsWindows) {
+            var registrationResult = ProcessRunner.CreateProcess("chmod", $"+x \"{executablePath}\"", captureOutput: true, displayWindow: false).Task.Result;
+            if (!registrationResult.Success)
+                CurrentSessionLogger.Error($"Failed to register debugger executable: {registrationResult.GetError()}");
+        }
 
-        var registrationResult = ProcessRunner.CreateProcess("chmod", $"+x \"{executablePath}\"", captureOutput: true, displayWindow: false).Task.Result;
-        if (!registrationResult.Success)
-            CurrentSessionLogger.Error($"Failed to register debugger executable: {registrationResult.GetError()}");
+        var linkPath = Path.Combine(Path.GetDirectoryName(executablePath)!, "clrdbg" + RuntimeInfo.ExecExtension);
+        File.Copy(executablePath, linkPath);
     }
 }

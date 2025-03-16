@@ -1,6 +1,6 @@
 namespace DotRush.Debugging.NetCore.Installers;
 
-interface IDebuggerInstaller {
+public interface IDebuggerInstaller {
     void BeginInstallation();
     string? GetDownloadLink();
     string? Install(string downloadUrl);
