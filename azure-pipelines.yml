@@ -125,7 +125,7 @@ stages:
             repositoryName: '$(Build.Repository.Name)'
             action: 'create'
             tagSource: 'gitTag'
-            assets: '$(Pipeline.Workspace)/**/DotRush.Bundle.*.vsix'
+            assets: '$(Pipeline.Workspace)/**/DotRush.Bundle.*'
         - script: npm install -g vsce
           displayName: 'Install VSCode builder'
         - task: Bash@3

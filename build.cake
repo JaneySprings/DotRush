@@ -29,7 +29,12 @@ Task("server")
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 		Configuration = configuration,
 		Runtime = runtime,
-	}));
+	}))
+	.Does(() => {
+		var input = _Path.Combine(VSCodeExtensionDirectory, "bin", "LanguageServer");
+		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.Bundle.Server.v{version}_{runtime}.zip");
+		Zip(input, output);
+	});
 
 Task("netcore")
 	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.NetCore", "DotRush.Debugging.NetCore.csproj"), new DotNetPublishSettings {
