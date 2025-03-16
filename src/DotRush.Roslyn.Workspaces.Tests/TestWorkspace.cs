@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using DotRush.Common.External;
 using Microsoft.CodeAnalysis;
+using NUnit.Framework;
 
 namespace DotRush.Roslyn.Workspaces.Tests;
 
@@ -11,6 +12,8 @@ public class TestWorkspace : DotRushWorkspace {
     private readonly bool restoreProjectsBeforeLoading;
     private readonly bool compileProjectsAfterLoading;
     private readonly bool applyWorkspaceChanges;
+
+    private readonly List<string> loadedProjects = new List<string>();
 
     protected override ReadOnlyDictionary<string, string> WorkspaceProperties => workspaceProperties;
     protected override bool LoadMetadataForReferencedProjects => loadMetadataForReferencedProjects;
@@ -38,8 +41,17 @@ public class TestWorkspace : DotRushWorkspace {
     public override void OnProjectRestoreFailed(string documentPath, ProcessResult result) {
         throw new InvalidOperationException($"[{documentPath}]: Project restore failed with exit code {result.ExitCode}:\nOutput: {result.GetOutput()}\nError: {result.GetError()}");
     }
+    public override void OnProjectLoadCompleted(string documentPath) {
+        loadedProjects.Add(documentPath);
+    }
 
     public void SetSolution(Solution solution) {
         Solution = solution;
+    }
+    public void AssertLoadedProjects(int expectedCount) {
+        Assert.That(loadedProjects, Has.Count.EqualTo(expectedCount));
+
+        var projects = Solution!.Projects.Select(it => it.FilePath).Distinct().ToList();
+        projects.ForEach(path => Assert.That(loadedProjects, Contains.Item(path)));
     }
 }

@@ -25,8 +25,10 @@ public class MSBuildProject {
     }
     public bool IsTestProject() {
         var isTestProject = this.EvaluateProperty("IsTestProject");
-        if (isTestProject != null && isTestProject.Contains("true", StringComparison.OrdinalIgnoreCase) && !IsLegacyFormat)
+        if (isTestProject != null && isTestProject.Contains("true", StringComparison.OrdinalIgnoreCase))
             return true;
+        if (IsLegacyFormat)
+            return false;
         
         return this.HasPackage("NUnit") || this.HasPackage("NUnitLite") || this.HasPackage("xunit");
     }

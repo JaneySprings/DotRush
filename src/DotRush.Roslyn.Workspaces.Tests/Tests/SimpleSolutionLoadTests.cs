@@ -17,6 +17,7 @@ public class SimpleSolutionLoadTests : TestFixture {
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
 
         await workspace.LoadAsync(new[] { solutionPath }, CancellationToken.None);
+        workspace.AssertLoadedProjects(1);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(1));
         Assert.That(workspace.Solution.Projects.First().Name, Is.EqualTo("MyProject"));
 
@@ -33,6 +34,7 @@ public class SimpleSolutionLoadTests : TestFixture {
         var solutionPath = CreateSolution("MySolution", project1Path, project2Path);
 
         await workspace.LoadAsync(new[] { solutionPath }, CancellationToken.None);
+        workspace.AssertLoadedProjects(2);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(2));
         Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo("MyProject"));
         Assert.That(workspace.Solution.Projects.ElementAt(1).Name, Is.EqualTo("MyProject2"));
@@ -46,8 +48,27 @@ public class SimpleSolutionLoadTests : TestFixture {
         var solutionFilterPath = CreateSolutionFilter(solutionPath, project2Path);
 
         await workspace.LoadAsync(new[] { solutionFilterPath }, CancellationToken.None);
+        workspace.AssertLoadedProjects(1);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(1));
         Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo("MyProject2"));
+    }
+    [Test]
+    public async Task LoadSingleProjectWithRelativePathTest() {
+        var workspace = new TestWorkspace(restore: true);
+        var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
+        var solutionPath = CreateSolution("MySolution", projectPath);
+        var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
+        solutionPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), solutionPath);
+
+        await workspace.LoadAsync(new[] { solutionPath }, CancellationToken.None);
+        workspace.AssertLoadedProjects(1);
+        Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(1));
+        Assert.That(workspace.Solution.Projects.First().Name, Is.EqualTo("MyProject"));
+
+        var documentIds = workspace.Solution.GetDocumentIdsWithFilePathV2(documentPath);
+
+        Assert.That(documentIds.Count(), Is.EqualTo(1));
+        Assert.That(workspace.Solution.GetDocument(documentIds.First())!.Name, Is.EqualTo("Program.cs"));
     }
 
     [Test]
@@ -58,6 +79,7 @@ public class SimpleSolutionLoadTests : TestFixture {
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
 
         await workspace.LoadAsync(new[] { solutionPath }, CancellationToken.None);
+        workspace.AssertLoadedProjects(1);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(2));
 
         var documentIds = workspace.Solution.GetDocumentIdsWithFilePathV2(documentPath);
@@ -75,6 +97,7 @@ public class SimpleSolutionLoadTests : TestFixture {
         var solutionPath = CreateSolution("MySolution", project1Path, project2Path);
 
         await workspace.LoadAsync(new[] { solutionPath }, CancellationToken.None);
+        workspace.AssertLoadedProjects(2);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(4));
 
         var (tfm1, tfm2) = GetTFMs(MultiTFM);
@@ -92,6 +115,7 @@ public class SimpleSolutionLoadTests : TestFixture {
         var solutionPath = CreateSolution("MySolution", project1Path);
 
         await workspace.LoadAsync(new[] { solutionPath, project2Path }, CancellationToken.None);
+        workspace.AssertLoadedProjects(2);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(2));
         Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo("MyProject"));
         Assert.That(workspace.Solution.Projects.ElementAt(1).Name, Is.EqualTo("MyProject2"));
@@ -105,6 +129,7 @@ public class SimpleSolutionLoadTests : TestFixture {
         var solution2Path = CreateSolution("MySolution2", project2Path);
 
         await workspace.LoadAsync(new[] { solution1Path, solution2Path }, CancellationToken.None);
+        workspace.AssertLoadedProjects(2); // Last solution wins. But event will be fired for both.
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(1));
         Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo("MyProject2"));
     }
@@ -127,6 +152,7 @@ public class SimpleSolutionLoadTests : TestFixture {
         var solutionPath = CreateSolution("MySolution", project1Path, project2Path);
 
         await workspace.LoadAsync(new[] { solutionPath }, CancellationToken.None);
+        workspace.AssertLoadedProjects(2);
         Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(2));
 
         Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo("MyProject"));

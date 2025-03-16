@@ -33,7 +33,7 @@ public abstract class SolutionController : ProjectsController {
 
                 OnProjectLoadStarted(solutionFile);
                 var solution = await workspace.OpenSolutionAsync(solutionFile, null, cancellationToken);
-                solution.Projects.ForEach(project => OnProjectLoadCompleted(project.FilePath ?? string.Empty));
+                solution.Projects.Select(it => it.FilePath).Distinct().ForEach(path => OnProjectLoadCompleted(path ?? string.Empty));
 
                 OnWorkspaceStateChanged(workspace.CurrentSolution);
 
