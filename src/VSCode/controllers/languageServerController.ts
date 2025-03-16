@@ -1,4 +1,6 @@
-import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
+import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
+import { TestExplorerController } from "./testExplorerController";
+import { PublicExports } from "../publicExports";
 import { Extensions } from "../extensions";
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
@@ -6,14 +8,32 @@ import * as path from 'path';
 
 export class LanguageServerController {
     private static client: LanguageClient;
-    private static command: string;
+    private static serverOptions: ServerOptions;
+    private static clientOptions: LanguageClientOptions;
     private static running: boolean;
 
     public static async activate(context: vscode.ExtensionContext): Promise<void> {
         const serverExecutable = path.join(context.extensionPath, "extension", "bin", "LanguageServer", "DotRush");
         const serverExtension = process.platform === 'win32' ? '.exe' : '';
-        LanguageServerController.command = serverExecutable + serverExtension;
-        
+        LanguageServerController.serverOptions = {
+            command: serverExecutable + serverExtension,
+            options: { cwd: Extensions.getCurrentWorkingDirectory() }
+        };
+        LanguageServerController.clientOptions = {
+            documentSelector: [
+                { pattern: '**/*.cs' },
+                { pattern: '**/*.xaml' }
+            ],
+            diagnosticCollectionName: res.extensionId,
+            progressOnInitialization: true,
+            synchronize: {
+                configurationSection: res.extensionId
+            },
+            connectionOptions: {
+                maxRestartCount: 2,
+            }
+        };
+
         if (await LanguageServerController.shouldQuickPickTargets())
             await LanguageServerController.showQuickPickTargets();
 
@@ -34,23 +54,10 @@ export class LanguageServerController {
     }
 
     private static initialize() {
-        const serverOptions: ServerOptions = { 
-            command: LanguageServerController.command,
-            options: { cwd: Extensions.getCurrentWorkingDirectory() }
-        };
-        LanguageServerController.client = new LanguageClient(res.extensionId, res.extensionId, serverOptions, { 
-            documentSelector: [
-                { pattern: '**/*.cs' },
-                { pattern: '**/*.xaml' }
-            ],
-            diagnosticCollectionName: res.extensionId,
-            progressOnInitialization: true, 
-            synchronize: { 
-                configurationSection: res.extensionId
-            },
-            connectionOptions: {
-                maxRestartCount: 2,
-            }
+        LanguageServerController.client = new LanguageClient(res.extensionId, res.extensionId, LanguageServerController.serverOptions, LanguageServerController.clientOptions);
+        LanguageServerController.client.onNotification('dotrush/projectLoaded', (project: string) => {
+            TestExplorerController.loadProject(project);
+            PublicExports.instance.onProjectLoaded.invoke(project);
         });
     }
     public static start() {
@@ -62,6 +69,7 @@ export class LanguageServerController {
         LanguageServerController.client.stop();
         LanguageServerController.client.dispose();
         LanguageServerController.running = false;
+        TestExplorerController.unloadProjects();
     }
     public static restart() {
         LanguageServerController.stop();

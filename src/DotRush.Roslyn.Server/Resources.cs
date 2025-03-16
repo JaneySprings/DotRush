@@ -3,6 +3,8 @@ using System.Text;
 namespace DotRush.Roslyn.Server;
 
 public static class Resources {
+    public const string ProjectLoadedNotification = "dotrush/projectLoaded";
+
     public const string DotNetRegistrationFailed = "Failed to register .NET SDK. Make sure .NET SDK is installed or install it manually from [this link](https://dotnet.microsoft.com/download).";
     public const string MultipleSolutionsOrProjectsFound = "Found more than one project or solution file. Specify the `dotrush.roslyn.projectOrSolutionFiles` configuration property.";
 

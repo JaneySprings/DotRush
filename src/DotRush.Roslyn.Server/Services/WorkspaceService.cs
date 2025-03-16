@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using DotRush.Common.External;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces;
 using DotRush.Roslyn.Workspaces.FileSystem;
+using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
@@ -53,6 +55,9 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
     public override void OnProjectLoadStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
         _ = LanguageServer.Server.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectIndexCompositeFormat, projectName));
+    }
+    public override void OnProjectLoadCompleted(string documentPath) {
+        _ = LanguageServer.Server.SendNotification(new NotificationMessage(Resources.ProjectLoadedNotification, JsonSerializer.SerializeToDocument(documentPath)));
     }
     public override void OnProjectCompilationStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);

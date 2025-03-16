@@ -7,8 +7,6 @@ export interface Project {
     path: string;
     frameworks: string[];
     configurations: string[];
-    isTestProject: boolean;
-    isExecutable: boolean;
 }
 
 export class ProjectOrSolutionItem implements QuickPickItem {

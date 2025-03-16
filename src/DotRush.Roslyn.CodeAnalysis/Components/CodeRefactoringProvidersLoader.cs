@@ -59,7 +59,7 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
     }
     public ReadOnlyCollection<CodeRefactoringProvider> LoadFromDotRush() {
         return new ReadOnlyCollection<CodeRefactoringProvider>(new List<CodeRefactoringProvider> {
-            new ReorganizeUsingsRefactoringProvider(),
+            new OrganizeImportsRefactoringProvider(),
         });
     }
 }
