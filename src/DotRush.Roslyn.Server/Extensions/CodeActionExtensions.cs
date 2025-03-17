@@ -106,10 +106,11 @@ public static class CodeActionExtensions {
                             continue;
 
                         var newDocumentFilePath = newDocument.FilePath;
-                        if (string.IsNullOrEmpty(newDocumentFilePath) && textDocumentEdits.Count != 0)
-                            newDocumentFilePath = Path.Combine(Path.GetDirectoryName(textDocumentEdits.Keys.First().FileSystemPath)!, newDocument.Name);
-                        if (string.IsNullOrEmpty(newDocumentFilePath))
-                            newDocumentFilePath = Path.Combine(projectChanges.NewProject.GetProjectDirectory(), newDocument.Name);
+                        if (string.IsNullOrEmpty(newDocumentFilePath)) {
+                            newDocumentFilePath = projectChanges.NewProject.GetProjectDirectory();
+                            newDocument.Folders.ForEach(f => newDocumentFilePath = Path.Combine(newDocumentFilePath, f));
+                            newDocumentFilePath = Path.Combine(newDocumentFilePath, newDocument.Name);
+                        }
 
                         var sourceText = await newDocument.GetTextAsync(cancellationToken).ConfigureAwait(false);
                         FileSystemExtensions.WriteAllText(newDocumentFilePath, sourceText.ToString());
