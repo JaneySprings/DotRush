@@ -10,20 +10,20 @@ public class WorkspaceFilesWatcher {
     private readonly IWorkspaceChangeListener listener;
     private readonly Thread workerThread;
     private IEnumerable<string> workspaceFolders;
-    private HashSet<string> workspaceFiles;
+    private Dictionary<string, DateTime> workspaceFiles;
     private string? repositoryPath;
 
     public WorkspaceFilesWatcher(IWorkspaceChangeListener listener) {
         this.listener = listener;
         currentClassLogger = new CurrentClassLogger(nameof(WorkspaceFilesWatcher));
         workspaceFolders = Enumerable.Empty<string>();
-        workspaceFiles = new HashSet<string>();
-        workerThread = new Thread(() => {
+        workspaceFiles = new Dictionary<string, DateTime>();
+        workerThread = new Thread(() => SafeExtensions.Invoke(() => {
             while (true) {
                 Thread.Sleep(UpdateTreshold);
                 CheckWorkspaceChanges();
             }
-        });
+        }));
         workerThread.IsBackground = true;
         workerThread.Name = nameof(WorkspaceFilesWatcher);
     }
@@ -43,7 +43,7 @@ public class WorkspaceFilesWatcher {
             return;
         }
 
-        var newWorkspaceFiles = new HashSet<string>();
+        var newWorkspaceFiles = new Dictionary<string, DateTime>(workspaceFiles.Count);
         foreach (var folder in workspaceFolders) {
             if (!Directory.Exists(folder))
                 continue;
@@ -52,7 +52,7 @@ public class WorkspaceFilesWatcher {
                 repositoryPath = GitExtensions.GetRepositoryFolder(folder);
 
             foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
-                newWorkspaceFiles.Add(file);
+                newWorkspaceFiles.Add(file, File.GetLastWriteTime(file));
         }
 
         if (workspaceFiles.Count == 0) {
@@ -61,19 +61,27 @@ public class WorkspaceFilesWatcher {
         }
 
         var hasChanges = false;
-        var addedFiles = newWorkspaceFiles.Except(workspaceFiles);
+        var addedFiles = newWorkspaceFiles.Keys.Except(workspaceFiles.Keys);
         if (addedFiles.Any()) {
             listener.OnDocumentsCreated(addedFiles);
             hasChanges = true;
         }
 
-        var removedFiles = workspaceFiles.Except(newWorkspaceFiles);
+        var removedFiles = workspaceFiles.Keys.Except(newWorkspaceFiles.Keys);
         if (removedFiles.Any()) {
             listener.OnDocumentsDeleted(removedFiles);
             hasChanges = true;
         }
 
+        var changedFiles = newWorkspaceFiles.Where(x => workspaceFiles.ContainsKey(x.Key) && workspaceFiles[x.Key] != x.Value).Select(x => x.Key);
+        if (changedFiles.Any()) {
+            listener.OnDocumentsChanged(changedFiles);
+            // No need to call ComitChanges because it doesn't affect the project files
+        }
+
+        workspaceFiles.Clear();
         workspaceFiles = newWorkspaceFiles;
+        
         if (hasChanges)
             listener.OnCommitChanges();
     }
