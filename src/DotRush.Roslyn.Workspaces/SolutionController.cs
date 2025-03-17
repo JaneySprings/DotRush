@@ -51,10 +51,10 @@ public abstract class SolutionController : ProjectsController {
         CurrentSessionLogger.Debug($"Solution loading completed, loaded {workspace.CurrentSolution.ProjectIds.Count} projects");
     }
 
-    public void CreateDocuments(string[] files) {
-        foreach (var file in files)
-            CreateDocument(file);
-    }
+    public void CreateDocuments(string[] files) => files.ForEach(file => CreateDocument(file));
+    public void UpdateDocuments(string[] files) => files.ForEach(file => UpdateDocument(file));
+    public void DeleteDocuments(string[] files) => files.ForEach(file => DeleteDocument(file));
+
     public void CreateDocument(string file) {
         if (IsAdditionalDocument(file))
             CreateAdditionalDocument(file);
@@ -66,10 +66,6 @@ public abstract class SolutionController : ProjectsController {
             UpdateAdditionalDocument(file, text);
         if (IsSourceCodeDocument(file))
             UpdateSourceCodeDocument(file, text);
-    }
-    public void DeleteDocuments(string[] files) {
-        foreach (var file in files)
-            DeleteDocument(file);
     }
     public void DeleteDocument(string file) {
         if (IsAdditionalDocument(file))

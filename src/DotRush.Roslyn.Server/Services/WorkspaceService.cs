@@ -102,6 +102,9 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
     }
     void IWorkspaceChangeListener.OnDocumentsDeleted(IEnumerable<string> documentPaths) {
         DeleteDocuments(documentPaths.ToArray());
+    } 
+    void IWorkspaceChangeListener.OnDocumentsChanged(IEnumerable<string> documentPaths) {
+        UpdateDocuments(documentPaths.ToArray());
     }
     void IWorkspaceChangeListener.OnCommitChanges() {
         ApplyChanges();
