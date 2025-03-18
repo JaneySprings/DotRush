@@ -72,19 +72,25 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
 
     private static List<FoldingRange> GetFoldingDirectivesOfType<TStart, TEnd>(IEnumerable<SyntaxNode?> nodes, SourceText sourceText) where TStart : DirectiveTriviaSyntax where TEnd : DirectiveTriviaSyntax {
         var result = new List<FoldingRange>();
-        var startDirectivesSyntax = nodes.OfType<TStart>();
-        foreach (var startDirectiveSyntax in startDirectivesSyntax) {
-            var startRange = startDirectiveSyntax.Span.ToRange(sourceText);
-            var endDirectiveSyntax = nodes.OfType<TEnd>().FirstOrDefault(it => it.Span.Start > startDirectiveSyntax.Span.End);
-            if (endDirectiveSyntax == null)
-                continue;
+        var foldingStack = new Stack<FoldingRange>();
+        
+        foreach (var node in nodes) {
+            if (node is TStart startDirectiveSyntax) {
+                var startRange = startDirectiveSyntax.Span.ToRange(sourceText);
+                foldingStack.Push(new FoldingRange {
+                    Kind = FoldingRangeKind.Region,
+                    StartLine = (uint)startRange.Start.Line
+                });
+            }
+            if (node is TEnd endDirectiveSyntax) {
+                if (foldingStack.Count == 0)
+                    continue;
 
-            var endRange = endDirectiveSyntax.Span.ToRange(sourceText);
-            result.Add(new FoldingRange {
-                Kind = FoldingRangeKind.Region,
-                StartLine = (uint)startRange.Start.Line,
-                EndLine = (uint)endRange.End.Line
-            });
+                var foldingRange = foldingStack.Pop();
+                var endRange = endDirectiveSyntax.Span.ToRange(sourceText);
+                foldingRange.EndLine = (uint)endRange.End.Line;
+                result.Add(foldingRange);
+            }
         }
 
         return result;
