@@ -42,6 +42,7 @@ export class TestExplorerController {
 
         const root = TestExplorerController.controller.createTestItem(projectName, projectName, vscode.Uri.file(projectPath));
         root.children.replace(discoveredTests.map(t => TestExtensions.fixtureToTestItem(t, TestExplorerController.controller)));
+        TestExplorerController.controller.items.delete(root.id);
         TestExplorerController.controller.items.add(root);
     }
     public static unloadProjects() {
@@ -53,8 +54,6 @@ export class TestExplorerController {
 
         const projectFiles: string[] = [];
         TestExplorerController.controller.items.forEach(item => projectFiles.push(item.uri!.fsPath));
-        TestExplorerController.unloadProjects();
-
         return Extensions.parallelForEach(projectFiles, async (projectFile) => await TestExplorerController.loadProject(projectFile));
     }
     private static async runTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
