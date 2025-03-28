@@ -13,7 +13,7 @@ namespace DotRush.Roslyn.Server;
 
 public class LanguageServer {
     private static EmmyLuaLanguageServer server = null!;
-    private static InitializeParams initializeParameters = null!;
+    private static ParallelDispatcher dispatcher = null!;
 
     private static ConfigurationService configurationService = null!;
     private static WorkspaceService workspaceService = null!;
@@ -27,6 +27,7 @@ public class LanguageServer {
     public static Task Main(string[] args) {
         ConfigureServices();
 
+        dispatcher = new ParallelDispatcher();
         server = EmmyLuaLanguageServer
             .From(Console.OpenStandardInput(), Console.OpenStandardOutput())
             .AddHandler(new TextDocumentHandler(workspaceService))
@@ -47,28 +48,26 @@ public class LanguageServer {
             .AddHandler(new DocumentDiagnosticsHandler(workspaceService, codeAnalysisService, configurationService))
             .AddHandler(new WorkspaceDiagnosticHandler(codeAnalysisService));
 
-        server.SetScheduler(new ParallelDispatcher());
+        server.SetScheduler(dispatcher);
         server.OnInitialize(OnInitializeAsync);
-        server.OnInitialized(OnInitializedAsync);
         return server.Run();
     }
-    private static Task OnInitializeAsync(InitializeParams parameters, ServerInfo serverInfo) {
-        initializeParameters = parameters;
-        ObserveClientProcess(parameters.ProcessId);
+    private static async Task OnInitializeAsync(InitializeParams parameters, ServerInfo serverInfo) {
+        ConfigureProcessObserver(parameters.ProcessId);
         ConfigureServerInfo(serverInfo);
-        return Task.CompletedTask;
-    }
-    private static async Task OnInitializedAsync(InitializedParams parameters) {
+        
         await configurationService.InitializeAsync().ConfigureAwait(false);
         if (!workspaceService.InitializeWorkspace())
             LanguageServer.Proxy.ShowError(Resources.DotNetRegistrationFailed);
 
         workspaceService.WorkspaceStateChanged += (_, _) => navigationService.UpdateSolution(workspaceService.Solution);
-        _ = workspaceService.LoadAsync(initializeParameters.WorkspaceFolders, CancellationToken.None);
-        _ = externalAccessService.StartListeningAsync(initializeParameters.ProcessId, CancellationToken.None);
+        await workspaceService.LoadAsync(parameters.WorkspaceFolders, CancellationToken.None).ConfigureAwait(false);
+        dispatcher.StartWorkerThread();
+
+        _ = externalAccessService.StartListeningAsync(parameters.ProcessId, CancellationToken.None);
     }
  
-    private static void ObserveClientProcess(int? pid) {
+    private static void ConfigureProcessObserver(int? pid) {
         if (pid == null || pid <= 0)
             return;
 

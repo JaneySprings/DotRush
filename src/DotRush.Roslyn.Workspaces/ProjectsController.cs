@@ -18,9 +18,9 @@ public abstract class ProjectsController {
     public virtual void OnProjectRestoreCompleted(string documentPath) {}
     public virtual void OnProjectRestoreFailed(string documentPath, ProcessResult result) {}
     public virtual void OnProjectLoadStarted(string documentPath) {}
-    public virtual void OnProjectLoadCompleted(string documentPath) {}
+    public virtual void OnProjectLoadCompleted(Project project) {}
     public virtual void OnProjectCompilationStarted(string documentPath) {}
-    public virtual void OnProjectCompilationCompleted(string documentPath) {}
+    public virtual void OnProjectCompilationCompleted(Project project) {}
     protected abstract void OnWorkspaceStateChanged(Solution newSolution);
 
     protected async Task LoadProjectsAsync(MSBuildWorkspace workspace, IEnumerable<string> projectFilePaths, CancellationToken cancellationToken) {
@@ -39,14 +39,14 @@ public abstract class ProjectsController {
 
                 OnProjectLoadStarted(projectFile);
                 var project = await workspace.OpenProjectAsync(projectFile, null, cancellationToken);
-                OnProjectLoadCompleted(project.FilePath ?? string.Empty);
+                OnProjectLoadCompleted(project);
 
                 OnWorkspaceStateChanged(workspace.CurrentSolution);
 
                 if (CompileProjectsAfterLoading) {
                     OnProjectCompilationStarted(projectFile);
                     _ = await project.GetCompilationAsync(cancellationToken);
-                    OnProjectCompilationCompleted(projectFile);
+                    OnProjectCompilationCompleted(project);
                 }
             });
         }
