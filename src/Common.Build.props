@@ -2,6 +2,8 @@
     <!-- https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core -->
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
+        <ServerTargetFramework>net10.0</ServerTargetFramework>
+
         <RollForward>major</RollForward>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -11,12 +13,8 @@
         <SelfContained>false</SelfContained>
         <PublishTrimmed>false</PublishTrimmed>
         <NoWarn>$(NoWarn);NUnit2045</NoWarn>
-        
         <AssetsPath>$(MSBuildThisFileDirectory)..\extension\bin\</AssetsPath>
-        <ServerTargetFramework>net9.0</ServerTargetFramework>
-
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-
     </PropertyGroup>
 
     <ItemGroup>
