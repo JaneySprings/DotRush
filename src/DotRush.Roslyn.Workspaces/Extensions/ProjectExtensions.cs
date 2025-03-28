@@ -75,3 +75,16 @@ public static class ProjectExtensions {
         return project.Documents.Any(it => it.Folders.Contains(folderName, StringComparer.OrdinalIgnoreCase));
     }
 }
+
+public class ProjectByPathComparer : IEqualityComparer<Project> {
+    public static readonly ProjectByPathComparer Instance = new ProjectByPathComparer();
+
+    private ProjectByPathComparer() { }
+
+    public bool Equals(Project? x, Project? y) {
+        return x?.FilePath == y?.FilePath;
+    }
+    public int GetHashCode(Project obj) {
+        return obj.FilePath?.GetHashCode() ?? obj.GetHashCode();
+    }
+}

@@ -33,7 +33,7 @@ public abstract class SolutionController : ProjectsController {
 
                 OnProjectLoadStarted(solutionFile);
                 var solution = await workspace.OpenSolutionAsync(solutionFile, null, cancellationToken);
-                solution.Projects.Select(it => it.FilePath).Distinct().ForEach(path => OnProjectLoadCompleted(path ?? string.Empty));
+                solution.Projects.Distinct(ProjectByPathComparer.Instance).ForEach(project => OnProjectLoadCompleted(project));
 
                 OnWorkspaceStateChanged(workspace.CurrentSolution);
 
@@ -41,7 +41,7 @@ public abstract class SolutionController : ProjectsController {
                     foreach (var project in solution.Projects) {
                         OnProjectCompilationStarted(project.FilePath ?? solutionFile);
                         _ = await project.GetCompilationAsync(cancellationToken);
-                        OnProjectCompilationCompleted(project.FilePath ?? solutionFile);
+                        OnProjectCompilationCompleted(project);
                     }
                 }
             });

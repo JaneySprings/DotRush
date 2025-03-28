@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
+using DotRush.Common.Extensions;
 using DotRush.Common.External;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces;
@@ -8,6 +9,7 @@ using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
+using Project = Microsoft.CodeAnalysis.Project;
 
 namespace DotRush.Roslyn.Server.Services;
 
@@ -56,8 +58,8 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
         _ = LanguageServer.Server.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectIndexCompositeFormat, projectName));
     }
-    public override void OnProjectLoadCompleted(string documentPath) {
-        _ = LanguageServer.Server.SendNotification(new NotificationMessage(Resources.ProjectLoadedNotification, JsonSerializer.SerializeToDocument(documentPath)));
+    public override void OnProjectLoadCompleted(Project project) {
+        _ = LanguageServer.Server.SendNotification(new NotificationMessage(Resources.ProjectLoadedNotification, JsonSerializer.SerializeToDocument(project.FilePath)));
     }
     public override void OnProjectCompilationStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
@@ -80,7 +82,7 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
 
     private IEnumerable<string>? GetProjectOrSolutionFiles(IEnumerable<string>? workspaceFolders) {
         if (configurationService.ProjectOrSolutionFiles.Count != 0)
-            return configurationService.ProjectOrSolutionFiles;
+            return configurationService.ProjectOrSolutionFiles.Select(it => Path.GetFullPath(it.ToPlatformPath())).ToArray();
 
         if (workspaceFolders == null)
             return null;

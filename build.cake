@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Runtime.InteropServices;
 using _Path = System.IO.Path;
 
@@ -17,12 +18,13 @@ Setup(context => {
 	EnsureDirectoryExists(ArtifactsDirectory);
 });
 
-Task("clean").Does(() => {
-	EnsureDirectoryExists(ArtifactsDirectory);
-	CleanDirectories(_Path.Combine(RootDirectory, "src", "DotRush.*", "**", "bin"));
-	CleanDirectories(_Path.Combine(RootDirectory, "src", "DotRush.*", "**", "obj"));
-	CleanDirectories(VSCodeExtensionDirectory);
-});
+Task("clean")
+	.Does(() => {
+		EnsureDirectoryExists(ArtifactsDirectory);
+		CleanDirectories(_Path.Combine(RootDirectory, "src", "DotRush.*", "**", "bin"));
+		CleanDirectories(_Path.Combine(RootDirectory, "src", "DotRush.*", "**", "obj"));
+		CleanDirectories(VSCodeExtensionDirectory);
+	});
 
 Task("server")
 	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server", "DotRush.Roslyn.Server.csproj"), new DotNetPublishSettings {
@@ -33,7 +35,8 @@ Task("server")
 	.Does(() => {
 		var input = _Path.Combine(VSCodeExtensionDirectory, "bin", "LanguageServer");
 		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.Bundle.Server_{runtime}.zip");
-		Zip(input, output);
+		EnsureFileDeleted(output);
+		ZipFile.CreateFromDirectory(input, output, CompressionLevel.Optimal, false);
 	});
 
 Task("netcore")
@@ -102,6 +105,10 @@ void ExecuteCommand(string command, string arguments) {
 	}
 	if (StartProcess(command, arguments) != 0)
 		throw new Exception("Command exited with non-zero exit code.");
+}
+void EnsureFileDeleted(string path) {
+	if (FileExists(path)) 
+		DeleteFile(path);
 }
 
 RunTarget(target);

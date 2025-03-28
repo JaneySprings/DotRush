@@ -32,7 +32,6 @@ public class ParallelDispatcher : IScheduler {
         mainThread.IsBackground = true;
         workerThread.IsBackground = true;
         mainThread.Start();
-        workerThread.Start();
     }
 
     public void Schedule(Func<Message, Task> action, Message message) {
@@ -41,6 +40,9 @@ public class ParallelDispatcher : IScheduler {
             taskInfo.IsWorkerTask = true;
  
         mainTasks.Add(taskInfo);
+    }
+    public void StartWorkerThread() {
+        workerThread.Start();
     }
 
 

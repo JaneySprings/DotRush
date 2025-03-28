@@ -1,4 +1,4 @@
-use std::{fs, os::unix::fs::PermissionsExt};
+use std::fs;
 use zed_extension_api::{self as zed, LanguageServerId, Result, Worktree};
 
 struct DotRushExtension {}
@@ -50,9 +50,6 @@ impl DotRushExtension {
             zed::DownloadedFileType::Zip,
         )
         .map_err(|e| format!("failed to download file: {e}"))?;
-
-        fs::set_permissions(&binary_path, fs::Permissions::from_mode(0o755))
-            .map_err(|e| format!("failed to set permissions: {e}"))?;
 
         Ok(binary_path)
     }
