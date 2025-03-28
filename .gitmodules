@@ -1,3 +1,6 @@
 [submodule "src/DotRush.Debugging.Mono"]
 	path = src/DotRush.Debugging.Mono
 	url = https://github.com/JaneySprings/Mono.Debugger
+[submodule "src/DotRush.Profiling.Tools"]
+	path = src/DotRush.Profiling.Tools
+	url = https://github.com/dotnet/diagnostics
