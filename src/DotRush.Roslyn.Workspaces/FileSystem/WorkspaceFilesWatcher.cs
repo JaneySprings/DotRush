@@ -1,27 +1,31 @@
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.Workspaces.Extensions;
 
 namespace DotRush.Roslyn.Workspaces.FileSystem;
 
-public class WorkspaceFilesWatcher {
-    private const int UpdateTreshold = 1200;
+public class WorkspaceFilesWatcher : IDisposable {
+    private const int UpdateTreshold = 2500;
 
     private readonly CurrentClassLogger currentClassLogger;
     private readonly IWorkspaceChangeListener listener;
     private readonly Thread workerThread;
     private IEnumerable<string> workspaceFolders;
-    private Dictionary<string, DateTime> workspaceFiles;
+    private Dictionary<string, long> workspaceFiles;
     private string? repositoryPath;
+    private bool isDisposed;
 
     public WorkspaceFilesWatcher(IWorkspaceChangeListener listener) {
         this.listener = listener;
         currentClassLogger = new CurrentClassLogger(nameof(WorkspaceFilesWatcher));
         workspaceFolders = Enumerable.Empty<string>();
-        workspaceFiles = new Dictionary<string, DateTime>();
+        workspaceFiles = new Dictionary<string, long>();
         workerThread = new Thread(() => SafeExtensions.Invoke(() => {
-            while (true) {
-                Thread.Sleep(UpdateTreshold);
+            CheckWorkspaceChanges(); // Fill initial workspace files
+
+            while (!isDisposed) {
                 CheckWorkspaceChanges();
+                Thread.Sleep(UpdateTreshold);
             }
         }));
         workerThread.IsBackground = true;
@@ -34,6 +38,10 @@ public class WorkspaceFilesWatcher {
 
         this.workspaceFolders = workspaceFolders;
         currentClassLogger.Debug($"Start observing workspace folders: {string.Join("; ", workspaceFolders)}");
+
+        if (listener.IsGitEventsSupported)
+            repositoryPath = GitExtensions.GetRepositoryFolder(workspaceFolders);
+
         workerThread.Start();
     }
 
@@ -43,46 +51,64 @@ public class WorkspaceFilesWatcher {
             return;
         }
 
-        var newWorkspaceFiles = new Dictionary<string, DateTime>(workspaceFiles.Count);
-        foreach (var folder in workspaceFolders) {
-            if (!Directory.Exists(folder))
-                continue;
-
-            if (listener.IsGitEventsSupported && string.IsNullOrEmpty(repositoryPath))
-                repositoryPath = GitExtensions.GetRepositoryFolder(folder);
-
-            foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
-                newWorkspaceFiles.Add(file, File.GetLastWriteTime(file));
-        }
-
+        var newWorkspaceFiles = ProcessDirectoryFiles();
         if (workspaceFiles.Count == 0) {
             workspaceFiles = newWorkspaceFiles;
             return;
         }
 
+        // Create files
         var hasChanges = false;
-        var addedFiles = newWorkspaceFiles.Keys.Except(workspaceFiles.Keys);
-        if (addedFiles.Any()) {
+        var addedFiles = new HashSet<string>(newWorkspaceFiles.Keys.Except(workspaceFiles.Keys));
+        if (addedFiles.Count > 0) {
             listener.OnDocumentsCreated(addedFiles);
             hasChanges = true;
         }
 
-        var removedFiles = workspaceFiles.Keys.Except(newWorkspaceFiles.Keys);
-        if (removedFiles.Any()) {
+        // Delete files
+        var removedFiles = new HashSet<string>(workspaceFiles.Keys.Except(newWorkspaceFiles.Keys));
+        if (removedFiles.Count > 0) {
             listener.OnDocumentsDeleted(removedFiles);
             hasChanges = true;
         }
 
-        var changedFiles = newWorkspaceFiles.Where(x => workspaceFiles.ContainsKey(x.Key) && workspaceFiles[x.Key] != x.Value).Select(x => x.Key);
-        if (changedFiles.Any()) {
-            listener.OnDocumentsChanged(changedFiles);
-            // No need to call ComitChanges because it doesn't affect the project files
+        // Update files
+        var changedFiles = new HashSet<string>();
+        foreach (var newFile in newWorkspaceFiles) {
+            if (workspaceFiles.TryGetValue(newFile.Key, out var oldMetadata) && oldMetadata != newFile.Value)
+                changedFiles.Add(newFile.Key);
         }
+        if (changedFiles.Count > 0)
+            listener.OnDocumentsChanged(changedFiles);
 
-        workspaceFiles.Clear();
+        // Commit changes
         workspaceFiles = newWorkspaceFiles;
-        
         if (hasChanges)
             listener.OnCommitChanges();
+    }
+    private Dictionary<string, long> ProcessDirectoryFiles() {
+        var newWorkspaceFiles = new Dictionary<string, long>(workspaceFiles.Count);
+        var enumerationOptions = new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = true };
+        foreach (var folder in workspaceFolders) {
+            if (!Directory.Exists(folder))
+                continue;
+
+            foreach (var file in Directory.EnumerateFiles(folder, "*", enumerationOptions)) {
+                if (!WorkspaceExtensions.IsRelevantDocument(file))
+                    continue;
+
+                newWorkspaceFiles[file] = File.GetLastWriteTime(file).Ticks;
+            }
+        }
+
+        return newWorkspaceFiles;
+    }
+
+    public void Dispose() {
+        if (workerThread.ThreadState == ThreadState.Unstarted || workerThread.ThreadState == ThreadState.Stopped)
+            return;
+        
+        isDisposed = true;
+        currentClassLogger.Debug("Stopped observing workspace folders");
     }
 }

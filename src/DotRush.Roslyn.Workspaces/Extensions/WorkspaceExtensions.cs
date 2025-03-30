@@ -7,6 +7,28 @@ using Microsoft.CodeAnalysis.MSBuild;
 namespace DotRush.Roslyn.Workspaces.Extensions;
 
 public static class WorkspaceExtensions {
+    private static string[] sourceCodeExtensions = { ".cs", /* .fs .vb */};
+    private static string[] additionalDocumentExtensions = { ".xaml", /* maybe '.razor' ? */};
+    private static string[] projectFileExtensions = { ".csproj", /* fsproj vbproj */};
+    private static string[] solutionFileExtensions = { ".sln", ".slnf", ".slnx" };
+    private static string[] relevantExtensions = sourceCodeExtensions.Concat(additionalDocumentExtensions).ToArray();
+
+    public static bool IsSourceCodeDocument(string filePath) {
+        return sourceCodeExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
+    }
+    public static bool IsAdditionalDocument(string filePath) {
+        return additionalDocumentExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
+    }
+    public static bool IsRelevantDocument(string filePath) {
+        return relevantExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
+    }
+    public static bool IsProjectFile(string filePath) {
+        return projectFileExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
+    }
+    public static bool IsSolutionFile(string filePath) {
+        return solutionFileExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
+    }
+
     public static IEnumerable<ProjectId> GetProjectIdsWithFilePath(this Solution solution, string filePath) {
         return solution.GetProjectIdsWithDocumentFilePath(filePath).Concat(solution.GetProjectIdsWithAdditionalDocumentFilePath(filePath)).Distinct();
     }

@@ -17,6 +17,15 @@ public static class GitExtensions {
 
         return null;
     }
+    public static string? GetRepositoryFolder(IEnumerable<string> paths) {
+        foreach (var path in paths) {
+            var gitFolder = GetRepositoryFolder(path);
+            if (gitFolder != null)
+                return gitFolder;
+        }
+
+        return null;
+    }
     public static bool IsRepositoryLocked(string? gitPath) {
         if (string.IsNullOrEmpty(gitPath))
             return false;

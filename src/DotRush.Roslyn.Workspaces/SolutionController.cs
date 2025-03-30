@@ -56,35 +56,22 @@ public abstract class SolutionController : ProjectsController {
     public void DeleteDocuments(string[] files) => files.ForEach(file => DeleteDocument(file));
 
     public void CreateDocument(string file) {
-        if (IsAdditionalDocument(file))
+        if (WorkspaceExtensions.IsAdditionalDocument(file))
             CreateAdditionalDocument(file);
-        if (IsSourceCodeDocument(file))
+        if (WorkspaceExtensions.IsSourceCodeDocument(file))
             CreateSourceCodeDocument(file);
     }
     public void UpdateDocument(string file, string? text = null) {
-        if (IsAdditionalDocument(file))
+        if (WorkspaceExtensions.IsAdditionalDocument(file))
             UpdateAdditionalDocument(file, text);
-        if (IsSourceCodeDocument(file))
+        if (WorkspaceExtensions.IsSourceCodeDocument(file))
             UpdateSourceCodeDocument(file, text);
     }
     public void DeleteDocument(string file) {
-        if (IsAdditionalDocument(file))
+        if (WorkspaceExtensions.IsAdditionalDocument(file))
             DeleteAdditionalDocument(file);
-        if (IsSourceCodeDocument(file))
+        if (WorkspaceExtensions.IsSourceCodeDocument(file))
             DeleteSourceCodeDocument(file);
-    }
-
-    public static bool IsSourceCodeDocument(string filePath) {
-        var allowedExtensions = new[] { ".cs", /* .fs .vb */};
-        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
-    }
-    public static bool IsAdditionalDocument(string filePath) {
-        var allowedExtensions = new[] { ".xaml", /* maybe '.razor' ? */};
-        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
-    }
-    public static bool IsProjectFile(string filePath) {
-        var allowedExtensions = new[] { ".csproj", /* fsproj vbproj */};
-        return allowedExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
     }
 
     private void CreateSourceCodeDocument(string file) {

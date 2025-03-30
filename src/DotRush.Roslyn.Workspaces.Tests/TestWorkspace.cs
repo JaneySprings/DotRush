@@ -1,11 +1,12 @@
 using System.Collections.ObjectModel;
 using DotRush.Common.External;
+using DotRush.Roslyn.Workspaces.FileSystem;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.Workspaces.Tests;
 
-public class TestWorkspace : DotRushWorkspace {
+public class TestWorkspace : DotRushWorkspace, IWorkspaceChangeListener {
     private readonly ReadOnlyDictionary<string, string> workspaceProperties;
     private readonly bool loadMetadataForReferencedProjects;
     private readonly bool skipUnrecognizedProjects;
@@ -14,6 +15,9 @@ public class TestWorkspace : DotRushWorkspace {
     private readonly bool applyWorkspaceChanges;
 
     private readonly List<string> loadedProjects = new List<string>();
+    public List<string> CreatedDocuments { get; } = new List<string>();
+    public List<string> UpdatedDocuments { get; } = new List<string>();
+    public List<string> DeletedDocuments { get; } = new List<string>();
 
     protected override ReadOnlyDictionary<string, string> WorkspaceProperties => workspaceProperties;
     protected override bool LoadMetadataForReferencedProjects => loadMetadataForReferencedProjects;
@@ -23,6 +27,7 @@ public class TestWorkspace : DotRushWorkspace {
     protected override bool ApplyWorkspaceChanges => applyWorkspaceChanges;
     protected override string DotNetSdkDirectory => string.Empty;
 
+    bool IWorkspaceChangeListener.IsGitEventsSupported => false;
 
     public TestWorkspace(Dictionary<string, string>? workspaceProperties = null) : this(workspaceProperties, true, false, false, false, false) {}
     public TestWorkspace(bool restore) : this(null, true, false, restore, false, false) {}
@@ -54,4 +59,18 @@ public class TestWorkspace : DotRushWorkspace {
         var projects = Solution!.Projects.Select(it => it.FilePath).Distinct().ToList();
         projects.ForEach(path => Assert.That(loadedProjects, Contains.Item(path)));
     }
+
+    void IWorkspaceChangeListener.OnDocumentsCreated(IEnumerable<string> documentPaths) {
+        CreateDocuments(documentPaths.ToArray());
+        CreatedDocuments.AddRange(documentPaths);
+    }
+    void IWorkspaceChangeListener.OnDocumentsDeleted(IEnumerable<string> documentPaths) {
+        DeleteDocuments(documentPaths.ToArray());
+        DeletedDocuments.AddRange(documentPaths);
+    }
+    void IWorkspaceChangeListener.OnDocumentsChanged(IEnumerable<string> documentPaths) {
+        UpdateDocuments(documentPaths.ToArray());
+        UpdatedDocuments.AddRange(documentPaths);
+    }
+    void IWorkspaceChangeListener.OnCommitChanges() {}
 }
