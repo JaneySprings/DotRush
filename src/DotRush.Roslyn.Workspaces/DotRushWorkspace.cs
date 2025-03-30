@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis.MSBuild;
 
@@ -39,11 +40,11 @@ public abstract class DotRushWorkspace : SolutionController {
         return LoadProjectsAsync(workspace, projectFiles, cancellationToken);
     }
     public async Task LoadAsync(IEnumerable<string> targets, CancellationToken cancellationToken) {
-        var solutionFiles = targets.Where(it => Path.GetExtension(it).StartsWith(".sln", StringComparison.OrdinalIgnoreCase)).Select(Path.GetFullPath).ToArray();
+        var solutionFiles = targets.Where(it => WorkspaceExtensions.IsSolutionFile(it)).Select(Path.GetFullPath).ToArray();
         if (solutionFiles.Length != 0)
             await LoadSolutionAsync(solutionFiles, cancellationToken).ConfigureAwait(false);
 
-        var projectFiles = targets.Where(it => Path.GetExtension(it).Equals(".csproj", StringComparison.OrdinalIgnoreCase)).Select(Path.GetFullPath).ToArray();
+        var projectFiles = targets.Where(it => WorkspaceExtensions.IsProjectFile(it)).Select(Path.GetFullPath).ToArray();
         if (projectFiles.Length != 0)
             await LoadProjectsAsync(projectFiles, cancellationToken).ConfigureAwait(false);
     }

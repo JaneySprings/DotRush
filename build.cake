@@ -39,8 +39,13 @@ Task("server")
 		ZipFile.CreateFromDirectory(input, output, CompressionLevel.Optimal, false);
 	});
 
-Task("netcore")
+Task("debugging")
 	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.NetCore", "DotRush.Debugging.NetCore.csproj"), new DotNetPublishSettings {
+		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
+		Configuration = configuration,
+		Runtime = runtime,
+	}))
+	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Unity", "DotRush.Debugging.Unity.csproj"), new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 		Configuration = configuration,
 		Runtime = runtime,
@@ -50,12 +55,6 @@ Task("netcore")
 		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestExplorer", "dotrushde.dll")} --install-ncdbg");
 	});
 
-Task("unity")
-	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Unity", "DotRush.Debugging.Unity.csproj"), new DotNetPublishSettings {
-		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
-		Configuration = configuration,
-		Runtime = runtime,
-	}));
 
 Task("test")
 	.IsDependentOn("clean")
@@ -87,8 +86,7 @@ Task("test")
 Task("vsix")
 	.IsDependentOn("clean")
 	.IsDependentOn("server")
-	.IsDependentOn("netcore")
-	.IsDependentOn("unity")
+	.IsDependentOn("debugging")
 	.Does(() => {
 		var vsruntime = runtime.Replace("win-", "win32-").Replace("osx-", "darwin-");
 		var suffix = bundle ? ".Bundle" : string.Empty;
