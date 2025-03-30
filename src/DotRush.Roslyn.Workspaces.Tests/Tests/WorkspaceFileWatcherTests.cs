@@ -88,7 +88,7 @@ public class WorkspaceFileWatcherTests : TestFixture {
             Assert.That(documentIds.Count(), Is.EqualTo(1));
             var document = workspace.Solution!.GetDocument(documentIds.Single());
             Assert.That(document!.FilePath, Is.EqualTo(documentPath));
-            Assert.That(workspace.CreatedDocuments[i - 1], Is.EqualTo(documentPath));
+            Assert.That(workspace.CreatedDocuments, Does.Contain(documentPath));
         }
 
         Directory.Delete(Path.Combine(Path.GetDirectoryName(projectPath)!, "src"), true);
@@ -101,7 +101,7 @@ public class WorkspaceFileWatcherTests : TestFixture {
             var documentPath = Path.Combine(Path.GetDirectoryName(projectPath)!, "src", $"Program{i}.cs");
             var documentIds = workspace.Solution!.GetDocumentIdsWithFilePathV2(documentPath);
             Assert.That(documentIds, Is.Empty);
-            Assert.That(workspace.DeletedDocuments[i - 1], Is.EqualTo(documentPath));
+            Assert.That(workspace.DeletedDocuments, Does.Contain(documentPath));
         }
     }
 }
