@@ -32,11 +32,15 @@ public class CompilationHost {
     public async Task<ReadOnlyCollection<DiagnosticContext>> DiagnoseAsync(IEnumerable<Document> documents, bool enableAnalyzers, CancellationToken cancellationToken) {
         documents.ForEach(document => workspaceDiagnostics.ClearWithKey(document.Project.Id));
 
+        bool hasAnalyzersDiagnose = false;
         foreach (var document in documents) {
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Project.Name} started");
             var compilation = await DiagnoseAsync(document.Project, cancellationToken).ConfigureAwait(false);
-            if (compilation != null && enableAnalyzers)
+            if (compilation != null && enableAnalyzers && !hasAnalyzersDiagnose) {
+                // Diagnose with analyzers only once for the first tfm (I think it is enough)
                 await AnalyzerDiagnoseAsync(document, compilation, cancellationToken).ConfigureAwait(false);
+                hasAnalyzersDiagnose = true;
+            }
             
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Project.Name} finished");
         }
@@ -85,8 +89,7 @@ public class CompilationHost {
         var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
         if (semanticModel == null)
             return;
-        var entireDocumentSpan = syntaxTree.GetRoot().Span;
-        var semanticDiagnostics = await compilationWithAnalyzers.GetAnalyzerSemanticDiagnosticsAsync(semanticModel, entireDocumentSpan, cancellationToken).ConfigureAwait(false);
+        var semanticDiagnostics = await compilationWithAnalyzers.GetAnalyzerSemanticDiagnosticsAsync(semanticModel, null, cancellationToken).ConfigureAwait(false);
         workspaceDiagnostics.AddDiagnostics(project.Id, semanticDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
     }
 }

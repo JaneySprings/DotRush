@@ -13,15 +13,15 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
 
     public ImmutableArray<DiagnosticAnalyzer> GetComponents(Project? project = null) {
         var dotrushComponents = ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush());
-        // var roslynCoreComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName));
-        // var roslynCSharpComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
+        var roslynCoreComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName));
+        var roslynCSharpComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
         if (project == null)
-            // return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).ToImmutableArray();
-            return dotrushComponents.ToImmutableArray();
+            return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).ToImmutableArray();
+            // return dotrushComponents.ToImmutableArray();
 
         var projectProviders = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
-        // return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).Concat(projectProviders).ToImmutableArray();
-        return dotrushComponents.Concat(projectProviders).ToImmutableArray();
+        return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).Concat(projectProviders).ToImmutableArray();
+        // return dotrushComponents.Concat(projectProviders).ToImmutableArray();
     }
     
     public ReadOnlyCollection<DiagnosticAnalyzer> LoadFromProject(Project project) {
@@ -35,7 +35,6 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
         currentClassLogger.Debug($"Loaded {result.Count} analyzers from project '{project.Name}'");
         return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
     }
-    [Obsolete("TODO: Check the Visual Studio behavior")]
     public ReadOnlyCollection<DiagnosticAnalyzer> LoadFromAssembly(string assemblyName) {
         var result = new List<DiagnosticAnalyzer>();
         var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);
