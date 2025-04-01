@@ -31,16 +31,13 @@ public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider
 public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAnalyzer> {
     private DiagnosticAnalyzersLoader loader = null!;
     protected override IComponentLoader<DiagnosticAnalyzer> ComponentsLoader => loader;
-    protected override int EmbeddedComponentsCount => 0;
+    protected override int EmbeddedComponentsCount => 113;
     protected override int ProjectComponentsCount => 276;
 
     [SetUp]
     public void SetUp() {
         loader = new DiagnosticAnalyzersLoader();
     }
-
-    [Test, Ignore("Not loaded any embedded analyzers yet")]
-    public override void LoadEmbeddedComponentsTest() {}
 }
 
 
