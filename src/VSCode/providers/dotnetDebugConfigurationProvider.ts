@@ -42,6 +42,8 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
             options.sourceLinkOptions = {
                 "*": { enabled: Extensions.getSetting(res.configIdDebuggerAutomaticSourcelinkDownload, true) }
             }
+        if (options.cwd === undefined && options.program !== undefined)
+            options.cwd = path.dirname(options.program);
 
         return options;
     }
