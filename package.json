@@ -253,6 +253,12 @@
               },
               "sourceLinkOptions": {
                 "type": "object"
+              },
+              "launchSettingsFilePath": {
+                "type": "string"
+              },
+              "launchSettingsProfile": {
+                "type": "string"
               }
             }
           },
