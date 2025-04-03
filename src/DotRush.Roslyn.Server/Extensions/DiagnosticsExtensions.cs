@@ -1,21 +1,27 @@
-using DotRush.Roslyn.CodeAnalysis.Extensions;
-using Microsoft.CodeAnalysis;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
+using DotRush.Roslyn.CodeAnalysis.Extensions;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using Microsoft.CodeAnalysis;
+using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
 public static class DiagnosticExtensions {
+    // https://github.com/JaneySprings/DotRush/issues/21
+    private static readonly string[] priorityDiagnosticIds = {
+        // Unnecessary using directive
+        "CS8019", "IDE0005"
+        // TODO: if needed, add more diagnostic IDs here
+    };
+
     public static ProtocolModels.DiagnosticSeverity ToServerSeverity(this DiagnosticSeverity severity) {
         switch (severity) {
             case DiagnosticSeverity.Error:
                 return ProtocolModels.DiagnosticSeverity.Error;
             case DiagnosticSeverity.Warning:
                 return ProtocolModels.DiagnosticSeverity.Warning;
-            // https://github.com/JaneySprings/DotRush/issues/21
-            // VS doesn't show hidden diagnostics in the UI
             case DiagnosticSeverity.Info:
+                return ProtocolModels.DiagnosticSeverity.Information;
             case DiagnosticSeverity.Hidden:
                 return ProtocolModels.DiagnosticSeverity.Hint;
             default:
@@ -51,5 +57,12 @@ public static class DiagnosticExtensions {
                 End = new Position(0, 0)
             },
         };
+    }
+
+    public static bool IsHiddenInUI(this Diagnostic diagnostic) {
+        if (diagnostic.Severity == DiagnosticSeverity.Hidden && priorityDiagnosticIds.Contains(diagnostic.Id))
+            return false;
+
+        return diagnostic.Severity == DiagnosticSeverity.Hidden;
     }
 }

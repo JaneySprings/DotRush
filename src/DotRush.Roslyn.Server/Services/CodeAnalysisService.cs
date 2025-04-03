@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using DotRush.Common.Extensions;
 using DotRush.Roslyn.CodeAnalysis;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
+using DotRush.Roslyn.Server.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -26,11 +27,11 @@ public class CodeAnalysisService {
 
         var documentFilePath = documents.First().FilePath;
         var diagnostics = await compilationHost.DiagnoseAsync(documents, configurationService.EnableAnalyzers, cancellationToken).ConfigureAwait(false);
-        return diagnostics.Where(d => d.Diagnostic.Severity != DiagnosticSeverity.Hidden && PathExtensions.Equals(d.FilePath, documentFilePath)).ToList().AsReadOnly();
+        return diagnostics.Where(d => !d.Diagnostic.IsHiddenInUI() && PathExtensions.Equals(d.FilePath, documentFilePath)).ToList().AsReadOnly();
     }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
         var diagnostics = compilationHost.GetDiagnostics();
-        return diagnostics.Where(d => d.Diagnostic.Severity != DiagnosticSeverity.Hidden).ToList().AsReadOnly();
+        return diagnostics.Where(d => !d.Diagnostic.IsHiddenInUI()).ToList().AsReadOnly();
     }
 
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
