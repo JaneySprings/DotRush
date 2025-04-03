@@ -1,12 +1,20 @@
-using DotRush.Roslyn.CodeAnalysis.Extensions;
-using Microsoft.CodeAnalysis;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
+using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
+using DotRush.Roslyn.CodeAnalysis.Extensions;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using Microsoft.CodeAnalysis;
+using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
 public static class DiagnosticExtensions {
+    // https://github.com/JaneySprings/DotRush/issues/21
+    private static readonly string[] priorityDiagnosticIds = {
+        // Unnecessary using directive
+        "CS8019", "IDE0005"
+        // TODO: if needed, add more diagnostic IDs here
+    };
+
     public static ProtocolModels.DiagnosticSeverity ToServerSeverity(this DiagnosticSeverity severity) {
         switch (severity) {
             case DiagnosticSeverity.Error:
@@ -15,8 +23,12 @@ public static class DiagnosticExtensions {
                 return ProtocolModels.DiagnosticSeverity.Warning;
             case DiagnosticSeverity.Info:
                 return ProtocolModels.DiagnosticSeverity.Information;
-            default:
+            case DiagnosticSeverity.Hidden:
                 return ProtocolModels.DiagnosticSeverity.Hint;
+            default:
+                CurrentSessionLogger.Error($"Unsupported diagnostic severity: {severity}");
+                return ProtocolModels.DiagnosticSeverity.Information;
+
         }
     }
     public static ProtocolModels.DiagnosticSeverity ToServerSeverity(this WorkspaceDiagnosticKind kind) {
@@ -36,7 +48,6 @@ public static class DiagnosticExtensions {
             Range = context.Diagnostic.Location.ToRange(),
             Severity = context.Diagnostic.Severity.ToServerSeverity(),
             Source = context.Source,
-            Data = context.GetHashCode(),
         };
     }
     public static ProtocolModels.Diagnostic ToServerDiagnostic(this WorkspaceDiagnostic diagnostic) {
@@ -48,5 +59,12 @@ public static class DiagnosticExtensions {
                 End = new Position(0, 0)
             },
         };
+    }
+
+    public static bool IsHiddenInUI(this Diagnostic diagnostic) {
+        if (diagnostic.Severity == DiagnosticSeverity.Hidden && priorityDiagnosticIds.Contains(diagnostic.Id))
+            return false;
+
+        return diagnostic.Severity == DiagnosticSeverity.Hidden;
     }
 }
