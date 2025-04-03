@@ -1,3 +1,4 @@
+using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
@@ -25,7 +26,9 @@ public static class DiagnosticExtensions {
             case DiagnosticSeverity.Hidden:
                 return ProtocolModels.DiagnosticSeverity.Hint;
             default:
-                throw new NotImplementedException($"Unsupported diagnostic severity: {severity}");
+                CurrentSessionLogger.Error($"Unsupported diagnostic severity: {severity}");
+                return ProtocolModels.DiagnosticSeverity.Information;
+
         }
     }
     public static ProtocolModels.DiagnosticSeverity ToServerSeverity(this WorkspaceDiagnosticKind kind) {

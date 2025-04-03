@@ -86,8 +86,10 @@ public class CodeActionHandler : CodeActionHandlerBase {
             var textSpan = range.ToTextSpan(sourceText);
             var diagnosticContexts = codeAnalysisService.GetDiagnosticsByDocumentSpan(document, textSpan);
             var diagnosticGroups = diagnosticContexts.GroupBy(it => it.Diagnostic.Id).ToList();
-            if (diagnosticGroups.Count == 0)
+            if (diagnosticGroups.Count == 0) {
+                currentClassLogger.Debug($"No diagnostics found for document '{document.Name}' in range '{range}'");
                 continue;
+            }
 
             foreach (var group in diagnosticGroups) {
                 var project = group.FirstOrDefault()?.RelatedProject;
