@@ -6,13 +6,13 @@ using Microsoft.CodeAnalysis.Text;
 namespace DotRush.Roslyn.CodeAnalysis.Diagnostics;
 
 public class DiagnosticCollection {
-    private readonly Dictionary<string, HashSet<DiagnosticContext>> workspaceDiagnostics;
+    private readonly Dictionary<string, List<DiagnosticContext>> workspaceDiagnostics;
     private readonly Dictionary<ProjectId, HashSet<string>> diagnosticRelations;
     private readonly object lockObject;
     private string collectionToken;
 
     public DiagnosticCollection() {
-        workspaceDiagnostics = new Dictionary<string, HashSet<DiagnosticContext>>();
+        workspaceDiagnostics = new Dictionary<string, List<DiagnosticContext>>();
         diagnosticRelations = new Dictionary<ProjectId, HashSet<string>>();
         lockObject = new object();
         collectionToken = GenerateNewCollectionToken();
@@ -27,8 +27,8 @@ public class DiagnosticCollection {
 
             var validDiagnostics = diagnostics.Where(c => !string.IsNullOrEmpty(c.FilePath) && File.Exists(c.FilePath)).ToArray();
             foreach (var diagnosticsGroup in validDiagnostics.GroupBy(c => c.FilePath!)) {
-                if (!workspaceDiagnostics.TryGetValue(diagnosticsGroup.Key, out HashSet<DiagnosticContext>? container)) {
-                    container = new HashSet<DiagnosticContext>();
+                if (!workspaceDiagnostics.TryGetValue(diagnosticsGroup.Key, out List<DiagnosticContext>? container)) {
+                    container = new List<DiagnosticContext>();
                     workspaceDiagnostics[diagnosticsGroup.Key] = container;
                 }
                 container.AddRange(diagnosticsGroup);
@@ -48,7 +48,7 @@ public class DiagnosticCollection {
         if (!relations.Contains(document.FilePath))
             return new List<DiagnosticContext>().AsReadOnly();
 
-        if (workspaceDiagnostics.TryGetValue(document.FilePath, out HashSet<DiagnosticContext>? diagnostics))
+        if (workspaceDiagnostics.TryGetValue(document.FilePath, out List<DiagnosticContext>? diagnostics))
             return diagnostics.Where(d => d.Span.IntersectsWith(span)).ToList().AsReadOnly();
 
         return new List<DiagnosticContext>().AsReadOnly();
