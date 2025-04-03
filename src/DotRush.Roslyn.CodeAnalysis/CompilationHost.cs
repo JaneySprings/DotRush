@@ -5,6 +5,7 @@ using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.CodeAnalysis;
 
@@ -22,8 +23,8 @@ public class CompilationHost {
     public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
         return workspaceDiagnostics.GetDiagnostics();
     }
-    public DiagnosticContext? GetDiagnosticContextById(int diagnosticId) {
-        return workspaceDiagnostics.GetById(diagnosticId);
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
+        return workspaceDiagnostics.GetDiagnosticsByDocumentSpan(document, span);
     }
     public string GetCollectionToken() {
         return workspaceDiagnostics.GetCollectionToken();

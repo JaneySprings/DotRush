@@ -1,9 +1,11 @@
 using System.Collections.ObjectModel;
+using DotRush.Common.Extensions;
 using DotRush.Roslyn.CodeAnalysis;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeRefactorings;
+using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.Server.Services;
 
@@ -18,26 +20,30 @@ public class CodeAnalysisService {
         this.compilationHost = new CompilationHost();
     }
 
-    public Task<ReadOnlyCollection<DiagnosticContext>> DiagnoseAsync(IEnumerable<Document> documents, CancellationToken cancellationToken) {
-        return compilationHost.DiagnoseAsync(documents, configurationService.EnableAnalyzers, cancellationToken);
+    public async Task<ReadOnlyCollection<DiagnosticContext>> GetDocumentDiagnostics(IEnumerable<Document> documents, CancellationToken cancellationToken) {
+        if (!documents.Any())
+            return new ReadOnlyCollection<DiagnosticContext>(new List<DiagnosticContext>());
+
+        var documentFilePath = documents.First().FilePath;
+        var diagnostics = await compilationHost.DiagnoseAsync(documents, configurationService.EnableAnalyzers, cancellationToken).ConfigureAwait(false);
+        return diagnostics.Where(d => d.Diagnostic.Severity != DiagnosticSeverity.Hidden && PathExtensions.Equals(d.FilePath, documentFilePath)).ToList().AsReadOnly();
     }
-    public DiagnosticContext? GetDiagnosticContextById(int diagnosticId) {
-        return compilationHost.GetDiagnosticContextById(diagnosticId);
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
+        var diagnostics = compilationHost.GetDiagnostics();
+        return diagnostics.Where(d => d.Diagnostic.Severity != DiagnosticSeverity.Hidden).ToList().AsReadOnly();
+    }
+
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
+        return compilationHost.GetDiagnosticsByDocumentSpan(document, span);
     }
     public string GetDiagnosticsCollectionToken() {
         return compilationHost.GetCollectionToken();
-    }
-    public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
-        return compilationHost.GetDiagnostics();
     }
 
     public IEnumerable<CodeFixProvider>? GetCodeFixProvidersForDiagnosticId(string? diagnosticId, Project? project) {
         return codeActionHost.GetCodeFixProvidersForDiagnosticId(diagnosticId, project);
     }
     public IEnumerable<CodeRefactoringProvider>? GetCodeRefactoringProvidersForProject(Project? project) {
-        if (!configurationService.EnableAnalyzers)
-            return null;
-
         return codeActionHost.GetCodeRefactoringProvidersForProject(project);
     }
 }

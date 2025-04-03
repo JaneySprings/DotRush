@@ -41,14 +41,9 @@ public class CodeActionHandler : CodeActionHandlerBase {
         return SafeExtensions.InvokeAsync(new CodeActionResponse(new List<CommandOrCodeAction>()), async () => {
             codeActionsCache.Clear();
 
-            var filePath = request.TextDocument.Uri.FileSystemPath;
-            var serverDiagnostics = request.Context.Diagnostics?.Where(it => it.Data?.Value != null);
-            var diagnosticIds = serverDiagnostics?.Select(it => (int)it.Data!.Value!);
-
             var result = new List<CommandOrCodeAction>();
-            if (diagnosticIds != null && diagnosticIds.Any())
-                result.AddRange(await GetQuickFixesAsync(filePath, diagnosticIds, token).ConfigureAwait(false));
-
+            var filePath = request.TextDocument.Uri.FileSystemPath;
+            result.AddRange(await GetQuickFixesAsync(filePath, request.Range, token).ConfigureAwait(false));
             result.AddRange(await GetRefactoringsAsync(filePath, request.Range, token).ConfigureAwait(false));
             return new CodeActionResponse(result);
         });
@@ -76,49 +71,58 @@ public class CodeActionHandler : CodeActionHandlerBase {
         });
     }
 
-    private async Task<IEnumerable<CommandOrCodeAction>> GetQuickFixesAsync(string filePath, IEnumerable<int> diagnosticIds, CancellationToken cancellationToken) {
-        var result = new List<CommandOrCodeAction>();
-        var diagnosticContexts = diagnosticIds
-            .Select(id => codeAnalysisService.GetDiagnosticContextById(id))
-            .Where(it => it != null)
-            .GroupBy(it => it!.Diagnostic.Id);
+    private async Task<IEnumerable<CommandOrCodeAction>> GetQuickFixesAsync(string filePath, DocumentRange range, CancellationToken cancellationToken) {
+        var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
+        if (documentIds == null)
+            return Enumerable.Empty<CommandOrCodeAction>();
 
-        foreach (var group in diagnosticContexts) {
-            var project = group.FirstOrDefault()?.RelatedProject;
-            if (project == null) {
-                currentClassLogger.Debug($"Project not found for diagnostic id '{group.Key}'");
+        foreach (var documentId in documentIds) {
+            var result = new List<CommandOrCodeAction>();
+            var document = workspaceService.Solution?.GetDocument(documentId);
+            if (document == null)
                 continue;
-            }
 
-            var codeFixProviders = codeAnalysisService.GetCodeFixProvidersForDiagnosticId(group.Key, project);
-            if (codeFixProviders == null) {
-                currentClassLogger.Debug($"CodeFixProviders not found for diagnostic id '{group.Key}'");
+            var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
+            var textSpan = range.ToTextSpan(sourceText);
+            var diagnosticContexts = codeAnalysisService.GetDiagnosticsByDocumentSpan(document, textSpan);
+            var diagnosticGroups = diagnosticContexts.GroupBy(it => it.Diagnostic.Id).ToList();
+            if (diagnosticGroups.Count == 0)
                 continue;
+
+            foreach (var group in diagnosticGroups) {
+                var project = group.FirstOrDefault()?.RelatedProject;
+                if (project == null) {
+                    currentClassLogger.Debug($"Project not found for diagnostic id '{group.Key}'");
+                    continue;
+                }
+
+                var codeFixProviders = codeAnalysisService.GetCodeFixProvidersForDiagnosticId(group.Key, project);
+                if (codeFixProviders == null) {
+                    currentClassLogger.Debug($"CodeFixProviders not found for diagnostic id '{group.Key}'");
+                    continue;
+                }
+
+                foreach (var codeFixProvider in codeFixProviders) {
+                    var mergedTextSpan = group.Select(it => it!.Diagnostic.Location.SourceSpan).ToMergedTextSpan();
+                    var diagnostics = group.Select(it => it!.Diagnostic).ToImmutableArray();
+                    await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, mergedTextSpan, diagnostics, (action, _) => {
+                        if (cancellationToken.IsCancellationRequested)
+                            return;
+
+                        var singleCodeActions = action.ToFlattenCodeActions().Where(x => !x.IsBlacklisted());
+                        foreach (var singleCodeAction in singleCodeActions) {
+                            if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
+                                result.Add(new CommandOrCodeAction(singleCodeAction.ToCodeAction(CodeActionKind.QuickFix)));
+                        }
+                    }, cancellationToken)).ConfigureAwait(false);
+                }
             }
 
-            var document = project.Documents.FirstOrDefault(it => PathExtensions.Equals(it.FilePath, filePath));
-            if (document == null) {
-                currentClassLogger.Debug($"Document not found for file path '{filePath}'");
-                continue;
-            }
-
-            foreach (var codeFixProvider in codeFixProviders) {
-                var textSpan = group.Select(it => it!.Diagnostic.Location.SourceSpan).ToMergedTextSpan();
-                var diagnostics = group.Select(it => it!.Diagnostic).ToImmutableArray();
-                await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, textSpan, diagnostics, (action, _) => {
-                    if (cancellationToken.IsCancellationRequested)
-                        return;
-
-                    var singleCodeActions = action.ToFlattenCodeActions().Where(x => !x.IsBlacklisted());
-                    foreach (var singleCodeAction in singleCodeActions) {
-                        if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
-                            result.Add(new CommandOrCodeAction(singleCodeAction.ToCodeAction(CodeActionKind.QuickFix)));
-                    }
-                }, cancellationToken)).ConfigureAwait(false);
-            }
+            if (result.Count != 0)
+                return result;
         }
 
-        return result;
+        return Enumerable.Empty<CommandOrCodeAction>();
     }
     private async Task<IEnumerable<CommandOrCodeAction>> GetRefactoringsAsync(string filePath, DocumentRange range, CancellationToken cancellationToken) {
         var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using DotRush.Common.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.CodeAnalysis.Diagnostics;
 
@@ -41,8 +42,16 @@ public class DiagnosticCollection {
     public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
         return workspaceDiagnostics.Values.SelectMany(c => c).ToList().AsReadOnly();
     }
-    public DiagnosticContext? GetById(int diagnosticId) {
-        return workspaceDiagnostics.Values.SelectMany(c => c).FirstOrDefault(c => c.GetHashCode() == diagnosticId);
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
+        if (!diagnosticRelations.TryGetValue(document.Project.Id, out HashSet<string>? relations) || string.IsNullOrEmpty(document.FilePath))
+            return new List<DiagnosticContext>().AsReadOnly();
+        if (!relations.Contains(document.FilePath))
+            return new List<DiagnosticContext>().AsReadOnly();
+
+        if (workspaceDiagnostics.TryGetValue(document.FilePath, out HashSet<DiagnosticContext>? diagnostics))
+            return diagnostics.Where(d => d.Span.IntersectsWith(span)).ToList().AsReadOnly();
+
+        return new List<DiagnosticContext>().AsReadOnly();
     }
     public string GetCollectionToken() {
         return collectionToken;

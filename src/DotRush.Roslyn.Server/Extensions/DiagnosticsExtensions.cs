@@ -13,10 +13,13 @@ public static class DiagnosticExtensions {
                 return ProtocolModels.DiagnosticSeverity.Error;
             case DiagnosticSeverity.Warning:
                 return ProtocolModels.DiagnosticSeverity.Warning;
+            // https://github.com/JaneySprings/DotRush/issues/21
+            // VS doesn't show hidden diagnostics in the UI
             case DiagnosticSeverity.Info:
-                return ProtocolModels.DiagnosticSeverity.Information;
-            default:
+            case DiagnosticSeverity.Hidden:
                 return ProtocolModels.DiagnosticSeverity.Hint;
+            default:
+                throw new NotImplementedException($"Unsupported diagnostic severity: {severity}");
         }
     }
     public static ProtocolModels.DiagnosticSeverity ToServerSeverity(this WorkspaceDiagnosticKind kind) {
