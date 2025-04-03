@@ -22,7 +22,7 @@ public class DocumentDiagnosticsHandler : DocumentDiagnosticHandlerBase {
         this.workspaceService = workspaceService;
         this.configurationService = configurationService;
     }
-    
+
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
         serverCapabilities.DiagnosticProvider ??= new DiagnosticOptions();
         serverCapabilities.DiagnosticProvider.Identifier = "dotrush";
@@ -36,13 +36,12 @@ public class DocumentDiagnosticsHandler : DocumentDiagnosticHandlerBase {
                 return new RelatedUnchangedDocumentDiagnosticReport();
 
             var documents = documentIds.Select(id => workspaceService.Solution.GetDocument(id)).WhereNotNull();
-            var diagnostics = await codeAnalysisService.DiagnoseAsync(documents, token).ConfigureAwait(false);
-            var curentFileDiagnostics = diagnostics.Where(d => PathExtensions.Equals(d.FilePath, request.TextDocument.Uri.FileSystemPath));
+            var diagnostics = await codeAnalysisService.GetDocumentDiagnostics(documents, token).ConfigureAwait(false);
 
-            CurrentSessionLogger.Debug($"Publish Diagnostics: {request.TextDocument.Uri.FileSystemPath} - {curentFileDiagnostics.Count()}");
+            CurrentSessionLogger.Debug($"Publish Diagnostics: {request.TextDocument.Uri.FileSystemPath} - {diagnostics.Count}");
 
             return new RelatedFullDocumentDiagnosticReport {
-                Diagnostics = curentFileDiagnostics.Select(diagnostic => diagnostic.ToServerDiagnostic()).ToList(),
+                Diagnostics = diagnostics.Select(diagnostic => diagnostic.ToServerDiagnostic()).ToList(),
             };
         });
     }
