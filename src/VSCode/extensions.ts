@@ -7,12 +7,6 @@ export class Extensions {
     public static readonly projectExtPattern: string = '.csproj';
     public static readonly solutionExtPattern: string = '.sln*';
 
-    public static async getProjectFiles(): Promise<string[]> {
-        return (await Extensions.findFiles(undefined, Extensions.projectExtPattern)).map(x => x.fsPath);
-    }
-    public static async getSolutionFiles(): Promise<string[]> {
-        return (await Extensions.findFiles(undefined, Extensions.solutionExtPattern)).map(x => x.fsPath);
-    }
     public static getSetting<TValue>(id: string, fallback: TValue | undefined = undefined): TValue | undefined {
         return vscode.workspace.getConfiguration(res.extensionId).get<TValue>(id) ?? fallback;
     }
@@ -20,6 +14,12 @@ export class Extensions {
         return vscode.workspace.getConfiguration(res.extensionId).update(id, value, target);
     }
 
+    public static async getProjectFiles(): Promise<string[]> {
+        return (await Extensions.findFiles(undefined, Extensions.projectExtPattern)).map(x => x.fsPath);
+    }
+    public static async getSolutionFiles(): Promise<string[]> {
+        return (await Extensions.findFiles(undefined, Extensions.solutionExtPattern)).map(x => x.fsPath);
+    }
     public static async selectProjectOrSolutionFile(baseUri: vscode.Uri | undefined = undefined): Promise<string | undefined> {
         if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath).startsWith('.sln'))
             return baseUri.fsPath;
