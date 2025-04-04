@@ -128,6 +128,11 @@
         "title": "%command.title.setStartupProject%"
       },
       {
+        "command": "dotrush.selectActiveConfiguration",
+        "category": "%extension.displayName%",
+        "title": "%command.title.selectActiveConfiguration%"
+      },
+      {
         "command": "dotrush.pickProjectOrSolutionFiles",
         "category": "%extension.displayName%",
         "title": "%command.title.pickProjectOrSolutionFiles%"

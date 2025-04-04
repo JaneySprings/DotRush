@@ -3,6 +3,7 @@
 
 	"command.title.restartServer": "Restart server",
 	"command.title.setStartupProject": "Set as Startup Project",
+	"command.title.selectActiveConfiguration": "Select Active Configuration",
 	"command.title.pickProjectOrSolutionFiles": "Pick Project or Solution files",
 	"command.title.buildWorkspace": "Build Workspace",
 	"command.title.build": "Build",

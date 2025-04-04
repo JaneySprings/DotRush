@@ -1,6 +1,6 @@
 import { QuickPickItem, QuickPickItemKind, workspace } from "vscode";
-import * as path from "path";
 import { Icons } from "../resources/icons";
+import * as path from "path";
 
 export interface Project {
     name: string;
@@ -33,14 +33,16 @@ export class ProjectOrSolutionItem implements QuickPickItem {
     }
 }
 
-export class TargetFrameworkItem implements QuickPickItem {
+export class ConfigurationItem implements QuickPickItem {
     label: string;
-    description: string;
-    item: string;
+    description: string | undefined;
+    configuration: string;
+    framework: string | undefined;
 
-    constructor(tfm: string, projectName: string) {
-        this.label = projectName;
-        this.description = tfm;
-        this.item = tfm;
+    constructor(config: string, framework: string | undefined) {
+        this.label = config;
+        this.description = framework;
+        this.configuration = config;
+        this.framework = framework;
     }
 }
