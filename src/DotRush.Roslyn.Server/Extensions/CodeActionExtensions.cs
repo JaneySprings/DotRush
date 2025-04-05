@@ -13,8 +13,6 @@ using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAct
 namespace DotRush.Roslyn.Server.Extensions;
 
 public static class CodeActionExtensions {
-    private const int MaxSubjectLength = 100;
-
     public static ProtocolModels.CodeAction ToCodeAction(this CodeAction codeAction, ProtocolModels.CodeActionKind kind) {
         return new ProtocolModels.CodeAction() {
             IsPreferred = codeAction.Priority == CodeActionPriority.High,
@@ -50,11 +48,7 @@ public static class CodeActionExtensions {
         if (codeAction.Title.StartsWithUpper())
             return codeAction.Title;
 
-        var subject = $"{parentTitle} {codeAction.Title}";
-        if (subject.Length > MaxSubjectLength)
-            return string.Concat(subject.AsSpan(0, MaxSubjectLength), "...");
-
-        return subject;
+        return $"{parentTitle} {codeAction.Title}";
     }
     // Requires a specific service to get operations (Not available in the current workspace)
     public static bool IsBlacklisted(this CodeAction codeAction) {

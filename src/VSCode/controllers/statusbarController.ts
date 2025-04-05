@@ -52,8 +52,8 @@ export class StatusBarController {
         PublicExports.instance.onActiveProjectChanged.invoke(StatusBarController.activeProject);
         StateController.putLocal('project', StatusBarController.activeProject.path);
 
-        const configuration = StateController.getLocal<string>('configuration');
-        const framework = StateController.getLocal<string>('framework');
+        const configuration = StateController.getLocal<string>('configuration', project.configurations.at(0));
+        const framework = StateController.getLocal<string>('framework', project.frameworks.at(0));
         const activeConfiguration = StatusBarController.activeProject.configurations.find(it => it === configuration);
         const activeFramework = StatusBarController.activeProject.frameworks.find(it => it === framework);
         StatusBarController.performSelectConfiguration(activeConfiguration, activeFramework);

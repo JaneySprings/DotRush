@@ -1,7 +1,6 @@
 import { DebugAdapterController } from '../controllers/debugAdapterController';
-import { StatusBarController } from '../controllers/statusbarController';
+import { LaunchProfile } from '../models/profile';
 import { Extensions } from '../extensions';
-import { Interop } from '../interop/interop';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -18,48 +17,51 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
 			config.preLaunchTask = folder === undefined ? undefined : `${res.extensionId}: Build`;
 		}
 
+        await DotNetDebugConfigurationProvider.provideDebuggerConfiguration(config);
+
 		if (!config.program && config.request === 'launch')
-			config.program = await DotNetDebugConfigurationProvider.getProgramPath();
+			config.program = await DebugAdapterController.getProgramPath();
 		if (!config.processId && config.request === 'attach')
 			config.processId = await DebugAdapterController.showQuickPickProcess();
 
-        return DotNetDebugConfigurationProvider.provideDebuggerOptions(config);
+        if (!config.cwd && config.program)
+            config.cwd = path.dirname(config.program);
+
+        return config;
 	}
 
-	private static provideDebuggerOptions(options: vscode.DebugConfiguration): vscode.DebugConfiguration {
-        if (options.justMyCode === undefined)
-            options.justMyCode = Extensions.getSetting(res.configIdDebuggerProjectAssembliesOnly, false);
-        if (options.enableStepFiltering === undefined)
-            options.enableStepFiltering = Extensions.getSetting(res.configIdDebuggerStepOverPropertiesAndOperators, false);
-        if (options.console === undefined)
-            options.console = Extensions.getSetting(res.configIdDebuggerConsole);
-        if (options.symbolOptions === undefined)
-            options.symbolOptions = {
+	private static async provideDebuggerConfiguration(config: vscode.DebugConfiguration) {
+        if (config.launchSettingsFilePath !== undefined && Extensions.onVSCode(false, true)) {
+            const profile = await DebugAdapterController.getLaunchProfile(config.launchSettingsFilePath, config.launchSettingsProfile);
+            DotNetDebugConfigurationProvider.provideDebuggerConfigurationFromProfile(config, profile);
+        }
+
+        if (config.justMyCode === undefined)
+            config.justMyCode = Extensions.getSetting(res.configIdDebuggerProjectAssembliesOnly, false);
+        if (config.enableStepFiltering === undefined)
+            config.enableStepFiltering = Extensions.getSetting(res.configIdDebuggerStepOverPropertiesAndOperators, false);
+        if (config.console === undefined)
+            config.console = Extensions.getSetting(res.configIdDebuggerConsole);
+        if (config.symbolOptions === undefined)
+            config.symbolOptions = {
                 searchPaths: Extensions.getSetting(res.configIdDebuggerSymbolSearchPaths),
                 searchMicrosoftSymbolServer: Extensions.getSetting(res.configIdDebuggerSearchMicrosoftSymbolServer, false),
             };
-        if (options.sourceLinkOptions === undefined)
-            options.sourceLinkOptions = {
+        if (config.sourceLinkOptions === undefined)
+            config.sourceLinkOptions = {
                 "*": { enabled: Extensions.getSetting(res.configIdDebuggerAutomaticSourcelinkDownload, true) }
             }
-        if (options.cwd === undefined && options.program !== undefined)
-            options.cwd = path.dirname(options.program);
-
-        return options;
     }
-    
-	private static async getProgramPath(): Promise<string | undefined> {
-        if (StatusBarController.activeProject === undefined || StatusBarController.activeConfiguration === undefined)
-            return await DebugAdapterController.showQuickPickProgram();
+    private static provideDebuggerConfigurationFromProfile(config: vscode.DebugConfiguration, profile: LaunchProfile | undefined) {
+        if (profile === undefined)
+            return config;
 
-        const targetPath = Interop.getPropertyValue('TargetPath', StatusBarController.activeProject.path, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
-		if (!targetPath)
-			return await DebugAdapterController.showQuickPickProgram();
-        
-        return targetPath;
-        // const programDirectory = path.dirname(assemblyPath);
-        // const programFile = path.basename(assemblyPath, '.dll');
-        // const programPath = path.join(programDirectory, programFile + Interop.execExtension);
-		// return programPath;
-	}
+        config.cwd = profile.workingDirectory;
+        config.program = profile.executablePath;
+        config.args = profile.commandLineArgs;
+        config.env = profile.environmentVariables;
+
+        if (profile.applicationUrl !== undefined)
+            config.env = { ...config.env, ASPNETCORE_URLS: profile.applicationUrl };
+    }
 }

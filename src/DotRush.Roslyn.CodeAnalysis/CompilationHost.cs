@@ -42,7 +42,7 @@ public class CompilationHost {
                 await AnalyzerDiagnoseAsync(document, compilation, cancellationToken).ConfigureAwait(false);
                 hasAnalyzersDiagnose = true;
             }
-            
+
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Project.Name} finished");
         }
 

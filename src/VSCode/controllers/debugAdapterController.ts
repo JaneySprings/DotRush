@@ -1,6 +1,8 @@
 import { DotNetDebugConfigurationProvider } from '../providers/dotnetDebugConfigurationProvider';
 import { MonoDebugConfigurationProvider } from '../providers/monoDebugConfigurationProvider';
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
+import { StatusBarController } from './statusbarController';
+import { LaunchProfile } from '../models/profile';
 import { ProcessItem } from '../models/process';
 import { Interop } from '../interop/interop';
 import { Extensions } from '../extensions';
@@ -35,6 +37,36 @@ export class DebugAdapterController {
         const selectedItem = await vscode.window.showQuickPick(processes.map(p => new ProcessItem(p)), { placeHolder: res.messageSelectProcessTitle });
         return selectedItem?.item.id.toString();
     }
+    public static async getLaunchProfile(launchSettingsPath: string, profileName: string | undefined): Promise<LaunchProfile | undefined> {
+        launchSettingsPath = Extensions.resolveTemplatePath(launchSettingsPath);
+
+        const settings = await vscode.workspace.fs.readFile(vscode.Uri.file(launchSettingsPath)).then(data => JSON.parse(data.toString()));
+        const profiles = settings?.profiles as { [key: string]: LaunchProfile };
+        if (profiles === undefined || Object.keys(profiles).length === 0)
+            return undefined;
+
+        if (profileName !== undefined)
+            return profiles[profileName];
+
+        if (profiles['https'] !== undefined) // For web projects, the default profile is 'https'
+            return profiles['https'];
+
+        return profiles[Object.keys(profiles)[0]];
+    }
+    public static async getProgramPath(): Promise<string | undefined> {
+        if (StatusBarController.activeProject === undefined || StatusBarController.activeConfiguration === undefined)
+            return await DebugAdapterController.showQuickPickProgram();
+
+        const targetPath = Interop.getPropertyValue('TargetPath', StatusBarController.activeProject.path, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
+		if (!targetPath)
+			return await DebugAdapterController.showQuickPickProgram();
+        
+        return targetPath;
+        // const programDirectory = path.dirname(assemblyPath);
+        // const programFile = path.basename(assemblyPath, '.dll');
+        // const programPath = path.join(programDirectory, programFile + Interop.execExtension);
+		// return programPath;
+	}
     
     private static async installDebugger(id: string): Promise<void> {
         const getNameByDebuggerId = (id: string) => {
