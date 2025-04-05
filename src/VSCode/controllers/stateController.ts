@@ -11,8 +11,8 @@ export class StateController {
         StateController.context = undefined;
     }
 
-    public static getLocal<TValue>(key: string): TValue | undefined {
-        return StateController.context?.workspaceState.get<TValue>(`${res.extensionId}.${key}`);
+    public static getLocal<TValue>(key: string, defaultValue: TValue | undefined = undefined): TValue | undefined {
+        return StateController.context?.workspaceState.get<TValue>(`${res.extensionId}.${key}`) ?? defaultValue;
     }
     public static putLocal(key: string, value: any) {
         StateController.context?.workspaceState.update(`${res.extensionId}.${key}`, value);

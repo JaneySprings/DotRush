@@ -13,6 +13,9 @@ export class Extensions {
     public static putSetting<TValue>(id: string, value: TValue, target: vscode.ConfigurationTarget): Thenable<void> {
         return vscode.workspace.getConfiguration(res.extensionId).update(id, value, target);
     }
+    public static onVSCode<TValue>(official: TValue, fork: TValue): TValue {
+        return vscode.env.appName.includes(res.vscodeAppName) ? official : fork;
+    }
 
     public static async getProjectFiles(): Promise<string[]> {
         return (await Extensions.findFiles(undefined, Extensions.projectExtPattern)).map(x => x.fsPath);
@@ -118,9 +121,19 @@ export class Extensions {
             return vscode.workspace.workspaceFolders[0];
         return undefined;
     }
-    public static onVSCode<TValue>(official: TValue, fork: TValue): TValue {
-        return vscode.env.appName.includes(res.vscodeAppName) ? official : fork;
+    public static resolveTemplatePath(templatePath: string): string {
+        if (path.isAbsolute(templatePath))
+            return templatePath;
+
+        const workspaceFolder = Extensions.getWorkspaceFolder();
+        if (workspaceFolder === undefined)
+            return templatePath;
+
+        return templatePath
+            .replace(/\$\{workspaceFolder\}/g, workspaceFolder.uri.fsPath)
+            .replace(/\$\{workspaceRoot\}/g, workspaceFolder.uri.fsPath);
     }
+
 
     private static async findFiles(baseUri: vscode.Uri | undefined, extension: string): Promise<vscode.Uri[]> {
         if (baseUri?.fsPath !== undefined && path.extname(baseUri.fsPath) === extension)
