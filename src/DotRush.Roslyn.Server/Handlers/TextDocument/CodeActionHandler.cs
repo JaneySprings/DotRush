@@ -85,38 +85,40 @@ public class CodeActionHandler : CodeActionHandlerBase {
             var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
             var textSpan = range.ToTextSpan(sourceText);
             var diagnosticContexts = codeAnalysisService.GetDiagnosticsByDocumentSpan(document, textSpan);
-            var diagnosticGroups = diagnosticContexts.GroupBy(it => it.Diagnostic.Id).ToList();
-            if (diagnosticGroups.Count == 0) {
+            var diagnosticByIdGroups = diagnosticContexts.GroupBy(it => it.Diagnostic.Id).ToList();
+            if (diagnosticByIdGroups.Count == 0) {
                 currentClassLogger.Debug($"No diagnostics found for document '{document.Name}' in range '{range}'");
                 continue;
             }
 
-            foreach (var group in diagnosticGroups) {
-                var project = group.FirstOrDefault()?.RelatedProject;
+            foreach (var byIdGroup in diagnosticByIdGroups) {
+                var project = byIdGroup.FirstOrDefault()?.RelatedProject;
                 if (project == null) {
-                    currentClassLogger.Debug($"Project not found for diagnostic id '{group.Key}'");
+                    currentClassLogger.Debug($"Project not found for diagnostic id '{byIdGroup.Key}'");
                     continue;
                 }
 
-                var codeFixProviders = codeAnalysisService.GetCodeFixProvidersForDiagnosticId(group.Key, project);
+                var codeFixProviders = codeAnalysisService.GetCodeFixProvidersForDiagnosticId(byIdGroup.Key, project);
                 if (codeFixProviders == null) {
-                    currentClassLogger.Debug($"CodeFixProviders not found for diagnostic id '{group.Key}'");
+                    currentClassLogger.Debug($"CodeFixProviders not found for diagnostic id '{byIdGroup.Key}'");
                     continue;
                 }
 
                 foreach (var codeFixProvider in codeFixProviders) {
-                    var mergedTextSpan = group.Select(it => it!.Diagnostic.Location.SourceSpan).ToMergedTextSpan();
-                    var diagnostics = group.Select(it => it!.Diagnostic).ToImmutableArray();
-                    await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, mergedTextSpan, diagnostics, (action, _) => {
-                        if (cancellationToken.IsCancellationRequested)
-                            return;
+                    var diagnosticByRangeGroups = byIdGroup.GroupBy(it => it.Diagnostic.Location.SourceSpan).ToList();
+                    foreach (var byRangeGroup in diagnosticByRangeGroups) {
+                        var diagnostics = byRangeGroup.Select(it => it!.Diagnostic).ToImmutableArray();
+                        await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, byRangeGroup.Key, diagnostics, (action, _) => {
+                            if (cancellationToken.IsCancellationRequested)
+                                return;
 
-                        var singleCodeActions = action.ToFlattenCodeActions().Where(x => !x.IsBlacklisted());
-                        foreach (var singleCodeAction in singleCodeActions) {
-                            if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
-                                result.Add(new CommandOrCodeAction(singleCodeAction.ToCodeAction(CodeActionKind.QuickFix)));
-                        }
-                    }, cancellationToken)).ConfigureAwait(false);
+                            var singleCodeActions = action.ToFlattenCodeActions().Where(x => !x.IsBlacklisted());
+                            foreach (var singleCodeAction in singleCodeActions) {
+                                if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
+                                    result.Add(new CommandOrCodeAction(singleCodeAction.ToCodeAction(CodeActionKind.QuickFix)));
+                            }
+                        }, cancellationToken)).ConfigureAwait(false);
+                    }
                 }
             }
 
