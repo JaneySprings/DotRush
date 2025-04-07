@@ -121,7 +121,7 @@ export class Extensions {
             return vscode.workspace.workspaceFolders[0];
         return undefined;
     }
-    public static resolveTemplatePath(templatePath: string): string {
+    public static resolveTemplatedPath(templatePath: string): string {
         if (path.isAbsolute(templatePath))
             return templatePath;
 
@@ -133,7 +133,6 @@ export class Extensions {
             .replace(/\$\{workspaceFolder\}/g, workspaceFolder.uri.fsPath)
             .replace(/\$\{workspaceRoot\}/g, workspaceFolder.uri.fsPath);
     }
-
 
     private static async findFiles(baseUri: vscode.Uri | undefined, extension: string): Promise<vscode.Uri[]> {
         if (baseUri?.fsPath !== undefined && path.extname(baseUri.fsPath) === extension)

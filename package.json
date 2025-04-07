@@ -181,6 +181,7 @@
             "name": ".NET Core Debugger (launch)",
             "type": "coreclr",
             "request": "launch",
+            "program": "${command:dotrush.activeTargetPath}",
             "preLaunchTask": "dotrush: Build"
           },
           {
@@ -198,6 +199,7 @@
               "name": ".NET Core Debugger (launch)",
               "type": "coreclr",
               "request": "launch",
+              "program": "^\"\\${command:dotrush.activeTargetPath}\"",
               "preLaunchTask": "dotrush: Build"
             }
           },
@@ -451,6 +453,11 @@
             "type": "boolean",
             "default": true,
             "description": "%configuration.description.debugger.automaticSourcelinkDownload%"
+          },
+          "dotrush.debugger.automaticLaunchSettingsLoad": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.description.debugger.automaticLaunchSettingsLoad%"
           },
           "dotrush.debugger.symbolSearchPaths": {
             "type": "array",

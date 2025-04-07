@@ -17,12 +17,12 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
 			config.preLaunchTask = folder === undefined ? undefined : `${res.extensionId}: Build`;
 		}
 
-        await DotNetDebugConfigurationProvider.provideDebuggerConfiguration(config);
+        DotNetDebugConfigurationProvider.provideDebuggerConfiguration(config);
 
 		if (!config.program && config.request === 'launch')
-			config.program = await DebugAdapterController.getProgramPath();
+			config.program = await vscode.commands.executeCommand(res.commandIdActiveTargetPath);
 		if (!config.processId && config.request === 'attach')
-			config.processId = await DebugAdapterController.showQuickPickProcess();
+			config.processId = await vscode.commands.executeCommand(res.commandIdPickProcess);
 
         if (!config.cwd && config.program)
             config.cwd = path.dirname(config.program);
@@ -30,9 +30,12 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
         return config;
 	}
 
-	private static async provideDebuggerConfiguration(config: vscode.DebugConfiguration) {
-        if (config.launchSettingsFilePath !== undefined && Extensions.onVSCode(false, true)) {
-            const profile = await DebugAdapterController.getLaunchProfile(config.launchSettingsFilePath, config.launchSettingsProfile);
+	private static provideDebuggerConfiguration(config: vscode.DebugConfiguration) {
+        // https://github.com/JaneySprings/DotRush/issues/22
+        if (config.launchSettingsFilePath === undefined && Extensions.getSetting<boolean>(res.configIdDebuggerAutomaticLaunchSettingsLoad))
+            config.launchSettingsFilePath = DebugAdapterController.getLaunchSettingsPath();
+        if (config.launchSettingsFilePath !== undefined && Extensions.onVSCode(false, true /* netcoredbg only */)) {
+            const profile = DebugAdapterController.getLaunchProfile(config.launchSettingsFilePath, config.launchSettingsProfile);
             DotNetDebugConfigurationProvider.provideDebuggerConfigurationFromProfile(config, profile);
         }
 
