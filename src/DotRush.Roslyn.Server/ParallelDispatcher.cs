@@ -12,6 +12,7 @@ public class ParallelDispatcher : IScheduler {
     private readonly BlockingCollection<Action> workerTasks = new BlockingCollection<Action>();
     private readonly string[] workerHandlersTable = new[] {
         "textDocument/diagnostic",
+        "textDocument/codeAction" // depends on diagnostics
     };
 
     public ParallelDispatcher() {
