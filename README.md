@@ -49,6 +49,7 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
             "name": ".NET Core Debugger (launch)",
             "type": "coreclr",
             "request": "launch",
+            "program": "${command:dotrush.activeTargetPath}",
             "preLaunchTask": "dotrush: Build"
         },
         {

@@ -2,7 +2,7 @@ import { DotNetDebugConfigurationProvider } from '../providers/dotnetDebugConfig
 import { MonoDebugConfigurationProvider } from '../providers/monoDebugConfigurationProvider';
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
 import { StatusBarController } from './statusbarController';
-import { LaunchProfile } from '../models/profile';
+import { LaunchProfile, LaunchSettings } from '../models/profile';
 import { ProcessItem } from '../models/process';
 import { Interop } from '../interop/interop';
 import { Extensions } from '../extensions';
@@ -14,6 +14,7 @@ import * as fs from 'fs';
 export class DebugAdapterController {
     public static async activate(context: vscode.ExtensionContext) : Promise<void> {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickProcess, async () => await DebugAdapterController.showQuickPickProcess()));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveTargetPath, async () => await DebugAdapterController.getProjectTargetPath()));
 
         context.subscriptions.push(vscode.tasks.registerTaskProvider(res.taskDefinitionId, new DotNetTaskProvider()));
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerVsdbgId, new DotNetDebugConfigurationProvider()));
@@ -23,50 +24,34 @@ export class DebugAdapterController {
             await DebugAdapterController.installDebugger(Extensions.onVSCode(res.debuggerVsdbgInstallId, res.debuggerNcdbgInstallId));
     }
 
-    public static async showQuickPickProgram(): Promise<string | undefined> {
-        const programPath = await vscode.window.showOpenDialog({
-            title: res.messageSelectProgramTitle,
-            canSelectFiles: true,
-            canSelectFolders: false,
-            canSelectMany: false
-        });
-        return programPath?.[0].fsPath;
-    }
-    public static async showQuickPickProcess(): Promise<string | undefined> {
-        const processes = await Interop.getProcesses();
-        const selectedItem = await vscode.window.showQuickPick(processes.map(p => new ProcessItem(p)), { placeHolder: res.messageSelectProcessTitle });
-        return selectedItem?.item.id.toString();
-    }
-    public static async getLaunchProfile(launchSettingsPath: string, profileName: string | undefined): Promise<LaunchProfile | undefined> {
-        launchSettingsPath = Extensions.resolveTemplatePath(launchSettingsPath);
+    public static getLaunchProfile(launchSettingsPath: string, profileName: string | undefined): LaunchProfile | undefined {
+        launchSettingsPath = Extensions.resolveTemplatedPath(launchSettingsPath);
+        if (!fs.existsSync(launchSettingsPath))
+            return undefined;
 
-        const settings = await vscode.workspace.fs.readFile(vscode.Uri.file(launchSettingsPath)).then(data => JSON.parse(data.toString()));
-        const profiles = settings?.profiles as { [key: string]: LaunchProfile };
-        if (profiles === undefined || Object.keys(profiles).length === 0)
+        const settings: LaunchSettings = JSON.parse(fs.readFileSync(launchSettingsPath, 'utf8'));
+        if (settings?.profiles === undefined || Object.keys(settings.profiles).length === 0)
             return undefined;
 
         if (profileName !== undefined)
-            return profiles[profileName];
+            return settings.profiles[profileName];
 
-        if (profiles['https'] !== undefined) // For web projects, the default profile is 'https'
-            return profiles['https'];
+        if (settings.profiles['https'] !== undefined) // For web projects, the default profile is 'https'
+            return settings.profiles['https'];
 
-        return profiles[Object.keys(profiles)[0]];
+        return settings.profiles[Object.keys(settings.profiles)[0]];
     }
-    public static async getProgramPath(): Promise<string | undefined> {
-        if (StatusBarController.activeProject === undefined || StatusBarController.activeConfiguration === undefined)
-            return await DebugAdapterController.showQuickPickProgram();
+    public static getLaunchSettingsPath(): string | undefined {
+        const projectPath = StatusBarController.activeProject?.path;
+        if (projectPath === undefined)
+            return undefined;
 
-        const targetPath = Interop.getPropertyValue('TargetPath', StatusBarController.activeProject.path, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
-		if (!targetPath)
-			return await DebugAdapterController.showQuickPickProgram();
-        
-        return targetPath;
-        // const programDirectory = path.dirname(assemblyPath);
-        // const programFile = path.basename(assemblyPath, '.dll');
-        // const programPath = path.join(programDirectory, programFile + Interop.execExtension);
-		// return programPath;
-	}
+        const settingsPath = path.join(path.dirname(projectPath), 'Properties', 'launchSettings.json');
+        if (!fs.existsSync(settingsPath))
+            return undefined;
+
+        return settingsPath;
+    }
     
     private static async installDebugger(id: string): Promise<void> {
         const getNameByDebuggerId = (id: string) => {
@@ -82,5 +67,33 @@ export class DebugAdapterController {
             cancellable: false
         };
         await vscode.window.withProgress(options, (_p, _ct) => Interop.installDebugger(id));
+    }
+    private static async getProjectTargetPath(): Promise<string | undefined> {
+        if (StatusBarController.activeProject === undefined || StatusBarController.activeConfiguration === undefined)
+            return await DebugAdapterController.showQuickPickProgram();
+
+        const targetPath = Interop.getPropertyValue('TargetPath', StatusBarController.activeProject.path, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
+		if (!targetPath)
+			return await DebugAdapterController.showQuickPickProgram();
+        
+        return targetPath;
+        // const programDirectory = path.dirname(assemblyPath);
+        // const programFile = path.basename(assemblyPath, '.dll');
+        // const programPath = path.join(programDirectory, programFile + Interop.execExtension);
+		// return programPath;
+	}
+    private static async showQuickPickProgram(): Promise<string | undefined> {
+        const programPath = await vscode.window.showOpenDialog({
+            title: res.messageSelectProgramTitle,
+            canSelectFiles: true,
+            canSelectFolders: false,
+            canSelectMany: false
+        });
+        return programPath?.[0].fsPath;
+    }
+    private static async showQuickPickProcess(): Promise<string | undefined> {
+        const processes = await Interop.getProcesses();
+        const selectedItem = await vscode.window.showQuickPick(processes.map(p => new ProcessItem(p)), { placeHolder: res.messageSelectProcessTitle });
+        return selectedItem?.item.id.toString();
     }
 }
