@@ -7,10 +7,7 @@ using DotRush.Roslyn.Server.Extensions;
 namespace DotRush.Roslyn.Server.Services;
 
 public class ConfigurationService {
-    private const string ExtensionId = "dotrush";
-    private const string RoslynId = "roslyn";
-    
-    private Configuration? configuration;
+    private RoslynSection? configuration;
 
     public bool ShowItemsFromUnimportedNamespaces => configuration?.ShowItemsFromUnimportedNamespaces ?? false;
     public bool SkipUnrecognizedProjects => configuration?.SkipUnrecognizedProjects ?? true;
@@ -25,24 +22,30 @@ public class ConfigurationService {
     public ReadOnlyCollection<string> ProjectOrSolutionFiles => (configuration?.ProjectOrSolutionFiles ?? new List<string>()).AsReadOnly();
 
     public ConfigurationService() {}
-    internal ConfigurationService(Configuration configuration) {
-        this.configuration = configuration;
+    internal ConfigurationService(ConfigurationSection configuration) {
+        this.configuration = configuration.Roslyn;
     }
 
     public async Task InitializeAsync() {
-        var sectionList = await LanguageServer.Proxy.GetConfigurationAsync($"{ExtensionId}.{RoslynId}", 3, CancellationToken.None).ConfigureAwait(false);
+        var sectionList = await LanguageServer.Proxy.GetConfigurationAsync(Resources.ExtensionId, 3, CancellationToken.None).ConfigureAwait(false);
         var section = sectionList?.FirstOrDefault()?.Value;
         if (section == null) {
-            CurrentSessionLogger.Error("ConfigurationService failed to initialize");
+            CurrentSessionLogger.Error("Configuration section not found in the configuration file.");
             return;
         }
 
-        configuration = JsonSerializer.Deserialize<Configuration>((JsonDocument)section);
+        var sections = JsonSerializer.Deserialize<ConfigurationSection>((JsonDocument)section);
+        configuration = sections?.Roslyn;
         CurrentSessionLogger.Debug("ConfigurationService initialized");
     }
 }
 
-internal sealed class Configuration {
+internal sealed class ConfigurationSection {
+    [JsonPropertyName("roslyn")]
+    public RoslynSection? Roslyn { get; set; }
+    // Other sections that not related to lsp
+}
+internal sealed class RoslynSection {
     [JsonPropertyName("showItemsFromUnimportedNamespaces")]
     public bool ShowItemsFromUnimportedNamespaces { get; set; }
 
@@ -57,7 +60,7 @@ internal sealed class Configuration {
 
     [JsonPropertyName("compileProjectsAfterLoading")]
     public bool CompileProjectsAfterLoading { get; set; }
-        
+
     [JsonPropertyName("applyWorkspaceChanges")]
     public bool ApplyWorkspaceChanges { get; set; }
 
@@ -72,7 +75,7 @@ internal sealed class Configuration {
 
     [JsonPropertyName("workspaceProperties")]
     public List<string>? WorkspaceProperties { get; set; }
-    
+
     [JsonPropertyName("projectOrSolutionFiles")]
     public List<string>? ProjectOrSolutionFiles { get; set; }
 }

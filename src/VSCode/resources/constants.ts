@@ -61,3 +61,5 @@ export const configIdMSBuildNoRestore = "msbuild.noRestore";
 export const configIdMSBuildNoDependencies = "msbuild.noDependencies";
 export const configIdMSBuildAdditionalBuildArguments = "msbuild.additionalBuildArguments";
 export const configIdMSBuildAdditionalTestArguments = "msbuild.additionalTestArguments";
+export const configIdTestExplorerAutoRefreshTests = "testExplorer.autoRefreshTests";
+export const configIdTestExplorerSkipInitialPauseEvent = "testExplorer.skipInitialPauseEvent";
