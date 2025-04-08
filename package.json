@@ -499,6 +499,22 @@
             "items": {
               "type": "string"
             }
+          },
+          "dotrush.testExplorer.autoRefreshTests": {
+            "type": "boolean",
+            "default": true,
+            "tags": [
+              "experimental"
+            ],
+            "description": "%configuration.description.testExplorer.autoRefreshTests%"
+          },
+          "dotrush.testExplorer.skipInitialPauseEvent": {
+            "type": "boolean",
+            "default": true,
+            "tags": [
+              "experimental"
+            ],
+            "description": "%configuration.description.testExplorer.skipInitialPauseEvent%"
           }
         }
       }

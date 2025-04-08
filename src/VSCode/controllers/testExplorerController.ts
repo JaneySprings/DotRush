@@ -20,17 +20,16 @@ export class TestExplorerController {
         context.subscriptions.push(TestExplorerController.controller);
         context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileRun, vscode.TestRunProfileKind.Run, TestExplorerController.runTests, true));
         context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileDebug, vscode.TestRunProfileKind.Debug, TestExplorerController.debugTests, true));
-
         /* Experimental API */
-        if (Extensions.getSetting('testExplorer.skipInitialPauseEvent', false)) {
-            context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerVsdbgId, new ContinueAfterInitialPauseTracker()));
-        }
-        if (Extensions.getSetting('testExplorer.autoRefreshTests', false)) {
+        if (Extensions.getSetting(res.configIdTestExplorerAutoRefreshTests)) {
             context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(ev => {
                 const fileName = path.basename(ev.uri.fsPath);
                 if (fileName.endsWith('.cs') && fileName.includes('Tests'))
                     TestExplorerController.refreshTests();
             }));
+        }
+        if (Extensions.getSetting(res.configIdTestExplorerSkipInitialPauseEvent) && Extensions.onVSCode(true, false)) {
+            context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerVsdbgId, new ContinueAfterInitialPauseTracker()));
         }
     }
 

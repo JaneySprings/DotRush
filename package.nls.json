@@ -35,5 +35,8 @@
 	"configuration.description.msbuild.noRestore": "Determines if the project will be restored before building.",
 	"configuration.description.msbuild.noDependencies": "Determines if the project dependencies will be built.",
 	"configuration.description.msbuild.additionalBuildArguments": "Additional arguments to pass to the build command.",
-	"configuration.description.msbuild.additionalTestArguments": "Additional arguments to pass to the test command."
+	"configuration.description.msbuild.additionalTestArguments": "Additional arguments to pass to the test command.",
+
+	"configuration.description.testExplorer.autoRefreshTests": "Automatically refresh tests on source code save.",
+	"configuration.description.testExplorer.skipInitialPauseEvent": "Skip the initial pause event when starting the tests debugging. This option will be ignored for netcoredbg."
 }
