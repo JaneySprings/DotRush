@@ -436,12 +436,12 @@
           },
           "dotrush.debugger.projectAssembliesOnly": {
             "type": "boolean",
-            "default": false,
+            "default": true,
             "description": "%configuration.description.debugger.projectAssembliesOnly%"
           },
           "dotrush.debugger.stepOverPropertiesAndOperators": {
             "type": "boolean",
-            "default": false,
+            "default": true,
             "description": "%configuration.description.debugger.stepOverPropertiesAndOperators%"
           },
           "dotrush.debugger.searchMicrosoftSymbolServer": {
