@@ -42,8 +42,6 @@ public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAn
 
 
 public abstract class ComponentsLoaderTests<TValue> : WorkspaceTestFixture where TValue: class {
-    protected const string MultiTFM = "net8.0;net9.0";
-
     protected abstract IComponentLoader<TValue> ComponentsLoader { get; }
     protected abstract int EmbeddedComponentsCount { get; }
     protected abstract int ProjectComponentsCount { get; }
