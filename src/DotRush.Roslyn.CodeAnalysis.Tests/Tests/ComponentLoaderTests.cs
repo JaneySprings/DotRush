@@ -21,7 +21,7 @@ public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider
     private CodeFixProvidersLoader loader = null!;
     protected override IComponentLoader<CodeFixProvider> ComponentsLoader => loader;
     protected override int EmbeddedComponentsCount => 163;
-    protected override int ProjectComponentsCount => 132;
+    protected override int ProjectComponentsCount => 133;
 
     [SetUp]
     public void SetUp() {
