@@ -32,7 +32,7 @@ public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAn
     private DiagnosticAnalyzersLoader loader = null!;
     protected override IComponentLoader<DiagnosticAnalyzer> ComponentsLoader => loader;
     protected override int EmbeddedComponentsCount => 113;
-    protected override int ProjectComponentsCount => 276;
+    protected override int ProjectComponentsCount => 277;
 
     [SetUp]
     public void SetUp() {
