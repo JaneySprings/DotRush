@@ -31,7 +31,7 @@ public class CompilationHost {
     }
 
     public async Task<ReadOnlyCollection<DiagnosticContext>> DiagnoseAsync(IEnumerable<Document> documents, bool enableAnalyzers, CancellationToken cancellationToken) {
-        documents.ForEach(document => workspaceDiagnostics.ClearWithKey(document.Project.Id));
+        documents.ForEach(document => workspaceDiagnostics.ClearDiagnostics(document));
 
         bool hasAnalyzersDiagnose = false;
         foreach (var document in documents) {
@@ -85,12 +85,12 @@ public class CompilationHost {
         if (syntaxTree == null)
             return;
         var syntaxDiagnostics = await compilationWithAnalyzers.GetAnalyzerSyntaxDiagnosticsAsync(syntaxTree, cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, syntaxDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, syntaxDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, true)));
         
         var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
         if (semanticModel == null)
             return;
         var semanticDiagnostics = await compilationWithAnalyzers.GetAnalyzerSemanticDiagnosticsAsync(semanticModel, null, cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, semanticDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, semanticDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, true)));
     }
 }

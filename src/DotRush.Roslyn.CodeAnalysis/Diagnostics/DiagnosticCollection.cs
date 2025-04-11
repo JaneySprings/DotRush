@@ -43,11 +43,8 @@ public class DiagnosticCollection {
         return workspaceDiagnostics.Values.SelectMany(c => c).ToList().AsReadOnly();
     }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
-        if (!diagnosticRelations.TryGetValue(document.Project.Id, out HashSet<string>? relations) || string.IsNullOrEmpty(document.FilePath))
+        if (string.IsNullOrEmpty(document.FilePath))
             return new List<DiagnosticContext>().AsReadOnly();
-        if (!relations.Contains(document.FilePath))
-            return new List<DiagnosticContext>().AsReadOnly();
-
         if (workspaceDiagnostics.TryGetValue(document.FilePath, out List<DiagnosticContext>? diagnostics))
             return diagnostics.Where(d => d.Span.IntersectsWith(span)).ToList().AsReadOnly();
 
@@ -56,12 +53,17 @@ public class DiagnosticCollection {
     public string GetCollectionToken() {
         return collectionToken;
     }
-    public void ClearWithKey(ProjectId key) {
+    public void ClearDiagnostics(Document document) {
+        if (string.IsNullOrEmpty(document.FilePath))
+            return;
+
         lock (lockObject) {
-            if (diagnosticRelations.TryGetValue(key, out HashSet<string>? relations)) {
-                relations.ForEach(r => workspaceDiagnostics.Remove(r));
-                diagnosticRelations.Remove(key);
-            }
+            // Remove all compilation diagnostics for the document (scan entire project)
+            if (diagnosticRelations.TryGetValue(document.Project.Id, out HashSet<string>? relations))
+                relations.ForEach(r => workspaceDiagnostics[r].RemoveAll(c => !c.IsAnalyzerDiagnostic));
+            // Remove all analyzer diagnostics for the document (scan only the document)
+            if (workspaceDiagnostics.TryGetValue(document.FilePath, out List<DiagnosticContext>? diagnostics))
+                diagnostics.RemoveAll(c => c.IsAnalyzerDiagnostic);
         }
     }
     public void Invalidate() {
