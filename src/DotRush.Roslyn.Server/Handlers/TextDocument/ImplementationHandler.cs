@@ -33,26 +33,25 @@ public class ImplementationHandler : ImplementationHandlerBase {
             if (document == null)
                 continue;
 
-            var sourceText = await document.GetTextAsync(cancellationToken);
-            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
+            var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
+            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken).ConfigureAwait(false);
             if (symbol == null || solutionService.Solution == null)
                 continue;
 
-            var symbols = await SymbolFinder.FindImplementationsAsync(symbol, solutionService.Solution, cancellationToken: cancellationToken);
+            var symbols = await SymbolFinder.FindImplementationsAsync(symbol, solutionService.Solution, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (symbols != null)
                 result.AddRange(symbols.SelectMany(it => it.Locations).Select(it => it.ToLocation()));
 
-            if (symbol is IMethodSymbol methodSymbol) {
-                symbols = await SymbolFinder.FindOverridesAsync(methodSymbol, solutionService.Solution, cancellationToken: cancellationToken);
-                if (symbols != null)
-                    result.AddRange(symbols.SelectMany(it => it.Locations).Select(it => it.ToLocation()));
-            }
+            symbols = await SymbolFinder.FindOverridesAsync(symbol, solutionService.Solution, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (symbols != null)
+                result.AddRange(symbols.SelectMany(it => it.Locations).Select(it => it.ToLocation()));
+            
             if (symbol is INamedTypeSymbol namedTypeSymbol) {
-                symbols = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, solutionService.Solution, cancellationToken: cancellationToken);
+                symbols = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, solutionService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
                 if (symbols != null)
                     result.AddRange(symbols.SelectMany(it => it.Locations).Select(it => it.ToLocation()));
 
-                symbols = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, solutionService.Solution, cancellationToken: cancellationToken);
+                symbols = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, solutionService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
                 if (symbols != null)
                     result.AddRange(symbols.SelectMany(it => it.Locations).Select(it => it.ToLocation()));
             }
