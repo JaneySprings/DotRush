@@ -36,8 +36,9 @@
     "vscode": "^1.73.0"
   },
   "activationEvents": [
-    "workspaceContains:**/*.csproj",
-    "onDebug"
+    "onLanguage:csharp",
+    "onDebug",
+    "workspaceContains:**/*.{csproj,sln,cs,xaml}"
   ],
   "main": "extension/main.js",
   "scripts": {
