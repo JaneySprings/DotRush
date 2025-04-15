@@ -61,19 +61,19 @@ export class StatusBarController {
         StatusBarController.configurationStatusBarItem.show();
     }
 
-    private static performSelectConfiguration(config: string | undefined, framework: string | undefined) {
-        StatusBarController.activeConfiguration = config;
+    private static performSelectConfiguration(configuration: string | undefined, framework: string | undefined) {
+        StatusBarController.activeConfiguration = configuration;
         StatusBarController.activeFramework = framework;
 
-        if (StatusBarController.activeFramework === undefined)
-            StatusBarController.configurationStatusBarItem.text = `${Icons.target} ${StatusBarController.activeConfiguration}`;
-        else
-            StatusBarController.configurationStatusBarItem.text = `${Icons.target} ${StatusBarController.activeConfiguration} | ${StatusBarController.activeFramework}`;
+        StatusBarController.configurationStatusBarItem.tooltip = StatusBarController.activeProject?.name;
+        StatusBarController.configurationStatusBarItem.text = framework === undefined
+            ? `${Icons.target} ${configuration}`
+            : `${Icons.target} ${configuration} | ${framework}`;
 
-        PublicExports.instance.onActiveConfigurationChanged.invoke(StatusBarController.activeConfiguration);
-        PublicExports.instance.onActiveFrameworkChanged.invoke(StatusBarController.activeFramework);
-        StateController.putLocal('configuration', StatusBarController.activeConfiguration);
-        StateController.putLocal('framework', StatusBarController.activeFramework);
+        PublicExports.instance.onActiveConfigurationChanged.invoke(configuration);
+        PublicExports.instance.onActiveFrameworkChanged.invoke(framework);
+        StateController.putLocal('configuration', configuration);
+        StateController.putLocal('framework', framework);
     }
     private static async showQuickPickConfiguration(): Promise<void> {
         const configurations = StatusBarController.activeProject?.configurations ?? [];
