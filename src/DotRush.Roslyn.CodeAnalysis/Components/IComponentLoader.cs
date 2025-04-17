@@ -7,8 +7,8 @@ namespace DotRush.Roslyn.CodeAnalysis.Components;
 public interface IComponentLoader<T> where T : class {
     MemoryCache<T> ComponentsCache { get; }
 
-    ReadOnlyCollection<T> LoadFromProject(Project project);
-    ReadOnlyCollection<T> LoadFromAssembly(string assemblyName);
-    ReadOnlyCollection<T> LoadFromDotRush();
+    List<T> LoadFromProject(Project project);
+    List<T> LoadFromAssembly(string assemblyName);
+    List<T> LoadFromDotRush();
     ImmutableArray<T> GetComponents(Project? project = null);
 }

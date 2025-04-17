@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
+using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
@@ -16,15 +16,18 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
         var roslynCoreComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName));
         var roslynCSharpComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
         if (project == null)
-            return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).ToImmutableArray();
+            return dotrushComponents.AddRanges(roslynCoreComponents, roslynCSharpComponents).ToImmutableArray();
             // return dotrushComponents.ToImmutableArray();
 
         var projectProviders = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
-        return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).Concat(projectProviders).ToImmutableArray();
+        return dotrushComponents.AddRanges(roslynCoreComponents, roslynCSharpComponents, projectProviders).ToImmutableArray();
         // return dotrushComponents.Concat(projectProviders).ToImmutableArray();
     }
-    
-    public ReadOnlyCollection<DiagnosticAnalyzer> LoadFromProject(Project project) {
+    public ImmutableArray<DiagnosticAnalyzer> GetSuppressors(Project? project = null) {
+        return GetComponents(project).Where(it => it is DiagnosticSuppressor).ToImmutableArray();
+    }
+
+    public List<DiagnosticAnalyzer> LoadFromProject(Project project) {
         var result = new List<DiagnosticAnalyzer>();
         foreach (var reference in project.AnalyzerReferences)
             foreach (var analyzer in reference.GetAnalyzers(project.Language)) {
@@ -33,13 +36,13 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
             }
 
         currentClassLogger.Debug($"Loaded {result.Count} analyzers from project '{project.Name}'");
-        return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
+        return result;
     }
-    public ReadOnlyCollection<DiagnosticAnalyzer> LoadFromAssembly(string assemblyName) {
+    public List<DiagnosticAnalyzer> LoadFromAssembly(string assemblyName) {
         var result = new List<DiagnosticAnalyzer>();
         var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);
         if (assemblyTypes == null)
-            return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
+            return result;
 
         var analyzersInfo = assemblyTypes.Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(DiagnosticAnalyzer)));
         foreach (var analyzerInfo in analyzersInfo) {
@@ -55,9 +58,9 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
             }
         }
         currentClassLogger.Debug($"Loaded {result.Count} analyzers form assembly '{assemblyName}'");
-        return new ReadOnlyCollection<DiagnosticAnalyzer>(result);
+        return result;
     }
-    public ReadOnlyCollection<DiagnosticAnalyzer> LoadFromDotRush() {
-        return new ReadOnlyCollection<DiagnosticAnalyzer>(new List<DiagnosticAnalyzer>());
+    public List<DiagnosticAnalyzer> LoadFromDotRush() {
+        return new List<DiagnosticAnalyzer>();
     }
 }

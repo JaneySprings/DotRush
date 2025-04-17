@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Reflection;
+using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Embedded.Refactorings;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
@@ -18,17 +18,17 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
         var roslynCoreComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName));
         var roslynCSharpComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
         if (project == null)
-            return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).ToImmutableArray();
+            return dotrushComponents.AddRanges(roslynCoreComponents, roslynCSharpComponents).ToImmutableArray();
 
         var projectProviders = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
-        return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).Concat(projectProviders).ToImmutableArray();
+        return dotrushComponents.AddRanges(roslynCoreComponents, roslynCSharpComponents, projectProviders).ToImmutableArray();
     }
     
-    public ReadOnlyCollection<CodeRefactoringProvider> LoadFromAssembly(string assemblyName) {
+    public List<CodeRefactoringProvider> LoadFromAssembly(string assemblyName) {
         var result = new List<CodeRefactoringProvider>();
         var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);
         if (assemblyTypes == null)
-            return new ReadOnlyCollection<CodeRefactoringProvider>(result);
+            return result;
 
         var providersInfo = assemblyTypes.Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(CodeRefactoringProvider)));
         foreach (var providerInfo in providersInfo) {
@@ -49,17 +49,17 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
             }
         }
         currentClassLogger.Debug($"Loaded {result.Count} codeRefactoringProviders form assembly '{assemblyName}'");
-        return new ReadOnlyCollection<CodeRefactoringProvider>(result);
+        return result;
     }
-    public ReadOnlyCollection<CodeRefactoringProvider> LoadFromProject(Project project) {
+    public List<CodeRefactoringProvider> LoadFromProject(Project project) {
         var analyzerReferenceAssemblies = project.AnalyzerReferences.Select(it => it.FullPath);
-        var result = analyzerReferenceAssemblies.SelectMany(it => LoadFromAssembly(it ?? string.Empty)).ToArray();
-        currentClassLogger.Debug($"Loaded {result.Length} codeRefactoringProviders from project '{project.Name}'");
-        return new ReadOnlyCollection<CodeRefactoringProvider>(result);
+        var result = analyzerReferenceAssemblies.SelectMany(it => LoadFromAssembly(it ?? string.Empty)).ToList();
+        currentClassLogger.Debug($"Loaded {result.Count} codeRefactoringProviders from project '{project.Name}'");
+        return result;
     }
-    public ReadOnlyCollection<CodeRefactoringProvider> LoadFromDotRush() {
-        return new ReadOnlyCollection<CodeRefactoringProvider>(new List<CodeRefactoringProvider> {
+    public List<CodeRefactoringProvider> LoadFromDotRush() {
+        return new List<CodeRefactoringProvider> {
             new OrganizeImportsRefactoringProvider(),
-        });
+        };
     }
 }

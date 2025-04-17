@@ -33,10 +33,33 @@ public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAn
     protected override IComponentLoader<DiagnosticAnalyzer> ComponentsLoader => loader;
     protected override int EmbeddedComponentsCount => 113;
     protected override int ProjectComponentsCount => 277;
+    protected int SuppressorsCount => 1;
 
     [SetUp]
     public void SetUp() {
         loader = new DiagnosticAnalyzersLoader();
+    }
+
+    [Test]
+    public void LoadProjectSuppressorsTest() {
+        var projects = Workspace!.Solution!.Projects;
+        Assert.That(projects.Count(), Is.EqualTo(2));
+
+        foreach (var project in projects) {
+            ComponentsLoader.ComponentsCache.ThrowOnCreation = false;
+            var components = loader.GetSuppressors(project);
+            Assert.That(components, Has.Length.EqualTo(SuppressorsCount));
+            Assert.That(ComponentsLoader.ComponentsCache.Keys, Does.Contain(project.Name));
+            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(ProjectComponentsCount + EmbeddedComponentsCount));
+
+            var oldComponentsKeysCount = ComponentsLoader.ComponentsCache.Keys.Count();
+
+            ComponentsLoader.ComponentsCache.ThrowOnCreation = true;
+            components = loader.GetSuppressors(project);
+            Assert.That(components, Has.Length.EqualTo(SuppressorsCount));
+            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(ProjectComponentsCount + EmbeddedComponentsCount));
+            Assert.That(ComponentsLoader.ComponentsCache.Keys.Count(), Is.EqualTo(oldComponentsKeysCount));
+        }
     }
 }
 

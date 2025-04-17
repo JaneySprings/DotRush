@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Reflection;
+using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
@@ -17,17 +17,17 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
         var roslynCoreComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName));
         var roslynCSharpComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
         if (project == null)
-            return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).ToImmutableArray();
+            return dotrushComponents.AddRanges(roslynCoreComponents, roslynCSharpComponents).ToImmutableArray();
 
         var projectProviders = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
-        return dotrushComponents.Concat(roslynCoreComponents).Concat(roslynCSharpComponents).Concat(projectProviders).ToImmutableArray();
+        return dotrushComponents.AddRanges(roslynCoreComponents, roslynCSharpComponents, projectProviders).ToImmutableArray();
     }
 
-    public ReadOnlyCollection<CodeFixProvider> LoadFromAssembly(string assemblyName) {
+    public List<CodeFixProvider> LoadFromAssembly(string assemblyName) {
         var result = new List<CodeFixProvider>();
         var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);
         if (assemblyTypes == null)
-            return new ReadOnlyCollection<CodeFixProvider>(result);
+            return result;
 
         var providersInfo = assemblyTypes.Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(CodeFixProvider)));
         foreach (var providerInfo in providersInfo) {
@@ -48,15 +48,15 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
             }
         }
         currentClassLogger.Debug($"Loaded {result.Count} codeFixProviders form assembly '{assemblyName}'");
-        return new ReadOnlyCollection<CodeFixProvider>(result);
+        return result;
     }
-    public ReadOnlyCollection<CodeFixProvider> LoadFromProject(Project project) {
+    public List<CodeFixProvider> LoadFromProject(Project project) {
         var analyzerReferenceAssemblies = project.AnalyzerReferences.Select(it => it.FullPath);
-        var result = analyzerReferenceAssemblies.SelectMany(it => LoadFromAssembly(it ?? string.Empty)).ToArray();
-        currentClassLogger.Debug($"Loaded {result.Length} codeFixProviders from project '{project.Name}'");
-        return new ReadOnlyCollection<CodeFixProvider>(result);
+        var result = analyzerReferenceAssemblies.SelectMany(it => LoadFromAssembly(it ?? string.Empty)).ToList();
+        currentClassLogger.Debug($"Loaded {result.Count} codeFixProviders from project '{project.Name}'");
+        return result;
     }
-    public ReadOnlyCollection<CodeFixProvider> LoadFromDotRush() {
-        return new ReadOnlyCollection<CodeFixProvider>(new List<CodeFixProvider>());
+    public List<CodeFixProvider> LoadFromDotRush() {
+        return new List<CodeFixProvider>();
     }
 }

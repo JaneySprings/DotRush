@@ -1,7 +1,7 @@
 namespace DotRush.Roslyn.CodeAnalysis;
 
 public class MemoryCache<TValue> where TValue : class {
-    private readonly Dictionary<string, IEnumerable<string>> cache = new Dictionary<string, IEnumerable<string>>();
+    private readonly Dictionary<string, HashSet<string>> cache = new Dictionary<string, HashSet<string>>();
     private readonly Dictionary<string, TValue> componentTable = new Dictionary<string, TValue>();
     private readonly object lockObject = new object();
 
@@ -9,10 +9,10 @@ public class MemoryCache<TValue> where TValue : class {
     internal int Count => componentTable.Count;
     internal bool ThrowOnCreation { get; set; }
 
-    public IEnumerable<TValue> GetOrCreate(string key, Func<IEnumerable<TValue>> factory) {
+    public List<TValue> GetOrCreate(string key, Func<List<TValue>> factory) {
         lock (lockObject) {
             if (cache.TryGetValue(key, out var value))
-                return value.Select(x => componentTable[x]).ToArray();
+                return value.Select(x => componentTable[x]).ToList();
 
             if (ThrowOnCreation)
                 throw new InvalidOperationException($"Component {key} not found");
@@ -21,7 +21,7 @@ public class MemoryCache<TValue> where TValue : class {
             foreach (var item in newValue)
                 componentTable.TryAdd(GetValueId(item) , item);
 
-            cache.Add(key, newValue.Select(GetValueId));
+            cache.Add(key, newValue.Select(GetValueId).ToHashSet());
             return newValue;
         }
     }

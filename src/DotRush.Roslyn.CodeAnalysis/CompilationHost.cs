@@ -36,7 +36,11 @@ public class CompilationHost {
         bool hasAnalyzersDiagnose = false;
         foreach (var document in documents) {
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Project.Name} started");
-            var compilation = await DiagnoseAsync(document.Project, cancellationToken).ConfigureAwait(false);
+
+            var compilation = enableAnalyzers 
+                ? await DiagnoseWithSuppressorsAsync(document.Project, cancellationToken).ConfigureAwait(false)
+                : await DiagnoseAsync(document.Project, cancellationToken).ConfigureAwait(false);
+
             if (compilation != null && enableAnalyzers && !hasAnalyzersDiagnose) {
                 // Diagnose with analyzers only once for the first tfm (I think it is enough)
                 await AnalyzerDiagnoseAsync(document, compilation, cancellationToken).ConfigureAwait(false);
@@ -46,7 +50,7 @@ public class CompilationHost {
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Project.Name} finished");
         }
 
-        return new ReadOnlyCollection<DiagnosticContext>(workspaceDiagnostics.GetDiagnostics());
+        return workspaceDiagnostics.GetDiagnostics();
     }
 
     private async Task<Compilation?> DiagnoseAsync(Project project, CancellationToken cancellationToken) {
@@ -66,6 +70,26 @@ public class CompilationHost {
         var methodBodyDiagnostics = compilation.GetMethodBodyDiagnostics(cancellationToken);
         workspaceDiagnostics.AddDiagnostics(project.Id, methodBodyDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
 
+        return compilation;
+    }
+    private async Task<Compilation?> DiagnoseWithSuppressorsAsync(Project project, CancellationToken cancellationToken) {
+         if (cancellationToken.IsCancellationRequested)
+            return null;
+        
+        var diagnosticSuppressors = diagnosticAnalyzersLoader.GetSuppressors(project);
+        if (diagnosticSuppressors == null || diagnosticSuppressors.Length == 0)
+            return await DiagnoseAsync(project, cancellationToken);
+        
+        var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
+        if (compilation == null)
+            return null;
+
+        var compilationWithSuppressors = compilation.WithAnalyzers(diagnosticSuppressors, project.AnalyzerOptions);
+        if (compilationWithSuppressors == null)
+            return null;
+
+        var diagnostics = await compilationWithSuppressors.GetAllDiagnosticsAsync(cancellationToken).ConfigureAwait(false);
+        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
         return compilation;
     }
     private async Task AnalyzerDiagnoseAsync(Document document, Compilation compilation, CancellationToken cancellationToken) {
