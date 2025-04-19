@@ -20,7 +20,7 @@ public class CompilationHost {
         workspaceDiagnostics = new DiagnosticCollection();
     }
 
-    public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
+    public ReadOnlyDictionary<string, List<DiagnosticContext>> GetDiagnostics() {
         return workspaceDiagnostics.GetDiagnostics();
     }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
@@ -30,20 +30,41 @@ public class CompilationHost {
         return workspaceDiagnostics.GetCollectionToken();
     }
 
-    public async Task<ReadOnlyCollection<DiagnosticContext>> DiagnoseAsync(IEnumerable<Document> documents, bool enableAnalyzers, CancellationToken cancellationToken) {
-        documents.ForEach(document => workspaceDiagnostics.ClearDiagnostics(document));
+    public async Task<ReadOnlyDictionary<string, List<DiagnosticContext>>> DiagnoseDocumentsAsync(IEnumerable<Document> documents, bool enableAnalyzers, CancellationToken cancellationToken) {
+        documents.ForEach(document => workspaceDiagnostics.ClearDocumentDiagnostics(document));
+
+        bool hasAnalyzersDiagnose = false;
+        foreach (var document in documents) {
+            currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Name} started");
+
+            await DiagnoseAsync(document, cancellationToken).ConfigureAwait(false);
+
+            if (enableAnalyzers && !hasAnalyzersDiagnose) {
+                // Diagnose with analyzers only once for the first tfm (I think it is enough)
+                await AnalyzerDiagnoseAsync(document, cancellationToken).ConfigureAwait(false);
+                hasAnalyzersDiagnose = true;
+            }
+
+            currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Name} finished");
+        }
+
+        return workspaceDiagnostics.GetDiagnostics();
+    }
+    public async Task<ReadOnlyDictionary<string, List<DiagnosticContext>>> DiagnoseProjectsAsync(IEnumerable<Document> documents, bool enableAnalyzers, CancellationToken cancellationToken) {
+        documents.ForEach(document => workspaceDiagnostics.ClearProjectDiagnostics(document));
 
         bool hasAnalyzersDiagnose = false;
         foreach (var document in documents) {
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Project.Name} started");
 
-            var compilation = enableAnalyzers 
-                ? await DiagnoseWithSuppressorsAsync(document.Project, cancellationToken).ConfigureAwait(false)
-                : await DiagnoseAsync(document.Project, cancellationToken).ConfigureAwait(false);
+            if (enableAnalyzers) 
+                await DiagnoseWithSuppressorsAsync(document.Project, cancellationToken).ConfigureAwait(false);
+            else 
+                await DiagnoseAsync(document.Project, cancellationToken).ConfigureAwait(false);
 
-            if (compilation != null && enableAnalyzers && !hasAnalyzersDiagnose) {
+            if (enableAnalyzers && !hasAnalyzersDiagnose) {
                 // Diagnose with analyzers only once for the first tfm (I think it is enough)
-                await AnalyzerDiagnoseAsync(document, compilation, cancellationToken).ConfigureAwait(false);
+                await AnalyzerDiagnoseAsync(document, cancellationToken).ConfigureAwait(false);
                 hasAnalyzersDiagnose = true;
             }
 
@@ -53,46 +74,48 @@ public class CompilationHost {
         return workspaceDiagnostics.GetDiagnostics();
     }
 
-    private async Task<Compilation?> DiagnoseAsync(Project project, CancellationToken cancellationToken) {
+    #region DiagnosticProcessing
+    private async Task DiagnoseAsync(Project project, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
-            return null;
+            return;
         
         var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
         if (compilation == null)
-            return null;
+            return;
 
-        var parseDiagnostics = compilation.GetParseDiagnostics(cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(project.Id, parseDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
-
-        var declarationDiagnostics = compilation.GetDeclarationDiagnostics(cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(project.Id, declarationDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
-
-        var methodBodyDiagnostics = compilation.GetMethodBodyDiagnostics(cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(project.Id, methodBodyDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
-
-        return compilation;
+        var diagnostics = compilation.GetDiagnostics(cancellationToken);
+        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
     }
-    private async Task<Compilation?> DiagnoseWithSuppressorsAsync(Project project, CancellationToken cancellationToken) {
+    private async Task DiagnoseAsync(Document document, CancellationToken cancellationToken) {
+        if (cancellationToken.IsCancellationRequested)
+            return;
+        
+        var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
+        if (semanticModel == null)
+            return;
+
+        var diagnostics = semanticModel.GetDiagnostics(null, cancellationToken);
+        workspaceDiagnostics.AddDiagnostics(document.Project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document.Project)));
+    }
+    private async Task DiagnoseWithSuppressorsAsync(Project project, CancellationToken cancellationToken) {
          if (cancellationToken.IsCancellationRequested)
-            return null;
+            return;
         
         var diagnosticSuppressors = diagnosticAnalyzersLoader.GetSuppressors(project);
-        if (diagnosticSuppressors == null || diagnosticSuppressors.Length == 0)
-            return await DiagnoseAsync(project, cancellationToken);
+        if (diagnosticSuppressors == null || diagnosticSuppressors.Length == 0) {
+            await DiagnoseAsync(project, cancellationToken);
+            return;
+        }
         
         var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
-        if (compilation == null)
-            return null;
-
-        var compilationWithSuppressors = compilation.WithAnalyzers(diagnosticSuppressors, project.AnalyzerOptions);
+        var compilationWithSuppressors = compilation?.WithAnalyzers(diagnosticSuppressors, project.AnalyzerOptions);
         if (compilationWithSuppressors == null)
-            return null;
+            return;
 
         var diagnostics = await compilationWithSuppressors.GetAllDiagnosticsAsync(cancellationToken).ConfigureAwait(false);
         workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
-        return compilation;
     }
-    private async Task AnalyzerDiagnoseAsync(Document document, Compilation compilation, CancellationToken cancellationToken) {
+    private async Task AnalyzerDiagnoseAsync(Document document, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
             return;
         
@@ -101,20 +124,20 @@ public class CompilationHost {
         if (diagnosticAnalyzers == null || diagnosticAnalyzers.Length == 0)
             return;
 
-        var compilationWithAnalyzers = compilation.WithAnalyzers(diagnosticAnalyzers, project.AnalyzerOptions);
+        var syntaxTree = await document.GetSyntaxTreeAsync(cancellationToken).ConfigureAwait(false);
+        var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
+        if (semanticModel == null || syntaxTree == null)
+            return;
+    
+        var compilationWithAnalyzers = semanticModel.Compilation.WithAnalyzers(diagnosticAnalyzers, project.AnalyzerOptions);
         if (compilationWithAnalyzers == null)
             return;
 
-        var syntaxTree = await document.GetSyntaxTreeAsync(cancellationToken).ConfigureAwait(false);
-        if (syntaxTree == null)
-            return;
         var syntaxDiagnostics = await compilationWithAnalyzers.GetAnalyzerSyntaxDiagnosticsAsync(syntaxTree, cancellationToken).ConfigureAwait(false);
         workspaceDiagnostics.AddDiagnostics(project.Id, syntaxDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, true)));
         
-        var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
-        if (semanticModel == null)
-            return;
         var semanticDiagnostics = await compilationWithAnalyzers.GetAnalyzerSemanticDiagnosticsAsync(semanticModel, null, cancellationToken).ConfigureAwait(false);
         workspaceDiagnostics.AddDiagnostics(project.Id, semanticDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, true)));
     }
+    #endregion
 }
