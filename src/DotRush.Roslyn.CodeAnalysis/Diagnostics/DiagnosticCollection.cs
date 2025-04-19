@@ -39,8 +39,8 @@ public class DiagnosticCollection {
             return validDiagnostics;
         }
     }
-    public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
-        return workspaceDiagnostics.Values.SelectMany(c => c).ToList().AsReadOnly();
+    public ReadOnlyDictionary<string, List<DiagnosticContext>> GetDiagnostics() {
+        return new ReadOnlyDictionary<string, List<DiagnosticContext>>(workspaceDiagnostics);
     }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
         if (string.IsNullOrEmpty(document.FilePath))
@@ -53,7 +53,17 @@ public class DiagnosticCollection {
     public string GetCollectionToken() {
         return collectionToken;
     }
-    public void ClearDiagnostics(Document document) {
+    public void ClearDocumentDiagnostics(Document document) {
+        if (string.IsNullOrEmpty(document.FilePath))
+            return;
+
+        lock (lockObject) {
+            // Remove all diagnostics for the document
+            if (workspaceDiagnostics.ContainsKey(document.FilePath))
+                workspaceDiagnostics[document.FilePath].Clear();
+        }
+    }
+    public void ClearProjectDiagnostics(Document document) {
         if (string.IsNullOrEmpty(document.FilePath))
             return;
 
@@ -62,16 +72,16 @@ public class DiagnosticCollection {
             if (diagnosticRelations.TryGetValue(document.Project.Id, out HashSet<string>? relations))
                 relations.ForEach(r => workspaceDiagnostics[r].RemoveAll(c => !c.IsAnalyzerDiagnostic));
             // Remove all analyzer diagnostics for the document (scan only the document)
-            if (workspaceDiagnostics.TryGetValue(document.FilePath, out List<DiagnosticContext>? diagnostics))
-                diagnostics.RemoveAll(c => c.IsAnalyzerDiagnostic);
+            if (workspaceDiagnostics.ContainsKey(document.FilePath))
+                workspaceDiagnostics[document.FilePath].RemoveAll(c => c.IsAnalyzerDiagnostic);
         }
     }
-    public void Invalidate() {
+
+    private void Invalidate() {
         lock (lockObject) {
             collectionToken = GenerateNewCollectionToken();
         }
     }
-
     private string GenerateNewCollectionToken() {
         collectionToken = Guid.NewGuid().ToString();
         return collectionToken;

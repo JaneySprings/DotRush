@@ -426,6 +426,11 @@
             "default": true,
             "description": "%configuration.description.roslyn.useMultitargetDiagnostics%"
           },
+          "dotrush.roslyn.projectScopeDiagnostics": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.description.roslyn.projectScopeDiagnostics%"
+          },
           "dotrush.roslyn.enableAnalyzers": {
             "type": "boolean",
             "default": true,

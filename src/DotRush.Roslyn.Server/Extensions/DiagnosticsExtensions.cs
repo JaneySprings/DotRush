@@ -61,10 +61,10 @@ public static class DiagnosticExtensions {
         };
     }
 
-    public static bool IsHiddenInUI(this Diagnostic diagnostic) {
-        if (diagnostic.Severity == DiagnosticSeverity.Hidden && priorityDiagnosticIds.Contains(diagnostic.Id))
+    public static bool IsHiddenInUI(this DiagnosticContext context) {
+        if (context.Diagnostic.Severity == DiagnosticSeverity.Hidden && priorityDiagnosticIds.Contains(context.Diagnostic.Id))
             return false;
 
-        return diagnostic.Severity == DiagnosticSeverity.Hidden;
+        return context.Diagnostic.Severity == DiagnosticSeverity.Hidden;
     }
 }

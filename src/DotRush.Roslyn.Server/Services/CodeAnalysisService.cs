@@ -22,16 +22,21 @@ public class CodeAnalysisService {
     }
 
     public async Task<ReadOnlyCollection<DiagnosticContext>> GetDocumentDiagnostics(IEnumerable<Document> documents, CancellationToken cancellationToken) {
-        if (!documents.Any())
+        var documentFilePath = documents.FirstOrDefault()?.FilePath;
+        if (string.IsNullOrEmpty(documentFilePath))
             return new ReadOnlyCollection<DiagnosticContext>(new List<DiagnosticContext>());
 
-        var documentFilePath = documents.First().FilePath;
-        var diagnostics = await compilationHost.DiagnoseAsync(documents, configurationService.EnableAnalyzers, cancellationToken).ConfigureAwait(false);
-        return diagnostics.Where(d => !d.Diagnostic.IsHiddenInUI() && PathExtensions.Equals(d.FilePath, documentFilePath)).ToList().AsReadOnly();
+        var diagnostics = configurationService.ProjectScopeDiagnostics
+            ? await compilationHost.DiagnoseProjectsAsync(documents, configurationService.EnableAnalyzers, cancellationToken).ConfigureAwait(false)
+            : await compilationHost.DiagnoseDocumentsAsync(documents, configurationService.EnableAnalyzers, cancellationToken).ConfigureAwait(false);
+        
+        if (!diagnostics.TryGetValue(documentFilePath, out List<DiagnosticContext>? value))
+            return new ReadOnlyCollection<DiagnosticContext>(new List<DiagnosticContext>());
+
+        return value.AsReadOnly();
     }
-    public ReadOnlyCollection<DiagnosticContext> GetDiagnostics() {
-        var diagnostics = compilationHost.GetDiagnostics();
-        return diagnostics.Where(d => !d.Diagnostic.IsHiddenInUI()).ToList().AsReadOnly();
+    public ReadOnlyDictionary<string, List<DiagnosticContext>> GetDiagnostics() {
+        return compilationHost.GetDiagnostics();
     }
 
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {

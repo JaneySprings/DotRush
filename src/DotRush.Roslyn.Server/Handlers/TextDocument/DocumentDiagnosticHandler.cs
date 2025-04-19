@@ -26,7 +26,6 @@ public class DocumentDiagnosticsHandler : DocumentDiagnosticHandlerBase {
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
         serverCapabilities.DiagnosticProvider ??= new DiagnosticOptions();
         serverCapabilities.DiagnosticProvider.Identifier = "dotrush";
-        serverCapabilities.DiagnosticProvider.InterFileDependencies = true;
     }
 
     protected override Task<DocumentDiagnosticReport> Handle(DocumentDiagnosticParams request, CancellationToken token) {
@@ -41,7 +40,7 @@ public class DocumentDiagnosticsHandler : DocumentDiagnosticHandlerBase {
             CurrentSessionLogger.Debug($"Publish Diagnostics: {request.TextDocument.Uri.FileSystemPath} - {diagnostics.Count}");
 
             return new RelatedFullDocumentDiagnosticReport {
-                Diagnostics = diagnostics.Select(diagnostic => diagnostic.ToServerDiagnostic()).ToList(),
+                Diagnostics = diagnostics.Where(d => !d.IsHiddenInUI()).Select(d => d.ToServerDiagnostic()).ToList(),
             };
         });
     }
