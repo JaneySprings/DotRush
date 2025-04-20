@@ -45,24 +45,24 @@ public static class WorkspaceExtensions {
         return solution.Projects.SelectMany(project => project.GetAdditionalDocumentIdsWithFolderPath(folderPath));
     }
     public static IEnumerable<ProjectId> GetProjectIdsMayContainsFilePath(this Solution solution, string documentPath) {
-        var projects = solution.Projects.Where(p => PathExtensions.StartsWith(documentPath, Path.GetDirectoryName(p.FilePath) + Path.DirectorySeparatorChar));
-        if (!projects.Any())
+        var projects = solution.Projects.Where(p => PathExtensions.StartsWith(documentPath, Path.GetDirectoryName(p.FilePath) + Path.DirectorySeparatorChar)).ToList();
+        if (projects.Count == 0 || string.IsNullOrEmpty(documentPath))
             return Enumerable.Empty<ProjectId>();
+        if (projects.Count == 1)
+            return projects.Select(p => p.Id);
 
-        var documentFolders = projects.First().GetFolders(documentPath); // 'First()' - Implementation uses only project file path
-        var filteredProjects = projects.ToList();
-        foreach (var documentFolder in documentFolders) { 
-            if (filteredProjects.Count == 0)
-                break;
-            filteredProjects = filteredProjects.Where(p => p.HasFolder(documentFolder)).ToList();
+        var directoryInfo = new DirectoryInfo(Path.GetDirectoryName(documentPath)!);
+        while (directoryInfo != null) {
+            var filteredProjects = projects.Where(p => p.Documents.Any(d => PathExtensions.StartsWith(d.FilePath, directoryInfo.FullName))).ToList();
+            if (filteredProjects.Count != 0)
+                return filteredProjects.Select(p => p.Id);
+
+            directoryInfo = directoryInfo.Parent;
         }
 
-        if (filteredProjects.Count > 0)
-            return filteredProjects.Select(p => p.Id);
-            
-        return projects.Select(p => p.Id);
+        return Enumerable.Empty<ProjectId>();
     }
-    
+
     public static IEnumerable<DocumentId> GetDocumentIdsWithFilePathV2(this Solution solution, string? filePath) {
         return solution.Projects.SelectMany(it => it.GetDocumentIdsWithFilePath(filePath)) ?? Enumerable.Empty<DocumentId>();
     }
