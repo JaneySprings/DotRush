@@ -13,7 +13,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="DotRush.LanguageServer.Framework" />
+		<PackageReference Include="EmmyLua.LanguageServer.Framework" />
 
 		<ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
 		<ProjectReference Include="..\DotRush.Roslyn.CodeAnalysis\DotRush.Roslyn.CodeAnalysis.csproj" />

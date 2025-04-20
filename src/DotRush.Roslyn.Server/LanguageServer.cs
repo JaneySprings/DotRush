@@ -28,25 +28,25 @@ public class LanguageServer {
         ConfigureServices();
 
         dispatcher = new ParallelDispatcher();
-        server = EmmyLuaLanguageServer
-            .From(Console.OpenStandardInput(), Console.OpenStandardOutput())
-            .AddHandler(new TextDocumentHandler(workspaceService))
-            .AddHandler(new WorkspaceSymbolHandler(workspaceService))
-            .AddHandler(new DocumentFormattingHandler(workspaceService))
-            .AddHandler(new RenameHandler(workspaceService))
-            .AddHandler(new SignatureHelpHandler(workspaceService))
-            .AddHandler(new DocumentSymbolHandler(navigationService))
-            .AddHandler(new HoverHandler(navigationService))
-            .AddHandler(new FoldingRangeHandler(navigationService))
-            .AddHandler(new ImplementationHandler(workspaceService))
-            .AddHandler(new ReferenceHandler(navigationService))
-            .AddHandler(new DefinitionHandler(navigationService))
-            .AddHandler(new TypeDefinitionHandler(navigationService))
-            .AddHandler(new TypeHierarchyHandler(navigationService))
-            .AddHandler(new CodeActionHandler(workspaceService, codeAnalysisService))
-            .AddHandler(new CompletionHandler(workspaceService, configurationService))
-            .AddHandler(new DocumentDiagnosticsHandler(workspaceService, codeAnalysisService, configurationService))
-            .AddHandler(new WorkspaceDiagnosticHandler(codeAnalysisService));
+        server = EmmyLuaLanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
+        server.AddHandler(new DidChangeConfigurationHandler(configurationService))
+              .AddHandler(new TextDocumentHandler(workspaceService))
+              .AddHandler(new WorkspaceSymbolHandler(workspaceService))
+              .AddHandler(new DocumentFormattingHandler(workspaceService))
+              .AddHandler(new RenameHandler(workspaceService))
+              .AddHandler(new SignatureHelpHandler(workspaceService))
+              .AddHandler(new DocumentSymbolHandler(navigationService))
+              .AddHandler(new HoverHandler(navigationService))
+              .AddHandler(new FoldingRangeHandler(navigationService))
+              .AddHandler(new ImplementationHandler(workspaceService))
+              .AddHandler(new ReferenceHandler(navigationService))
+              .AddHandler(new DefinitionHandler(navigationService))
+              .AddHandler(new TypeDefinitionHandler(navigationService))
+              .AddHandler(new TypeHierarchyHandler(navigationService))
+              .AddHandler(new CodeActionHandler(workspaceService, codeAnalysisService))
+              .AddHandler(new CompletionHandler(workspaceService, configurationService))
+              .AddHandler(new DocumentDiagnosticsHandler(workspaceService, codeAnalysisService, configurationService))
+              .AddHandler(new WorkspaceDiagnosticHandler(codeAnalysisService));
 
         server.SetScheduler(dispatcher);
         server.OnInitialize(OnInitializeAsync);
@@ -55,8 +55,8 @@ public class LanguageServer {
     private static async Task OnInitializeAsync(InitializeParams parameters, ServerInfo serverInfo) {
         ConfigureProcessObserver(parameters.ProcessId);
         ConfigureServerInfo(serverInfo);
-        
-        await configurationService.InitializeAsync().ConfigureAwait(false);
+
+        await configurationService.InitializeTask.ConfigureAwait(false);
         if (!workspaceService.InitializeWorkspace())
             LanguageServer.Proxy.ShowError(Resources.DotNetRegistrationFailed);
 
