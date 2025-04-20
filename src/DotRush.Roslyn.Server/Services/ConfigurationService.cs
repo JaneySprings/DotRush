@@ -1,14 +1,18 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
 
 namespace DotRush.Roslyn.Server.Services;
 
 public class ConfigurationService {
+    private const string ConfigurationFileName = "dotrush.config.json";
+    private readonly CurrentClassLogger currentClassLogger;
+   
     private RoslynSection? configuration;
-
     public bool ShowItemsFromUnimportedNamespaces => configuration?.ShowItemsFromUnimportedNamespaces ?? false;
     public bool SkipUnrecognizedProjects => configuration?.SkipUnrecognizedProjects ?? true;
     public bool LoadMetadataForReferencedProjects => configuration?.LoadMetadataForReferencedProjects ?? false;
@@ -22,29 +26,50 @@ public class ConfigurationService {
     public ReadOnlyDictionary<string, string> WorkspaceProperties => (configuration?.WorkspaceProperties ?? new List<string>()).ToPropertiesDictionary();
     public ReadOnlyCollection<string> ProjectOrSolutionFiles => (configuration?.ProjectOrSolutionFiles ?? new List<string>()).AsReadOnly();
 
-    public ConfigurationService() {}
-    internal ConfigurationService(ConfigurationSection configuration) {
-        this.configuration = configuration.Roslyn;
+    private readonly TaskCompletionSource initializeTaskSource;
+    public Task InitializeTask => initializeTaskSource.Task;
+
+    public ConfigurationService() {
+        currentClassLogger = new CurrentClassLogger(nameof(ConfigurationService));
+        initializeTaskSource = new TaskCompletionSource();
+        var configFilePath = Path.Combine(Environment.CurrentDirectory, ConfigurationFileName);
+        if (!File.Exists(configFilePath))
+            configFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigurationFileName);
+        if (File.Exists(configFilePath)) {
+            currentClassLogger.Debug($"Configuration file found: '{configFilePath}'");
+            ChangeConfiguration(JsonExtensions.Deserialize<ConfigurationSection>(configFilePath));
+        }
     }
 
-    public async Task InitializeAsync() {
-        var sectionList = await LanguageServer.Proxy.GetConfigurationAsync(Resources.ExtensionId, 3, CancellationToken.None).ConfigureAwait(false);
-        var section = sectionList?.FirstOrDefault()?.Value;
-        if (section == null) {
-            CurrentSessionLogger.Error("Configuration section not found in the configuration file.");
+    public void ChangeConfiguration(LSPAny? sectionJson) {
+        if (sectionJson?.Value is not JsonDocument jsonDocument) {
+            currentClassLogger.Error("Configuration section is not a valid JSON document.");
+            return;
+        }
+    
+        var sections = JsonSerializer.Deserialize<ConfigurationSection>(jsonDocument);
+        ChangeConfiguration(sections);
+    }
+    private void ChangeConfiguration(ConfigurationSection? section) {
+        if (section?.DotRush?.Roslyn == null) {
+            currentClassLogger.Error("Configuration section is not a valid document.");
             return;
         }
 
-        var sections = JsonSerializer.Deserialize<ConfigurationSection>((JsonDocument)section);
-        configuration = sections?.Roslyn;
-        CurrentSessionLogger.Debug("ConfigurationService initialized");
+        configuration = section.DotRush.Roslyn;
+        initializeTaskSource.TrySetResult();
+        currentClassLogger.Debug("configuration updated");
     }
 }
 
 internal sealed class ConfigurationSection {
+    [JsonPropertyName("dotrush")]
+    public DotRushSection? DotRush { get; set; }
+    // Other sections that not related to lsp
+}
+internal sealed class DotRushSection {
     [JsonPropertyName("roslyn")]
     public RoslynSection? Roslyn { get; set; }
-    // Other sections that not related to lsp
 }
 internal sealed class RoslynSection {
     [JsonPropertyName("showItemsFromUnimportedNamespaces")]

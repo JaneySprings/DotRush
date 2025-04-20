@@ -35,6 +35,8 @@ dotnet_diagnostic.IDE0066.severity = none
 dotnet_diagnostic.IDE0028.severity = none
 # IDE0058: Expression value is never used
 dotnet_diagnostic.IDE0058.severity = none
+# VSTHRD003: Avoid awaiting or returning a Task
+dotnet_diagnostic.VSTHRD003.severity = none
 
 # Organize usings
 dotnet_separate_import_directive_groups = false

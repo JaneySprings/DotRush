@@ -57,28 +57,6 @@ public static class ServerExtensions {
         })));
     }
 
-    public static async Task<List<LSPAny>?> GetConfigurationAsync(this ClientProxy clientProxy, string section, int retryCount, CancellationToken cancellationToken) {
-        List<LSPAny>? result = null;
-        
-        for (int i = 0; i < retryCount; i++) {
-            try {
-                result = await clientProxy.GetConfiguration(new ConfigurationParams { 
-                    Items = new List<ConfigurationItem> { new ConfigurationItem { Section = section }}
-                }, cancellationToken).WaitAsync(TimeSpan.FromSeconds(5), cancellationToken).ConfigureAwait(false);
-            } catch (Exception ex) {
-                CurrentSessionLogger.Error(ex);
-            }
-        }
-
-        return result;
-    }
-    public static T GetValue<T>(this List<LSPAny>? configuration, string key, T defaultValue) {
-        if (configuration == null)
-            return defaultValue;
-
-        return defaultValue;
-    }
-
     public static ReadOnlyDictionary<string, string> ToPropertiesDictionary(this List<string> properties) {
         var result = new Dictionary<string, string>();
         foreach (var property in properties) {
