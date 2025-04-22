@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using Microsoft.CodeAnalysis;
 
 namespace DotRush.Roslyn.CodeAnalysis.Components;

@@ -14,7 +14,7 @@ public class CodeRefactoringProvidersLoaderTests : ComponentsLoaderTests<CodeRef
 
     [SetUp]
     public void SetUp() {
-        loader = new CodeRefactoringProvidersLoader();
+        loader = new CodeRefactoringProvidersLoader(this);
     }
 }
 public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider> {
@@ -25,7 +25,7 @@ public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider
 
     [SetUp]
     public void SetUp() {
-        loader = new CodeFixProvidersLoader();
+        loader = new CodeFixProvidersLoader(this);
     }
 }
 public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAnalyzer> {
@@ -37,7 +37,7 @@ public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAn
 
     [SetUp]
     public void SetUp() {
-        loader = new DiagnosticAnalyzersLoader();
+        loader = new DiagnosticAnalyzersLoader(this);
     }
 
     [Test]
@@ -64,7 +64,7 @@ public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAn
 }
 
 
-public abstract class ComponentsLoaderTests<TValue> : WorkspaceTestFixture where TValue: class {
+public abstract class ComponentsLoaderTests<TValue> : WorkspaceTestFixture, IAdditionalComponentsProvider where TValue: class {
     protected abstract IComponentLoader<TValue> ComponentsLoader { get; }
     protected abstract int EmbeddedComponentsCount { get; }
     protected abstract int ProjectComponentsCount { get; }
@@ -109,5 +109,9 @@ public abstract class ComponentsLoaderTests<TValue> : WorkspaceTestFixture where
             Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(ProjectComponentsCount + EmbeddedComponentsCount));
             Assert.That(ComponentsLoader.ComponentsCache.Keys.Count(), Is.EqualTo(oldComponentsKeysCount));
         }
+    }
+
+    IEnumerable<string> IAdditionalComponentsProvider.GetAdditionalAssemblies() {
+        return Enumerable.Empty<string>();
     }
 }

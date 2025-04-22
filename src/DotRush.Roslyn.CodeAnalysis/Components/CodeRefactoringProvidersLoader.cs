@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using System.Reflection;
-using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Embedded.Refactorings;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
@@ -10,20 +9,33 @@ using Microsoft.CodeAnalysis.CodeRefactorings;
 namespace DotRush.Roslyn.CodeAnalysis.Components;
 
 public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringProvider> {
-    public MemoryCache<CodeRefactoringProvider> ComponentsCache { get; } = new MemoryCache<CodeRefactoringProvider>();
-    private readonly CurrentClassLogger currentClassLogger = new CurrentClassLogger(nameof(CodeRefactoringProvidersLoader));
+    private readonly CurrentClassLogger currentClassLogger;
+    private readonly IAdditionalComponentsProvider additionalComponentsProvider;
+
+    public MemoryCache<CodeRefactoringProvider> ComponentsCache { get; }
+
+    public CodeRefactoringProvidersLoader(IAdditionalComponentsProvider additionalComponentsProvider) {
+        this.additionalComponentsProvider = additionalComponentsProvider;
+        currentClassLogger = new CurrentClassLogger(nameof(CodeRefactoringProvidersLoader));
+        ComponentsCache = new MemoryCache<CodeRefactoringProvider>();
+    }
 
     public ImmutableArray<CodeRefactoringProvider> GetComponents(Project? project = null) {
-        var dotrushComponents = ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush());
-        var roslynCoreComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName));
-        var roslynCSharpComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
+        var result = new List<CodeRefactoringProvider>();
+        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush()));
+        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName)));
+        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName)));
         if (project == null)
-            return dotrushComponents.AddRanges(roslynCoreComponents, roslynCSharpComponents).ToImmutableArray();
+            return result.ToImmutableArray();
 
-        var projectProviders = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
-        return dotrushComponents.AddRanges(roslynCoreComponents, roslynCSharpComponents, projectProviders).ToImmutableArray();
+        result.AddRange(ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project)));
+
+        foreach (var assemblyName in additionalComponentsProvider.GetAdditionalAssemblies())
+            result.AddRange(ComponentsCache.GetOrCreate(assemblyName, () => LoadFromAssembly(assemblyName)));
+
+        return result.ToImmutableArray();
     }
-    
+
     public List<CodeRefactoringProvider> LoadFromAssembly(string assemblyName) {
         var result = new List<CodeRefactoringProvider>();
         var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);

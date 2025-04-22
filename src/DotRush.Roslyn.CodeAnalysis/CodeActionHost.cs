@@ -7,8 +7,13 @@ using Microsoft.CodeAnalysis.CodeRefactorings;
 namespace DotRush.Roslyn.CodeAnalysis;
 
 public class CodeActionHost {
-    private readonly CodeFixProvidersLoader codeFixProvidersLoader = new CodeFixProvidersLoader();
-    private readonly CodeRefactoringProvidersLoader codeRefactoringsProviderProvider = new CodeRefactoringProvidersLoader();
+    private readonly CodeFixProvidersLoader codeFixProvidersLoader;
+    private readonly CodeRefactoringProvidersLoader codeRefactoringsProviderProvider;
+
+    public CodeActionHost(IAdditionalComponentsProvider additionalComponentsProvider) {
+        codeFixProvidersLoader = new CodeFixProvidersLoader(additionalComponentsProvider);
+        codeRefactoringsProviderProvider = new CodeRefactoringProvidersLoader(additionalComponentsProvider);
+    }
 
     public IEnumerable<CodeFixProvider>? GetCodeFixProvidersForDiagnosticId(string? diagnosticId, Project? project) {
         if (diagnosticId == null)
