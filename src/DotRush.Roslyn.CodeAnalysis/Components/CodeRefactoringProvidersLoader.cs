@@ -30,8 +30,10 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
 
         result.AddRange(ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project)));
 
-        foreach (var assemblyName in additionalComponentsProvider.GetAdditionalAssemblies())
-            result.AddRange(ComponentsCache.GetOrCreate(assemblyName, () => LoadFromAssembly(assemblyName)));
+        if (additionalComponentsProvider.IsEnabled) {
+            foreach (var assemblyName in additionalComponentsProvider.GetAdditionalAssemblies())
+                result.AddRange(ComponentsCache.GetOrCreate(assemblyName, () => LoadFromAssembly(assemblyName)));
+        }
 
         return result.ToImmutableArray();
     }

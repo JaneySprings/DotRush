@@ -28,7 +28,7 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
         var diagnostics = configurationService.ProjectScopeDiagnostics
             ? await compilationHost.DiagnoseProjectsAsync(documents, configurationService.EnableAnalyzers, cancellationToken).ConfigureAwait(false)
             : await compilationHost.DiagnoseDocumentsAsync(documents, configurationService.EnableAnalyzers, cancellationToken).ConfigureAwait(false);
-        
+
         if (!diagnostics.TryGetValue(documentFilePath, out List<DiagnosticContext>? value))
             return new ReadOnlyCollection<DiagnosticContext>(new List<DiagnosticContext>());
 
@@ -52,6 +52,9 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
         return codeActionHost.GetCodeRefactoringProvidersForProject(project);
     }
 
+    bool IAdditionalComponentsProvider.IsEnabled { 
+        get => configurationService.EnableAnalyzers;
+    }
     IEnumerable<string> IAdditionalComponentsProvider.GetAdditionalAssemblies() {
         return configurationService.AnalyzerAssemblies;
     }

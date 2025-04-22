@@ -111,7 +111,8 @@ public abstract class ComponentsLoaderTests<TValue> : WorkspaceTestFixture, IAdd
         }
     }
 
+    bool IAdditionalComponentsProvider.IsEnabled => false;
     IEnumerable<string> IAdditionalComponentsProvider.GetAdditionalAssemblies() {
-        return Enumerable.Empty<string>();
+        throw new NotImplementedException("This method is not implemented in the test project");
     }
 }
