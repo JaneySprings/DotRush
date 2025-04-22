@@ -225,7 +225,8 @@ class EmptyClass {
         Assert.That(diagnostics[testFile], Is.Empty, "Diagnostics should be empty after removing document");
     }
 
+    bool IAdditionalComponentsProvider.IsEnabled => false;
     IEnumerable<string> IAdditionalComponentsProvider.GetAdditionalAssemblies() {
-        return Enumerable.Empty<string>();
+        throw new NotImplementedException("This method is not implemented in the test project");
     }
 }
