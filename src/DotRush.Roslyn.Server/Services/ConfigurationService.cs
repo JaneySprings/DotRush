@@ -25,6 +25,7 @@ public class ConfigurationService {
     public string DotNetSdkDirectory => configuration?.DotNetSdkDirectory ?? Environment.GetEnvironmentVariable("DOTNET_SDK_PATH") ?? string.Empty;
     public ReadOnlyDictionary<string, string> WorkspaceProperties => (configuration?.WorkspaceProperties ?? new List<string>()).ToPropertiesDictionary();
     public ReadOnlyCollection<string> ProjectOrSolutionFiles => (configuration?.ProjectOrSolutionFiles ?? new List<string>()).AsReadOnly();
+    public ReadOnlyCollection<string> AnalyzerAssemblies => (configuration?.AnalyzerAssemblies ?? new List<string>()).AsReadOnly();
 
     private readonly TaskCompletionSource initializeTaskSource;
     public Task InitializeTask => initializeTaskSource.Task;
@@ -107,4 +108,7 @@ internal sealed class RoslynSection {
 
     [JsonPropertyName("projectOrSolutionFiles")]
     public List<string>? ProjectOrSolutionFiles { get; set; }
+
+    [JsonPropertyName("analyzerAssemblies")]
+    public List<string>? AnalyzerAssemblies { get; set; }
 }

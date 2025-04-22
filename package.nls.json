@@ -13,7 +13,6 @@
 	"view.title.createProjectTemplate": "[Open a folder](command:vscode.openFolder) that contains a .NET project or create a new project.\n[Create New Project](command:dotrush.createProjectTemplate)",
 
 	"configuration.description.roslyn.workspaceProperties": "Additional MSBuild properties to pass to the workspace (e.g. Configuration=Debug).",
-	"configuration.description.roslyn.enableAnalyzers": "Enable Roslyn analyzers (may affect performance).",
 	"configuration.description.roslyn.skipUnrecognizedProjects": "Determines if unrecognized projects are skipped when projects are opened.",
 	"configuration.description.roslyn.loadMetadataForReferencedProjects": "Determines if metadata from existing output assemblies is loaded instead of opening referenced projects.",
 	"configuration.description.roslyn.showItemsFromUnimportedNamespaces": "Determines if items from unimported namespaces are shown in completion lists.",
@@ -24,6 +23,8 @@
 	"configuration.description.roslyn.projectScopeDiagnostics": "When enabled, analysis will run on the entire project. Disable to limit analysis to the currently opened document.",
 	"configuration.description.roslyn.applyWorkspaceChanges": "Determines if changes made to the workspace are applied to the project files.",
 	"configuration.description.roslyn.dotnetSdkDirectory": "Path to the SDK directory to use for .NET projects (e.g. C:\\Program Files\\dotnet\\sdk\\9.0.201).",
+	"configuration.description.roslyn.enableAnalyzers": "Enable support for Roslyn-based code analyzers.",
+	"configuration.description.roslyn.analyzerAssemblies": "Paths to additional Roslyn analyzer assemblies (.dll files) to include during analysis.",
 
 	"configuration.description.debugger.projectAssembliesOnly": "Use only project assemblies for debugging.",
 	"configuration.description.debugger.stepOverPropertiesAndOperators": "Step over properties and operators.",

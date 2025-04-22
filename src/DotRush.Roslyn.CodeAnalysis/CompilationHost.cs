@@ -14,9 +14,9 @@ public class CompilationHost {
     private readonly DiagnosticCollection workspaceDiagnostics;
     private readonly CurrentClassLogger currentClassLogger;
 
-    public CompilationHost() {
+    public CompilationHost(IAdditionalComponentsProvider additionalComponentsProvider) {
         currentClassLogger = new CurrentClassLogger(nameof(CompilationHost));
-        diagnosticAnalyzersLoader = new DiagnosticAnalyzersLoader();
+        diagnosticAnalyzersLoader = new DiagnosticAnalyzersLoader(additionalComponentsProvider);
         workspaceDiagnostics = new DiagnosticCollection();
     }
 
@@ -36,7 +36,7 @@ public class CompilationHost {
         bool hasAnalyzersDiagnose = false;
         foreach (var document in documents) {
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Name} started");
-
+            // No way to use Suppressors for single document
             await DiagnoseAsync(document, cancellationToken).ConfigureAwait(false);
 
             if (enableAnalyzers && !hasAnalyzersDiagnose) {

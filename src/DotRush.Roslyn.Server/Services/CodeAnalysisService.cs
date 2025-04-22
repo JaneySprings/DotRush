@@ -1,8 +1,7 @@
 using System.Collections.ObjectModel;
-using DotRush.Common.Extensions;
 using DotRush.Roslyn.CodeAnalysis;
+using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
-using DotRush.Roslyn.Server.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -10,15 +9,15 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.Server.Services;
 
-public class CodeAnalysisService {
+public class CodeAnalysisService : IAdditionalComponentsProvider {
     private readonly ConfigurationService configurationService;
     private readonly CodeActionHost codeActionHost;
     private readonly CompilationHost compilationHost;
 
     public CodeAnalysisService(ConfigurationService configurationService) {
         this.configurationService = configurationService;
-        this.codeActionHost = new CodeActionHost();
-        this.compilationHost = new CompilationHost();
+        this.codeActionHost = new CodeActionHost(this);
+        this.compilationHost = new CompilationHost(this);
     }
 
     public async Task<ReadOnlyCollection<DiagnosticContext>> GetDocumentDiagnostics(IEnumerable<Document> documents, CancellationToken cancellationToken) {
@@ -51,5 +50,9 @@ public class CodeAnalysisService {
     }
     public IEnumerable<CodeRefactoringProvider>? GetCodeRefactoringProvidersForProject(Project? project) {
         return codeActionHost.GetCodeRefactoringProvidersForProject(project);
+    }
+
+    IEnumerable<string> IAdditionalComponentsProvider.GetAdditionalAssemblies() {
+        return configurationService.AnalyzerAssemblies;
     }
 }

@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
@@ -8,20 +7,31 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace DotRush.Roslyn.CodeAnalysis.Components;
 
 public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
-    public MemoryCache<DiagnosticAnalyzer> ComponentsCache { get; } = new MemoryCache<DiagnosticAnalyzer>();
-    private readonly CurrentClassLogger currentClassLogger = new CurrentClassLogger(nameof(DiagnosticAnalyzersLoader));
+    private readonly CurrentClassLogger currentClassLogger;
+    private readonly IAdditionalComponentsProvider additionalComponentsProvider;
+
+    public MemoryCache<DiagnosticAnalyzer> ComponentsCache { get; }
+
+    public DiagnosticAnalyzersLoader(IAdditionalComponentsProvider additionalComponentsProvider) {
+        this.additionalComponentsProvider = additionalComponentsProvider;
+        currentClassLogger = new CurrentClassLogger(nameof(DiagnosticAnalyzersLoader));
+        ComponentsCache = new MemoryCache<DiagnosticAnalyzer>();
+    }
 
     public ImmutableArray<DiagnosticAnalyzer> GetComponents(Project? project = null) {
-        var dotrushComponents = ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush());
-        var roslynCoreComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName));
-        var roslynCSharpComponents = ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
+        var result = new List<DiagnosticAnalyzer>();
+        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush()));
+        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName)));
+        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName)));
         if (project == null)
-            return dotrushComponents.AddRanges(roslynCoreComponents, roslynCSharpComponents).ToImmutableArray();
-            // return dotrushComponents.ToImmutableArray();
+            return result.ToImmutableArray();
 
-        var projectProviders = ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project));
-        return dotrushComponents.AddRanges(roslynCoreComponents, roslynCSharpComponents, projectProviders).ToImmutableArray();
-        // return dotrushComponents.Concat(projectProviders).ToImmutableArray();
+        result.AddRange(ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project)));
+
+        foreach (var assemblyName in additionalComponentsProvider.GetAdditionalAssemblies())
+            result.AddRange(ComponentsCache.GetOrCreate(assemblyName, () => LoadFromAssembly(assemblyName)));
+
+        return result.ToImmutableArray();
     }
     public ImmutableArray<DiagnosticAnalyzer> GetSuppressors(Project? project = null) {
         return GetComponents(project).Where(it => it is DiagnosticSuppressor).ToImmutableArray();

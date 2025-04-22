@@ -374,7 +374,8 @@
     ],
     "configuration": [
       {
-        "title": "%extension.displayName%",
+        "title": "Roslyn",
+        "order": 0,
         "properties": {
           "dotrush.roslyn.workspaceProperties": {
             "type": "array",
@@ -431,15 +432,28 @@
             "default": true,
             "description": "%configuration.description.roslyn.projectScopeDiagnostics%"
           },
+          "dotrush.roslyn.dotnetSdkDirectory": {
+            "type": "string",
+            "description": "%configuration.description.roslyn.dotnetSdkDirectory%"
+          },
           "dotrush.roslyn.enableAnalyzers": {
             "type": "boolean",
             "default": true,
             "description": "%configuration.description.roslyn.enableAnalyzers%"
           },
-          "dotrush.roslyn.dotnetSdkDirectory": {
-            "type": "string",
-            "description": "%configuration.description.roslyn.dotnetSdkDirectory%"
-          },
+          "dotrush.roslyn.analyzerAssemblies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "%configuration.description.roslyn.analyzerAssemblies%"
+          }
+        }
+      },
+      {
+        "title": "Debugger",
+        "order": 1,
+        "properties": {
           "dotrush.debugger.projectAssembliesOnly": {
             "type": "boolean",
             "default": true,
@@ -462,7 +476,7 @@
           },
           "dotrush.debugger.automaticLaunchSettingsLoad": {
             "type": "boolean",
-            "default": false,
+            "default": true,
             "description": "%configuration.description.debugger.automaticLaunchSettingsLoad%"
           },
           "dotrush.debugger.symbolSearchPaths": {
@@ -481,7 +495,13 @@
               "integratedTerminal",
               "externalTerminal"
             ]
-          },
+          }
+        }
+      },
+      {
+        "title": "MSBuild",
+        "order": 2,
+        "properties": {
           "dotrush.msbuild.noRestore": {
             "type": "boolean",
             "default": false,
@@ -505,7 +525,13 @@
             "items": {
               "type": "string"
             }
-          },
+          }
+        }
+      },
+      {
+        "title": "Test Explorer",
+        "order": 3,
+        "properties": {
           "dotrush.testExplorer.autoRefreshTests": {
             "type": "boolean",
             "default": true,

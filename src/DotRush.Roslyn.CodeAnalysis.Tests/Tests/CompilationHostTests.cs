@@ -1,11 +1,12 @@
 using DotRush.Common.Extensions;
+using DotRush.Roslyn.CodeAnalysis.Components;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.CodeAnalysis.Tests;
 
-public class CompilationHostTests : WorkspaceTestFixture {
+public class CompilationHostTests : WorkspaceTestFixture, IAdditionalComponentsProvider {
     private CompilationHost compilationHost = null!;
     private string mainDocumentPath = null!;
     private IEnumerable<Document> Documents => Workspace!.Solution!.GetDocumentIdsWithFilePath(mainDocumentPath).Select(id => Workspace.Solution.GetDocument(id))!;
@@ -16,7 +17,7 @@ public class CompilationHostTests : WorkspaceTestFixture {
 
     [SetUp]
     public void SetUp() {
-        compilationHost = new CompilationHost();
+        compilationHost = new CompilationHost(this);
         mainDocumentPath = CreateFileInProject("Main.cs", "namespace TestProjectCH { class Main { static void Main() { } } }");
         Workspace!.CreateDocument(mainDocumentPath);
     }
@@ -222,5 +223,9 @@ class EmptyClass {
         Workspace.DeleteDocument(testFile);
         diagnostics = await compilationHost.DiagnoseProjectsAsync(Documents, enableAnalyzers: false, CancellationToken.None);
         Assert.That(diagnostics[testFile], Is.Empty, "Diagnostics should be empty after removing document");
+    }
+
+    IEnumerable<string> IAdditionalComponentsProvider.GetAdditionalAssemblies() {
+        return Enumerable.Empty<string>();
     }
 }
