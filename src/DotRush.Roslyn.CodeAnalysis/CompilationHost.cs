@@ -33,17 +33,13 @@ public class CompilationHost {
     public async Task<ReadOnlyDictionary<string, List<DiagnosticContext>>> DiagnoseDocumentsAsync(IEnumerable<Document> documents, bool enableAnalyzers, CancellationToken cancellationToken) {
         documents.ForEach(document => workspaceDiagnostics.ClearDocumentDiagnostics(document));
 
-        bool hasAnalyzersDiagnose = false;
         foreach (var document in documents) {
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Name} started");
             // No way to use Suppressors for single document
             await DiagnoseAsync(document, cancellationToken).ConfigureAwait(false);
 
-            if (enableAnalyzers && !hasAnalyzersDiagnose) {
-                // Diagnose with analyzers only once for the first tfm (I think it is enough)
+            if (enableAnalyzers)
                 await AnalyzerDiagnoseAsync(document, cancellationToken).ConfigureAwait(false);
-                hasAnalyzersDiagnose = true;
-            }
 
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Name} finished");
         }
@@ -53,19 +49,14 @@ public class CompilationHost {
     public async Task<ReadOnlyDictionary<string, List<DiagnosticContext>>> DiagnoseProjectsAsync(IEnumerable<Document> documents, bool enableAnalyzers, CancellationToken cancellationToken) {
         documents.ForEach(document => workspaceDiagnostics.ClearProjectDiagnostics(document));
 
-        bool hasAnalyzersDiagnose = false;
         foreach (var document in documents) {
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Project.Name} started");
 
-            if (enableAnalyzers) 
+            if (enableAnalyzers) {
                 await DiagnoseWithSuppressorsAsync(document.Project, cancellationToken).ConfigureAwait(false);
-            else 
-                await DiagnoseAsync(document.Project, cancellationToken).ConfigureAwait(false);
-
-            if (enableAnalyzers && !hasAnalyzersDiagnose) {
-                // Diagnose with analyzers only once for the first tfm (I think it is enough)
                 await AnalyzerDiagnoseAsync(document, cancellationToken).ConfigureAwait(false);
-                hasAnalyzersDiagnose = true;
+            } else {
+                await DiagnoseAsync(document.Project, cancellationToken).ConfigureAwait(false);
             }
 
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Diagnostics for {document.Project.Name} finished");

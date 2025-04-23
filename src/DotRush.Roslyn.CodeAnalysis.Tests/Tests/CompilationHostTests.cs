@@ -63,7 +63,7 @@ class Program {
         _ = await compilationHost.DiagnoseProjectsAsync(Documents, enableAnalyzers: true, CancellationToken.None);
         var diagnostics = compilationHost.GetDiagnostics().SelectMany(d => d.Value).ToList();
         Assert.That(diagnostics, Is.Not.Empty);
-        Assert.That(diagnostics, Has.Count.GreaterThan(12));
+        Assert.That(diagnostics, Has.Count.GreaterThan(20));
         Assert.That(diagnostics.Any(d => !File.Exists(d.FilePath)), Is.False, "Diagnostics should contain file paths");
         Assert.That(diagnostics.Any(d => d.IsAnalyzerDiagnostic), Is.True, "Diagnostics should contain analyzer diagnostics");
         foreach (var tfm in MultiTFM.Split(';'))
@@ -71,16 +71,16 @@ class Program {
 
         var currentFileDiagnostics = diagnostics.Where(d => PathExtensions.Equals(d.FilePath, mainDocumentPath)).ToList();
         Assert.That(currentFileDiagnostics, Is.Not.Empty);
-        Assert.That(currentFileDiagnostics, Has.Count.EqualTo(12));
+        Assert.That(currentFileDiagnostics, Has.Count.EqualTo(20));
         // For both tfms
         Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "CS8019").ToList(), Has.Count.EqualTo(2), "Diagnostics should contain 2 unnecessary usings");
         Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "CS0219").ToList(), Has.Count.EqualTo(2), "Diagnostics should contain 2 unused variables");
         // For first tfm + (UnnecessaryUsingsFixable)
-        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0055").ToList(), Has.Count.EqualTo(2), "Diagnostics should contain 2 fix formatting");
-        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0040").ToList(), Has.Count.EqualTo(2), "Diagnostics should contain 2 accessibility modifiers");
-        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0059").ToList(), Has.Count.EqualTo(1), "Diagnostics should contain 1 unused value assignment");
-        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0005").ToList(), Has.Count.EqualTo(1), "Diagnostics should contain 1 unnecessary using directive");
-        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0160").ToList(), Has.Count.EqualTo(1), "Diagnostics should contain 1 convert to block scoped");
+        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0055").ToList(), Has.Count.EqualTo(4), "Diagnostics should contain 4 fix formatting");
+        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0040").ToList(), Has.Count.EqualTo(4), "Diagnostics should contain 4 accessibility modifiers");
+        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0059").ToList(), Has.Count.EqualTo(2), "Diagnostics should contain 2 unused value assignment");
+        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0005").ToList(), Has.Count.EqualTo(2), "Diagnostics should contain 2 unnecessary using directive");
+        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0160").ToList(), Has.Count.EqualTo(2), "Diagnostics should contain 2 convert to block scoped");
     }
 
     [Test]
@@ -138,7 +138,30 @@ class Program {
 
         var currentFileDiagnostics = compilationHost.GetDiagnostics().SelectMany(d => d.Value).Where(d => PathExtensions.Equals(d.FilePath, mainDocumentPath)).ToList();
         Assert.That(currentFileDiagnostics, Is.Not.Empty);
-        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0059").ToList(), Has.Count.EqualTo(1), "Diagnostics should contain 1 unused value assignment");
+        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0059").ToList(), Has.Count.EqualTo(2), "Diagnostics should contain 2 unused value assignment");
+    }
+    [Test]
+    public async Task AnalyzerDiagnosticsShouldNotOverwriteOtherDiagnostics2Test() {
+        Workspace!.UpdateDocument(mainDocumentPath, @"
+using System.Diagnostics.Contracts;
+namespace TestProjectCH;
+class Program {
+    static void Main() {
+        int t = 1;
+    }
+}
+");
+        var file2 = CreateFileInProject("File2.cs", "namespace TestProjectCH { class File2 { static void Main() { } } }");
+        Workspace!.CreateDocument(file2);
+        var documents2 = Workspace!.Solution!.GetDocumentIdsWithFilePath(file2).Select(id => Workspace.Solution.GetDocument(id))!;
+        Assert.That(documents2, Is.Not.Empty);
+
+        _ = await compilationHost.DiagnoseDocumentsAsync(Documents, enableAnalyzers: true, CancellationToken.None);
+        _ = await compilationHost.DiagnoseDocumentsAsync(documents2!, enableAnalyzers: true, CancellationToken.None);
+
+        var currentFileDiagnostics = compilationHost.GetDiagnostics().SelectMany(d => d.Value).Where(d => PathExtensions.Equals(d.FilePath, mainDocumentPath)).ToList();
+        Assert.That(currentFileDiagnostics, Is.Not.Empty);
+        Assert.That(currentFileDiagnostics.Where(d => d.Diagnostic.Id == "IDE0059").ToList(), Has.Count.EqualTo(2), "Diagnostics should contain 2 unused value assignment");
     }
     [Test]
     public async Task DiagnosticsWithProjectScopeTest() {

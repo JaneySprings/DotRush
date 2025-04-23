@@ -20,22 +20,22 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
         ComponentsCache = new MemoryCache<CodeRefactoringProvider>();
     }
 
-    public ImmutableArray<CodeRefactoringProvider> GetComponents(Project? project = null) {
-        var result = new List<CodeRefactoringProvider>();
-        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush()));
-        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName)));
-        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName)));
-        if (project == null)
-            return result.ToImmutableArray();
+    public ImmutableArray<CodeRefactoringProvider> GetComponents(Project project) {
+        return ComponentsCache.GetOrCreate(project.Name, () => {
+            var result = new List<CodeRefactoringProvider>();
+            result.AddRange(LoadFromDotRush());
+            result.AddRange(LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName));
+            result.AddRange(LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
 
-        result.AddRange(ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project)));
+            result.AddRange(LoadFromProject(project));
 
-        if (additionalComponentsProvider.IsEnabled) {
-            foreach (var assemblyName in additionalComponentsProvider.GetAdditionalAssemblies())
-                result.AddRange(ComponentsCache.GetOrCreate(assemblyName, () => LoadFromAssembly(assemblyName)));
-        }
+            if (additionalComponentsProvider.IsEnabled) {
+                foreach (var assemblyName in additionalComponentsProvider.GetAdditionalAssemblies())
+                    result.AddRange(LoadFromAssembly(assemblyName));
+            }
 
-        return result.ToImmutableArray();
+            return result;
+        }).ToImmutableArray();
     }
 
     public List<CodeRefactoringProvider> LoadFromAssembly(string assemblyName) {

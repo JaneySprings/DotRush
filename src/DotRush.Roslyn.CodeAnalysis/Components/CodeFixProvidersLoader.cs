@@ -19,22 +19,22 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
         ComponentsCache = new MemoryCache<CodeFixProvider>();
     }
 
-    public ImmutableArray<CodeFixProvider> GetComponents(Project? project = null) {
-        var result = new List<CodeFixProvider>();
-        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush()));
-        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName)));
-        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName)));
-        if (project == null)
-            return result.ToImmutableArray();
+    public ImmutableArray<CodeFixProvider> GetComponents(Project project) {
+        return ComponentsCache.GetOrCreate(project.Name, () => {
+            var result = new List<CodeFixProvider>();
+            result.AddRange(LoadFromDotRush());
+            result.AddRange(LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName));
+            result.AddRange(LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
 
-        result.AddRange(ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project)));
+            result.AddRange(LoadFromProject(project));
 
-        if (additionalComponentsProvider.IsEnabled) {
-            foreach (var assemblyName in additionalComponentsProvider.GetAdditionalAssemblies())
-                result.AddRange(ComponentsCache.GetOrCreate(assemblyName, () => LoadFromAssembly(assemblyName)));
-        }
+            if (additionalComponentsProvider.IsEnabled) {
+                foreach (var assemblyName in additionalComponentsProvider.GetAdditionalAssemblies())
+                    result.AddRange(LoadFromAssembly(assemblyName));
+            }
 
-        return result.ToImmutableArray();
+            return result;
+        }).ToImmutableArray();
     }
 
     public List<CodeFixProvider> LoadFromAssembly(string assemblyName) {

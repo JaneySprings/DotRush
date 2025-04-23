@@ -15,12 +15,12 @@ public class CodeActionHost {
         codeRefactoringsProviderProvider = new CodeRefactoringProvidersLoader(additionalComponentsProvider);
     }
 
-    public IEnumerable<CodeFixProvider>? GetCodeFixProvidersForDiagnosticId(string? diagnosticId, Project? project) {
+    public IEnumerable<CodeFixProvider>? GetCodeFixProvidersForDiagnosticId(string? diagnosticId, Project project) {
         if (diagnosticId == null)
             return null;
         return codeFixProvidersLoader.GetComponents(project).Where(x => x.FixableDiagnosticIds.CanFixDiagnostic(diagnosticId));
     }
-    public IEnumerable<CodeRefactoringProvider>? GetCodeRefactoringProvidersForProject(Project? project) {
+    public IEnumerable<CodeRefactoringProvider>? GetCodeRefactoringProvidersForProject(Project project) {
         return codeRefactoringsProviderProvider.GetComponents(project);
     }
 }

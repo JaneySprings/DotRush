@@ -18,24 +18,24 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
         ComponentsCache = new MemoryCache<DiagnosticAnalyzer>();
     }
 
-    public ImmutableArray<DiagnosticAnalyzer> GetComponents(Project? project = null) {
-        var result = new List<DiagnosticAnalyzer>();
-        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.DotRushCodeAnalysis, () => LoadFromDotRush()));
-        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.CommonFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName)));
-        result.AddRange(ComponentsCache.GetOrCreate(KnownAssemblies.CSharpFeaturesAssemblyName, () => LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName)));
-        if (project == null)
-            return result.ToImmutableArray();
+    public ImmutableArray<DiagnosticAnalyzer> GetComponents(Project project) {
+        return ComponentsCache.GetOrCreate(project.Name, () => {
+            var result = new List<DiagnosticAnalyzer>();
+            result.AddRange(LoadFromDotRush());
+            result.AddRange(LoadFromAssembly(KnownAssemblies.CommonFeaturesAssemblyName));
+            result.AddRange(LoadFromAssembly(KnownAssemblies.CSharpFeaturesAssemblyName));
 
-        result.AddRange(ComponentsCache.GetOrCreate(project.Name, () => LoadFromProject(project)));
+            result.AddRange(LoadFromProject(project));
 
-        if (additionalComponentsProvider.IsEnabled) {
-            foreach (var assemblyName in additionalComponentsProvider.GetAdditionalAssemblies())
-                result.AddRange(ComponentsCache.GetOrCreate(assemblyName, () => LoadFromAssembly(assemblyName)));
-        }
+            if (additionalComponentsProvider.IsEnabled) {
+                foreach (var assemblyName in additionalComponentsProvider.GetAdditionalAssemblies())
+                    result.AddRange(LoadFromAssembly(assemblyName));
+            }
 
-        return result.ToImmutableArray();
+            return result;
+        }).ToImmutableArray();
     }
-    public ImmutableArray<DiagnosticAnalyzer> GetSuppressors(Project? project = null) {
+    public ImmutableArray<DiagnosticAnalyzer> GetSuppressors(Project project) {
         return GetComponents(project).Where(it => it is DiagnosticSuppressor).ToImmutableArray();
     }
 
