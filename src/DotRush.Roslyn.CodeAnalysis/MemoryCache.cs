@@ -18,10 +18,14 @@ public class MemoryCache<TValue> where TValue : class {
                 throw new InvalidOperationException($"Component {key} not found");
 
             var newValue = factory();
-            foreach (var item in newValue)
-                componentTable.TryAdd(GetValueId(item) , item);
+            var componentIds = new HashSet<string>(newValue.Count);
+            foreach (var component in newValue) {
+                var componentId = GetValueId(component);
+                componentIds.Add(componentId);
+                componentTable.TryAdd(componentId, component);
+            }
 
-            cache.Add(key, newValue.Select(GetValueId).ToHashSet());
+            cache.Add(key, componentIds);
             return newValue;
         }
     }

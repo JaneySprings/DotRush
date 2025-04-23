@@ -45,10 +45,10 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
         return compilationHost.GetCollectionToken();
     }
 
-    public IEnumerable<CodeFixProvider>? GetCodeFixProvidersForDiagnosticId(string? diagnosticId, Project? project) {
+    public IEnumerable<CodeFixProvider>? GetCodeFixProvidersForDiagnosticId(string? diagnosticId, Project project) {
         return codeActionHost.GetCodeFixProvidersForDiagnosticId(diagnosticId, project);
     }
-    public IEnumerable<CodeRefactoringProvider>? GetCodeRefactoringProvidersForProject(Project? project) {
+    public IEnumerable<CodeRefactoringProvider>? GetCodeRefactoringProvidersForProject(Project project) {
         return codeActionHost.GetCodeRefactoringProvidersForProject(project);
     }
 

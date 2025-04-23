@@ -9,5 +9,5 @@ public interface IComponentLoader<T> where T : class {
     List<T> LoadFromProject(Project project);
     List<T> LoadFromAssembly(string assemblyName);
     List<T> LoadFromDotRush();
-    ImmutableArray<T> GetComponents(Project? project = null);
+    ImmutableArray<T> GetComponents(Project project);
 }
