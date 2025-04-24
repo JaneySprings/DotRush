@@ -68,6 +68,11 @@
         "label": "Visual Studio 2022 Light",
         "uiTheme": "vs",
         "path": "./themes/vs2022_light.json"
+      },
+      {
+        "label": "Visual Studio Classic",
+        "uiTheme": "vs",
+        "path": "./themes/vs2022_classic.json"
       }
     ],
     "menus": {
