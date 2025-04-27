@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Serialization;
+using DotRush.Common.Extensions;
 
 namespace DotRush.Debugging.NetCore.Models;
 
@@ -10,9 +11,13 @@ public class ProcessInfo {
     [JsonPropertyName("name")]
     public string? Name { get; set; }
 
+    [JsonPropertyName("startTime")]
+    public string? StartTime { get; set; }
+
     public ProcessInfo() {}
     public ProcessInfo(Process process) {
         Id = process.Id;
         Name = process.ProcessName;
+        StartTime = SafeExtensions.Invoke(null, () => process.StartTime.ToShortTimeString());
     }
 }
