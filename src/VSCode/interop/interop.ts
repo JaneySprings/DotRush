@@ -9,11 +9,14 @@ import * as path from 'path';
 
 export class Interop {
     private static toolPath: string;
+
     public static execExtension: string;
+    public static binariesPath: string;
 
     public static initialize(extensionPath : string) {
         Interop.execExtension = process.platform === 'win32' ? '.exe' : '';
-        Interop.toolPath = path.join(extensionPath, "extension", "bin", "TestExplorer", "dotrushde" + Interop.execExtension);
+        Interop.binariesPath = path.join(extensionPath, "extension", "bin");
+        Interop.toolPath = path.join(Interop.binariesPath, "TestExplorer", "dotrushde" + Interop.execExtension);
     }
 
     public static async getProject(projectFile: string): Promise<Project> {

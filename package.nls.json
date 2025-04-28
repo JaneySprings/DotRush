@@ -9,6 +9,8 @@
 	"command.title.build": "Build",
 	"command.title.restore": "Restore",
 	"command.title.clean": "Clean",
+	"command.title.attachTraceProfiler": "Attach Trace Profiler",
+	"command.title.attachHeapDumpProfiler": "Attach Heap Dump Profiler",
 
 	"view.title.createProjectTemplate": "[Open a folder](command:vscode.openFolder) that contains a .NET project or create a new project.\n[Create New Project](command:dotrush.createProjectTemplate)",
 

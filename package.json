@@ -162,6 +162,16 @@
         "command": "dotrush.clean",
         "category": "%extension.displayName%",
         "title": "%command.title.clean%"
+      },
+      {
+        "command": "dotrush.attachTraceProfiler",
+        "category": "%extension.displayName%",
+        "title": "%command.title.attachTraceProfiler%"
+      },
+      {
+        "command": "dotrush.attachHeapDumpProfiler",
+        "category": "%extension.displayName%",
+        "title": "%command.title.attachHeapDumpProfiler%"
       }
     ],
     "debuggers": [
