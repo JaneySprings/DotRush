@@ -111,6 +111,18 @@
           "command": "dotrush.clean",
           "when": "false"
         }
+      ],
+      "debug/toolBar": [
+        {
+          "command": "dotrush.attachTraceProfiler",
+          "group": "navigation4@1",
+          "when": "debugType == coreclr"
+        },
+        {
+          "command": "dotrush.createHeapDump",
+          "group": "navigation4@2",
+          "when": "debugType == coreclr"
+        }
       ]
     },
     "views": {
@@ -166,12 +178,14 @@
       {
         "command": "dotrush.attachTraceProfiler",
         "category": "%extension.displayName%",
+        "icon": "$(bracket-dot)",
         "title": "%command.title.attachTraceProfiler%"
       },
       {
-        "command": "dotrush.attachHeapDumpProfiler",
+        "command": "dotrush.createHeapDump",
         "category": "%extension.displayName%",
-        "title": "%command.title.attachHeapDumpProfiler%"
+        "icon": "$(file-binary)",
+        "title": "%command.title.createHeapDump%"
       }
     ],
     "debuggers": [
@@ -580,6 +594,9 @@
       "files.readonlyInclude": {
         "**/LanguageServer/_decompiled_/**": true,
         "**/LanguageServer/_generated_/**": true
+      },
+      "workbench.editorAssociations": {
+        "*speedscope.json": "speedscope-in-vscode.speedscope"
       }
     }
   }

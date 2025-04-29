@@ -15,16 +15,6 @@ export class DebugAdapterController {
     public static async activate(context: vscode.ExtensionContext) : Promise<void> {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickProcess, async () => await DebugAdapterController.showQuickPickProcess()));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveTargetPath, async () => await DebugAdapterController.getProjectTargetPath()));
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdAttachTraceProfiler, async () => {
-            const task = await DotNetTaskProvider.getTraceTask();
-            if (task !== undefined)
-                vscode.tasks.executeTask(task);
-        }));
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdAttachHeapDumpProfiler, async () => {
-            const task = await DotNetTaskProvider.getHeapDumpTask();
-            if (task !== undefined)
-                vscode.tasks.executeTask(task);
-        }));
 
         context.subscriptions.push(vscode.tasks.registerTaskProvider(res.taskDefinitionId, new DotNetTaskProvider()));
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerVsdbgId, new DotNetDebugConfigurationProvider()));

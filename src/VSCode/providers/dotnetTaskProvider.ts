@@ -1,10 +1,8 @@
 import { StatusBarController } from '../controllers/statusbarController';
 import { ProcessArgumentBuilder } from '../interop/processArgumentBuilder';
 import { Extensions } from '../extensions';
-import { Interop } from '../interop/interop';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
-import * as path from 'path';
 
 enum DotNetTarget {
     Build = 'build',
@@ -44,47 +42,6 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
     }
     public static getCleanTask(projectFile: string): vscode.Task {
         return DotNetTaskProvider.getTask({ type: res.taskDefinitionId }, projectFile, DotNetTarget.Clean);
-    }
-
-    public static async getTraceTask(): Promise<vscode.Task | undefined> {
-        const options: vscode.ShellExecutionOptions = { cwd: Extensions.getCurrentWorkingDirectory() };
-        const toolPath = path.join(Interop.binariesPath, 'Diagnostics', 'dotnet-trace' + Interop.execExtension);
-        const processId = await vscode.commands.executeCommand(res.commandIdPickProcess);
-        if (processId === undefined)
-            return undefined;
-
-        const builder = new ProcessArgumentBuilder(toolPath)
-            .append('collect').append(`-p ${processId}`)
-
-        // Extensions.getSetting<string[]>(res.configIdMSBuildAdditionalBuildArguments)?.forEach(arg => builder.append(arg));
-
-        return new vscode.Task(
-            { type: res.taskDefinitionId }, 
-            vscode.TaskScope.Workspace, 
-            'Trace',
-            res.extensionId,
-            new vscode.ShellExecution(builder.getCommand(), builder.getArguments(), options),
-        );
-    }
-    public static async getHeapDumpTask(): Promise<vscode.Task | undefined> {
-        const options: vscode.ShellExecutionOptions = { cwd: Extensions.getCurrentWorkingDirectory() };
-        const toolPath = path.join(Interop.binariesPath, 'Diagnostics', 'dotnet-gcdump' + Interop.execExtension);
-        const processId = await vscode.commands.executeCommand(res.commandIdPickProcess);
-        if (processId === undefined)
-            return undefined;
-
-        const builder = new ProcessArgumentBuilder(toolPath)
-            .append('collect').append(`-p ${processId}`)
-
-        // Extensions.getSetting<string[]>(res.configIdMSBuildAdditionalBuildArguments)?.forEach(arg => builder.append(arg));
-
-        return new vscode.Task(
-            { type: res.taskDefinitionId }, 
-            vscode.TaskScope.Workspace, 
-            'GCDump',
-            res.extensionId,
-            new vscode.ShellExecution(builder.getCommand(), builder.getArguments(), options),
-        );
     }
 
     private static getTask(definition: vscode.TaskDefinition, projectPath: string, target: DotNetTarget, configuration: string | undefined = undefined, framework: string | undefined = undefined): vscode.Task {
