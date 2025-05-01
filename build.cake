@@ -55,6 +55,16 @@ Task("debugging")
 		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestExplorer", "dotrushde.dll")} --install-ncdbg");
 	});
 
+Task("diagnostics")
+	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Diagnostics", "src", "Tools", "dotnet-trace", "dotnet-trace.csproj"), new DotNetPublishSettings {
+		OutputDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "Diagnostics"),
+		Configuration = configuration,
+		Runtime = runtime,
+	})).Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Diagnostics", "src", "Tools", "dotnet-gcdump", "dotnet-gcdump.csproj"), new DotNetPublishSettings {
+		OutputDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "Diagnostics"),
+		Configuration = configuration,
+		Runtime = runtime,
+	}));
 
 Task("test")
 	.IsDependentOn("clean")
@@ -87,6 +97,7 @@ Task("vsix")
 	.IsDependentOn("clean")
 	.IsDependentOn("server")
 	.IsDependentOn("debugging")
+	.IsDependentOn("diagnostics")
 	.Does(() => {
 		var vsruntime = runtime.Replace("win-", "win32-").Replace("osx-", "darwin-");
 		var suffix = bundle ? ".Bundle" : string.Empty;
