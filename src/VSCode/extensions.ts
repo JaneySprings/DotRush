@@ -96,7 +96,10 @@ export class Extensions {
             await Promise.all(slice.map(action));
         }
     }
-    public static async waitForTask(task: vscode.Task): Promise<boolean> {
+    public static async waitForTask(task: vscode.Task | undefined): Promise<boolean> {
+        if (task === undefined)
+            return false;
+
         const execution = await vscode.tasks.executeTask(task);
         const executionExitCode = await new Promise<number>((resolve) => {
             const disposable = vscode.tasks.onDidEndTaskProcess(e => {
@@ -107,6 +110,13 @@ export class Extensions {
             });
         });
         return executionExitCode === 0;
+    }
+    public static async getTask(taskName: string | undefined): Promise<vscode.Task | undefined> {
+        if (taskName === undefined)
+            return undefined;
+
+        const tasks = await vscode.tasks.fetchTasks();
+        return tasks.find(task => task.name === taskName);
     }
     public static getCurrentWorkingDirectory(): string | undefined {
         if (vscode.workspace.workspaceFile !== undefined)

@@ -31,10 +31,9 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
 	}
 
 	private static provideDebuggerConfiguration(config: vscode.DebugConfiguration) {
-        // https://github.com/JaneySprings/DotRush/issues/22
-        if (config.launchSettingsFilePath === undefined && Extensions.getSetting<boolean>(res.configIdDebuggerAutomaticLaunchSettingsLoad))
+        if (config.launchSettingsFilePath === undefined)
             config.launchSettingsFilePath = DebugAdapterController.getLaunchSettingsPath();
-        if (config.launchSettingsFilePath !== undefined && Extensions.onVSCode(false, true /* netcoredbg only */)) {
+        if (config.launchSettingsFilePath !== undefined && Extensions.onVSCode(false, true /* https://github.com/JaneySprings/DotRush/issues/22 */)) {
             const profile = DebugAdapterController.getLaunchProfile(config.launchSettingsFilePath, config.launchSettingsProfile);
             DotNetDebugConfigurationProvider.provideDebuggerConfigurationFromProfile(config, profile);
         }
@@ -61,7 +60,7 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
 
         config.cwd = profile.workingDirectory;
         config.program = profile.executablePath;
-        config.args = profile.commandLineArgs;
+        config.args = [profile.commandLineArgs]; //TODO: We need to split the command line args
         config.env = profile.environmentVariables;
 
         if (profile.applicationUrl !== undefined)
