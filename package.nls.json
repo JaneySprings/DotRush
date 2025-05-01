@@ -32,7 +32,6 @@
 	"configuration.description.debugger.stepOverPropertiesAndOperators": "Step over properties and operators.",
 	"configuration.description.debugger.searchMicrosoftSymbolServer": "Search Microsoft Symbol Server for missing PDBs.",
 	"configuration.description.debugger.automaticSourcelinkDownload": "Automatically download source files from SourceLink.",
-	"configuration.description.debugger.automaticLaunchSettingsLoad": "Automatically load launchSettings.json file from the Properties folder of the startup project.",
 	"configuration.description.debugger.symbolSearchPaths": "Additional symbol search paths.",
 	"configuration.description.debugger.console": "Console to use for debugging console applications.",
 
@@ -42,5 +41,6 @@
 	"configuration.description.msbuild.additionalTestArguments": "Additional arguments to pass to the test command.",
 
 	"configuration.description.testExplorer.autoRefreshTests": "Automatically refresh tests on source code save.",
-	"configuration.description.testExplorer.skipInitialPauseEvent": "Skip the initial pause event when starting the tests debugging. This option will be ignored for netcoredbg."
+	"configuration.description.testExplorer.skipInitialPauseEvent": "Skip the initial pause event when starting the tests debugging. This option will be ignored for netcoredbg.",
+	"configuration.description.testExplorer.preLaunchTask": "Task to run before launching the test run."
 }

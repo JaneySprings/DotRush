@@ -1,3 +1,4 @@
+import { ProcessArgumentBuilder } from '../interop/processArgumentBuilder';
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
 import { TestExtensions } from '../models/test';
 import { Interop } from '../interop/interop';
@@ -57,24 +58,28 @@ export class TestExplorerController {
     }
     private static async runTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
         TestExplorerController.convertTestRequest(request).forEach(async (filters, project) => {
+            const preLaunchTask = await Extensions.getTask(Extensions.getSetting<string>(res.configIdTestExplorerPreLaunchTask));
             const testReport = path.join(TestExplorerController.testsResultDirectory, `${project.label}.trx`);
             if (fs.existsSync(testReport))
                 vscode.workspace.fs.delete(vscode.Uri.file(testReport));
 
-            const testArguments: string[] = ['--logger', `'trx;LogFileName=${testReport}'`];
-            if (filters.length > 0) {
-                testArguments.push('--filter');
-                testArguments.push(`'${filters.join('|')}'`);
-            }
+            const testArguments = new ProcessArgumentBuilder('test')
+                .append('--logger').append(`'trx;LogFileName=${testReport}'`);
+                
+            testArguments.conditional('--no-build', () => preLaunchTask !== undefined);
+            testArguments.conditional('--filter', () => filters.length > 0);
+            testArguments.conditional(`'${filters.join('|')}'`, () => filters.length > 0);
 
             const testRun = TestExplorerController.controller.createTestRun(request);
+            await Extensions.waitForTask(preLaunchTask);
             await Extensions.waitForTask(DotNetTaskProvider.getTestTask(project.uri!.fsPath, testArguments));
             await TestExplorerController.publishTestResults(testRun, project, testReport);
         });
     }
     private static async debugTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
         TestExplorerController.convertTestRequest(request).forEach(async (filters, project) => {
-            const executionSuccess = await Extensions.waitForTask(DotNetTaskProvider.getBuildTask(project.uri!.fsPath));
+            const preLaunchTask = await Extensions.getTask(Extensions.getSetting<string>(res.configIdTestExplorerPreLaunchTask));
+            const executionSuccess = await Extensions.waitForTask(preLaunchTask ?? DotNetTaskProvider.getBuildTask(project.uri!.fsPath));
             if (!executionSuccess || token.isCancellationRequested)
                 return;
 

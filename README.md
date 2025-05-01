@@ -95,3 +95,11 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 &emsp;You can change the debugger options in the VSCode settings.
 
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image4.jpg)
+
+## Profiling .NET Core Applications
+&emsp;To profile your .NET Core applications, you can use the built-in **dotnet-trace** and **dotnet-gcdump** tools. You can attach the profiler to a running process by executing the `DotRush: Attach Trace Profiler` or `DotRush: Create Heap Dump` commands. Also you can use the following buttons in the debugger toolbar if you have the **.NET Core Debugger** running:
+
+![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image7.jpg)
+
+- For the `trace` report, you can use the [Speedscope in VSCode](https://marketplace.visualstudio.com/items?itemName=sransara.speedscope-in-vscode) extension to view it. Alternatively, you can upload it directly to the [speedscope](https://www.speedscope.app) site.
+- For the `gcdump` report, you can use the [dotnet-heapview](https://github.com/1hub/dotnet-heapview) or _Visual Studio for Windows_.

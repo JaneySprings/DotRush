@@ -503,11 +503,6 @@
             "default": true,
             "description": "%configuration.description.debugger.automaticSourcelinkDownload%"
           },
-          "dotrush.debugger.automaticLaunchSettingsLoad": {
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.description.debugger.automaticLaunchSettingsLoad%"
-          },
           "dotrush.debugger.symbolSearchPaths": {
             "type": "array",
             "description": "%configuration.description.debugger.symbolSearchPaths%",
@@ -576,6 +571,10 @@
               "experimental"
             ],
             "description": "%configuration.description.testExplorer.skipInitialPauseEvent%"
+          },
+          "dotrush.testExplorer.preLaunchTask": {
+            "type": "string",
+            "description": "%configuration.description.testExplorer.preLaunchTask%"
           }
         }
       }
