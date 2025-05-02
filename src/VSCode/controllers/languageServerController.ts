@@ -44,7 +44,8 @@ export class LanguageServerController {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickTargets, () => LanguageServerController.showQuickPickTargets()))
         context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => LanguageServerController.restart()));
         context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async e => {
-            if (path.extname(e.fileName) !== '.csproj')
+            const extName = path.extname(e.fileName);
+            if (extName !== '.csproj' && extName !== '.props')
                 return;
 
             const value = await vscode.window.showWarningMessage(res.messageProjectChanged, res.messageReload)
