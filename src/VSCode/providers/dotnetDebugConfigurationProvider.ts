@@ -60,7 +60,11 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
 
         config.cwd = profile.workingDirectory;
         config.program = profile.executablePath;
-        config.args = [profile.commandLineArgs]; //TODO: We need to split the command line args
+
+        if (profile.commandLineArgs) {
+            config.args = [profile.commandLineArgs]; //TODO: We need to split the command line args
+        }
+        
         config.env = profile.environmentVariables;
 
         if (profile.applicationUrl !== undefined)
