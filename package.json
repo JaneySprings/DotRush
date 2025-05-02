@@ -43,7 +43,7 @@
   "main": "extension/main.js",
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "watch": "tsc -watch -p ./src/tsconfig.json",
+    "watch": "tsc -watch -p ./src/VSCode/tsconfig.json",
     "package": "webpack --mode production"
   },
   "devDependencies": {
