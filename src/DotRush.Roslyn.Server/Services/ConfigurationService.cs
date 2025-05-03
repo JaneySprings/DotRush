@@ -11,9 +11,11 @@ namespace DotRush.Roslyn.Server.Services;
 public class ConfigurationService {
     private const string ConfigurationFileName = "dotrush.config.json";
     private readonly CurrentClassLogger currentClassLogger;
-   
     private RoslynSection? configuration;
+
     public bool ShowItemsFromUnimportedNamespaces => configuration?.ShowItemsFromUnimportedNamespaces ?? false;
+    public bool TargetTypedCompletionFilter => configuration?.TargetTypedCompletionFilter ?? false;
+
     public bool SkipUnrecognizedProjects => configuration?.SkipUnrecognizedProjects ?? true;
     public bool LoadMetadataForReferencedProjects => configuration?.LoadMetadataForReferencedProjects ?? false;
     public bool RestoreProjectsBeforeLoading => configuration?.RestoreProjectsBeforeLoading ?? true;
@@ -75,6 +77,9 @@ internal sealed class DotRushSection {
 internal sealed class RoslynSection {
     [JsonPropertyName("showItemsFromUnimportedNamespaces")]
     public bool ShowItemsFromUnimportedNamespaces { get; set; }
+
+    [JsonPropertyName("targetTypedCompletionFilter")]
+    public bool TargetTypedCompletionFilter { get; set; }
 
     [JsonPropertyName("skipUnrecognizedProjects")]
     public bool SkipUnrecognizedProjects { get; set; }
