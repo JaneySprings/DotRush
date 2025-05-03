@@ -426,6 +426,11 @@
             "default": true,
             "description": "%configuration.description.roslyn.showItemsFromUnimportedNamespaces%"
           },
+          "dotrush.roslyn.targetTypedCompletionFilter": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.description.roslyn.targetTypedCompletionFilter%"
+          },
           "dotrush.roslyn.skipUnrecognizedProjects": {
             "type": "boolean",
             "default": true,

@@ -2,8 +2,7 @@
 // https://github.com/dotnet/roslyn/blob/main/src/Workspaces/SharedUtilitiesAndExtensions/Compiler/Core/OrganizeImports/OrganizeImportsOptions.cs#L18
 
 using System.Composition;
-using System.Reflection;
-using DotRush.Roslyn.CodeAnalysis.Extensions;
+using DotRush.Roslyn.CodeAnalysis.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -13,10 +12,8 @@ namespace DotRush.Roslyn.CodeAnalysis.Embedded.Refactorings;
 
 [ExportCodeRefactoringProvider(LanguageNames.CSharp, Name = nameof(OrganizeImportsRefactoringProvider)), Shared]
 public class OrganizeImportsRefactoringProvider : CodeRefactoringProvider {
-    private static Type? organizeImportsOptionsType;
-    private static MethodInfo? organizeImportsServiceMethod;
-    private static object? organizeImportsService;
-    
+    private object? organizeImportsService = InternalCSharpOrganizeImportsService.CreateNew();
+
     public sealed override async Task ComputeRefactoringsAsync(CodeRefactoringContext context) {
         var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
         var node = root?.FindNode(context.Span);
@@ -46,27 +43,17 @@ public class OrganizeImportsRefactoringProvider : CodeRefactoringProvider {
         ));
     }
 
-    private static Task<Document> SortUsingsAsync(Document document, bool placeSystemFirst, bool separateGroups, CancellationToken cancellationToken) {
-        if (organizeImportsOptionsType == null) {
-            organizeImportsOptionsType = ReflectionExtensions.GetTypeFromLoadedAssembly(KnownAssemblies.WorkspacesAssemblyName, "Microsoft.CodeAnalysis.OrganizeImports.OrganizeImportsOptions");
-            ArgumentNullException.ThrowIfNull(organizeImportsOptionsType, nameof(organizeImportsOptionsType));
-        }
+    private Task<Document> SortUsingsAsync(Document document, bool placeSystemFirst, bool separateGroups, CancellationToken cancellationToken) {
+        var organizeImportsOptions = InternalOrganizeImportsOptions.CreateNew();
+        if (organizeImportsOptions == null || organizeImportsService == null)
+            return Task.FromResult(document);
 
-        var organizeImportsOptions = Activator.CreateInstance(organizeImportsOptionsType);
-        organizeImportsOptionsType.GetProperty("PlaceSystemNamespaceFirst")?.SetValue(organizeImportsOptions, placeSystemFirst);
-        organizeImportsOptionsType.GetProperty("SeparateImportDirectiveGroups")?.SetValue(organizeImportsOptions, separateGroups);
-
-        if (organizeImportsServiceMethod == null || organizeImportsService == null) {
-            var organizeImportsServiceType = ReflectionExtensions.GetTypeFromLoadedAssembly(KnownAssemblies.CSharpWorkspacesAssemblyName, "Microsoft.CodeAnalysis.CSharp.OrganizeImports.CSharpOrganizeImportsService");
-            ArgumentNullException.ThrowIfNull(organizeImportsServiceType, nameof(organizeImportsServiceType));
-            organizeImportsService = Activator.CreateInstance(organizeImportsServiceType);
-            organizeImportsServiceMethod = organizeImportsServiceType.GetMethod("OrganizeImportsAsync");
-        }
+        InternalOrganizeImportsOptions.AssignValues(organizeImportsOptions, placeSystemFirst, separateGroups);
         
-        var newDocumentTask = organizeImportsServiceMethod?.Invoke(organizeImportsService, new object?[] { document, organizeImportsOptions, cancellationToken });
-        if (newDocumentTask is Task<Document> task)
-            return task;
+        var newDocumentTask = InternalCSharpOrganizeImportsService.OrganizeImportsAsync(organizeImportsService, document, organizeImportsOptions, cancellationToken);
+        if (newDocumentTask == null)
+            return Task.FromResult(document);
 
-        return Task.FromResult(document);
+        return newDocumentTask;
     }
 }
