@@ -1,6 +1,7 @@
 import { DebugAdapterController } from '../controllers/debugAdapterController';
 import { LaunchProfile } from '../models/profile';
 import { Extensions } from '../extensions';
+import { Interop } from '../interop/interop';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -17,11 +18,13 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
 			config.preLaunchTask = folder === undefined ? undefined : `${res.extensionId}: Build`;
 		}
 
-        DotNetDebugConfigurationProvider.provideDebuggerConfiguration(config);
+        Extensions.onVSCode(true, false) 
+            ? DotNetDebugConfigurationProvider.provideVsdbgConfiguration(config)
+            : DotNetDebugConfigurationProvider.provideNcdbgConfiguration(config);
 
-		if (!config.program && config.request === 'launch')
+		if (config.request === 'launch' && !config.program)
 			config.program = await vscode.commands.executeCommand(res.commandIdActiveTargetPath);
-		if (!config.processId && config.request === 'attach')
+		if (config.request === 'attach' && !config.processId && !config.processName && !config.processPath)
 			config.processId = await vscode.commands.executeCommand(res.commandIdPickProcess);
 
         if (!config.cwd && config.program)
@@ -30,13 +33,41 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
         return config;
 	}
 
-	private static provideDebuggerConfiguration(config: vscode.DebugConfiguration) {
-        if (config.launchSettingsFilePath === undefined)
+    private static provideVsdbgConfiguration(config: vscode.DebugConfiguration) {
+        if (config.launchSettingsFilePath === undefined && config.request === 'launch')
             config.launchSettingsFilePath = DebugAdapterController.getLaunchSettingsPath();
-        if (config.launchSettingsFilePath !== undefined && Extensions.onVSCode(false, true /* https://github.com/JaneySprings/DotRush/issues/22 */)) {
+       
+        // https://github.com/JaneySprings/DotRush/issues/39
+        if (config.processPath !== undefined)
+            config.processId = Interop.createProcess(config.processPath)
+
+        if (config.justMyCode === undefined)
+            config.justMyCode = Extensions.getSetting(res.configIdDebuggerProjectAssembliesOnly, false);
+        if (config.enableStepFiltering === undefined)
+            config.enableStepFiltering = Extensions.getSetting(res.configIdDebuggerStepOverPropertiesAndOperators, false);
+        if (config.console === undefined)
+            config.console = Extensions.getSetting(res.configIdDebuggerConsole);
+        if (config.symbolOptions === undefined)
+            config.symbolOptions = {
+                searchPaths: Extensions.getSetting(res.configIdDebuggerSymbolSearchPaths),
+                searchMicrosoftSymbolServer: Extensions.getSetting(res.configIdDebuggerSearchMicrosoftSymbolServer, false),
+            };
+        if (config.sourceLinkOptions === undefined)
+            config.sourceLinkOptions = {
+                "*": { enabled: Extensions.getSetting(res.configIdDebuggerAutomaticSourcelinkDownload, true) }
+            }
+    }
+	private static provideNcdbgConfiguration(config: vscode.DebugConfiguration) {
+        if (config.launchSettingsFilePath === undefined && config.request === 'launch')
+            config.launchSettingsFilePath = DebugAdapterController.getLaunchSettingsPath();
+        if (config.launchSettingsFilePath !== undefined) { /* https://github.com/JaneySprings/DotRush/issues/22 */
             const profile = DebugAdapterController.getLaunchProfile(config.launchSettingsFilePath, config.launchSettingsProfile);
             DotNetDebugConfigurationProvider.provideDebuggerConfigurationFromProfile(config, profile);
         }
+
+        // https://github.com/JaneySprings/DotRush/issues/39
+        if (config.processPath !== undefined)
+            config.processId = Interop.createProcess(config.processPath)
 
         if (config.justMyCode === undefined)
             config.justMyCode = Extensions.getSetting(res.configIdDebuggerProjectAssembliesOnly, false);
