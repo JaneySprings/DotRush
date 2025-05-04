@@ -12,8 +12,8 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
 									token?: vscode.CancellationToken): Promise<vscode.DebugConfiguration | undefined> {
 
         if (!config.type && !config.request && !config.name) {
-            config.name = res.debuggerVsdbgTitle;
-            config.type = res.debuggerVsdbgId;
+            config.name = res.debuggerNetCoreTitle;
+            config.type = res.debuggerNetCoreId;
             config.request = folder === undefined ? 'attach' : 'launch';
             config.preLaunchTask = folder === undefined ? undefined : `${res.extensionId}: Build`;
         }

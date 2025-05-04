@@ -17,9 +17,13 @@ export class PerformanceView implements vscode.DebugAdapterTrackerFactory {
     private processId: number | undefined;
 
     public activate(context: vscode.ExtensionContext) {
-        context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerVsdbgId, this));
+        context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerNetCoreId, this));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdAttachTraceProfiler, async () => await PerformanceView.feature.startProfiler(this.processId, DotNetProfilerType.Trace)));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdCreateHeapDump, async () => await PerformanceView.feature.startProfiler(this.processId, DotNetProfilerType.Dump)));
+        context.subscriptions.push(vscode.debug.onDidStartDebugSession(s => {
+            if (s.type === res.debuggerNetCoreId && s.configuration.processId !== undefined)
+                this.processId = s.configuration.processId;
+        }));
     }
 
     public createDebugAdapterTracker(session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
