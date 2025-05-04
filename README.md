@@ -96,6 +96,26 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image4.jpg)
 
+## Debugging Godot Projects
+&emsp;To debug your Godot project, open it in VSCode and create a `launch.json` file with the following content (adjust the `processPath` to the location of your Godot Engine executable):
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": ".NET Core Debugger (attach)",
+            "type": "coreclr",
+            "request": "attach",
+            "processPath": "C:\\Programs\\Godot\\Godot_v4.4.1-stable_mono_win64.exe",
+        }
+    ]
+}
+```
+
+&emsp;Press **F5** to start debugging. It will launch the Godot Engine and attach the debugger to it:
+
+![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image8.jpg)
+
 ## Profiling .NET Core Applications
 &emsp;To profile your .NET Core applications, you can use the built-in **dotnet-trace** and **dotnet-gcdump** tools. You can attach the profiler to a running process by executing the `DotRush: Attach Trace Profiler` or `DotRush: Create Heap Dump` commands. Also you can use the following buttons in the debugger toolbar if you have the **.NET Core Debugger** running:
 

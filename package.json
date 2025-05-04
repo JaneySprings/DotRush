@@ -304,6 +304,9 @@
               "processId": {
                 "type": "string"
               },
+              "processPath": {
+                "type": "string"
+              },
               "sourceFileMap": {
                 "type": "object"
               },
