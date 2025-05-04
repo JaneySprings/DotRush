@@ -4,12 +4,12 @@ export const extensionPublisher = "nromanov";
 export const extensionMicrosoftId = "ms-dotnettools.csharp";
 export const microsoftProblemMatcherId = "msCompile";
 export const vscodeAppName = "Visual Studio Code";
-export const debuggerVsdbgId = "coreclr";
-export const debuggerVsdbgInstallId = 'vsdbg';
-export const debuggerVsdbgTitle = ".NET Core Debugger";
-export const debuggerVsdbgDisplayName = "Microsoft .NET Core Debugger (vsdbg)"
+export const debuggerNetCoreId = "coreclr";
+export const debuggerNetCoreTitle = ".NET Core Debugger";
 export const debuggerUnityId = "unity";
 export const debuggerUnityTitle = "Unity Debugger";
+export const debuggerVsdbgInstallId = 'vsdbg';
+export const debuggerVsdbgDisplayName = "Microsoft .NET Core Debugger (vsdbg)"
 export const debuggerNcdbgInstallId = 'ncdbg';
 export const debuggerNcdbgDisplayName = "Samsung Debugger (NetCoreDbg)"
 

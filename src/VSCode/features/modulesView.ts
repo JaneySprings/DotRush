@@ -12,7 +12,7 @@ export class ModulesView implements TreeDataProvider<any>, DebugAdapterTrackerFa
 
     public activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.window.registerTreeDataProvider(res.extendedViewIdModules, this));
-        context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerVsdbgId, this));
+        context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerNetCoreId, this));
         context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerUnityId, this));
         context.subscriptions.push(vscode.debug.onDidStartDebugSession(() => this.treeViewDataChangedEmitter.fire(null), this));
     }

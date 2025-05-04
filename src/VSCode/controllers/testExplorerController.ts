@@ -30,7 +30,7 @@ export class TestExplorerController {
             }));
         }
         if (Extensions.getSetting(res.configIdTestExplorerSkipInitialPauseEvent) && Extensions.onVSCode(true, false)) {
-            context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerVsdbgId, new ContinueAfterInitialPauseTracker()));
+            context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerNetCoreId, new ContinueAfterInitialPauseTracker()));
         }
     }
 
@@ -86,7 +86,7 @@ export class TestExplorerController {
             const processId = await Interop.runTestHost(project.uri!.fsPath, filters.join('|'));
             await vscode.debug.startDebugging(Extensions.getWorkspaceFolder(), {
                 name: res.testExplorerProfileDebug,
-                type: res.debuggerVsdbgId,
+                type: res.debuggerNetCoreId,
                 processId: processId,
                 request: 'attach',
             });
