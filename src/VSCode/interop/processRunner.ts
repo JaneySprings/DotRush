@@ -1,5 +1,6 @@
 import { spawnSync, spawn } from 'child_process';
 import { ProcessArgumentBuilder } from './processArgumentBuilder';
+import { Extensions } from '../extensions';
 
 export class ProcessRunner {
     public static runSync(builder: ProcessArgumentBuilder): string | undefined {
@@ -42,5 +43,14 @@ export class ProcessRunner {
             });
             child.unref();
         });
+    }
+    public static createProcess(builder: ProcessArgumentBuilder): number | undefined {
+        const child = spawn(builder.getCommand(), builder.getArguments(), {
+            detached: true,
+            stdio: ['ignore', 'ignore', 'ignore'],
+            cwd: Extensions.getCurrentWorkingDirectory()
+        });
+        child.unref();
+        return child.pid;
     }
 }

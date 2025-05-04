@@ -19,6 +19,10 @@ export class Interop {
         Interop.toolPath = path.join(Interop.binariesPath, "TestExplorer", "dotrushde" + Interop.execExtension);
     }
 
+    public static createProcess(executable: string): number | undefined {
+        return ProcessRunner.createProcess(new ProcessArgumentBuilder(executable));
+    }
+
     public static async getProject(projectFile: string): Promise<Project> {
         return await ProcessRunner.runAsync<Project>(new ProcessArgumentBuilder(Interop.toolPath)
             .append("--project")
