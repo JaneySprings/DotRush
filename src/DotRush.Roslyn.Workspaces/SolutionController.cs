@@ -1,5 +1,6 @@
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
+using DotRush.Common.MSBuild;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -19,36 +20,43 @@ public abstract class SolutionController : ProjectsController {
 
     protected async Task LoadSolutionAsync(MSBuildWorkspace workspace, IEnumerable<string> solutionFilePaths, CancellationToken cancellationToken) {
         CurrentSessionLogger.Debug($"Loading solutions: {string.Join(';', solutionFilePaths)}");
-        await OnLoadingStartedAsync(cancellationToken);
 
-        foreach (var solutionFile in solutionFilePaths) {
-            await SafeExtensions.InvokeAsync(async () => {
-                if (RestoreProjectsBeforeLoading) {
-                    OnProjectRestoreStarted(solutionFile);
-                    var result = await workspace.RestoreProjectAsync(solutionFile, cancellationToken);
-                    if (result.ExitCode != 0)
-                        OnProjectRestoreFailed(solutionFile, result);
-                    OnProjectRestoreCompleted(solutionFile);
-                }
+        // Load the first solution and then load the rest as projects
+        var firstSolutionPath = solutionFilePaths.First();
+        var otherSolutionPaths = solutionFilePaths.Skip(1).ToArray();
 
-                OnProjectLoadStarted(solutionFile);
-                var solution = await workspace.OpenSolutionAsync(solutionFile, null, cancellationToken);
-                solution.Projects.Distinct(ProjectByPathComparer.Instance).ForEach(project => OnProjectLoadCompleted(project));
-
-                OnWorkspaceStateChanged(workspace.CurrentSolution);
-
-                if (CompileProjectsAfterLoading) {
-                    foreach (var project in solution.Projects) {
-                        OnProjectCompilationStarted(project.FilePath ?? solutionFile);
-                        _ = await project.GetCompilationAsync(cancellationToken);
-                        OnProjectCompilationCompleted(project);
-                    }
-                }
-            });
+        await LoadSolutionAsync(workspace, firstSolutionPath, cancellationToken);
+        foreach (var solutionFilePath in otherSolutionPaths) {
+            var projectFilePaths = MSBuildSolutionLoader.GetProjectFiles(solutionFilePath);
+            await LoadProjectsAsync(workspace, projectFilePaths, cancellationToken);
         }
 
-        await OnLoadingCompletedAsync(cancellationToken);
         CurrentSessionLogger.Debug($"Solution loading completed, loaded {workspace.CurrentSolution.ProjectIds.Count} projects");
+    }
+    protected Task LoadSolutionAsync(MSBuildWorkspace workspace, string solutionFilePath, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync(async () => {
+            if (RestoreProjectsBeforeLoading) {
+                OnProjectRestoreStarted(solutionFilePath);
+                var result = await workspace.RestoreProjectAsync(solutionFilePath, cancellationToken);
+                if (result.ExitCode != 0)
+                    OnProjectRestoreFailed(solutionFilePath, result);
+                OnProjectRestoreCompleted(solutionFilePath);
+            }
+
+            OnProjectLoadStarted(solutionFilePath);
+            var solution = await workspace.OpenSolutionAsync(solutionFilePath, null, cancellationToken);
+            solution.Projects.Distinct(ProjectByPathComparer.Instance).ForEach(project => OnProjectLoadCompleted(project));
+
+            OnWorkspaceStateChanged(workspace.CurrentSolution);
+
+            if (CompileProjectsAfterLoading) {
+                foreach (var project in solution.Projects) {
+                    OnProjectCompilationStarted(project.FilePath ?? solutionFilePath);
+                    _ = await project.GetCompilationAsync(cancellationToken);
+                    OnProjectCompilationCompleted(project);
+                }
+            }
+        });
     }
 
     public void CreateDocuments(string[] files) => files.ForEach(file => CreateDocument(file));

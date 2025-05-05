@@ -129,9 +129,10 @@ public class SimpleSolutionLoadTests : TestFixture {
         var solution2Path = CreateSolution("MySolution2", project2Path);
 
         await workspace.LoadAsync(new[] { solution1Path, solution2Path }, CancellationToken.None);
-        workspace.AssertLoadedProjects(2); // Last solution wins. But event will be fired for both.
-        Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(1));
-        Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo("MyProject2"));
+        workspace.AssertLoadedProjects(2);
+        Assert.That(workspace.Solution!.Projects.Count(), Is.EqualTo(2));
+        Assert.That(workspace.Solution.Projects.ElementAt(0).Name, Is.EqualTo("MyProject"));
+        Assert.That(workspace.Solution.Projects.ElementAt(1).Name, Is.EqualTo("MyProject2"));
     }
 
     [Test]
