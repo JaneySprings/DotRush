@@ -24,8 +24,7 @@ public abstract class ProjectsController {
     protected abstract void OnWorkspaceStateChanged(Solution newSolution);
 
     protected async Task LoadProjectsAsync(MSBuildWorkspace workspace, IEnumerable<string> projectFilePaths, CancellationToken cancellationToken) {
-        CurrentSessionLogger.Debug($"Loading projects: {string.Join(';', projectFilePaths)}");
-        await OnLoadingStartedAsync(cancellationToken);
+        CurrentSessionLogger.Debug($"Loading projects: {string.Join(';', projectFilePaths)}");;
 
         foreach (var projectFile in projectFilePaths) {
             await SafeExtensions.InvokeAsync(async () => {
@@ -51,7 +50,6 @@ public abstract class ProjectsController {
             });
         }
 
-        await OnLoadingCompletedAsync(cancellationToken);
         CurrentSessionLogger.Debug($"Projects loading completed, loaded {workspace.CurrentSolution.ProjectIds.Count} projects");
     }
 }

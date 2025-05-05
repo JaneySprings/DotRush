@@ -59,6 +59,7 @@ public class CompletionHandler : CompletionHandlerBase {
                 Detail = item.InlineDescription,
                 Kind = item.ToCompletionItemKind(),
                 Data = item.GetHashCode(),
+                Preselect = item.Rules.MatchPriority == Microsoft.CodeAnalysis.Completion.MatchPriority.Preselect,
                 SortText = item.HasPriority() ? $"0_{item.SortText}" : item.SortText,
                 Deprecated = item.Tags.Contains(InternalWellKnownTags.Deprecated),
             }).ToList());
@@ -104,6 +105,7 @@ public class CompletionHandler : CompletionHandlerBase {
             FilterText = item.FilterText,
             Detail = item.Detail,
             Kind = item.Kind,
+            Preselect = item.Preselect,
             Deprecated = item.Deprecated,
             Documentation = documentation,
             InsertTextMode = InsertTextMode.AsIs,
