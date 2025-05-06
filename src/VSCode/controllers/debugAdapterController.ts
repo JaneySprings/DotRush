@@ -12,9 +12,10 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 export class DebugAdapterController {
-    public static async activate(context: vscode.ExtensionContext) : Promise<void> {
+    public static async activate(context: vscode.ExtensionContext): Promise<void> {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickProcess, async () => await DebugAdapterController.showQuickPickProcess()));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveTargetPath, async () => await DebugAdapterController.getProjectTargetPath()));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveTargetBinaryPath, async () => await DebugAdapterController.getProjectTargetBinaryPath()));
 
         context.subscriptions.push(vscode.tasks.registerTaskProvider(res.taskDefinitionId, new DotNetTaskProvider()));
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerNetCoreId, new DotNetDebugConfigurationProvider()));
@@ -52,7 +53,7 @@ export class DebugAdapterController {
 
         return settingsPath;
     }
-    
+
     private static async installDebugger(id: string): Promise<void> {
         const getNameByDebuggerId = (id: string) => {
             switch (id) {
@@ -61,7 +62,7 @@ export class DebugAdapterController {
                 default: return id;
             }
         };
-        const options : vscode.ProgressOptions = {
+        const options: vscode.ProgressOptions = {
             title: res.messageInstallingComponentTitle + getNameByDebuggerId(id),
             location: vscode.ProgressLocation.Notification,
             cancellable: false
@@ -73,15 +74,20 @@ export class DebugAdapterController {
             return await DebugAdapterController.showQuickPickProgram();
 
         const targetPath = Interop.getPropertyValue('TargetPath', StatusBarController.activeProject.path, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
-		if (!targetPath)
-			return await DebugAdapterController.showQuickPickProgram();
-        
+        if (!targetPath)
+            return await DebugAdapterController.showQuickPickProgram();
+
         return targetPath;
-        // const programDirectory = path.dirname(assemblyPath);
-        // const programFile = path.basename(assemblyPath, '.dll');
-        // const programPath = path.join(programDirectory, programFile + Interop.execExtension);
-		// return programPath;
-	}
+    }
+    private static async getProjectTargetBinaryPath(): Promise<string | undefined> {
+        const assemblyPath = await DebugAdapterController.getProjectTargetPath();
+        if (assemblyPath === undefined)
+            return undefined;
+
+        const programDirectory = path.dirname(assemblyPath);
+        const programFile = path.basename(assemblyPath, '.dll');
+        return path.join(programDirectory, programFile + Interop.execExtension);
+    }
     private static async showQuickPickProgram(): Promise<string | undefined> {
         const programPath = await vscode.window.showOpenDialog({
             title: res.messageSelectProgramTitle,

@@ -30,6 +30,7 @@ export const commandIdActiveProjectPath = "dotrush.activeProjectPath";
 export const commandIdActiveConfiguration = "dotrush.activeConfiguration";
 export const commandIdActiveTargetFramework = "dotrush.activeTargetFramework";
 export const commandIdActiveTargetPath = "dotrush.activeTargetPath";
+export const commandIdActiveTargetBinaryPath = "dotrush.activeTargetBinaryPath";
 export const commandIdSetStartupProject = "dotrush.setStartupProject";
 export const commandIdBuildWorkspace = "dotrush.buildWorkspace";
 export const commandIdStatusBarEnabled = "dotrush.statusBarEnabled";
