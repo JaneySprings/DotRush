@@ -11,13 +11,13 @@ export class ProcessRunner {
         }
         return result.stdout.toString().trimEnd();
     }
-    public static runAsync<TModel>(builder: ProcessArgumentBuilder): Promise<TModel> {
+    public static runAsync<TModel>(builder: ProcessArgumentBuilder): Promise<TModel | undefined> {
         return new Promise((resolve) => {
             const child = spawn(builder.getCommand(), builder.getArguments(), {
                 stdio: ['ignore', 'pipe', 'pipe'],
                 detached: true,
             });
-    
+
             let output = '';
             child.stdout?.on('data', (data) => {
                 output += data.toString().trimEnd();
@@ -26,20 +26,20 @@ export class ProcessRunner {
                 console.error(data.toString());
             });
             child.on('close', () => {
-                resolve(JSON.parse(output));
+                resolve(Extensions.deserialize<TModel>(output));
             });
             child.unref();
         });
     }
-    public static runDetached<TModel>(builder: ProcessArgumentBuilder): Promise<TModel> {
+    public static runDetached<TModel>(builder: ProcessArgumentBuilder): Promise<TModel | undefined> {
         return new Promise((resolve) => {
             const child = spawn(builder.getCommand(), builder.getArguments(), {
                 detached: true,
                 stdio: ['ignore', 'pipe', 'ignore'],
             });
-   
+
             child.stdout?.on('data', (data) => {
-                resolve(JSON.parse(data.toString().trimEnd()));
+                resolve(Extensions.deserialize<TModel>(data.toString().trimEnd()));
             });
             child.unref();
         });

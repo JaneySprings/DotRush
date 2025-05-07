@@ -99,6 +99,9 @@ export class DebugAdapterController {
     }
     private static async showQuickPickProcess(): Promise<string | undefined> {
         const processes = await Interop.getProcesses();
+        if (processes === undefined || processes.length === 0)
+            return undefined;
+
         const selectedItem = await vscode.window.showQuickPick(processes.map(p => new ProcessItem(p)), { placeHolder: res.messageSelectProcessTitle });
         return selectedItem?.item.id.toString();
     }
