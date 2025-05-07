@@ -37,7 +37,7 @@ export class TestExplorerController {
     public static async loadProject(projectPath: string): Promise<void> {
         const projectName = path.basename(projectPath, '.csproj');
         const discoveredTests = await Interop.getTests(projectPath);
-        if (discoveredTests.length === 0)
+        if (discoveredTests === undefined || discoveredTests.length === 0)
             return;
 
         const root = TestExplorerController.controller.createTestItem(projectName, projectName, vscode.Uri.file(projectPath));
@@ -65,7 +65,7 @@ export class TestExplorerController {
 
             const testArguments = new ProcessArgumentBuilder('test')
                 .append('--logger').append(`'trx;LogFileName=${testReport}'`);
-                
+
             testArguments.conditional('--no-build', () => preLaunchTask !== undefined);
             testArguments.conditional('--filter', () => filters.length > 0);
             testArguments.conditional(`'${filters.join('|')}'`, () => filters.length > 0);
@@ -127,7 +127,7 @@ export class TestExplorerController {
         }
 
         return Interop.getTestResults(testReport).then(testResults => {
-            testResults.forEach(result => {
+            testResults?.forEach(result => {
                 const duration = TestExtensions.toDurationNumber(result.duration);
                 const testItem = findTestItem(result.fullName);
                 if (testItem === undefined)

@@ -28,7 +28,7 @@ export class Extensions {
             return baseUri.fsPath;
         if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath) === '.csproj')
             return baseUri.fsPath;
-        
+
         const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionExtPattern);
         const projectFiles = await Extensions.findFiles(baseUri, Extensions.projectExtPattern);
         if (projectFiles.length === 0 && solutionFiles.length === 0) {
@@ -75,7 +75,7 @@ export class Extensions {
     public static async selectProjecFile(baseUri: vscode.Uri | undefined = undefined): Promise<string | undefined> {
         if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath) === '.csproj')
             return baseUri.fsPath;
-        
+
         const projectFiles = await Extensions.findFiles(baseUri, Extensions.projectExtPattern);
         if (projectFiles.length === 0) {
             vscode.window.showErrorMessage(res.messageNoProjectFileFound);
@@ -126,7 +126,7 @@ export class Extensions {
 
         return undefined;
     }
-    public static getWorkspaceFolder() : vscode.WorkspaceFolder | undefined {
+    public static getWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
         if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === 1)
             return vscode.workspace.workspaceFolders[0];
         return undefined;
@@ -143,12 +143,19 @@ export class Extensions {
             .replace(/\$\{workspaceFolder\}/g, workspaceFolder.uri.fsPath)
             .replace(/\$\{workspaceRoot\}/g, workspaceFolder.uri.fsPath);
     }
+    public static deserialize<TModel>(json: string): TModel | undefined {
+        try {
+            return JSON.parse(json) as TModel;
+        } catch (error) {
+            return undefined;
+        }
+    }
 
     private static async findFiles(baseUri: vscode.Uri | undefined, extension: string): Promise<vscode.Uri[]> {
         if (baseUri?.fsPath !== undefined && path.extname(baseUri.fsPath) === extension)
             return [baseUri];
 
-        const result = baseUri?.fsPath === undefined 
+        const result = baseUri?.fsPath === undefined
             ? await vscode.workspace.findFiles(`**/*${extension}`, null)
             : await vscode.workspace.findFiles(new vscode.RelativePattern(baseUri, `**/*${extension}`), null);
 

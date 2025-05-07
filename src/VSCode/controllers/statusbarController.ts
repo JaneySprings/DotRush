@@ -48,6 +48,9 @@ export class StatusBarController {
         }
 
         const project = await Interop.getProject(projectPath);
+        if (project === undefined)
+            return;
+
         StatusBarController.activeProject = project;
         StatusBarController.projectDecorationProvider.update(project);
         PublicExports.instance.onActiveProjectChanged.invoke(project);
