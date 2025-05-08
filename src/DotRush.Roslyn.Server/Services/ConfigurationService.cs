@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.Server.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 
@@ -11,6 +12,7 @@ namespace DotRush.Roslyn.Server.Services;
 public class ConfigurationService {
     private const string ConfigurationFileName = "dotrush.config.json";
     private readonly CurrentClassLogger currentClassLogger;
+    private readonly JsonSerializerOptions jsonSerializerOptions;
     private RoslynSection? configuration;
 
     public bool ShowItemsFromUnimportedNamespaces => configuration?.ShowItemsFromUnimportedNamespaces ?? false;
@@ -22,8 +24,8 @@ public class ConfigurationService {
     public bool CompileProjectsAfterLoading => configuration?.CompileProjectsAfterLoading ?? true;
     public bool ApplyWorkspaceChanges => configuration?.ApplyWorkspaceChanges ?? false;
     public bool UseMultitargetDiagnostics => configuration?.UseMultitargetDiagnostics ?? true;
-    public bool EnableAnalyzers => configuration?.EnableAnalyzers ?? true;
-    public bool ProjectScopeDiagnostics => configuration?.ProjectScopeDiagnostics ?? true;
+    public AnalysisScope CompilerDiagnosticsScope => configuration?.CompilerDiagnosticsScope ?? AnalysisScope.Project;
+    public AnalysisScope AnalyzerDiagnosticsScope => configuration?.AnalyzerDiagnosticsScope ?? AnalysisScope.Document;
     public string DotNetSdkDirectory => configuration?.DotNetSdkDirectory ?? Environment.GetEnvironmentVariable("DOTNET_SDK_PATH") ?? string.Empty;
     public ReadOnlyDictionary<string, string> WorkspaceProperties => (configuration?.WorkspaceProperties ?? new List<string>()).ToPropertiesDictionary();
     public ReadOnlyCollection<string> ProjectOrSolutionFiles => (configuration?.ProjectOrSolutionFiles ?? new List<string>()).AsReadOnly();
@@ -34,6 +36,10 @@ public class ConfigurationService {
 
     public ConfigurationService() {
         currentClassLogger = new CurrentClassLogger(nameof(ConfigurationService));
+        jsonSerializerOptions = new JsonSerializerOptions {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
         initializeTaskSource = new TaskCompletionSource();
         var configFilePath = Path.Combine(Environment.CurrentDirectory, ConfigurationFileName);
         if (!File.Exists(configFilePath))
@@ -49,8 +55,8 @@ public class ConfigurationService {
             currentClassLogger.Error("Configuration section is not a valid JSON document.");
             return;
         }
-    
-        var sections = JsonSerializer.Deserialize<ConfigurationSection>(jsonDocument);
+
+        var sections = JsonSerializer.Deserialize<ConfigurationSection>(jsonDocument, jsonSerializerOptions);
         ChangeConfiguration(sections);
     }
     private void ChangeConfiguration(ConfigurationSection? section) {
@@ -99,11 +105,11 @@ internal sealed class RoslynSection {
     [JsonPropertyName("useMultitargetDiagnostics")]
     public bool UseMultitargetDiagnostics { get; set; }
 
-    [JsonPropertyName("enableAnalyzers")]
-    public bool EnableAnalyzers { get; set; }
+    [JsonPropertyName("compilerDiagnosticsScope")]
+    public AnalysisScope CompilerDiagnosticsScope { get; set; }
 
-    [JsonPropertyName("projectScopeDiagnostics")]
-    public bool ProjectScopeDiagnostics { get; set; }
+    [JsonPropertyName("analyzerDiagnosticsScope")]
+    public AnalysisScope AnalyzerDiagnosticsScope { get; set; }
 
     [JsonPropertyName("dotnetSdkDirectory")]
     public string? DotNetSdkDirectory { get; set; }

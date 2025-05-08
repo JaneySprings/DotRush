@@ -14,35 +14,38 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
     private readonly CodeActionHost codeActionHost;
     private readonly CompilationHost compilationHost;
 
+    public Guid DiagnosticsCollectionToken => compilationHost.DiagnosticsCollectionToken;
+    private Guid previousSolutionToken;
+
     public CodeAnalysisService(ConfigurationService configurationService) {
         this.configurationService = configurationService;
         this.codeActionHost = new CodeActionHost(this);
         this.compilationHost = new CompilationHost(this);
     }
 
-    public async Task<ReadOnlyCollection<DiagnosticContext>> GetDocumentDiagnostics(IEnumerable<Document> documents, CancellationToken cancellationToken) {
+    public async Task<ReadOnlyCollection<DiagnosticContext>> GetDocumentDiagnosticsAsync(IEnumerable<Document> documents, WorkspaceService workspaceService, CancellationToken cancellationToken) {
         var documentFilePath = documents.FirstOrDefault()?.FilePath;
         if (string.IsNullOrEmpty(documentFilePath))
-            return new ReadOnlyCollection<DiagnosticContext>(new List<DiagnosticContext>());
+            return new List<DiagnosticContext>().AsReadOnly();
 
-        var diagnostics = configurationService.ProjectScopeDiagnostics
-            ? await compilationHost.DiagnoseProjectsAsync(documents, configurationService.EnableAnalyzers, cancellationToken).ConfigureAwait(false)
-            : await compilationHost.DiagnoseDocumentsAsync(documents, configurationService.EnableAnalyzers, cancellationToken).ConfigureAwait(false);
+        var currnetSolutionToken = workspaceService.SolutionToken;
+        if (previousSolutionToken != currnetSolutionToken) {
+            await compilationHost.UpdateCompilerDiagnosticsAsync(documents, configurationService.CompilerDiagnosticsScope, cancellationToken).ConfigureAwait(false);
+            await compilationHost.UpdateAnalyzerDiagnosticsAsync(documents, configurationService.AnalyzerDiagnosticsScope, cancellationToken).ConfigureAwait(false);
+            previousSolutionToken = currnetSolutionToken;
+        }
 
-        if (!diagnostics.TryGetValue(documentFilePath, out List<DiagnosticContext>? value))
-            return new ReadOnlyCollection<DiagnosticContext>(new List<DiagnosticContext>());
+        var diagnostics = compilationHost.GetDiagnostics();
+        if (diagnostics.TryGetValue(documentFilePath, out List<DiagnosticContext>? value))
+            return value.AsReadOnly();
 
-        return value.AsReadOnly();
+        return new List<DiagnosticContext>().AsReadOnly();
     }
     public ReadOnlyDictionary<string, List<DiagnosticContext>> GetDiagnostics() {
         return compilationHost.GetDiagnostics();
     }
-
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
         return compilationHost.GetDiagnosticsByDocumentSpan(document, span);
-    }
-    public string GetDiagnosticsCollectionToken() {
-        return compilationHost.GetCollectionToken();
     }
 
     public IEnumerable<CodeFixProvider>? GetCodeFixProvidersForDiagnosticId(string? diagnosticId, Project project) {
@@ -52,8 +55,8 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
         return codeActionHost.GetCodeRefactoringProvidersForProject(project);
     }
 
-    bool IAdditionalComponentsProvider.IsEnabled { 
-        get => configurationService.EnableAnalyzers;
+    bool IAdditionalComponentsProvider.IsEnabled {
+        get => configurationService.AnalyzerDiagnosticsScope != AnalysisScope.None;
     }
     IEnumerable<string> IAdditionalComponentsProvider.GetAdditionalAssemblies() {
         return configurationService.AnalyzerAssemblies;

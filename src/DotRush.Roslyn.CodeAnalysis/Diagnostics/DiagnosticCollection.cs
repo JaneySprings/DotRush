@@ -9,13 +9,13 @@ public class DiagnosticCollection {
     private readonly Dictionary<string, List<DiagnosticContext>> workspaceDiagnostics;
     private readonly Dictionary<ProjectId, HashSet<string>> diagnosticRelations;
     private readonly object lockObject;
-    private string collectionToken;
+
+    public Guid CollectionToken { get; private set; }
 
     public DiagnosticCollection() {
         workspaceDiagnostics = new Dictionary<string, List<DiagnosticContext>>();
         diagnosticRelations = new Dictionary<ProjectId, HashSet<string>>();
         lockObject = new object();
-        collectionToken = GenerateNewCollectionToken();
     }
 
     public IEnumerable<DiagnosticContext> AddDiagnostics(ProjectId key, IEnumerable<DiagnosticContext> diagnostics) {
@@ -50,40 +50,27 @@ public class DiagnosticCollection {
 
         return new List<DiagnosticContext>().AsReadOnly();
     }
-    public string GetCollectionToken() {
-        return collectionToken;
-    }
-    public void ClearDocumentDiagnostics(Document document) {
+    public void ClearDiagnostics(Document document, AnalysisScope scope, bool isAnalyzerOnly) {
         if (string.IsNullOrEmpty(document.FilePath))
             return;
 
         lock (lockObject) {
-            // Remove all diagnostics for the document
-            if (workspaceDiagnostics.ContainsKey(document.FilePath))
-                workspaceDiagnostics[document.FilePath].Clear();
-        }
-    }
-    public void ClearProjectDiagnostics(Document document) {
-        if (string.IsNullOrEmpty(document.FilePath))
-            return;
-
-        lock (lockObject) {
-            // Remove all compilation diagnostics for the document (scan entire project)
-            if (diagnosticRelations.TryGetValue(document.Project.Id, out HashSet<string>? relations))
-                relations.ForEach(r => workspaceDiagnostics[r].RemoveAll(c => !c.IsAnalyzerDiagnostic));
-            // Remove all analyzer diagnostics for the document (scan only the document)
-            if (workspaceDiagnostics.ContainsKey(document.FilePath))
-                workspaceDiagnostics[document.FilePath].RemoveAll(c => c.IsAnalyzerDiagnostic);
+            switch (scope) {
+                case AnalysisScope.None:
+                    return;
+                case AnalysisScope.Document:
+                    if (workspaceDiagnostics.TryGetValue(document.FilePath, out List<DiagnosticContext>? diagnostics))
+                        diagnostics.RemoveAll(c => c.IsAnalyzerDiagnostic == isAnalyzerOnly);
+                    break;
+                case AnalysisScope.Project:
+                    if (diagnosticRelations.TryGetValue(document.Project.Id, out HashSet<string>? relations))
+                        relations.ForEach(r => workspaceDiagnostics[r].RemoveAll(c => c.IsAnalyzerDiagnostic == isAnalyzerOnly));
+                    break;
+            }
         }
     }
 
     private void Invalidate() {
-        lock (lockObject) {
-            collectionToken = GenerateNewCollectionToken();
-        }
-    }
-    private string GenerateNewCollectionToken() {
-        collectionToken = Guid.NewGuid().ToString();
-        return collectionToken;
+        CollectionToken = Guid.NewGuid();
     }
 }

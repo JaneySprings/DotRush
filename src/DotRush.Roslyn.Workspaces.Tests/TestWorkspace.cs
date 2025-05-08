@@ -29,9 +29,14 @@ public class TestWorkspace : DotRushWorkspace, IWorkspaceChangeListener {
 
     bool IWorkspaceChangeListener.IsGitEventsSupported => false;
 
-    public TestWorkspace(Dictionary<string, string>? workspaceProperties = null) : this(workspaceProperties, true, false, false, false, false) {}
-    public TestWorkspace(bool restore) : this(null, true, false, restore, false, false) {}
-    public TestWorkspace(Dictionary<string, string>? workspaceProperties, bool loadMetadataForReferencedProjects, bool skipUnrecognizedProjects, bool restoreProjectsBeforeLoading, bool compileProjectsAfterLoading , bool applyWorkspaceChanges) {
+    public TestWorkspace(
+        Dictionary<string, string>? workspaceProperties = null,
+        bool loadMetadataForReferencedProjects = false,
+        bool skipUnrecognizedProjects = false,
+        bool restoreProjectsBeforeLoading = false,
+        bool compileProjectsAfterLoading = false,
+        bool applyWorkspaceChanges = false
+    ) {
         this.workspaceProperties = new ReadOnlyDictionary<string, string>(workspaceProperties ?? new Dictionary<string, string>());
         this.loadMetadataForReferencedProjects = loadMetadataForReferencedProjects;
         this.skipUnrecognizedProjects = skipUnrecognizedProjects;
@@ -72,5 +77,5 @@ public class TestWorkspace : DotRushWorkspace, IWorkspaceChangeListener {
         UpdateDocuments(documentPaths.ToArray());
         UpdatedDocuments.AddRange(documentPaths);
     }
-    void IWorkspaceChangeListener.OnCommitChanges() {}
+    void IWorkspaceChangeListener.OnCommitChanges() { }
 }

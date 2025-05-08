@@ -464,19 +464,29 @@
             "default": true,
             "description": "%configuration.description.roslyn.useMultitargetDiagnostics%"
           },
-          "dotrush.roslyn.projectScopeDiagnostics": {
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.description.roslyn.projectScopeDiagnostics%"
+          "dotrush.roslyn.compilerDiagnosticsScope": {
+            "type": "string",
+            "default": "Project",
+            "description": "%configuration.description.roslyn.compilerDiagnosticsScope%",
+            "enum": [
+              "None",
+              "Document",
+              "Project"
+            ]
+          },
+          "dotrush.roslyn.analyzerDiagnosticsScope": {
+            "type": "string",
+            "default": "Document",
+            "description": "%configuration.description.roslyn.analyzerDiagnosticsScope%",
+            "enum": [
+              "None",
+              "Document",
+              "Project"
+            ]
           },
           "dotrush.roslyn.dotnetSdkDirectory": {
             "type": "string",
             "description": "%configuration.description.roslyn.dotnetSdkDirectory%"
-          },
-          "dotrush.roslyn.enableAnalyzers": {
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.description.roslyn.enableAnalyzers%"
           },
           "dotrush.roslyn.analyzerAssemblies": {
             "type": "array",

@@ -92,7 +92,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
             }
 
             foreach (var byIdGroup in diagnosticByIdGroups) {
-                var project = byIdGroup.FirstOrDefault()?.RelatedProject;
+                var project = workspaceService.Solution?.GetProject(byIdGroup.FirstOrDefault()?.SourceId);
                 if (project == null) {
                     currentClassLogger.Debug($"Project not found for diagnostic id '{byIdGroup.Key}'");
                     continue;

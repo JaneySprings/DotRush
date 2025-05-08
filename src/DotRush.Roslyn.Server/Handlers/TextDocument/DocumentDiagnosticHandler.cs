@@ -1,5 +1,4 @@
 using DotRush.Common.Extensions;
-using DotRush.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
@@ -26,6 +25,7 @@ public class DocumentDiagnosticsHandler : DocumentDiagnosticHandlerBase {
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
         serverCapabilities.DiagnosticProvider ??= new DiagnosticOptions();
         serverCapabilities.DiagnosticProvider.Identifier = "dotrush";
+        serverCapabilities.DiagnosticProvider.InterFileDependencies = true;
     }
 
     protected override Task<DocumentDiagnosticReport> Handle(DocumentDiagnosticParams request, CancellationToken token) {
@@ -35,9 +35,7 @@ public class DocumentDiagnosticsHandler : DocumentDiagnosticHandlerBase {
                 return new RelatedUnchangedDocumentDiagnosticReport();
 
             var documents = documentIds.Select(id => workspaceService.Solution.GetDocument(id)).WhereNotNull();
-            var diagnostics = await codeAnalysisService.GetDocumentDiagnostics(documents, token).ConfigureAwait(false);
-
-            CurrentSessionLogger.Debug($"Publish Diagnostics: {request.TextDocument.Uri.FileSystemPath} - {diagnostics.Count}");
+            var diagnostics = await codeAnalysisService.GetDocumentDiagnosticsAsync(documents, workspaceService, token).ConfigureAwait(false);
 
             return new RelatedFullDocumentDiagnosticReport {
                 Diagnostics = diagnostics.Where(d => !d.IsHiddenInUI()).Select(d => d.ToServerDiagnostic()).ToList(),
