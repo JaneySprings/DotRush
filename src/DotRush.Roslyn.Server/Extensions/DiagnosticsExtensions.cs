@@ -47,7 +47,7 @@ public static class DiagnosticExtensions {
             Message = context.Diagnostic.GetSubject(),
             Range = context.Diagnostic.Location.ToRange(),
             Severity = context.Diagnostic.Severity.ToServerSeverity(),
-            Source = context.Source,
+            Source = context.SourceName,
         };
     }
     public static ProtocolModels.Diagnostic ToServerDiagnostic(this WorkspaceDiagnostic diagnostic) {

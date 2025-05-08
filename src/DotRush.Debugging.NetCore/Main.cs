@@ -75,8 +75,8 @@ public class Program {
 
             installer.EndInstallation(executable!);
             SetResult(Status.Success());
-        } catch (Exception ex) { 
-            SetResult((Status.Fail(ex.Message))); 
+        } catch (Exception ex) {
+            SetResult((Status.Fail(ex.Message)));
         }
     }
 }

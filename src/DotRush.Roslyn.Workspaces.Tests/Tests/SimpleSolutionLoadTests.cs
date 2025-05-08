@@ -11,7 +11,7 @@ public class SimpleSolutionLoadTests : TestFixture {
 
     [Test]
     public async Task LoadSingleProjectTest() {
-        var workspace = new TestWorkspace(restore: true);
+        var workspace = new TestWorkspace(restoreProjectsBeforeLoading: true);
         var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
         var solutionPath = CreateSolution("MySolution", projectPath);
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
@@ -54,7 +54,7 @@ public class SimpleSolutionLoadTests : TestFixture {
     }
     [Test]
     public async Task LoadSingleProjectWithRelativePathTest() {
-        var workspace = new TestWorkspace(restore: true);
+        var workspace = new TestWorkspace(restoreProjectsBeforeLoading: true);
         var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
         var solutionPath = CreateSolution("MySolution", projectPath);
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
@@ -137,7 +137,7 @@ public class SimpleSolutionLoadTests : TestFixture {
 
     [Test]
     public void ErrorOnRestoreTest() {
-        var workspace = new TestWorkspace(restore: true);
+        var workspace = new TestWorkspace(restoreProjectsBeforeLoading: true);
         var projectPath = CreateProject("MyProject", "MyError>/<", "Exe");
         var solutionPath = CreateSolution("MySolution", projectPath);
 
