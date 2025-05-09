@@ -85,7 +85,8 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
             return configurationService.ProjectOrSolutionFiles.Select(it => Path.GetFullPath(it.ToPlatformPath())).ToArray();
 
         if (workspaceFolders == null)
-            return null;
+            workspaceFolders = new[] { Environment.CurrentDirectory };
+
         var solutionFiles = workspaceFolders.SelectMany(it => Directory.GetFiles(it, "*.sln*", SearchOption.AllDirectories));
         if (solutionFiles.Count() == 1)
             return solutionFiles;
@@ -104,7 +105,7 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
     }
     void IWorkspaceChangeListener.OnDocumentsDeleted(IEnumerable<string> documentPaths) {
         DeleteDocuments(documentPaths.ToArray());
-    } 
+    }
     void IWorkspaceChangeListener.OnDocumentsChanged(IEnumerable<string> documentPaths) {
         UpdateDocuments(documentPaths.ToArray());
     }

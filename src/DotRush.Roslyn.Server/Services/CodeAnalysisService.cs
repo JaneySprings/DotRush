@@ -23,16 +23,15 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
         this.compilationHost = new CompilationHost(this);
     }
 
-    public async Task<ReadOnlyCollection<DiagnosticContext>> GetDocumentDiagnosticsAsync(IEnumerable<Document> documents, WorkspaceService workspaceService, CancellationToken cancellationToken) {
+    public async Task<ReadOnlyCollection<DiagnosticContext>> GetDocumentDiagnosticsAsync(IEnumerable<Document> documents, Guid currentSolutionToken, CancellationToken cancellationToken) {
         var documentFilePath = documents.FirstOrDefault()?.FilePath;
         if (string.IsNullOrEmpty(documentFilePath))
             return new List<DiagnosticContext>().AsReadOnly();
 
-        var currnetSolutionToken = workspaceService.SolutionToken;
-        if (previousSolutionToken != currnetSolutionToken) {
+        if (previousSolutionToken != currentSolutionToken) {
             await compilationHost.UpdateCompilerDiagnosticsAsync(documents, configurationService.CompilerDiagnosticsScope, cancellationToken).ConfigureAwait(false);
             await compilationHost.UpdateAnalyzerDiagnosticsAsync(documents, configurationService.AnalyzerDiagnosticsScope, cancellationToken).ConfigureAwait(false);
-            previousSolutionToken = currnetSolutionToken;
+            previousSolutionToken = currentSolutionToken;
         }
 
         var diagnostics = compilationHost.GetDiagnostics();

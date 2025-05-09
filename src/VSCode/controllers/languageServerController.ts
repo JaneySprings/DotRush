@@ -40,9 +40,8 @@ export class LanguageServerController {
         LanguageServerController.start();
 
         context.subscriptions.push(LanguageServerController.client);
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdRestartServer, () => LanguageServerController.restart()));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdReloadWorkspace, () => LanguageServerController.reload()));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickTargets, () => LanguageServerController.showQuickPickTargets()))
-        context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => LanguageServerController.restart()));
         context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async e => {
             const extName = path.extname(e.fileName);
             if (extName !== '.csproj' && extName !== '.props')
@@ -50,7 +49,7 @@ export class LanguageServerController {
 
             const value = await vscode.window.showWarningMessage(res.messageProjectChanged, res.messageReload)
             if (value === res.messageReload)
-                LanguageServerController.restart();
+                LanguageServerController.reload();
         }));
     }
 
@@ -68,13 +67,17 @@ export class LanguageServerController {
     }
     public static stop() {
         LanguageServerController.client.stop();
-        LanguageServerController.client.dispose();
         LanguageServerController.running = false;
         TestExplorerController.unloadProjects();
     }
-    public static restart() {
-        LanguageServerController.stop();
-        LanguageServerController.start();
+    public static reload() {
+        if (!LanguageServerController.running)
+            return;
+
+        const workspaceFolders = vscode.workspace.workspaceFolders?.map(folder => ({ uri: folder.uri.toString(), name: folder.name }));
+        LanguageServerController.client.sendNotification('dotrush/reloadWorkspace', {
+            workspaceFolders: workspaceFolders,
+        });
     }
     public static isRunning(): boolean {
         return LanguageServerController.running;
@@ -87,7 +90,7 @@ export class LanguageServerController {
 
         await Extensions.putSetting(res.configIdRoslynProjectOrSolutionFiles, result, vscode.ConfigurationTarget.Workspace);
         if (LanguageServerController.isRunning())
-            LanguageServerController.restart();
+            LanguageServerController.reload();
     }
     private static async shouldQuickPickTargets(): Promise<boolean> {
         const projectOrSolutionFiles = Extensions.getSetting<string[]>(res.configIdRoslynProjectOrSolutionFiles);

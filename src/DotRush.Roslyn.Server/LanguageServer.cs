@@ -2,6 +2,7 @@
 using System.Reflection;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
+using DotRush.Roslyn.Server.Handlers.Framework;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Handlers.Workspace;
 using DotRush.Roslyn.Server.Services;
@@ -29,9 +30,7 @@ public class LanguageServer {
 
         dispatcher = new ParallelDispatcher();
         server = EmmyLuaLanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
-        server.AddHandler(new DidChangeConfigurationHandler(configurationService))
-              .AddHandler(new TextDocumentHandler(workspaceService))
-              .AddHandler(new WorkspaceSymbolHandler(workspaceService))
+        server.AddHandler(new TextDocumentHandler(workspaceService))
               .AddHandler(new DocumentFormattingHandler(workspaceService))
               .AddHandler(new RenameHandler(workspaceService))
               .AddHandler(new SignatureHelpHandler(workspaceService))
@@ -46,7 +45,12 @@ public class LanguageServer {
               .AddHandler(new CodeActionHandler(workspaceService, codeAnalysisService))
               .AddHandler(new CompletionHandler(workspaceService, configurationService))
               .AddHandler(new DocumentDiagnosticsHandler(workspaceService, codeAnalysisService, configurationService))
-              .AddHandler(new WorkspaceDiagnosticHandler(codeAnalysisService));
+        // Workspace handlers
+              .AddHandler(new DidChangeConfigurationHandler(configurationService))
+              .AddHandler(new WorkspaceDiagnosticHandler(codeAnalysisService))
+              .AddHandler(new WorkspaceSymbolHandler(workspaceService))
+        // Framework handlers
+              .AddHandler(new ReloadWorkspaceHandler(workspaceService));
 
         server.SetScheduler(dispatcher);
         server.OnInitialize(OnInitializeAsync);
@@ -66,7 +70,7 @@ public class LanguageServer {
 
         _ = externalAccessService.StartListeningAsync(parameters.ProcessId, CancellationToken.None);
     }
- 
+
     private static void ConfigureProcessObserver(int? pid) {
         if (pid == null || pid <= 0)
             return;

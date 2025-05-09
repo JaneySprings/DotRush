@@ -136,9 +136,9 @@
     },
     "commands": [
       {
-        "command": "dotrush.restartServer",
+        "command": "dotrush.reloadWorkspace",
         "category": "%extension.displayName%",
-        "title": "%command.title.restartServer%"
+        "title": "%command.title.reloadWorkspace%"
       },
       {
         "command": "dotrush.setStartupProject",

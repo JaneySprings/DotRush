@@ -1,7 +1,7 @@
 {
 	"extension.displayName": "DotRush",
 
-	"command.title.restartServer": "Restart server",
+	"command.title.reloadWorkspace": "Reload Workspace",
 	"command.title.setStartupProject": "Set as Startup Project",
 	"command.title.selectActiveConfiguration": "Select Active Configuration",
 	"command.title.pickProjectOrSolutionFiles": "Pick Project or Solution files",
@@ -11,8 +11,6 @@
 	"command.title.clean": "Clean",
 	"command.title.attachTraceProfiler": "Attach Trace Profiler",
 	"command.title.createHeapDump": "Create Heap Dump",
-
-	"view.title.createProjectTemplate": "[Open a folder](command:vscode.openFolder) that contains a .NET project or create a new project.\n[Create New Project](command:dotrush.createProjectTemplate)",
 
 	"configuration.description.roslyn.workspaceProperties": "Additional MSBuild properties to pass to the workspace (e.g. Configuration=Debug).",
 	"configuration.description.roslyn.skipUnrecognizedProjects": "Determines if unrecognized projects are skipped when projects are opened.",
