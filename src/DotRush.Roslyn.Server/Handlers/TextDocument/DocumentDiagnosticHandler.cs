@@ -30,12 +30,13 @@ public class DocumentDiagnosticsHandler : DocumentDiagnosticHandlerBase {
 
     protected override Task<DocumentDiagnosticReport> Handle(DocumentDiagnosticParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync<DocumentDiagnosticReport>(new RelatedUnchangedDocumentDiagnosticReport(), async () => {
+            var currentSolutionToken = workspaceService.SolutionToken;
             var documentIds = GetDocumentIdsWithFilePath(request.TextDocument.Uri.FileSystemPath);
             if (documentIds == null || workspaceService.Solution == null)
                 return new RelatedUnchangedDocumentDiagnosticReport();
 
             var documents = documentIds.Select(id => workspaceService.Solution.GetDocument(id)).WhereNotNull();
-            var diagnostics = await codeAnalysisService.GetDocumentDiagnosticsAsync(documents, workspaceService, token).ConfigureAwait(false);
+            var diagnostics = await codeAnalysisService.GetDocumentDiagnosticsAsync(documents, currentSolutionToken, token).ConfigureAwait(false);
 
             return new RelatedFullDocumentDiagnosticReport {
                 Diagnostics = diagnostics.Where(d => !d.IsHiddenInUI()).Select(d => d.ToServerDiagnostic()).ToList(),

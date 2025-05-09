@@ -13,7 +13,7 @@ export const debuggerVsdbgDisplayName = "Microsoft .NET Core Debugger (vsdbg)"
 export const debuggerNcdbgInstallId = 'ncdbg';
 export const debuggerNcdbgDisplayName = "Samsung Debugger (NetCoreDbg)"
 
-export const commandIdRestartServer = "dotrush.restartServer";
+export const commandIdReloadWorkspace = "dotrush.reloadWorkspace";
 export const commandIdPickProcess = "dotrush.pickProcess";
 export const commandIdPickTargets = "dotrush.pickProjectOrSolutionFiles";
 export const commandIdBuildProject = "dotrush.build";
