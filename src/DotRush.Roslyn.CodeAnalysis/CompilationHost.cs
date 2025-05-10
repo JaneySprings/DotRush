@@ -29,7 +29,17 @@ public class CompilationHost {
         return workspaceDiagnostics.GetDiagnosticsByDocumentSpan(document, span);
     }
 
-    public async Task UpdateCompilerDiagnosticsAsync(IEnumerable<Document> documents, AnalysisScope scope, CancellationToken cancellationToken) {
+    public async Task AnalyzeAsync(IEnumerable<Document> documents, AnalysisScope compilerScope, AnalysisScope analyzerScope, CancellationToken cancellationToken) {
+        BeginAnalysis();
+        await UpdateCompilerDiagnosticsAsync(documents, compilerScope, cancellationToken).ConfigureAwait(false);
+        await UpdateAnalyzerDiagnosticsAsync(documents, analyzerScope, cancellationToken).ConfigureAwait(false);
+        EndAnalysis();
+    }
+
+    private void BeginAnalysis() {
+        workspaceDiagnostics.RemoveEmptyEntries();
+    }
+    private async Task UpdateCompilerDiagnosticsAsync(IEnumerable<Document> documents, AnalysisScope scope, CancellationToken cancellationToken) {
         if (scope == AnalysisScope.None || !documents.Any())
             return;
 
@@ -50,7 +60,7 @@ public class CompilationHost {
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Compiler analysis for {document.Name} finished");
         }
     }
-    public async Task UpdateAnalyzerDiagnosticsAsync(IEnumerable<Document> documents, AnalysisScope scope, CancellationToken cancellationToken) {
+    private async Task UpdateAnalyzerDiagnosticsAsync(IEnumerable<Document> documents, AnalysisScope scope, CancellationToken cancellationToken) {
         if (scope == AnalysisScope.None || !documents.Any())
             return;
 
@@ -71,6 +81,7 @@ public class CompilationHost {
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Compiler analysis for {document.Name} finished");
         }
     }
+    private void EndAnalysis() { }
 
     #region Analysis
     private async Task DiagnoseAsync(Project project, CancellationToken cancellationToken) {

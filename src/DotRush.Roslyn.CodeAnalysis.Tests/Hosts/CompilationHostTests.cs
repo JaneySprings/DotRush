@@ -17,8 +17,7 @@ public class CompilationHostTests : WorkspaceTestFixture, IAdditionalComponentsP
     }
 
     private async Task<List<DiagnosticContext>> GetDiagnostics(IEnumerable<Document> documents, AnalysisScope scope) {
-        await compilationHost.UpdateCompilerDiagnosticsAsync(documents, scope, CancellationToken.None);
-        await compilationHost.UpdateAnalyzerDiagnosticsAsync(documents, AnalysisScope.None, CancellationToken.None);
+        await compilationHost.AnalyzeAsync(documents, scope, AnalysisScope.None, CancellationToken.None);
         return compilationHost.GetDiagnostics().SelectMany(d => d.Value).ToList();
     }
     private IEnumerable<Document> UpdateDocument(string content) {
@@ -182,6 +181,10 @@ class Program {
         _ = await GetDiagnostics(documents, AnalysisScope.Document);
         diagnostics = compilationHost.GetDiagnostics();
         Assert.That(diagnostics[testDocumentPath], Is.Empty);
+
+        _ = await GetDiagnostics(documents, AnalysisScope.Project);
+        diagnostics = compilationHost.GetDiagnostics();
+        Assert.That(diagnostics.ContainsKey(testDocumentPath), Is.False);
     }
     [Test]
     public async Task DiagnosticsShouldBeEmptyAfterRemovingDocumentTest() {

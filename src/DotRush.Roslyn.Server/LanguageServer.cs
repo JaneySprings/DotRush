@@ -14,7 +14,6 @@ namespace DotRush.Roslyn.Server;
 
 public class LanguageServer {
     private static EmmyLuaLanguageServer server = null!;
-    private static ParallelDispatcher dispatcher = null!;
 
     private static ConfigurationService configurationService = null!;
     private static WorkspaceService workspaceService = null!;
@@ -28,9 +27,8 @@ public class LanguageServer {
     public static Task Main(string[] args) {
         ConfigureServices();
 
-        dispatcher = new ParallelDispatcher();
         server = EmmyLuaLanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
-        server.AddHandler(new TextDocumentHandler(workspaceService))
+        server.AddHandler(new TextDocumentHandler(workspaceService, codeAnalysisService))
               .AddHandler(new DocumentFormattingHandler(workspaceService))
               .AddHandler(new RenameHandler(workspaceService))
               .AddHandler(new SignatureHelpHandler(workspaceService))
@@ -44,15 +42,12 @@ public class LanguageServer {
               .AddHandler(new TypeHierarchyHandler(navigationService))
               .AddHandler(new CodeActionHandler(workspaceService, codeAnalysisService))
               .AddHandler(new CompletionHandler(workspaceService, configurationService))
-              .AddHandler(new DocumentDiagnosticsHandler(workspaceService, codeAnalysisService, configurationService))
         // Workspace handlers
               .AddHandler(new DidChangeConfigurationHandler(configurationService))
-              .AddHandler(new WorkspaceDiagnosticHandler(codeAnalysisService))
               .AddHandler(new WorkspaceSymbolHandler(workspaceService))
         // Framework handlers
               .AddHandler(new ReloadWorkspaceHandler(workspaceService));
 
-        server.SetScheduler(dispatcher);
         server.OnInitialize(OnInitializeAsync);
         return server.Run();
     }
@@ -66,7 +61,7 @@ public class LanguageServer {
 
         workspaceService.WorkspaceStateChanged += (_, _) => navigationService.UpdateSolution(workspaceService.Solution);
         await workspaceService.LoadAsync(parameters.WorkspaceFolders, CancellationToken.None).ConfigureAwait(false);
-        dispatcher.StartWorkerThread();
+        codeAnalysisService.StartWorkerThread();
 
         _ = externalAccessService.StartListeningAsync(parameters.ProcessId, CancellationToken.None);
     }

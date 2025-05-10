@@ -17,6 +17,9 @@ public abstract class DotRushWorkspace : SolutionController {
 
     public bool InitializeWorkspace() {
         var registrationResult = TryRegisterDotNetEnvironment();
+        if (workspace != null)
+            workspace.Dispose();
+
         workspace = MSBuildWorkspace.Create(WorkspaceProperties);
         workspace.LoadMetadataForReferencedProjects = LoadMetadataForReferencedProjects;
         workspace.SkipUnrecognizedProjects = SkipUnrecognizedProjects;
@@ -49,7 +52,7 @@ public abstract class DotRushWorkspace : SolutionController {
         var projectFiles = targets.Where(it => WorkspaceExtensions.IsProjectFile(it)).Select(Path.GetFullPath).ToArray();
         if (projectFiles.Length != 0)
             await LoadProjectsAsync(projectFiles, cancellationToken).ConfigureAwait(false);
-        
+
         await OnLoadingCompletedAsync(cancellationToken);
     }
 

@@ -1,7 +1,11 @@
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using DotRush.Common.Extensions;
 using DotRush.Roslyn.CodeAnalysis;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
+using DotRush.Roslyn.Server.Extensions;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -13,40 +17,55 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
     private readonly ConfigurationService configurationService;
     private readonly CodeActionHost codeActionHost;
     private readonly CompilationHost compilationHost;
-
-    public Guid DiagnosticsCollectionToken => compilationHost.DiagnosticsCollectionToken;
-    private Guid previousSolutionToken;
+    private readonly Thread workerThread;
+    private readonly BlockingCollection<Func<Task>> workerTasks;
 
     public CodeAnalysisService(ConfigurationService configurationService) {
         this.configurationService = configurationService;
         this.codeActionHost = new CodeActionHost(this);
         this.compilationHost = new CompilationHost(this);
+        this.workerTasks = new BlockingCollection<Func<Task>>();
+        this.workerThread = new Thread(() => {
+            foreach (var currentTask in workerTasks.GetConsumingEnumerable()) {
+                Func<Task> latestTask = currentTask;
+                // Drain queue and keep the most recent task
+                while (workerTasks.TryTake(out var task))
+                    latestTask = task;
+
+                SafeExtensions.InvokeAsync(latestTask).Wait();
+            }
+        });
+        this.workerThread.IsBackground = true;
     }
 
-    public async Task<ReadOnlyCollection<DiagnosticContext>> GetDocumentDiagnosticsAsync(IEnumerable<Document> documents, Guid currentSolutionToken, CancellationToken cancellationToken) {
-        var documentFilePath = documents.FirstOrDefault()?.FilePath;
-        if (string.IsNullOrEmpty(documentFilePath))
-            return new List<DiagnosticContext>().AsReadOnly();
-
-        if (previousSolutionToken != currentSolutionToken) {
-            await compilationHost.UpdateCompilerDiagnosticsAsync(documents, configurationService.CompilerDiagnosticsScope, cancellationToken).ConfigureAwait(false);
-            await compilationHost.UpdateAnalyzerDiagnosticsAsync(documents, configurationService.AnalyzerDiagnosticsScope, cancellationToken).ConfigureAwait(false);
-            previousSolutionToken = currentSolutionToken;
-        }
-
-        var diagnostics = compilationHost.GetDiagnostics();
-        if (diagnostics.TryGetValue(documentFilePath, out List<DiagnosticContext>? value))
-            return value.AsReadOnly();
-
-        return new List<DiagnosticContext>().AsReadOnly();
+    public void StartWorkerThread() {
+        workerThread.Start();
     }
-    public ReadOnlyDictionary<string, List<DiagnosticContext>> GetDiagnostics() {
-        return compilationHost.GetDiagnostics();
+    public void RequestDiagnosticPublishing(IEnumerable<Document> documents, CancellationToken cancellationToken) {
+        if (!documents.Any() || cancellationToken.IsCancellationRequested)
+            return;
+
+        workerTasks.Add(async () => {
+            await compilationHost.AnalyzeAsync(
+                documents,
+                configurationService.CompilerDiagnosticsScope,
+                configurationService.AnalyzerDiagnosticsScope,
+                cancellationToken
+            ).ConfigureAwait(false);
+
+            var diagnostics = compilationHost.GetDiagnostics();
+            foreach (var pair in diagnostics) {
+                await LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams {
+                    Uri = pair.Key,
+                    Diagnostics = pair.Value.Where(d => !d.IsHiddenInUI()).Select(d => d.ToServerDiagnostic()).ToList(),
+                }).ConfigureAwait(false);
+            }
+        }, cancellationToken);
     }
+
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
         return compilationHost.GetDiagnosticsByDocumentSpan(document, span);
     }
-
     public IEnumerable<CodeFixProvider>? GetCodeFixProvidersForDiagnosticId(string? diagnosticId, Project project) {
         return codeActionHost.GetCodeFixProvidersForDiagnosticId(diagnosticId, project);
     }

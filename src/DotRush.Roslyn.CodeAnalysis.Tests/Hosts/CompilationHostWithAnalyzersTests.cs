@@ -17,8 +17,7 @@ public class CompilationHostWithAnalyzersTests : WorkspaceTestFixture, IAddition
     }
 
     private async Task<List<DiagnosticContext>> GetDiagnostics(IEnumerable<Document> documents, AnalysisScope scope) {
-        await compilationHost.UpdateCompilerDiagnosticsAsync(documents, scope, CancellationToken.None);
-        await compilationHost.UpdateAnalyzerDiagnosticsAsync(documents, scope, CancellationToken.None);
+        await compilationHost.AnalyzeAsync(documents, scope, scope, CancellationToken.None);
         return compilationHost.GetDiagnostics().SelectMany(d => d.Value).ToList();
     }
     private IEnumerable<Document> UpdateDocument(string content) {
