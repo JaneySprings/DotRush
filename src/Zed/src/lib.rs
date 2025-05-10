@@ -1,5 +1,7 @@
 use std::fs;
 use zed_extension_api::{self as zed, LanguageServerId, Result, Worktree};
+use zed::serde_json;
+use zed_extension_api::settings::LspSettings;
 
 struct DotRushExtension {}
 impl DotRushExtension {
@@ -72,6 +74,18 @@ impl zed::Extension for DotRushExtension {
             args: Default::default(),
             env: Default::default(),
         })
+    }
+
+    fn language_server_workspace_configuration(
+        &mut self,
+        _language_server_id: &zed::LanguageServerId,
+        worktree: &zed::Worktree,
+    ) -> Result<Option<serde_json::Value>> {
+        let settings = LspSettings::for_worktree("dotrush", worktree)
+            .ok()
+            .and_then(|lsp_settings| lsp_settings.settings.clone())
+            .unwrap_or_default();
+        Ok(Some(settings))
     }
 }
 
