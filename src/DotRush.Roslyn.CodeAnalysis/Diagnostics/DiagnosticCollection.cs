@@ -63,9 +63,21 @@ public class DiagnosticCollection {
                         diagnostics.RemoveAll(c => c.IsAnalyzerDiagnostic == isAnalyzerOnly);
                     break;
                 case AnalysisScope.Project:
-                    if (diagnosticRelations.TryGetValue(document.Project.Id, out HashSet<string>? relations))
-                        relations.ForEach(r => workspaceDiagnostics[r].RemoveAll(c => c.IsAnalyzerDiagnostic == isAnalyzerOnly));
+                    if (diagnosticRelations.TryGetValue(document.Project.Id, out HashSet<string>? relations)) {
+                        foreach (var relation in relations) {
+                            if (workspaceDiagnostics.TryGetValue(relation, out List<DiagnosticContext>? _diagnostics))
+                                _diagnostics.RemoveAll(c => c.IsAnalyzerDiagnostic == isAnalyzerOnly);
+                        }
+                    }
                     break;
+            }
+        }
+    }
+    public void RemoveEmptyEntries() {
+        lock (lockObject) {
+            foreach (var key in workspaceDiagnostics.Keys.ToArray()) {
+                if (workspaceDiagnostics[key].Count == 0)
+                    workspaceDiagnostics.Remove(key);
             }
         }
     }

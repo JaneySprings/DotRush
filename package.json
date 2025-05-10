@@ -459,11 +459,6 @@
             "default": false,
             "description": "%configuration.description.roslyn.applyWorkspaceChanges%"
           },
-          "dotrush.roslyn.useMultitargetDiagnostics": {
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.description.roslyn.useMultitargetDiagnostics%"
-          },
           "dotrush.roslyn.compilerDiagnosticsScope": {
             "type": "string",
             "default": "Project",

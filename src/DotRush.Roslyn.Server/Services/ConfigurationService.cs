@@ -23,7 +23,6 @@ public class ConfigurationService {
     public bool RestoreProjectsBeforeLoading => configuration?.RestoreProjectsBeforeLoading ?? true;
     public bool CompileProjectsAfterLoading => configuration?.CompileProjectsAfterLoading ?? true;
     public bool ApplyWorkspaceChanges => configuration?.ApplyWorkspaceChanges ?? false;
-    public bool UseMultitargetDiagnostics => configuration?.UseMultitargetDiagnostics ?? true;
     public AnalysisScope CompilerDiagnosticsScope => configuration?.CompilerDiagnosticsScope ?? AnalysisScope.Project;
     public AnalysisScope AnalyzerDiagnosticsScope => configuration?.AnalyzerDiagnosticsScope ?? AnalysisScope.Document;
     public string DotNetSdkDirectory => configuration?.DotNetSdkDirectory ?? Environment.GetEnvironmentVariable("DOTNET_SDK_PATH") ?? string.Empty;
@@ -101,9 +100,6 @@ internal sealed class RoslynSection {
 
     [JsonPropertyName("applyWorkspaceChanges")]
     public bool ApplyWorkspaceChanges { get; set; }
-
-    [JsonPropertyName("useMultitargetDiagnostics")]
-    public bool UseMultitargetDiagnostics { get; set; }
 
     [JsonPropertyName("compilerDiagnosticsScope")]
     public AnalysisScope CompilerDiagnosticsScope { get; set; }

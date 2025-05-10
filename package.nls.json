@@ -20,7 +20,6 @@
 	"configuration.description.roslyn.restoreProjectsBeforeLoading": "Determines if projects are restored before they are loaded.",
 	"configuration.description.roslyn.compileProjectsAfterLoading": "Determines if projects are compiled after they are loaded.",
 	"configuration.description.roslyn.projectOrSolutionFiles": "Paths to project or solution files to load.",
-	"configuration.description.roslyn.useMultitargetDiagnostics": "Determines if projects from all target frameworks are diagnosed.",
 	"configuration.description.roslyn.compilerDiagnosticsScope": "Show compiler errors and warnings for:",
 	"configuration.description.roslyn.analyzerDiagnosticsScope": "Show analyzer errors and warnings for:",
 	"configuration.description.roslyn.applyWorkspaceChanges": "Determines if changes made to the workspace are applied to the project files.",
