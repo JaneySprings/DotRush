@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
@@ -13,7 +14,7 @@ namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 public class TextDocumentHandler : TextDocumentHandlerBase {
     private readonly WorkspaceService workspaceService;
     private readonly CodeAnalysisService codeAnalysisService;
-    private readonly HashSet<string> openDocuments = new HashSet<string>();
+    private readonly ConcurrentDictionary<string, byte> openDocuments = [];
 
     public TextDocumentHandler(WorkspaceService workspaceService, CodeAnalysisService codeAnalysisService) {
         this.workspaceService = workspaceService;
@@ -29,7 +30,7 @@ public class TextDocumentHandler : TextDocumentHandlerBase {
 
     protected override Task Handle(DidOpenTextDocumentParams request, CancellationToken token) {
         var filePath = request.TextDocument.Uri.FileSystemPath;
-        openDocuments.Add(filePath);
+        openDocuments[filePath] = 0;
         codeAnalysisService.RequestDiagnosticsPublishing(GetDocumentsWithFilePath(filePath), CancellationToken.None);
         return Task.CompletedTask;
     }
@@ -43,7 +44,7 @@ public class TextDocumentHandler : TextDocumentHandlerBase {
     }
     protected override Task Handle(DidCloseTextDocumentParams request, CancellationToken token) {
         var filePath = request.TextDocument.Uri.FileSystemPath;
-        openDocuments.Remove(filePath);
+        openDocuments.TryRemove(filePath, out _);
         return Task.CompletedTask;
     }
     protected override Task Handle(WillSaveTextDocumentParams request, CancellationToken token) {
@@ -57,7 +58,7 @@ public class TextDocumentHandler : TextDocumentHandlerBase {
 
     private List<Document> GetAllOpenDocuments() {
         var documents = new List<Document>();
-        foreach (var filePath in openDocuments) {
+        foreach (var filePath in openDocuments.Keys) {
             documents.AddRange(GetDocumentsWithFilePath(filePath));
         }
         return documents;
