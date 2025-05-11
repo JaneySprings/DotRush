@@ -45,7 +45,8 @@ public class ConfigurationService {
             configFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigurationFileName);
         if (File.Exists(configFilePath)) {
             currentClassLogger.Debug($"Configuration file found: '{configFilePath}'");
-            ChangeConfiguration(JsonExtensions.Deserialize<ConfigurationSection>(configFilePath));
+            var configuration = SafeExtensions.Invoke(() => JsonSerializer.Deserialize<ConfigurationSection>(File.ReadAllText(configFilePath), jsonSerializerOptions));
+            ChangeConfiguration(configuration);
         }
     }
 
@@ -55,7 +56,7 @@ public class ConfigurationService {
             return;
         }
 
-        var sections = JsonSerializer.Deserialize<ConfigurationSection>(jsonDocument, jsonSerializerOptions);
+        var sections = SafeExtensions.Invoke(() => JsonSerializer.Deserialize<ConfigurationSection>(jsonDocument, jsonSerializerOptions));
         ChangeConfiguration(sections);
     }
     private void ChangeConfiguration(ConfigurationSection? section) {

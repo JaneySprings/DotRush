@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.CodeAnalysis.Reflection;
 using Microsoft.CodeAnalysis;
@@ -25,7 +26,7 @@ public class ReflectionApiTests : TestFixture {
     [Test]
     public void OrganizeImportsOptionsTest() {
         Assert.That(InternalOrganizeImportsOptions.organizeImportsOptionsType, Is.Not.Null);
-        
+
         Assert.That(InternalOrganizeImportsOptions.placeSystemNamespaceFirstProperty, Is.Not.Null);
         Assert.That(InternalOrganizeImportsOptions.placeSystemNamespaceFirstProperty!.PropertyType, Is.EqualTo(typeof(bool)));
 
@@ -40,13 +41,13 @@ public class ReflectionApiTests : TestFixture {
     public void CSharpOrganizeImportsServiceTest() {
         Assert.That(InternalCSharpOrganizeImportsService.csharpOrganizeImportsServiceType, Is.Not.Null);
         Assert.That(InternalCSharpOrganizeImportsService.organizeImportsAsyncMethod, Is.Not.Null);
-        
+
         var parameters = InternalCSharpOrganizeImportsService.organizeImportsAsyncMethod!.GetParameters();
         Assert.That(parameters, Has.Length.EqualTo(3));
         Assert.That(parameters[0].ParameterType, Is.EqualTo(typeof(Document)));
         Assert.That(parameters[1].ParameterType.Name, Is.EqualTo("OrganizeImportsOptions"));
         Assert.That(parameters[2].ParameterType, Is.EqualTo(typeof(CancellationToken)));
-        
+
         var returnType = InternalCSharpOrganizeImportsService.organizeImportsAsyncMethod.ReturnType;
         Assert.That(returnType.IsGenericType, Is.True);
         Assert.That(returnType.GetGenericTypeDefinition(), Is.EqualTo(typeof(Task<>)));
@@ -56,7 +57,7 @@ public class ReflectionApiTests : TestFixture {
     [Test]
     public void CompletionOptionsTest() {
         Assert.That(InternalCompletionOptions.completionOptionsType, Is.Not.Null);
-        
+
         Assert.That(InternalCompletionOptions.showItemsFromUnimportedNamespacesProperty, Is.Not.Null);
         Assert.That(InternalCompletionOptions.showItemsFromUnimportedNamespacesProperty!.PropertyType, Is.EqualTo(typeof(bool?)));
 
@@ -71,7 +72,7 @@ public class ReflectionApiTests : TestFixture {
     public void GetCompletionsInternalMethodTest() {
         Assert.That(InternalCompletionService.IsInitialized, Is.True, "InternalCompletionService is not initialized.");
         Assert.That(InternalCompletionService.getCompletionsAsyncMethod, Is.Not.Null);
-        
+
         var parameters = InternalCompletionService.getCompletionsAsyncMethod!.GetParameters();
         Assert.That(parameters, Has.Length.EqualTo(7));
         Assert.That(parameters[0].ParameterType, Is.EqualTo(typeof(Document)));
@@ -91,7 +92,7 @@ public class ReflectionApiTests : TestFixture {
         var deprecatedField = wellKnownTagsType.GetField("Deprecated", BindingFlags.NonPublic | BindingFlags.Static);
         Assert.That(deprecatedField, Is.Not.Null);
         Assert.That(deprecatedField!.GetValue(null), Is.EqualTo(InternalWellKnownTags.Deprecated));
-        
+
         var targetTypeMatchField = wellKnownTagsType.GetField("TargetTypeMatch", BindingFlags.NonPublic | BindingFlags.Static);
         Assert.That(targetTypeMatchField, Is.Not.Null);
         Assert.That(targetTypeMatchField!.GetValue(null), Is.EqualTo(InternalWellKnownTags.TargetTypeMatch));

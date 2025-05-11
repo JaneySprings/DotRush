@@ -50,7 +50,7 @@ public class DefinitionHandler : DefinitionHandlerBase {
 
                 if (!location.IsInSource || location.SourceTree == null)
                     continue;
-                
+
                 var filePath = location.SourceTree?.FilePath ?? string.Empty;
                 if (!File.Exists(filePath))
                     filePath = await navigationService.EmitCompilerGeneratedFileAsync(location, document.Project, cancellationToken).ConfigureAwait(false);
@@ -65,7 +65,7 @@ public class DefinitionHandler : DefinitionHandlerBase {
         }
 
         return new DefinitionResponse(result.IsEmpty && !decompiledResult.IsEmpty
-            ? decompiledResult.ToNonNullableList() 
+            ? decompiledResult.ToNonNullableList()
             : result.ToNonNullableList()
         );
     }

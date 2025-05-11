@@ -28,12 +28,12 @@ public static class SafeExtensions {
             LogException(e);
         }
     }
-    public static T Invoke<T>(T fallback, Func<T> action) {
+    public static T? Invoke<T>(Func<T?> action) where T : class {
         try {
             return action.Invoke();
         } catch (Exception e) {
             LogException(e);
-            return fallback;
+            return null;
         }
     }
     public static void Invoke(Action action) {

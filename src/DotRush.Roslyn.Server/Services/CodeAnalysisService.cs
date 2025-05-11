@@ -41,7 +41,7 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
     public void StartWorkerThread() {
         workerThread.Start();
     }
-    public void RequestDiagnosticPublishing(IEnumerable<Document> documents, CancellationToken cancellationToken) {
+    public void RequestDiagnosticsPublishing(IEnumerable<Document> documents, CancellationToken cancellationToken) {
         if (!documents.Any() || cancellationToken.IsCancellationRequested)
             return;
 

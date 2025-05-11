@@ -1,44 +1,58 @@
 using System.Collections.ObjectModel;
-using DotRush.Common.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.CodeAnalysis.Diagnostics;
 
 public class DiagnosticCollection {
-    private readonly Dictionary<string, List<DiagnosticContext>> workspaceDiagnostics;
-    private readonly Dictionary<ProjectId, HashSet<string>> diagnosticRelations;
+    private Dictionary<string, List<DiagnosticContext>> workspaceDiagnostics;
+    private Dictionary<string, List<DiagnosticContext>>? tempWorkspaceDiagnostics;
     private readonly object lockObject;
-
-    public Guid CollectionToken { get; private set; }
 
     public DiagnosticCollection() {
         workspaceDiagnostics = new Dictionary<string, List<DiagnosticContext>>();
-        diagnosticRelations = new Dictionary<ProjectId, HashSet<string>>();
         lockObject = new object();
     }
 
-    public IEnumerable<DiagnosticContext> AddDiagnostics(ProjectId key, IEnumerable<DiagnosticContext> diagnostics) {
-        lock (lockObject) {
-            if (!diagnosticRelations.TryGetValue(key, out HashSet<string>? relations)) {
-                relations = new HashSet<string>();
-                diagnosticRelations[key] = relations;
-            }
+    public void BeginUpdate() {
+        if (tempWorkspaceDiagnostics != null)
+            throw new InvalidOperationException($"{nameof(EndUpdate)} method must be called before starting a new update.");
 
+        lock (lockObject) {
+            tempWorkspaceDiagnostics = new Dictionary<string, List<DiagnosticContext>>(workspaceDiagnostics.Count);
+            foreach (var kvp in workspaceDiagnostics) {
+                if (kvp.Value.Count > 0)
+                    tempWorkspaceDiagnostics[kvp.Key] = new List<DiagnosticContext>();
+            }
+        }
+    }
+    public IEnumerable<DiagnosticContext> AddDiagnostics(ProjectId key, IEnumerable<DiagnosticContext> diagnostics) {
+        if (tempWorkspaceDiagnostics == null)
+            throw new InvalidOperationException($"{nameof(BeginUpdate)} method must be called before adding diagnostics.");
+
+        lock (lockObject) {
             var validDiagnostics = diagnostics.Where(c => !string.IsNullOrEmpty(c.FilePath) && File.Exists(c.FilePath)).ToArray();
             foreach (var diagnosticsGroup in validDiagnostics.GroupBy(c => c.FilePath!)) {
-                if (!workspaceDiagnostics.TryGetValue(diagnosticsGroup.Key, out List<DiagnosticContext>? container)) {
+                if (!tempWorkspaceDiagnostics.TryGetValue(diagnosticsGroup.Key, out List<DiagnosticContext>? container)) {
                     container = new List<DiagnosticContext>();
-                    workspaceDiagnostics[diagnosticsGroup.Key] = container;
+                    tempWorkspaceDiagnostics[diagnosticsGroup.Key] = container;
                 }
                 container.AddRange(diagnosticsGroup);
-                relations.Add(diagnosticsGroup.Key);
             }
 
-            Invalidate();
             return validDiagnostics;
         }
     }
+    public void EndUpdate() {
+        if (tempWorkspaceDiagnostics == null)
+            throw new InvalidOperationException($"{nameof(BeginUpdate)} method must be called before ending an update.");
+
+        lock (lockObject) {
+            workspaceDiagnostics = tempWorkspaceDiagnostics;
+            tempWorkspaceDiagnostics = null;
+        }
+    }
+
     public ReadOnlyDictionary<string, List<DiagnosticContext>> GetDiagnostics() {
         return new ReadOnlyDictionary<string, List<DiagnosticContext>>(workspaceDiagnostics);
     }
@@ -49,40 +63,5 @@ public class DiagnosticCollection {
             return diagnostics.Where(d => d.Span.IntersectsWith(span)).ToList().AsReadOnly();
 
         return new List<DiagnosticContext>().AsReadOnly();
-    }
-    public void ClearDiagnostics(Document document, AnalysisScope scope, bool isAnalyzerOnly) {
-        if (string.IsNullOrEmpty(document.FilePath))
-            return;
-
-        lock (lockObject) {
-            switch (scope) {
-                case AnalysisScope.None:
-                    return;
-                case AnalysisScope.Document:
-                    if (workspaceDiagnostics.TryGetValue(document.FilePath, out List<DiagnosticContext>? diagnostics))
-                        diagnostics.RemoveAll(c => c.IsAnalyzerDiagnostic == isAnalyzerOnly);
-                    break;
-                case AnalysisScope.Project:
-                    if (diagnosticRelations.TryGetValue(document.Project.Id, out HashSet<string>? relations)) {
-                        foreach (var relation in relations) {
-                            if (workspaceDiagnostics.TryGetValue(relation, out List<DiagnosticContext>? _diagnostics))
-                                _diagnostics.RemoveAll(c => c.IsAnalyzerDiagnostic == isAnalyzerOnly);
-                        }
-                    }
-                    break;
-            }
-        }
-    }
-    public void RemoveEmptyEntries() {
-        lock (lockObject) {
-            foreach (var key in workspaceDiagnostics.Keys.ToArray()) {
-                if (workspaceDiagnostics[key].Count == 0)
-                    workspaceDiagnostics.Remove(key);
-            }
-        }
-    }
-
-    private void Invalidate() {
-        CollectionToken = Guid.NewGuid();
     }
 }
