@@ -14,10 +14,10 @@ public class ProcessInfo {
     [JsonPropertyName("startTime")]
     public string? StartTime { get; set; }
 
-    public ProcessInfo() {}
+    public ProcessInfo() { }
     public ProcessInfo(Process process) {
         Id = process.Id;
         Name = process.ProcessName;
-        StartTime = SafeExtensions.Invoke(null, () => process.StartTime.ToShortTimeString());
+        StartTime = SafeExtensions.Invoke(() => process.StartTime.ToShortTimeString());
     }
 }

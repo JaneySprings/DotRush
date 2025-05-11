@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
@@ -13,8 +12,6 @@ public class CompilationHost {
     private readonly DiagnosticAnalyzersLoader diagnosticAnalyzersLoader;
     private readonly DiagnosticCollection workspaceDiagnostics;
     private readonly CurrentClassLogger currentClassLogger;
-
-    public Guid DiagnosticsCollectionToken => workspaceDiagnostics.CollectionToken;
 
     public CompilationHost(IAdditionalComponentsProvider additionalComponentsProvider) {
         currentClassLogger = new CurrentClassLogger(nameof(CompilationHost));
@@ -37,13 +34,11 @@ public class CompilationHost {
     }
 
     private void BeginAnalysis() {
-        workspaceDiagnostics.RemoveEmptyEntries();
+        workspaceDiagnostics.BeginUpdate();
     }
     private async Task UpdateCompilerDiagnosticsAsync(IEnumerable<Document> documents, AnalysisScope scope, CancellationToken cancellationToken) {
         if (scope == AnalysisScope.None || !documents.Any())
             return;
-
-        documents.ForEach(document => workspaceDiagnostics.ClearDiagnostics(document, scope, false));
 
         foreach (var document in documents) {
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Compiler analysis for {document.Name} started");
@@ -64,8 +59,6 @@ public class CompilationHost {
         if (scope == AnalysisScope.None || !documents.Any())
             return;
 
-        documents.ForEach(document => workspaceDiagnostics.ClearDiagnostics(document, scope, true));
-
         foreach (var document in documents) {
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Compiler analysis for {document.Name} started");
 
@@ -81,7 +74,9 @@ public class CompilationHost {
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Compiler analysis for {document.Name} finished");
         }
     }
-    private void EndAnalysis() { }
+    private void EndAnalysis() {
+        workspaceDiagnostics.EndUpdate();
+    }
 
     #region Analysis
     private async Task DiagnoseAsync(Project project, CancellationToken cancellationToken) {

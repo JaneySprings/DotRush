@@ -150,7 +150,7 @@ class Program {
 
         var diagnostics = await GetDiagnostics(documents, AnalysisScope.Document);
         Assert.That(diagnostics.Where(d => d.Diagnostic.Id == "CS1002").ToList(), Has.Count.EqualTo(2), "Diagnostics should contain 2 missing semicolon");
-        diagnostics = await GetDiagnostics(documents2!, AnalysisScope.Document);
+        diagnostics = await GetDiagnostics(documents2!, AnalysisScope.Project);
         Assert.That(diagnostics.Where(d => d.Diagnostic.Id == "CS1002").ToList(), Has.Count.EqualTo(4), "Diagnostics should contain 4 missing semicolon");
     }
     [Test]
