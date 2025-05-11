@@ -13,6 +13,7 @@ namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 public class TextDocumentHandler : TextDocumentHandlerBase {
     private readonly WorkspaceService workspaceService;
     private readonly CodeAnalysisService codeAnalysisService;
+    private readonly HashSet<string> openDocuments = new HashSet<string>();
 
     public TextDocumentHandler(WorkspaceService workspaceService, CodeAnalysisService codeAnalysisService) {
         this.workspaceService = workspaceService;
@@ -28,6 +29,7 @@ public class TextDocumentHandler : TextDocumentHandlerBase {
 
     protected override Task Handle(DidOpenTextDocumentParams request, CancellationToken token) {
         var filePath = request.TextDocument.Uri.FileSystemPath;
+        openDocuments.Add(filePath);
         codeAnalysisService.RequestDiagnosticsPublishing(GetDocumentsWithFilePath(filePath), CancellationToken.None);
         return Task.CompletedTask;
     }
@@ -36,26 +38,42 @@ public class TextDocumentHandler : TextDocumentHandlerBase {
         var text = request.ContentChanges.First().Text;
 
         workspaceService.UpdateDocument(filePath, text);
-        codeAnalysisService.RequestDiagnosticsPublishing(GetDocumentsWithFilePath(filePath), CancellationToken.None);
+        codeAnalysisService.RequestDiagnosticsPublishing(GetAllOpenDocuments(), CancellationToken.None);
         return Task.CompletedTask;
     }
     protected override Task Handle(DidCloseTextDocumentParams request, CancellationToken token) {
+        var filePath = request.TextDocument.Uri.FileSystemPath;
+        openDocuments.Remove(filePath);
         return Task.CompletedTask;
     }
     protected override Task Handle(WillSaveTextDocumentParams request, CancellationToken token) {
+        var filePath = request.TextDocument.Uri.FileSystemPath;
+        codeAnalysisService.RequestDiagnosticsPublishing(GetAllOpenDocuments(), CancellationToken.None);
         return Task.CompletedTask;
     }
     protected override Task<List<TextEdit>?> HandleRequest(WillSaveTextDocumentParams request, CancellationToken token) {
         return Task.FromResult<List<TextEdit>?>(null);
     }
 
-    private IEnumerable<Document> GetDocumentsWithFilePath(string filePath) {
-        var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
-        if (documentIds == null || !documentIds.Any() || workspaceService.Solution == null)
-            return Enumerable.Empty<Document>();
-
+    private List<Document> GetAllOpenDocuments() {
         var documents = new List<Document>();
-        foreach (var documentId in documentIds) {
+        foreach (var filePath in openDocuments) {
+            documents.AddRange(GetDocumentsWithFilePath(filePath));
+        }
+        return documents;
+    }
+
+    private List<Document> GetDocumentsWithFilePath(string filePath) {
+        var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
+        if (documentIds == null || workspaceService.Solution == null)
+            return [];
+
+        var documentIdsList = documentIds.ToList();
+        if (documentIdsList.Count == 0)
+            return [];
+
+        var documents = new List<Document>(documentIdsList.Count);
+        foreach (var documentId in documentIdsList) {
             var document = workspaceService.Solution.GetDocument(documentId);
             if (document != null)
                 documents.Add(document);
