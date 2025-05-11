@@ -48,8 +48,6 @@ public class TextDocumentHandler : TextDocumentHandlerBase {
         return Task.CompletedTask;
     }
     protected override Task Handle(WillSaveTextDocumentParams request, CancellationToken token) {
-        var filePath = request.TextDocument.Uri.FileSystemPath;
-        codeAnalysisService.RequestDiagnosticsPublishing(GetAllOpenDocuments(), CancellationToken.None);
         return Task.CompletedTask;
     }
     protected override Task<List<TextEdit>?> HandleRequest(WillSaveTextDocumentParams request, CancellationToken token) {
