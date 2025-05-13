@@ -60,7 +60,7 @@ public class CompilationHost {
             return;
 
         foreach (var document in documents) {
-            currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Compiler analysis for {document.Name} started");
+            currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Analyzer analysis for {document.Name} started");
 
             switch (scope) {
                 case AnalysisScope.Document:
@@ -71,7 +71,7 @@ public class CompilationHost {
                     break;
             }
 
-            currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Compiler analysis for {document.Name} finished");
+            currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Analyzer analysis for {document.Name} finished");
         }
     }
     private void EndAnalysis() {
