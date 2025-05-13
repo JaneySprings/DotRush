@@ -36,6 +36,14 @@ public static class SafeExtensions {
             return null;
         }
     }
+    public static T Invoke<T>(T defaultValue, Func<T> action) {
+        try {
+            return action.Invoke();
+        } catch (Exception e) {
+            LogException(e);
+            return defaultValue;
+        }
+    }
     public static void Invoke(Action action) {
         try {
             action.Invoke();
