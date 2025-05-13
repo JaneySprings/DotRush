@@ -30,7 +30,7 @@ export class DebugAdapterController {
         if (!fs.existsSync(launchSettingsPath))
             return undefined;
 
-        const settings: LaunchSettings = JSON.parse(fs.readFileSync(launchSettingsPath, 'utf8'));
+        const settings = Extensions.deserialize<LaunchSettings>(fs.readFileSync(launchSettingsPath, 'utf-8').trim());
         if (settings?.profiles === undefined || Object.keys(settings.profiles).length === 0)
             return undefined;
 
