@@ -71,7 +71,11 @@ export class TestExplorerController {
             testArguments.conditional(`'${filters.join('|')}'`, () => filters.length > 0);
 
             const testRun = TestExplorerController.controller.createTestRun(request);
-            await Extensions.waitForTask(preLaunchTask);
+            if (preLaunchTask !== undefined) {
+                const executionSuccess = await Extensions.waitForTask(preLaunchTask);
+                if (!executionSuccess || token.isCancellationRequested)
+                    return;
+            }
             await Extensions.waitForTask(DotNetTaskProvider.getTestTask(project.uri!.fsPath, testArguments));
             await TestExplorerController.publishTestResults(testRun, project, testReport);
         });

@@ -96,10 +96,7 @@ export class Extensions {
             await Promise.all(slice.map(action));
         }
     }
-    public static async waitForTask(task: vscode.Task | undefined): Promise<boolean> {
-        if (task === undefined)
-            return false;
-
+    public static async waitForTask(task: vscode.Task): Promise<boolean> {
         const execution = await vscode.tasks.executeTask(task);
         const executionExitCode = await new Promise<number>((resolve) => {
             const disposable = vscode.tasks.onDidEndTaskProcess(e => {
