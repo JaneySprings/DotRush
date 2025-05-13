@@ -143,7 +143,7 @@ export class Extensions {
     public static deserialize<TModel>(json: string): TModel | undefined {
         try {
             return JSON.parse(json) as TModel;
-        } catch (error) {
+        } catch {
             return undefined;
         }
     }
