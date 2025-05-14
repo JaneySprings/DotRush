@@ -7,9 +7,10 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
-	async resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined,
-									config: vscode.DebugConfiguration, 
-									token?: vscode.CancellationToken): Promise<vscode.DebugConfiguration | undefined> {
+    public async resolveDebugConfiguration(
+        folder: vscode.WorkspaceFolder | undefined,
+        config: vscode.DebugConfiguration,
+        token?: vscode.CancellationToken): Promise<vscode.DebugConfiguration> {
 
         if (!config.type && !config.request && !config.name) {
             config.name = res.debuggerNetCoreTitle;
@@ -17,6 +18,13 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
             config.request = folder === undefined ? 'attach' : 'launch';
             config.preLaunchTask = folder === undefined ? undefined : `${res.extensionId}: Build`;
         }
+
+        return config;
+    }
+    public async resolveDebugConfigurationWithSubstitutedVariables(
+        folder: vscode.WorkspaceFolder | undefined,
+        config: vscode.DebugConfiguration,
+        token?: vscode.CancellationToken): Promise<vscode.DebugConfiguration> {
 
         Extensions.onVSCode(true, false)
             ? DotNetDebugConfigurationProvider.provideVsdbgConfiguration(config)
@@ -89,14 +97,14 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
         if (profile === undefined)
             return config;
 
-        config.cwd = profile.workingDirectory;
-        config.program = profile.executablePath;
-
-        if (profile.commandLineArgs) {
+        if (profile.workingDirectory !== undefined)
+            config.cwd = profile.workingDirectory;
+        if (profile.executablePath !== undefined)
+            config.program = profile.executablePath;
+        if (profile.environmentVariables !== undefined)
+            config.env = profile.environmentVariables;
+        if (profile.commandLineArgs !== undefined)
             config.args = [profile.commandLineArgs]; //TODO: We need to split the command line args
-        }
-
-        config.env = profile.environmentVariables;
 
         if (profile.applicationUrl !== undefined)
             config.env = { ...config.env, ASPNETCORE_URLS: profile.applicationUrl };

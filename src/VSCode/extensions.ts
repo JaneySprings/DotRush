@@ -128,18 +128,6 @@ export class Extensions {
             return vscode.workspace.workspaceFolders[0];
         return undefined;
     }
-    public static resolveTemplatedPath(templatePath: string): string {
-        if (path.isAbsolute(templatePath))
-            return templatePath;
-
-        const workspaceFolder = Extensions.getWorkspaceFolder();
-        if (workspaceFolder === undefined)
-            return templatePath;
-
-        return templatePath
-            .replace(/\$\{workspaceFolder\}/g, workspaceFolder.uri.fsPath)
-            .replace(/\$\{workspaceRoot\}/g, workspaceFolder.uri.fsPath);
-    }
     public static deserialize<TModel>(json: string): TModel | undefined {
         try {
             return JSON.parse(json) as TModel;
