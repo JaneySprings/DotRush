@@ -26,7 +26,6 @@ export class DebugAdapterController {
     }
 
     public static getLaunchProfile(launchSettingsPath: string, profileName: string | undefined): LaunchProfile | undefined {
-        launchSettingsPath = Extensions.resolveTemplatedPath(launchSettingsPath);
         if (!fs.existsSync(launchSettingsPath))
             return undefined;
 
