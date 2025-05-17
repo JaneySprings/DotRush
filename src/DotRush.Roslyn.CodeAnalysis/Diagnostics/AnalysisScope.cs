@@ -4,5 +4,5 @@ public enum AnalysisScope {
     None,
     Document,
     Project,
-    // Solution,
+    Solution,
 }

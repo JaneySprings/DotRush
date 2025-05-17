@@ -466,7 +466,8 @@
             "enum": [
               "None",
               "Document",
-              "Project"
+              "Project",
+              "Solution"
             ]
           },
           "dotrush.roslyn.analyzerDiagnosticsScope": {
@@ -476,7 +477,8 @@
             "enum": [
               "None",
               "Document",
-              "Project"
+              "Project",
+              "Solution"
             ]
           },
           "dotrush.roslyn.dotnetSdkDirectory": {

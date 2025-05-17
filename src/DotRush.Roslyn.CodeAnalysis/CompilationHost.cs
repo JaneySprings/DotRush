@@ -50,6 +50,9 @@ public class CompilationHost {
                 case AnalysisScope.Project:
                     await DiagnoseWithSuppressorsAsync(document.Project, cancellationToken).ConfigureAwait(false);
                     break;
+                case AnalysisScope.Solution:
+                    await DiagnoseWithSuppressorsAsync(document.Project.Solution, cancellationToken).ConfigureAwait(false);
+                    return; // Already include all projects and target frameworks
             }
 
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Compiler analysis for {document.Name} finished");
@@ -69,6 +72,9 @@ public class CompilationHost {
                 case AnalysisScope.Project:
                     await AnalyzerDiagnoseAsync(document.Project, cancellationToken).ConfigureAwait(false);
                     break;
+                case AnalysisScope.Solution:
+                    await AnalyzerDiagnoseAsync(document.Project.Solution, cancellationToken).ConfigureAwait(false);
+                    return; // Already include all projects and target frameworks
             }
 
             currentClassLogger.Debug($"[{cancellationToken.GetHashCode()}]: Analyzer analysis for {document.Name} finished");
@@ -79,17 +85,6 @@ public class CompilationHost {
     }
 
     #region Analysis
-    private async Task DiagnoseAsync(Project project, CancellationToken cancellationToken) {
-        if (cancellationToken.IsCancellationRequested)
-            return;
-
-        var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
-        if (compilation == null)
-            return;
-
-        var diagnostics = compilation.GetDiagnostics(cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
-    }
     private async Task DiagnoseAsync(Document document, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
             return;
@@ -100,6 +95,17 @@ public class CompilationHost {
 
         var diagnostics = semanticModel.GetDiagnostics(null, cancellationToken);
         workspaceDiagnostics.AddDiagnostics(document.Project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document.Project)));
+    }
+    private async Task DiagnoseAsync(Project project, CancellationToken cancellationToken) {
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
+        var compilation = await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
+        if (compilation == null)
+            return;
+
+        var diagnostics = compilation.GetDiagnostics(cancellationToken);
+        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
     }
     private async Task DiagnoseWithSuppressorsAsync(Project project, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
@@ -118,6 +124,13 @@ public class CompilationHost {
 
         var diagnostics = await compilationWithSuppressors.GetAllDiagnosticsAsync(cancellationToken).ConfigureAwait(false);
         workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+    }
+    private async Task DiagnoseWithSuppressorsAsync(Solution solution, CancellationToken cancellationToken) {
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
+        foreach (var project in solution.Projects)
+            await DiagnoseWithSuppressorsAsync(project, cancellationToken).ConfigureAwait(false);
     }
     private async Task AnalyzerDiagnoseAsync(Document document, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
@@ -158,6 +171,13 @@ public class CompilationHost {
 
         var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken).ConfigureAwait(false);
         workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, true)));
+    }
+    private async Task AnalyzerDiagnoseAsync(Solution solution, CancellationToken cancellationToken) {
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
+        foreach (var project in solution.Projects)
+            await AnalyzerDiagnoseAsync(project, cancellationToken).ConfigureAwait(false);
     }
     #endregion
 }
