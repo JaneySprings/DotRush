@@ -30,7 +30,7 @@ public static class GitExtensions {
         if (string.IsNullOrEmpty(gitPath))
             return false;
 
-        return IsLockedState(gitPath) 
+        return IsLockedState(gitPath)
             || IsMergeState(gitPath)
             || IsRebaseState(gitPath);
     }
@@ -41,8 +41,8 @@ public static class GitExtensions {
     }
     private static bool IsRebaseState(string gitPath) {
         var rebaseMergePath = Path.Combine(gitPath, "rebase-merge");
-        var rebaseHeadPath = Path.Combine(gitPath, "REBASE_HEAD");
-        return Directory.Exists(rebaseMergePath) || File.Exists(rebaseHeadPath);
+        // var rebaseHeadPath = Path.Combine(gitPath, "REBASE_HEAD");
+        return Directory.Exists(rebaseMergePath); //|| File.Exists(rebaseHeadPath);
     }
     private static bool IsLockedState(string gitPath) {
         var lockPath = Path.Combine(gitPath, "index.lock");

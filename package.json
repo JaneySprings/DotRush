@@ -454,11 +454,6 @@
             "default": true,
             "description": "%configuration.description.roslyn.compileProjectsAfterLoading%"
           },
-          "dotrush.roslyn.applyWorkspaceChanges": {
-            "type": "boolean",
-            "default": false,
-            "description": "%configuration.description.roslyn.applyWorkspaceChanges%"
-          },
           "dotrush.roslyn.compilerDiagnosticsScope": {
             "type": "string",
             "default": "Project",
