@@ -107,6 +107,7 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
             "type": "coreclr",
             "request": "attach",
             "processPath": "C:\\Programs\\Godot\\Godot_v4.4.1-stable_mono_win64.exe",
+            "preLaunchTask": "dotrush: Build"
         }
     ]
 }
