@@ -17,6 +17,9 @@ Roslyn-based autocompletion, suggestions, and code navigation to help you write 
 - **.NET Core Debugger** </br>
 Debug your C# applications with the built-in .NET Core Debugger.
 
+- **.NET Core Profiler** </br>
+Profile your .NET Core applications with the built-in profiler tools.
+
 - **Unity Debugger** </br>
 Debug your Unity projects with the integrated Mono Debugger.
 
@@ -124,3 +127,12 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 
 - For the `trace` report, you can use the [Speedscope in VSCode](https://marketplace.visualstudio.com/items?itemName=sransara.speedscope-in-vscode) extension to view it. Alternatively, you can upload it directly to the [speedscope](https://www.speedscope.app) site.
 - For the `gcdump` report, you can use the [dotnet-heapview](https://github.com/1hub/dotnet-heapview) or _Visual Studio for Windows_.
+
+## Limitations
+&emsp;DotRush currently supports **only C# language** features and does not support `Razor`, `XAML`, or other languages. Also it does not support the following language features:
+
+- **CodeLens** </br>
+DotRush does not support [CodeLens features](https://code.visualstudio.com/api/language-extensions/programmatic-language-features#codelens-show-actionable-context-information-within-source-code) such as references, tests, and other CodeLens features.
+
+- **Semantic Highlighting** </br>
+DotRush does not support advanced [semantic highlighting](https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide). Use the built-in syntax highlighting instead.
