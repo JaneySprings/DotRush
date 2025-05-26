@@ -50,7 +50,7 @@ export class ModulesView implements TreeDataProvider<any>, DebugAdapterTrackerFa
             return item;
         } else {
             const item = new vscode.TreeItem(element.name, vscode.TreeItemCollapsibleState.Collapsed);
-            item.iconPath = Icons.module;
+            item.iconPath = Icons.moduleIcon;
             return item;
         }
     }

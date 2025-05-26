@@ -1,4 +1,5 @@
 import { Range, TestItem, TestController, Uri, TestMessage } from "vscode";
+import { Icons } from "../resources/icons";
 
 export interface TestFixture {
     id: string;
@@ -25,7 +26,7 @@ export interface TestResult {
 
 export class TestExtensions {
     public static fixtureToTestItem(fixture: TestFixture, controller: TestController): TestItem {
-        const item = controller.createTestItem(fixture.id, fixture.name, Uri.file(fixture.filePath));
+        const item = controller.createTestItem(fixture.id, `${Icons.module} ${fixture.name}`, Uri.file(fixture.filePath));
         if (fixture.range !== null)
             item.range = fixture.range;
         if (fixture.children !== null && fixture.children !== undefined)
@@ -33,7 +34,7 @@ export class TestExtensions {
         return item;
     }
     public static testCaseToTestItem(testCase: TestCase, controller: TestController): TestItem {
-        const item = controller.createTestItem(testCase.id, testCase.name, Uri.file(testCase.filePath));
+        const item = controller.createTestItem(testCase.id, `${Icons.test} ${testCase.name}`, Uri.file(testCase.filePath));
         if (testCase.range !== null)
             item.range = testCase.range;
         return item;
