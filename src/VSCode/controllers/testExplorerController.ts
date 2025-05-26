@@ -60,7 +60,7 @@ export class TestExplorerController {
     private static async runTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
         TestExplorerController.convertTestRequest(request).forEach(async (filters, project) => {
             const preLaunchTask = await Extensions.getTask(Extensions.getSetting<string>(res.configIdTestExplorerPreLaunchTask));
-            const testReport = path.join(TestExplorerController.testsResultDirectory, `${project.label}.trx`);
+            const testReport = path.join(TestExplorerController.testsResultDirectory, `${project.id}.trx`);
             if (fs.existsSync(testReport))
                 vscode.workspace.fs.delete(vscode.Uri.file(testReport));
 
