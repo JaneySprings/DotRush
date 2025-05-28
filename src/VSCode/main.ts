@@ -13,10 +13,8 @@ import * as res from './resources/constants';
 import * as vscode from 'vscode';
 
 export async function activate(context: vscode.ExtensionContext) {
-	if (vscode.extensions.getExtension(res.extensionMicrosoftId)) {
-		vscode.window.showErrorMessage(res.messageOmniSharpAlreadyInstalled, { modal: true });
-		return;
-	}
+	if (vscode.extensions.getExtension(res.extensionMicrosoftId))
+		vscode.window.showWarningMessage(res.messageOmniSharpAlreadyInstalled);
 
 	const exports = new PublicExports();
 	Interop.initialize(context.extensionPath);
