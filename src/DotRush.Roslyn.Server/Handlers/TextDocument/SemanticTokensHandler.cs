@@ -11,7 +11,6 @@ using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -27,7 +26,7 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
             Full = true,
             Range = true,
             Legend = new SemanticTokensLegend {
-                TokenTypes = Enum.GetNames(typeof(SemanticTokenType)).Select(n => n.ToCamelCase()).ToList(),
+                TokenTypes = Enum.GetNames<SemanticTokenType>().Select(n => n.ToCamelCase()).ToList(),
                 TokenModifiers = new List<string>(),
             }
         };
@@ -119,7 +118,6 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
 
         return (startLine, startCharacter, length, type);
     }
-
     private SemanticTokenType GetTokenType(SyntaxToken token, SemanticModel? semanticModel) {
         if (token.IsKind(SyntaxKind.NumericLiteralToken))
             return SemanticTokenType.Number;
