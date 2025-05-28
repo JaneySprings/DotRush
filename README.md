@@ -133,6 +133,3 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 
 - **CodeLens** </br>
 DotRush does not support [CodeLens features](https://code.visualstudio.com/api/language-extensions/programmatic-language-features#codelens-show-actionable-context-information-within-source-code) such as references, tests, and other CodeLens features.
-
-- **Semantic Highlighting** </br>
-DotRush does not support advanced [semantic highlighting](https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide). Use the built-in syntax highlighting instead.
