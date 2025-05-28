@@ -114,7 +114,7 @@ public static class SymbolExtensions {
             case ProtocolModels.SymbolKind.Operator:
                 return SemanticTokenType.Operator;
             case ProtocolModels.SymbolKind.Function:
-                return SemanticTokenType.Method;
+                return SemanticTokenType.Delegate;
         }
 
         return SemanticTokenType.Unknown;
@@ -140,7 +140,7 @@ public enum SemanticTokenType {
     Method,
     EnumMember,
     Event,
-    Macro,
+    Delegate,
     Label,
     Unknown
 }

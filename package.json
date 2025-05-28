@@ -84,6 +84,9 @@
           ],
           "controlKeyword": [
             "keyword.control.cs"
+          ],
+          "delegate": [
+            "entity.name.type.delegate.cs"
           ]
         }
       }
