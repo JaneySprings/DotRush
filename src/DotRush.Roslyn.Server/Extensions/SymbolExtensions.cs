@@ -92,6 +92,8 @@ public static class SymbolExtensions {
             case ProtocolModels.SymbolKind.TypeParameter:
                 return SemanticTokenType.TypeParameter;
             case ProtocolModels.SymbolKind.Method:
+                if (symbol is IMethodSymbol methodSymbol && methodSymbol.MethodKind == MethodKind.Constructor)
+                    return methodSymbol.ContainingType.ToSemanticTokenType();
                 return SemanticTokenType.Method;
             case ProtocolModels.SymbolKind.Property:
                 return SemanticTokenType.Property;

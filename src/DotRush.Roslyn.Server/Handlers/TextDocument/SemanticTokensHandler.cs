@@ -132,7 +132,7 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
         // if (SyntaxFacts.IsPreprocessorKeyword(token.Kind()))
         //     return (uint)TokenTypes.IndexOf("macro");
         if (token.IsKind(SyntaxKind.IdentifierToken) && token.Parent.IsDeclaration() && semanticModel != null) {
-            var symbol = semanticModel.GetDeclaredSymbol(token.Parent);
+            var symbol = semanticModel.GetDeclaredSymbol(token.Parent!);
             if (symbol != null)
                 return symbol.ToSemanticTokenType();
         }
@@ -142,7 +142,7 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
                 return symbol.ToSemanticTokenType();
         }
 
-        //return SemanticTokenType.Unknown;
-        return SemanticTokenType.Operator;
+        return SemanticTokenType.Unknown;
+        // return SemanticTokenType.Operator;
     }
 }
