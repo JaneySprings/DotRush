@@ -49,7 +49,6 @@ class Program {
         foreach (var tfm in MultiTFM.Split(';'))
             Assert.That(diagnostics.Where(d => d.SourceName.Contains(tfm)).Count(), Is.EqualTo(14));
         Assert.That(diagnostics.Any(d => !File.Exists(d.FilePath)), Is.False, "Diagnostics should contain file paths");
-        Assert.That(diagnostics.Any(d => d.IsAnalyzerDiagnostic), Is.False, "Diagnostics should not contain analyzer diagnostics");
 
         var currentFileDiagnostics = diagnostics.Where(d => PathExtensions.Equals(d.FilePath, testDocumentPath)).ToList();
         Assert.That(currentFileDiagnostics, Is.Not.Empty);
@@ -74,7 +73,6 @@ class Program {
         foreach (var tfm in MultiTFM.Split(';'))
             Assert.That(diagnostics.Where(d => d.SourceName.Contains(tfm)).Count(), Is.EqualTo(2));
         Assert.That(diagnostics.Any(d => !File.Exists(d.FilePath)), Is.False, "Diagnostics should contain file paths");
-        Assert.That(diagnostics.Any(d => d.IsAnalyzerDiagnostic), Is.False, "Diagnostics should not contain analyzer diagnostics");
 
         var currentFileDiagnostics = diagnostics.Where(d => PathExtensions.Equals(d.FilePath, testDocumentPath)).ToList();
         Assert.That(currentFileDiagnostics, Is.Not.Empty);

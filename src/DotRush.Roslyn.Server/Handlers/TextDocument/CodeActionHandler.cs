@@ -72,61 +72,58 @@ public class CodeActionHandler : CodeActionHandlerBase {
     }
 
     private async Task<IEnumerable<CommandOrCodeAction>> GetQuickFixesAsync(string filePath, DocumentRange range, CancellationToken cancellationToken) {
-        var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
-        if (documentIds == null)
+        var documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath).FirstOrDefault();
+        if (documentId == null)
             return Enumerable.Empty<CommandOrCodeAction>();
 
-        foreach (var documentId in documentIds) {
-            var result = new List<CommandOrCodeAction>();
-            var document = workspaceService.Solution?.GetDocument(documentId);
-            if (document == null)
-                continue;
+        var result = new List<CommandOrCodeAction>();
+        var document = workspaceService.Solution?.GetDocument(documentId);
+        if (document == null)
+            return result;
 
-            var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
-            var textSpan = range.ToTextSpan(sourceText);
-            var diagnosticContexts = codeAnalysisService.GetDiagnosticsByDocumentSpan(document, textSpan);
-            var diagnosticByIdGroups = diagnosticContexts.GroupBy(it => it.Diagnostic.Id).ToList();
-            if (diagnosticByIdGroups.Count == 0) {
-                currentClassLogger.Debug($"No diagnostics found for document '{document.Name}' in range '{range}'");
-                continue;
-            }
-
-            foreach (var byIdGroup in diagnosticByIdGroups) {
-                var project = workspaceService.Solution?.GetProject(byIdGroup.FirstOrDefault()?.SourceId);
-                if (project == null) {
-                    currentClassLogger.Debug($"Project not found for diagnostic id '{byIdGroup.Key}'");
-                    continue;
-                }
-
-                var codeFixProviders = codeAnalysisService.GetCodeFixProvidersForDiagnosticId(byIdGroup.Key, project);
-                if (codeFixProviders == null) {
-                    currentClassLogger.Debug($"CodeFixProviders not found for diagnostic id '{byIdGroup.Key}'");
-                    continue;
-                }
-
-                foreach (var codeFixProvider in codeFixProviders) {
-                    var diagnosticByRangeGroups = byIdGroup.GroupBy(it => it.Diagnostic.Location.SourceSpan).ToList();
-                    foreach (var byRangeGroup in diagnosticByRangeGroups) {
-                        var diagnostics = byRangeGroup.Select(it => it!.Diagnostic).ToImmutableArray();
-                        await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, byRangeGroup.Key, diagnostics, (action, _) => {
-                            if (cancellationToken.IsCancellationRequested)
-                                return;
-
-                            var singleCodeActions = action.ToFlattenCodeActions().Where(x => !x.IsBlacklisted());
-                            foreach (var singleCodeAction in singleCodeActions) {
-                                if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
-                                    result.Add(new CommandOrCodeAction(singleCodeAction.ToCodeAction(CodeActionKind.QuickFix)));
-                            }
-                        }, cancellationToken)).ConfigureAwait(false);
-                    }
-                }
-            }
-
-            if (result.Count != 0)
-                return result;
+        var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
+        var textSpan = range.ToTextSpan(sourceText);
+        var diagnosticContexts = codeAnalysisService.GetDiagnosticsByDocumentSpan(document, textSpan);
+        var diagnosticByIdGroups = diagnosticContexts.GroupBy(it => it.Diagnostic.Id).ToList();
+        if (diagnosticByIdGroups.Count == 0) {
+            currentClassLogger.Debug($"No diagnostics found for document '{document.Name}' in range '{range}'");
+            return result;
         }
 
-        return Enumerable.Empty<CommandOrCodeAction>();
+        foreach (var byIdGroup in diagnosticByIdGroups) {
+            // Original document with diagnostic was created. We need to use it to avoid:
+            // System.ArgumentException: Syntax node is not within syntax tree
+            document = byIdGroup.FirstOrDefault()?.Document;
+            if (document == null) {
+                currentClassLogger.Debug($"Document not found for diagnostic id '{byIdGroup.Key}'");
+                continue;
+            }
+
+            var codeFixProviders = codeAnalysisService.GetCodeFixProvidersForDiagnosticId(byIdGroup.Key, document.Project);
+            if (codeFixProviders == null) {
+                currentClassLogger.Debug($"CodeFixProviders not found for diagnostic id '{byIdGroup.Key}'");
+                continue;
+            }
+
+            foreach (var codeFixProvider in codeFixProviders) {
+                var diagnosticByRangeGroups = byIdGroup.GroupBy(it => it.Diagnostic.Location.SourceSpan).ToList();
+                foreach (var byRangeGroup in diagnosticByRangeGroups) {
+                    var diagnostics = byRangeGroup.Select(it => it!.Diagnostic).ToImmutableArray();
+                    await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, byRangeGroup.Key, diagnostics, (action, _) => {
+                        if (cancellationToken.IsCancellationRequested)
+                            return;
+
+                        var singleCodeActions = action.ToFlattenCodeActions().Where(x => !x.IsBlacklisted());
+                        foreach (var singleCodeAction in singleCodeActions) {
+                            if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
+                                result.Add(new CommandOrCodeAction(singleCodeAction.ToCodeAction(CodeActionKind.QuickFix)));
+                        }
+                    }, cancellationToken)).ConfigureAwait(false);
+                }
+            }
+        }
+
+        return result;
     }
     private async Task<IEnumerable<CommandOrCodeAction>> GetRefactoringsAsync(string filePath, DocumentRange range, CancellationToken cancellationToken) {
         var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);

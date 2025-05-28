@@ -94,7 +94,7 @@ public class CompilationHost {
             return;
 
         var diagnostics = semanticModel.GetDiagnostics(null, cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(document.Project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document.Project)));
+        workspaceDiagnostics.AddDiagnostics(document.Project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document)));
     }
     private async Task DiagnoseAsync(Project project, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
@@ -151,10 +151,10 @@ public class CompilationHost {
             return;
 
         var syntaxDiagnostics = await compilationWithAnalyzers.GetAnalyzerSyntaxDiagnosticsAsync(syntaxTree, cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, syntaxDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, true)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, syntaxDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document)));
 
         var semanticDiagnostics = await compilationWithAnalyzers.GetAnalyzerSemanticDiagnosticsAsync(semanticModel, null, cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, semanticDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, true)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, semanticDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document)));
     }
     private async Task AnalyzerDiagnoseAsync(Project project, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
@@ -170,7 +170,7 @@ public class CompilationHost {
             return;
 
         var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, true)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
     }
     private async Task AnalyzerDiagnoseAsync(Solution solution, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
