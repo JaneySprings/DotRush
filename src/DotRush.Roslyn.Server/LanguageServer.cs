@@ -35,6 +35,7 @@ public class LanguageServer {
               .AddHandler(new DocumentSymbolHandler(navigationService))
               .AddHandler(new HoverHandler(navigationService))
               .AddHandler(new FoldingRangeHandler(navigationService))
+              .AddHandler(new SemanticTokensHandler(navigationService))
               .AddHandler(new ImplementationHandler(workspaceService))
               .AddHandler(new ReferenceHandler(navigationService))
               .AddHandler(new DefinitionHandler(navigationService))
@@ -63,6 +64,7 @@ public class LanguageServer {
         await workspaceService.LoadAsync(parameters.WorkspaceFolders, CancellationToken.None).ConfigureAwait(false);
         codeAnalysisService.StartWorkerThread();
 
+        _ = LanguageServer.Proxy.RefreshWorkspaceTokens();
         _ = externalAccessService.StartListeningAsync(parameters.ProcessId, CancellationToken.None);
     }
 

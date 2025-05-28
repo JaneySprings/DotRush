@@ -75,6 +75,19 @@
         "path": "./themes/vs2022_classic.json"
       }
     ],
+    "semanticTokenScopes": [
+      {
+        "language": "csharp",
+        "scopes": {
+          "keyword": [
+            "keyword.cs"
+          ],
+          "controlKeyword": [
+            "keyword.control.cs"
+          ]
+        }
+      }
+    ],
     "menus": {
       "explorer/context": [
         {
