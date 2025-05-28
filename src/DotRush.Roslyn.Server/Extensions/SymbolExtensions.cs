@@ -75,4 +75,70 @@ public static class SymbolExtensions {
 
         return null;
     }
+    public static SemanticTokenType ToSemanticTokenType(this ISymbol symbol) {
+        switch (symbol.ToSymbolKind()) {
+            case ProtocolModels.SymbolKind.Class:
+                return SemanticTokenType.Class;
+            case ProtocolModels.SymbolKind.Struct:
+                return SemanticTokenType.Struct;
+            case ProtocolModels.SymbolKind.Namespace:
+                return SemanticTokenType.Namespace;
+            case ProtocolModels.SymbolKind.Enum:
+                return SemanticTokenType.Enum;
+            case ProtocolModels.SymbolKind.EnumMember:
+                return SemanticTokenType.EnumMember;
+            case ProtocolModels.SymbolKind.Interface:
+                return SemanticTokenType.Interface;
+            case ProtocolModels.SymbolKind.TypeParameter:
+                return SemanticTokenType.TypeParameter;
+            case ProtocolModels.SymbolKind.Method:
+                return SemanticTokenType.Method;
+            case ProtocolModels.SymbolKind.Property:
+                return SemanticTokenType.Property;
+            case ProtocolModels.SymbolKind.Event:
+                return SemanticTokenType.Event;
+            case ProtocolModels.SymbolKind.Constant:
+                return SemanticTokenType.Variable;
+            case ProtocolModels.SymbolKind.Field:
+                return SemanticTokenType.Variable;
+            case ProtocolModels.SymbolKind.Variable:
+                if (symbol is IParameterSymbol)
+                    return SemanticTokenType.Parameter;
+                return SemanticTokenType.Variable;
+            case ProtocolModels.SymbolKind.String:
+                if (symbol.Kind == SymbolKind.Label)
+                    return SemanticTokenType.Label;
+                return SemanticTokenType.String;
+            case ProtocolModels.SymbolKind.Operator:
+                return SemanticTokenType.Operator;
+            case ProtocolModels.SymbolKind.Function:
+                return SemanticTokenType.Method;
+        }
+
+        return SemanticTokenType.Unknown;
+    }
+}
+
+public enum SemanticTokenType {
+    Comment,
+    Keyword,
+    ControlKeyword,
+    Number,
+    Operator,
+    String,
+    Class,
+    Struct,
+    Namespace,
+    Enum,
+    Interface,
+    TypeParameter,
+    Parameter,
+    Variable,
+    Property,
+    Method,
+    EnumMember,
+    Event,
+    Macro,
+    Label,
+    Unknown
 }
