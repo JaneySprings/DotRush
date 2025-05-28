@@ -9,7 +9,7 @@ namespace DotRush.Roslyn.CodeAnalysis.Tests;
 public class CodeRefactoringProvidersLoaderTests : ComponentsLoaderTests<CodeRefactoringProvider> {
     private CodeRefactoringProvidersLoader loader = null!;
     protected override IComponentLoader<CodeRefactoringProvider> ComponentsLoader => loader;
-    protected override int ComponentsCount => 78;
+    protected override int ComponentsCount => 79;
 
     [SetUp]
     public void SetUp() {
@@ -19,7 +19,7 @@ public class CodeRefactoringProvidersLoaderTests : ComponentsLoaderTests<CodeRef
 public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider> {
     private CodeFixProvidersLoader loader = null!;
     protected override IComponentLoader<CodeFixProvider> ComponentsLoader => loader;
-    protected override int ComponentsCount => 296;
+    protected override int ComponentsCount => 298;
 
     [SetUp]
     public void SetUp() {
@@ -29,7 +29,7 @@ public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider
 public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAnalyzer> {
     private DiagnosticAnalyzersLoader loader = null!;
     protected override IComponentLoader<DiagnosticAnalyzer> ComponentsLoader => loader;
-    protected override int ComponentsCount => 390;
+    protected override int ComponentsCount => 392;
     protected int SuppressorsCount => 1;
 
     [SetUp]
@@ -61,7 +61,7 @@ public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAn
 }
 
 
-public abstract class ComponentsLoaderTests<TValue> : WorkspaceTestFixture, IAdditionalComponentsProvider where TValue: class {
+public abstract class ComponentsLoaderTests<TValue> : WorkspaceTestFixture, IAdditionalComponentsProvider where TValue : class {
     protected abstract IComponentLoader<TValue> ComponentsLoader { get; }
     protected abstract int ComponentsCount { get; }
 

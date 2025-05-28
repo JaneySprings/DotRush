@@ -41,8 +41,8 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
     public void StartWorkerThread() {
         workerThread.Start();
     }
-    public void RequestDiagnosticsPublishing(IEnumerable<Document> documents, CancellationToken cancellationToken) {
-        if (!documents.Any() || cancellationToken.IsCancellationRequested)
+    public void RequestDiagnosticsPublishing(IEnumerable<Document> documents) {
+        if (!documents.Any())
             return;
 
         workerTasks.Add(async () => {
@@ -50,7 +50,7 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
                 documents,
                 configurationService.CompilerDiagnosticsScope,
                 configurationService.AnalyzerDiagnosticsScope,
-                cancellationToken
+                CancellationToken.None
             ).ConfigureAwait(false);
 
             var diagnostics = compilationHost.GetDiagnostics();
@@ -60,7 +60,7 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
                     Diagnostics = pair.Value.Where(d => !d.IsHiddenInUI()).Select(d => d.ToServerDiagnostic()).ToList(),
                 }).ConfigureAwait(false);
             }
-        }, cancellationToken);
+        });
     }
 
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {

@@ -28,7 +28,7 @@ public class TextDocumentHandler : TextDocumentHandlerBase {
 
     protected override Task Handle(DidOpenTextDocumentParams request, CancellationToken token) {
         var filePath = request.TextDocument.Uri.FileSystemPath;
-        codeAnalysisService.RequestDiagnosticsPublishing(GetDocumentsWithFilePath(filePath), CancellationToken.None);
+        codeAnalysisService.RequestDiagnosticsPublishing(GetDocumentsWithFilePath(filePath));
         return Task.CompletedTask;
     }
     protected override Task Handle(DidChangeTextDocumentParams request, CancellationToken token) {
@@ -36,7 +36,7 @@ public class TextDocumentHandler : TextDocumentHandlerBase {
         var text = request.ContentChanges.First().Text;
 
         workspaceService.UpdateDocument(filePath, text);
-        codeAnalysisService.RequestDiagnosticsPublishing(GetDocumentsWithFilePath(filePath), CancellationToken.None);
+        codeAnalysisService.RequestDiagnosticsPublishing(GetDocumentsWithFilePath(filePath));
         return Task.CompletedTask;
     }
     protected override Task Handle(DidCloseTextDocumentParams request, CancellationToken token) {

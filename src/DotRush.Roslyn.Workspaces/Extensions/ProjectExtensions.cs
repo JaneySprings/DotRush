@@ -41,7 +41,7 @@ public static class ProjectExtensions {
                 return false;
             return PathExtensions.StartsWith(document.FilePath, folderPathFixed);
         });
-        
+
         return filteredDocuments.Select(document => document.Id);
     }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Project project, string folderPath) {
@@ -51,14 +51,21 @@ public static class ProjectExtensions {
                 return false;
             return PathExtensions.StartsWith(document.FilePath, folderPathFixed);
         });
-        
+
         return filteredDocuments.Select(document => document.Id);
     }
+
+    public static IEnumerable<Document> GetDocumentWithFilePath(this Project project, string? filePath) {
+        return project.Documents.Where(it => PathExtensions.Equals(it.FilePath, filePath));
+    }
+    public static IEnumerable<TextDocument> GetAdditionalDocumentWithFilePath(this Project project, string? filePath) {
+        return project.AdditionalDocuments.Where(it => PathExtensions.Equals(it.FilePath, filePath));
+    }
     public static IEnumerable<DocumentId> GetDocumentIdsWithFilePath(this Project project, string? filePath) {
-        return project.Documents.Where(it => PathExtensions.Equals(it.FilePath, filePath)).Select(it => it.Id);
+        return project.GetDocumentWithFilePath(filePath).Select(it => it.Id);
     }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(this Project project, string? filePath) {
-        return project.AdditionalDocuments.Where(it => PathExtensions.Equals(it.FilePath, filePath)).Select(it => it.Id);
+        return project.GetAdditionalDocumentWithFilePath(filePath).Select(it => it.Id);
     }
 
     public static IEnumerable<string> GetFolders(this Project project, string documentPath) {
