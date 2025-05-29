@@ -5,7 +5,7 @@ import * as path from 'path';
 
 export class Extensions {
     public static readonly projectExtPattern: string = '.csproj';
-    public static readonly solutionExtPattern: string = '.sln*';
+    public static readonly solutionExtPattern: string = '.{sln,slnf,slnx}';
 
     public static getSetting<TValue>(id: string, fallback: TValue | undefined = undefined): TValue | undefined {
         return vscode.workspace.getConfiguration(res.extensionId).get<TValue>(id) ?? fallback;
