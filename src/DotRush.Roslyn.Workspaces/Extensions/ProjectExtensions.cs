@@ -4,7 +4,6 @@ using Microsoft.CodeAnalysis;
 namespace DotRush.Roslyn.Workspaces.Extensions;
 
 public static class ProjectExtensions {
-
     public static string GetTargetFramework(this Project project) {
         var frameworkStartIndex = project.Name.LastIndexOf('(');
         if (frameworkStartIndex == -1)
@@ -34,27 +33,6 @@ public static class ProjectExtensions {
         return Path.GetDirectoryName(project.FilePath) ?? string.Empty;
     }
 
-    public static IEnumerable<DocumentId> GetDocumentIdsWithFolderPath(this Project project, string folderPath) {
-        var folderPathFixed = folderPath.EndsWith(Path.DirectorySeparatorChar) ? folderPath : folderPath + Path.DirectorySeparatorChar;
-        var filteredDocuments = project.Documents.Where(document => {
-            if (document.Folders.Count > 0 && document.Folders[0].Equals("obj", StringComparison.OrdinalIgnoreCase))
-                return false;
-            return PathExtensions.StartsWith(document.FilePath, folderPathFixed);
-        });
-
-        return filteredDocuments.Select(document => document.Id);
-    }
-    public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Project project, string folderPath) {
-        var folderPathFixed = folderPath.EndsWith(Path.DirectorySeparatorChar) ? folderPath : folderPath + Path.DirectorySeparatorChar;
-        var filteredDocuments = project.AdditionalDocuments.Where(document => {
-            if (document.Folders.Count > 0 && document.Folders[0].Equals("obj", StringComparison.OrdinalIgnoreCase))
-                return false;
-            return PathExtensions.StartsWith(document.FilePath, folderPathFixed);
-        });
-
-        return filteredDocuments.Select(document => document.Id);
-    }
-
     public static IEnumerable<Document> GetDocumentWithFilePath(this Project project, string? filePath) {
         return project.Documents.Where(it => PathExtensions.Equals(it.FilePath, filePath));
     }
@@ -76,10 +54,6 @@ public static class ProjectExtensions {
 
         var relativePath = documentDirectory.Replace(rootDirectory, string.Empty, StringComparison.OrdinalIgnoreCase);
         return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
-    }
-
-    internal static bool HasFolder(this Project project, string folderName) {
-        return project.Documents.Any(it => it.Folders.Contains(folderName, StringComparer.OrdinalIgnoreCase));
     }
 }
 

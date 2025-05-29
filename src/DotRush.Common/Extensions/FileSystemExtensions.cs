@@ -61,4 +61,14 @@ public static class FileSystemExtensions {
         File.Move(sourceFilePath, newFilePath);
         return newFilePath;
     }
+    public static string[] GetFiles(string path, string[] extensions, SearchOption searchOption) {
+        if (!Directory.Exists(path))
+            return Array.Empty<string>();
+
+        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var extension in extensions)
+            result.UnionWith(Directory.EnumerateFiles(path, $"*.{extension}", searchOption));
+
+        return result.ToArray();
+    }
 }

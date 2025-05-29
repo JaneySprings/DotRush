@@ -34,7 +34,7 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
         var workspaceFolders = workspaceFolderUris?.Select(it => it.Uri.FileSystemPath).ToArray();
         var targets = GetProjectOrSolutionFiles(workspaceFolders);
         if (targets == null) {
-            LanguageServer.Proxy.ShowError(Resources.MultipleSolutionsOrProjectsFound);
+            LanguageServer.Proxy.ShowError(Resources.ProjectOrSolutionFileSpecificationRequired);
             return;
         }
 
@@ -87,10 +87,10 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
         if (workspaceFolders == null)
             workspaceFolders = new[] { Environment.CurrentDirectory };
 
-        var solutionFiles = workspaceFolders.SelectMany(it => Directory.GetFiles(it, "*.sln*", SearchOption.AllDirectories));
+        var solutionFiles = workspaceFolders.SelectMany(it => FileSystemExtensions.GetFiles(it, ["sln", "slnf", "slnx"], SearchOption.AllDirectories));
         if (solutionFiles.Count() == 1)
             return solutionFiles;
-        var projectFiles = workspaceFolders.SelectMany(it => Directory.GetFiles(it, "*.csproj", SearchOption.AllDirectories));
+        var projectFiles = workspaceFolders.SelectMany(it => FileSystemExtensions.GetFiles(it, ["csproj"], SearchOption.AllDirectories));
         if (projectFiles.Count() == 1)
             return projectFiles;
 

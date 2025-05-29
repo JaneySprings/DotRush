@@ -11,24 +11,22 @@ namespace DotRush.Roslyn.Workspaces;
 
 public abstract class SolutionController : ProjectsController {
     public Solution? Solution { get; protected set; }
-    public Guid SolutionToken { get; protected set; }
     public event EventHandler? WorkspaceStateChanged;
 
     protected override void OnWorkspaceStateChanged(Solution newSolution) {
         Solution = newSolution;
-        SolutionToken = Guid.NewGuid();
         WorkspaceStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     protected async Task LoadSolutionAsync(MSBuildWorkspace workspace, IEnumerable<string> solutionFilePaths, CancellationToken cancellationToken) {
         CurrentSessionLogger.Debug($"Loading solutions: {string.Join(';', solutionFilePaths)}");
 
-        // Load the first solution and then load the rest as projects
-        var firstSolutionPath = solutionFilePaths.First();
-        var otherSolutionPaths = solutionFilePaths.Skip(1).ToArray();
+        (var primarySolution, var otherSolutions) = SplitSolutions(solutionFilePaths);
 
-        await LoadSolutionAsync(workspace, firstSolutionPath, cancellationToken);
-        foreach (var solutionFilePath in otherSolutionPaths) {
+        if (!string.IsNullOrEmpty(primarySolution))
+            await LoadSolutionAsync(workspace, primarySolution, cancellationToken);
+
+        foreach (var solutionFilePath in otherSolutions) {
             var projectFilePaths = MSBuildSolutionLoader.GetProjectFiles(solutionFilePath);
             await LoadProjectsAsync(workspace, projectFilePaths, cancellationToken);
         }
@@ -211,5 +209,19 @@ public abstract class SolutionController : ProjectsController {
             return false;
 
         return true;
+    }
+    private (string?, IEnumerable<string>) SplitSolutions(IEnumerable<string> solutionFilePaths) {
+        string? primarySolution = null;
+        var secondarySolutions = new List<string>();
+
+        foreach (var solutionFilePath in solutionFilePaths) {
+            if (WorkspaceExtensions.IsSupportedSolutionFile(solutionFilePath) && primarySolution == null) {
+                primarySolution = solutionFilePath;
+                continue;
+            }
+            secondarySolutions.Add(solutionFilePath);
+        }
+
+        return (primarySolution, secondarySolutions);
     }
 }

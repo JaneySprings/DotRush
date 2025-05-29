@@ -11,6 +11,7 @@ public static class WorkspaceExtensions {
     private static string[] additionalDocumentExtensions = { ".xaml", /* maybe '.razor' ? */};
     private static string[] projectFileExtensions = { ".csproj", /* fsproj vbproj */};
     private static string[] solutionFileExtensions = { ".sln", ".slnf", ".slnx" };
+    private static string[] supportedSolutionExtensions = { ".sln", ".slnf" }; //slnx is not supported by Roslyn for now
     private static string[] relevantExtensions = sourceCodeExtensions.Concat(additionalDocumentExtensions).ToArray();
 
     public static bool IsSourceCodeDocument(string filePath) {
@@ -28,22 +29,10 @@ public static class WorkspaceExtensions {
     public static bool IsSolutionFile(string filePath) {
         return solutionFileExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
     }
+    public static bool IsSupportedSolutionFile(string filePath) {
+        return supportedSolutionExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
+    }
 
-    public static IEnumerable<ProjectId> GetProjectIdsWithFilePath(this Solution solution, string filePath) {
-        return solution.GetProjectIdsWithDocumentFilePath(filePath).Concat(solution.GetProjectIdsWithAdditionalDocumentFilePath(filePath)).Distinct();
-    }
-    public static IEnumerable<ProjectId> GetProjectIdsWithDocumentFilePath(this Solution solution, string filePath) {
-        return solution.Projects.Where(project => project.GetDocumentIdsWithFilePath(filePath).Any()).Select(project => project.Id);
-    }
-    public static IEnumerable<ProjectId> GetProjectIdsWithAdditionalDocumentFilePath(this Solution solution, string filePath) {
-        return solution.Projects.Where(project => project.GetAdditionalDocumentIdsWithFilePath(filePath).Any()).Select(project => project.Id);
-    }
-    public static IEnumerable<DocumentId> GetDocumentIdsWithFolderPath(this Solution solution, string folderPath) {
-        return solution.Projects.SelectMany(project => project.GetDocumentIdsWithFolderPath(folderPath));
-    }
-    public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFolderPath(this Solution solution, string folderPath) {
-        return solution.Projects.SelectMany(project => project.GetAdditionalDocumentIdsWithFolderPath(folderPath));
-    }
     public static IEnumerable<ProjectId> GetProjectIdsMayContainsFilePath(this Solution solution, string documentPath) {
         var projects = solution.Projects.Where(p => PathExtensions.StartsWith(documentPath, Path.GetDirectoryName(p.FilePath) + Path.DirectorySeparatorChar)).ToList();
         if (projects.Count == 0 || string.IsNullOrEmpty(documentPath))
