@@ -49,4 +49,16 @@ public static class FileSystemExtensions {
 
         File.SetAttributes(filePath, File.GetAttributes(filePath) | FileAttributes.ReadOnly);
     }
+    public static string RenameFile(string sourceFilePath, string newName) {
+        var sourceFileDirectory = Path.GetDirectoryName(sourceFilePath);
+        var newFilePath = Path.Combine(sourceFileDirectory!, newName);
+
+        if (!File.Exists(sourceFilePath))
+            throw new FileNotFoundException($"Source file not found: {sourceFilePath}");
+        if (File.Exists(newFilePath))
+            throw new IOException($"Destination file already exists: {newFilePath}");
+
+        File.Move(sourceFilePath, newFilePath);
+        return newFilePath;
+    }
 }

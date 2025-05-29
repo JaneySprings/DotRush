@@ -10,11 +10,15 @@ using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeRefactorings;
+using Microsoft.CodeAnalysis.Text;
 using CodeAnalysisCodeAction = Microsoft.CodeAnalysis.CodeActions.CodeAction;
+using CodeAnalysisOperation = Microsoft.CodeAnalysis.CodeActions.ApplyChangesOperation;
+using FileSystemExtensions = DotRush.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -61,13 +65,14 @@ public class CodeActionHandler : CodeActionHandlerBase {
                 return request;
             }
 
-            var result = await codeAction.ResolveCodeActionAsync(workspaceService, token).ConfigureAwait(false);
-            if (result == null) {
-                currentClassLogger.Error($"CodeAction '{request.Title}' with id '{codeActionId}' failed to resolve");
+            var documentEdits = await ResolveCodeActionAsync(codeAction, workspaceService.Solution, token).ConfigureAwait(false);
+            if (documentEdits.Count == 0) {
+                currentClassLogger.Error($"CodeAction '{request.Title}' with id '{codeActionId}' has no text edits");
                 return request;
             }
 
-            return result;
+            request.Edit = new WorkspaceEdit() { Changes = documentEdits };
+            return request;
         });
     }
 
@@ -163,5 +168,82 @@ public class CodeActionHandler : CodeActionHandlerBase {
         }
 
         return Enumerable.Empty<CommandOrCodeAction>();
+    }
+    private async Task<Dictionary<DocumentUri, List<TextEdit>>> ResolveCodeActionAsync(CodeAnalysisCodeAction codeAction, Solution solution, CancellationToken cancellationToken) {
+        var documentEdits = new Dictionary<DocumentUri, List<TextEdit>>();
+        var operations = await codeAction.GetOperationsAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var operation in operations) {
+            if (operation is not CodeAnalysisOperation applyChangesOperation)
+                continue;
+
+            var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solution);
+            foreach (var projectChanges in solutionChanges.GetProjectChanges()) {
+                foreach (var documentId in projectChanges.GetChangedDocuments()) {
+                    var newDocument = projectChanges.NewProject.GetDocument(documentId);
+                    var oldDocument = solution.GetDocument(newDocument?.Id);
+                    if (oldDocument?.FilePath == null || newDocument?.FilePath == null)
+                        continue;
+
+                    if (newDocument.Name != oldDocument.Name) {
+                        ProcessDocumentRename(oldDocument, newDocument.Name);
+                        continue;
+                    }
+
+                    var sourceText = await oldDocument.GetTextAsync(cancellationToken).ConfigureAwait(false);
+                    var textEdits = new List<TextEdit>();
+                    var textChanges = await newDocument.GetTextChangesAsync(oldDocument, cancellationToken).ConfigureAwait(false);
+                    textEdits.AddRange(textChanges.Select(x => new TextEdit() {
+                        NewText = x.NewText ?? string.Empty,
+                        Range = x.Span.ToRange(sourceText),
+                    }));
+
+                    if (textEdits.Count != 0)
+                        documentEdits.TryAdd(newDocument.FilePath, textEdits);
+                }
+                foreach (var documentId in projectChanges.GetAddedDocuments()) {
+                    var newDocument = projectChanges.NewProject.GetDocument(documentId)!;
+                    var sourceText = await newDocument.GetTextAsync(cancellationToken).ConfigureAwait(false);
+                    ProcessDocumentCreate(newDocument, sourceText);
+                }
+                foreach (var documentId in projectChanges.GetRemovedDocuments()) {
+                    var oldDocument = projectChanges.OldProject.GetDocument(documentId)!;
+                    ProcessDocumentRemove(oldDocument);
+                }
+            }
+        }
+
+        return documentEdits;
+    }
+
+    private void ProcessDocumentCreate(Document document, SourceText sourceText) {
+        if (document == null)
+            return;
+        var documentFilePath = document.FilePath;
+        if (string.IsNullOrEmpty(documentFilePath)) {
+            documentFilePath = document.Project.GetProjectDirectory();
+            document.Folders.ForEach(folder => documentFilePath = Path.Combine(documentFilePath, folder));
+            documentFilePath = Path.Combine(documentFilePath, document.Name);
+        }
+
+        FileSystemExtensions.WriteAllText(documentFilePath, sourceText.ToString());
+        workspaceService.CreateDocument(documentFilePath);
+        currentClassLogger.Debug($"File created via CodeAction: {documentFilePath}");
+    }
+    private void ProcessDocumentRemove(Document document) {
+        if (document?.FilePath == null)
+            return;
+
+        workspaceService.DeleteDocument(document.FilePath);
+        FileSystemExtensions.TryDeleteFile(document.FilePath);
+        currentClassLogger.Debug($"File removed via CodeAction: {document.FilePath}");
+    }
+    private void ProcessDocumentRename(Document document, string newName) {
+        if (document.FilePath == null || string.IsNullOrEmpty(newName))
+            return;
+
+        var newFilePath = FileSystemExtensions.RenameFile(document.FilePath, newName);
+        workspaceService.DeleteDocument(document.FilePath);
+        workspaceService.CreateDocument(newFilePath);
+        currentClassLogger.Debug($"File renamed via CodeAction: {document.FilePath} -> {newFilePath}");
     }
 }

@@ -8,11 +8,14 @@ public static class SyntaxExtensions {
     public static bool IsControlKeyword(this SyntaxToken token) {
         var kind = token.Kind();
 
-        // 'default' used in 'default(T)' expressions
+        // 'default' used in 'default' switch-case expressions
         if (token.IsKind(SyntaxKind.DefaultKeyword) && token.Parent is not DefaultSwitchLabelSyntax)
             return false;
+        // 'using' used in 'using var x' expressions
+        if (token.IsKind(SyntaxKind.UsingKeyword) && token.Parent is UsingDirectiveSyntax)
+            return false;
 
-        return kind >= SyntaxKind.IfKeyword && kind <= SyntaxKind.ThrowKeyword;
+        return kind >= SyntaxKind.IfKeyword && kind <= SyntaxKind.ThrowKeyword || kind == SyntaxKind.UsingKeyword;
     }
     public static bool IsRegularKeyword(this SyntaxToken token) {
         if (token.IsControlKeyword())
