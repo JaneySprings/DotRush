@@ -21,16 +21,11 @@ chmod +x "/home/You/.local/share/zed/extensions/work/dotrush/LanguageServer/dotr
  
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image5.jpg)
 
-*This extension based on the [csharp](https://github.com/zed-extensions/csharp) extension configs.*
-
 ## Configuration
 
 DotRush extension can be configured in Zed by creating a [settings.json file](https://zed.dev/docs/configuring-zed#settings-files) in your project root directory. 
 
-### Basic Configuration
-
 You only need to provide the `projectOrSolutionFiles` option at minimum, but can customize the behavior further with additional settings as needed.
-
 ```json
 {
     "lsp": {
@@ -50,7 +45,6 @@ You only need to provide the `projectOrSolutionFiles` option at minimum, but can
 }
 ```
 
-### All Configuration Options
-
+## All Configuration Options
 
 All available configuration options can be found in the DotRush extension's [package.json](https://github.com/JaneySprings/DotRush/blob/main/package.json) file. Any option under the `dotrush.roslyn` namespace can be used in your settings file with the structure shown above.
