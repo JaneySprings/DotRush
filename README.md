@@ -6,7 +6,7 @@
 <br clear="right"/>
 
 <p align="center">
-  <a href="https://github.com/JaneySprings/DotRush/blob/main/src/NeoVim/Readme.md">For Neovim Users</a> | <a href="https://github.com/JaneySprings/DotRush/blob/main/src/Zed/Readme.md">For Zed Users</a>
+  <a href="https://github.com/JaneySprings/DotRush/blob/main/src/NeoVim/Readme.md">For Neovim Users</a> | <a href="https://github.com/JaneySprings/DotRush/blob/main/src/Zed/Readme.md">For Zed Users</a> | <a href="https://github.com/JaneySprings/DotRush/blob/main/src/SublimeText/Readme.md">For Sublime Users</a>
 </p>
 
 ## Overview
