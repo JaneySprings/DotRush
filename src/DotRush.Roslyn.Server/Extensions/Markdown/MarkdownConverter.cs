@@ -22,6 +22,11 @@ public static partial class MarkdownConverter {
                 && taggedParts[0].Tag switch { TextTags.LineBreak => true, ContainerStart => true, _ => false };
     }
 
+    public static string TaggedTextToMarkdown(ImmutableArray<TaggedText> taggedParts) {
+        var stringBuilder = new StringBuilder();
+        TaggedTextToMarkdown(taggedParts, stringBuilder);
+        return stringBuilder.ToString();
+    }
     public static void TaggedTextToMarkdown(ImmutableArray<TaggedText> taggedParts, StringBuilder stringBuilder) {
         FormattingOptions formattingOptions = new();
         bool isInCodeBlock = false;
@@ -60,7 +65,8 @@ public static partial class MarkdownConverter {
                                 continue;
                         }
                     }
-                } else {
+                }
+                else {
                     // If it's just a newline, we're going to default to standard handling which will
                     // skip the newline.
                     canFormatAsBlock = !indexIsTag(i, ContainerStart, ContainerEnd, TextTags.LineBreak);
@@ -79,7 +85,8 @@ public static partial class MarkdownConverter {
                             stringBuilder.Append(formattingOptions.NewLine);
                             stringBuilder.Append("```");
                             goto standardHandling;
-                        } else {
+                        }
+                        else {
                             stringBuilder.Append(current.Text);
                         }
                     }
