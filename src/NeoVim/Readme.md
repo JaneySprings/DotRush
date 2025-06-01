@@ -14,7 +14,6 @@ Plug 'https://github.com/neovim/nvim-lspconfig'
 call plug#end()
 
 lua << EOF
-
 require('lspconfig.configs').dotrush = {
     default_config = {
         cmd = { '/Path/To/Executale/dotrush' }, -- Adjust path to the DotRush executable
@@ -25,6 +24,31 @@ require('lspconfig.configs').dotrush = {
     };
 }
 require('lspconfig').dotrush.setup({})
+EOF
+
 ```
 
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image6.jpg)
+
+## Configuration
+
+DotRush extension can be configured by creating a `dotrush.config.json` file in your project root directory.
+
+You only need to provide the `projectOrSolutionFiles` option at minimum, but can customize the behavior further with additional settings as needed.
+
+```json
+{
+    "dotrush": {
+        "roslyn": {
+            // Paths to project or solution files to load
+            "projectOrSolutionFiles": [
+                "/path/to/your/solution.sln"
+            ]
+        }
+    }
+}
+```
+
+### All Configuration Options
+
+All available configuration options can be found in the DotRush extension's [package.json](https://github.com/JaneySprings/DotRush/blob/main/package.json) file. Any option under the `dotrush.roslyn` namespace can be used in your settings file with the structure shown above.
