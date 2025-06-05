@@ -74,6 +74,7 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
     public List<CodeRefactoringProvider> LoadFromDotRush() {
         return new List<CodeRefactoringProvider> {
             new OrganizeImportsRefactoringProvider(),
+            new GenerateDescriptionRefactoringProvider(),
         };
     }
 }

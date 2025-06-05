@@ -18,12 +18,6 @@
             "type": "coreclr",
             "request": "attach",
             "processId": "${command:dotrush.pickProcess}"
-        },
-        {
-            "name": ".NET Core Debugger (launch)",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "dotrush: Build"
         }
     ]
 }
