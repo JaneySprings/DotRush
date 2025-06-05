@@ -16,14 +16,6 @@
             ]
         },
         {
-            "label": "dotrush: Build",
-            "type": "dotrush.task",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
             "label": "vsix",
             "command": "dotnet",
             "type": "process",

@@ -42,7 +42,6 @@ export const testExplorerViewTitle = "DotRush Test Explorer";
 export const testExplorerProfileRun = "Run NUnit/XUnit Tests";
 export const testExplorerProfileDebug = "Debug NUnit/XUnit Tests";
 
-export const messageOmniSharpAlreadyInstalled = "The C# extension is already installed. Please uninstall or disable it to avoid conflicts.";
 export const messageProjectChanged = "Projects have changed. Reload the DotRush to apply changes.";
 export const messageNoProjectFileFound = "No project files found in the current workspace folder.";
 export const messageSelectProcessTitle = "Select a process to attach";

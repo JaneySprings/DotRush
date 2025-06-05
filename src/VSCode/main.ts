@@ -9,13 +9,9 @@ import { ModulesView } from './features/modulesView';
 import { PerformanceView } from './features/performanceView';
 import { Interop } from './interop/interop';
 import { PublicExports } from './publicExports';
-import * as res from './resources/constants';
 import * as vscode from 'vscode';
 
 export async function activate(context: vscode.ExtensionContext) {
-	if (vscode.extensions.getExtension(res.extensionMicrosoftId))
-		vscode.window.showWarningMessage(res.messageOmniSharpAlreadyInstalled);
-
 	const exports = new PublicExports();
 	Interop.initialize(context.extensionPath);
 
