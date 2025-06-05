@@ -21,7 +21,7 @@ It provides all the features of the DotRush language server (including the code 
 
 ## Configuration
 
-DotRush extension can be configured in Sublime Text by creating a `dotrush.config.json` file in your project root directory. 
+DotRush extension can be configured by creating a `dotrush.config.json` file in your project root directory. 
 
 You only need to provide the `projectOrSolutionFiles` option at minimum, but can customize the behavior further with additional settings as needed.
 
