@@ -17,7 +17,7 @@ public class GenerateDescriptionRefactoringProvider : CodeRefactoringProvider {
             return;
 
         context.RegisterRefactoring(CodeAction.Create(
-            "Generate Description in XML",
+            "Generate description in XML",
             c => Task.FromResult(GenerateDocumentation(context.Document, memberDeclaration, root)),
             equivalenceKey: nameof(GenerateDescriptionRefactoringProvider)
         ));
