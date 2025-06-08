@@ -38,6 +38,11 @@ export class MonoDebugConfigurationProvider implements vscode.DebugConfiguration
                     ellipsizeStrings: true,
                     ellipsizedLength: 260,
                     stackFrameFormat: {
+                        module: true,
+                        parameterTypes: false,
+                        parameterValues: false,
+                        parameterNames: false,
+                        language: false,
                         line: false
                     },
                 },

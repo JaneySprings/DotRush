@@ -68,7 +68,7 @@ public class DebugSession : Session {
             SymbolServerExtensions.SetEventLogger(OnDebugDataReceived);
 
             launchAgent = configuration.GetLaunchAgent();
-            launchAgent.Attach(this);
+            launchAgent.Prepare(this);
             launchAgent.Connect(session);
             return new AttachResponse();
         });

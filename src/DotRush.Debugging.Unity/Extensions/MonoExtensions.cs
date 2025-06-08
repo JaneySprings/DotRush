@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text;
 using DotRush.Common.Extensions;
 using Mono.Debugging.Client;
@@ -34,7 +33,7 @@ public static class MonoExtensions {
         var sb = new StringBuilder();
         foreach (var line in assemblyLines)
             sb.AppendLine($"({line.SourceLine}) IL_{line.Address:0000}: {line.Code}");
-        
+
         return sb.ToString();
     }
     public static bool HasNullValue(this ObjectValue objectValue) {
@@ -85,46 +84,5 @@ public static class MonoExtensions {
         }
 
         return location.FileName;
-    }
-
-    public static void SetAssemblies(this SoftDebuggerStartInfo startInfo, string assembliesDirectory, DebuggerSessionOptions options) {
-        var useSymbolServers = options.SearchMicrosoftSymbolServer || options.SearchNuGetSymbolServer;
-        var assemblyPaths = Directory.EnumerateFiles(assembliesDirectory, "*.dll");
-        var assemblyPathMap = new Dictionary<string, string>();
-        var assemblySymbolPathMap = new Dictionary<string, string>();
-        var assemblyNames = new List<AssemblyName>();
-
-        foreach (var assemblyPath in assemblyPaths) {
-            try {
-                var assemblyName = AssemblyName.GetAssemblyName(assemblyPath);
-                if (string.IsNullOrEmpty(assemblyName.FullName) || string.IsNullOrEmpty(assemblyName.Name)) {
-                    DebuggerLoggingService.CustomLogger?.LogMessage($"Assembly '{assemblyPath}' has no name");
-                    continue;
-                }
-
-                string? assemblySymbolsFilePath = SymbolServerExtensions.SearchSymbols(options.SymbolSearchPaths, assemblyPath);
-                if (string.IsNullOrEmpty(assemblySymbolsFilePath) && options.SearchMicrosoftSymbolServer)
-                    assemblySymbolsFilePath = SymbolServerExtensions.DownloadSourceSymbols(assemblyPath, assemblyName.Name, SymbolServerExtensions.MicrosoftSymbolServerAddress);
-                if (string.IsNullOrEmpty(assemblySymbolsFilePath) && options.SearchNuGetSymbolServer)
-                    assemblySymbolsFilePath = SymbolServerExtensions.DownloadSourceSymbols(assemblyPath, assemblyName.Name, SymbolServerExtensions.NuGetSymbolServerAddress);
-                if (string.IsNullOrEmpty(assemblySymbolsFilePath))
-                    DebuggerLoggingService.CustomLogger?.LogMessage($"No symbols found for '{assemblyPath}'");
-
-                if (!string.IsNullOrEmpty(assemblySymbolsFilePath))
-                    assemblySymbolPathMap.Add(assemblyName.FullName, assemblySymbolsFilePath);
-
-                if (options.ProjectAssembliesOnly && SymbolServerExtensions.HasDebugSymbols(assemblyPath, useSymbolServers)) {
-                    assemblyPathMap.TryAdd(assemblyName.FullName, assemblyPath);
-                    assemblyNames.Add(assemblyName);
-                    DebuggerLoggingService.CustomLogger?.LogMessage($"User assembly '{assemblyName.Name}' added");
-                }
-            } catch (Exception e) {
-                DebuggerLoggingService.CustomLogger?.LogError($"Error while processing assembly '{assemblyPath}'", e);
-            }
-        }
-
-        startInfo.SymbolPathMap = assemblySymbolPathMap;
-        startInfo.AssemblyPathMap = assemblyPathMap;
-        startInfo.UserAssemblyNames = assemblyNames;
     }
 }
