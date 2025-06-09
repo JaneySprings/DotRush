@@ -377,14 +377,20 @@
         "configurationAttributes": {
           "attach": {
             "properties": {
-              "processId": {
-                "type": "string"
-              },
               "cwd": {
                 "type": "string"
               },
               "env": {
                 "type": "object"
+              },
+              "debuggerOptions": {
+                "type": "object"
+              },
+              "userAssemblies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             }
           }
