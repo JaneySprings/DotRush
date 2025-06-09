@@ -29,7 +29,10 @@ public class MSBuildProject {
             return true;
         if (IsLegacyFormat)
             return false;
-        
+
         return this.HasPackage("NUnit") || this.HasPackage("NUnitLite") || this.HasPackage("xunit");
+    }
+    public string GetAssemblyName() {
+        return this.EvaluateProperty("AssemblyName", SystemPath.GetFileNameWithoutExtension(Path)) ?? string.Empty;
     }
 }

@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using DotRush.Common.Extensions;
 using DotRush.Common.ExternalV2;
+using DotRush.Common.MSBuild;
 using DotRush.Debugging.Unity.Extensions;
 using DotRush.Debugging.Unity.Models;
 using Mono.Debugging.Soft;
@@ -39,6 +40,15 @@ public class UnityDebugLaunchAgent : BaseLaunchAgent {
         var projectAssemblyPath = Path.Combine(Configuration.WorkingDirectory, "Library", "ScriptAssemblies", "Assembly-CSharp.dll");
         if (File.Exists(projectAssemblyPath))
             return new[] { projectAssemblyPath };
+
+        var projectFilePaths = Directory.GetFiles(Configuration.WorkingDirectory, "*.csproj", SearchOption.TopDirectoryOnly);
+        if (projectFilePaths.Length == 1) {
+            var project = MSBuildProjectsLoader.LoadProject(projectFilePaths[0]);
+            var assemblyName = project?.GetAssemblyName();
+            projectAssemblyPath = Path.Combine(Configuration.WorkingDirectory, "Library", "ScriptAssemblies", $"{assemblyName}.dll");
+            if (File.Exists(projectAssemblyPath))
+                return new[] { projectAssemblyPath };
+        }
 
         logger?.OnErrorDataReceived($"Could not find user assembly '{projectAssemblyPath}'. Specify 'userAssemblies' property in the launch configuration to override this behavior.");
         return Enumerable.Empty<string>();
