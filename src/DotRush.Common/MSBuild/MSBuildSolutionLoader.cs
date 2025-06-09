@@ -25,7 +25,7 @@ public static class MSBuildSolutionLoader {
                 case ".slnx":
                     return GetProjectsFromSolutionX(solutionFile);
                 case ".slnf":
-                    return GetProjectsFromSolutionFilter(solutionFile);               
+                    return GetProjectsFromSolutionFilter(solutionFile);
             }
         } catch (Exception e) {
             CurrentSessionLogger.Error(e);
@@ -44,6 +44,9 @@ public static class MSBuildSolutionLoader {
 
             var lineParts = line.Split(',');
             if (lineParts.Length < 2)
+                continue;
+            // Skip solution folder
+            if (line.Contains("{2150E333-8FDC-42A3-9474-1A3956D46DE8}", StringComparison.OrdinalIgnoreCase))
                 continue;
 
             var projectPath = lineParts[1].Trim().Trim('"');
