@@ -1,7 +1,7 @@
 using System.IO.Compression;
 using DotRush.Common;
 using DotRush.Common.Extensions;
-using DotRush.Common.External;
+using DotRush.Common.InteropV2;
 using DotRush.Common.Logging;
 
 namespace DotRush.Debugging.NetCore.Installers;
@@ -21,7 +21,7 @@ public class NcdbgInstaller : IDebuggerInstaller {
         var runtime = $"{RuntimeInfo.GetOperationSystem()}-{RuntimeInfo.GetArchitecture64()}";
         if (RuntimeInfo.IsWindows && RuntimeInfo.IsAarch64)
             runtime = $"{RuntimeInfo.GetOperationSystem()}-x64"; // Not supported by netcoredbg, but we can try to use x64 version
-    
+
         return $"https://github.com/JaneySprings/netcoredbg/releases/download/{LatestReleaseVersion}/netcoredbg_{runtime}.zip";
     }
     string? IDebuggerInstaller.Install(string downloadUrl) {

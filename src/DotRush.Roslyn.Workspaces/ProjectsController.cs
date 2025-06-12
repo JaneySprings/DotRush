@@ -1,5 +1,5 @@
 using DotRush.Common.Extensions;
-using DotRush.Common.External;
+using DotRush.Common.InteropV2;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
@@ -14,17 +14,17 @@ public abstract class ProjectsController {
 
     public virtual Task OnLoadingStartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     public virtual Task OnLoadingCompletedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-    public virtual void OnProjectRestoreStarted(string documentPath) {}
-    public virtual void OnProjectRestoreCompleted(string documentPath) {}
-    public virtual void OnProjectRestoreFailed(string documentPath, ProcessResult result) {}
-    public virtual void OnProjectLoadStarted(string documentPath) {}
-    public virtual void OnProjectLoadCompleted(Project project) {}
-    public virtual void OnProjectCompilationStarted(string documentPath) {}
-    public virtual void OnProjectCompilationCompleted(Project project) {}
+    public virtual void OnProjectRestoreStarted(string documentPath) { }
+    public virtual void OnProjectRestoreCompleted(string documentPath) { }
+    public virtual void OnProjectRestoreFailed(string documentPath, ProcessResult result) { }
+    public virtual void OnProjectLoadStarted(string documentPath) { }
+    public virtual void OnProjectLoadCompleted(Project project) { }
+    public virtual void OnProjectCompilationStarted(string documentPath) { }
+    public virtual void OnProjectCompilationCompleted(Project project) { }
     protected abstract void OnWorkspaceStateChanged(Solution newSolution);
 
     protected async Task LoadProjectsAsync(MSBuildWorkspace workspace, IEnumerable<string> projectFilePaths, CancellationToken cancellationToken) {
-        CurrentSessionLogger.Debug($"Loading projects: {string.Join(';', projectFilePaths)}");;
+        CurrentSessionLogger.Debug($"Loading projects: {string.Join(';', projectFilePaths)}"); ;
 
         foreach (var projectFile in projectFilePaths) {
             await SafeExtensions.InvokeAsync(async () => {

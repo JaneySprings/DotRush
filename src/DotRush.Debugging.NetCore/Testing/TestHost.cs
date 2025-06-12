@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using DotRush.Common.ExternalV2;
+using DotRush.Common.Interop;
 using DotRush.Common.Logging;
 
 namespace DotRush.Debugging.NetCore.Testing;
@@ -7,13 +7,13 @@ namespace DotRush.Debugging.NetCore.Testing;
 public static class TestHost {
     public static Task<int> RunForDebugAsync(string projectFile, string filter) {
         CurrentSessionLogger.Debug($"Running test host with filter '{filter}'");
-        
+
         var tcs = new TaskCompletionSource<int>();
         var process = new ProcessRunner("dotnet", new ProcessArgumentBuilder()
             .Append("test")
             .Append(projectFile)
             .Append("--no-build")
-            .Conditional($"--filter {filter}", () => !string.IsNullOrEmpty(filter)), 
+            .Conditional($"--filter {filter}", () => !string.IsNullOrEmpty(filter)),
             new HandleStartProcessLogger(tcs)
         );
 
@@ -30,7 +30,7 @@ public static class TestHost {
             this.tcs = tcs;
         }
 
-        void IProcessLogger.OnErrorDataReceived(string stderr) { 
+        void IProcessLogger.OnErrorDataReceived(string stderr) {
             CurrentSessionLogger.Error(stderr);
         }
         void IProcessLogger.OnOutputDataReceived(string stdout) {

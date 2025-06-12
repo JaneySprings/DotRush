@@ -1,5 +1,5 @@
 using DotRush.Common.Extensions;
-using DotRush.Common.External;
+using DotRush.Common.InteropV2;
 using DotRush.Common.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;

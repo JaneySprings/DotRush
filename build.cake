@@ -45,7 +45,7 @@ Task("debugging")
 		Configuration = configuration,
 		Runtime = runtime,
 	}))
-	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Unity", "DotRush.Debugging.Unity.csproj"), new DotNetPublishSettings {
+	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Mono", "DotRush.Debugging.Mono.csproj"), new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 		Configuration = configuration,
 		Runtime = runtime,

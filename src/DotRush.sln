@@ -19,7 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Roslyn.Workspaces.T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Roslyn.CodeAnalysis.Tests", "DotRush.Roslyn.CodeAnalysis.Tests\DotRush.Roslyn.CodeAnalysis.Tests.csproj", "{07F7FAE7-C523-46B0-AAC4-EF1D293A7CFA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Debugging.Unity", "DotRush.Debugging.Unity\DotRush.Debugging.Unity.csproj", "{C8FB5D14-0685-42AD-BC21-743539922ADE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Debugging.Mono", "DotRush.Debugging.Mono\DotRush.Debugging.Mono.csproj", "{C8FB5D14-0685-42AD-BC21-743539922ADE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Debugging.NetCore", "DotRush.Debugging.NetCore\DotRush.Debugging.NetCore.csproj", "{0FA0A58D-5ABD-4A8F-855F-3E8DB4FA3AF8}"
 EndProject

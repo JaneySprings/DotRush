@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using DotRush.Common.ExternalV2;
+using DotRush.Common.Interop;
 
 namespace DotRush.Common.MSBuild;
 
