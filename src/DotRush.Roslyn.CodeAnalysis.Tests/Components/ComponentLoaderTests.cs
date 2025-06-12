@@ -29,7 +29,7 @@ public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider
 public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAnalyzer> {
     private DiagnosticAnalyzersLoader loader = null!;
     protected override IComponentLoader<DiagnosticAnalyzer> ComponentsLoader => loader;
-    protected override int ComponentsCount => 392;
+    protected override int ComponentsCount => 393;
     protected int SuppressorsCount => 1;
 
     [SetUp]
