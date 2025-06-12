@@ -26,7 +26,7 @@ export class TestExplorerController {
         if (Extensions.getSetting(res.configIdTestExplorerAutoRefreshTests)) {
             context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(ev => {
                 const fileName = path.basename(ev.uri.fsPath);
-                if (fileName.endsWith('.cs') && fileName.includes('Tests'))
+                if (fileName.endsWith('.cs') && fileName.includes('Test'))
                     TestExplorerController.refreshTests();
             }));
         }
