@@ -1,4 +1,4 @@
-using DotRush.Common.Collections;
+using DotRush.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
@@ -45,7 +45,7 @@ public class ImplementationHandler : ImplementationHandlerBase {
             symbols = await SymbolFinder.FindOverridesAsync(symbol, solutionService.Solution, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (symbols != null)
                 result.AddRange(symbols.SelectMany(it => it.Locations).Select(it => it.ToLocation()));
-            
+
             if (symbol is INamedTypeSymbol namedTypeSymbol) {
                 symbols = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, solutionService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
                 if (symbols != null)

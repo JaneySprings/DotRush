@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using DotRush.Common.Extensions;
-using DotRush.Common.External;
+using DotRush.Common.InteropV2;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces;
 using DotRush.Roslyn.Workspaces.FileSystem;

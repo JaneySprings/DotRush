@@ -3,7 +3,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using DotRush.Common;
 using DotRush.Common.Extensions;
-using DotRush.Common.External;
+using DotRush.Common.InteropV2;
 using DotRush.Common.Logging;
 using DotRush.Debugging.NetCore.Models;
 
@@ -21,7 +21,7 @@ public class VsdbgInstaller : IDebuggerInstaller {
 
     void IDebuggerInstaller.BeginInstallation() {
         FileSystemExtensions.TryDeleteDirectory(debuggerDirectory);
-    } 
+    }
     string? IDebuggerInstaller.GetDownloadLink() {
         CurrentSessionLogger.Debug($"Obtaining vsdbg via link: {OmnisharpPackageConfigUrl}");
 

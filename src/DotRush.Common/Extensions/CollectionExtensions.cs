@@ -23,3 +23,26 @@ public static class CollectionExtensions {
         return collection.Where(item => item != null)!;
     }
 }
+
+public class NullableCollection<T> : List<T?> where T : class {
+    public bool IsEmpty => Count == 0;
+
+    public NullableCollection() { }
+    public NullableCollection(IEnumerable<T?> collection) : base(collection) { }
+    public NullableCollection(int capacity) : base(capacity) { }
+
+    public List<T> ToList() {
+        return this.Where(x => x != null).Select(x => x!).ToList();
+    }
+}
+public class NullableValueCollection<T> : List<T?> where T : struct {
+    public bool IsEmpty => Count == 0;
+
+    public NullableValueCollection() { }
+    public NullableValueCollection(IEnumerable<T?> collection) : base(collection) { }
+    public NullableValueCollection(int capacity) : base(capacity) { }
+
+    public List<T> ToNonNullableList() {
+        return this.Where(x => x != null).Select(x => x!.Value).ToList();
+    }
+}

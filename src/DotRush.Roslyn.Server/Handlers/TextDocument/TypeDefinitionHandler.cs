@@ -1,4 +1,4 @@
-using DotRush.Common.Collections;
+using DotRush.Common.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
@@ -55,7 +55,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
 
                 if (!location.IsInSource || location.SourceTree == null)
                     continue;
-                
+
                 var filePath = location.SourceTree?.FilePath ?? string.Empty;
                 if (!File.Exists(filePath))
                     filePath = await navigationService.EmitCompilerGeneratedFileAsync(location, document.Project, cancellationToken).ConfigureAwait(false);
@@ -69,7 +69,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
             goto handle;
         }
 
-        return new TypeDefinitionResponse(result.IsEmpty && !decompiledResult.IsEmpty 
+        return new TypeDefinitionResponse(result.IsEmpty && !decompiledResult.IsEmpty
             ? decompiledResult.ToNonNullableList()
             : result.ToNonNullableList()
         );

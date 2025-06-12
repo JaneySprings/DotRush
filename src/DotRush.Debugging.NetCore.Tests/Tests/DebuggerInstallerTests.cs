@@ -1,6 +1,6 @@
 using DotRush.Common;
 using DotRush.Common.Extensions;
-using DotRush.Common.External;
+using DotRush.Common.InteropV2;
 using DotRush.Debugging.NetCore.Installers;
 using NUnit.Framework;
 

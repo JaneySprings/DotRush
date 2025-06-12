@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using DotRush.Common.External;
+using DotRush.Common.InteropV2;
 using DotRush.Roslyn.Workspaces.FileSystem;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;

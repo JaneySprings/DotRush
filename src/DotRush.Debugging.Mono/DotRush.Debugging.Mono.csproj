@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\Common.Build.props" />
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<AssemblyName>monodbg</AssemblyName>
+		<OutputPath>$(AssetsPath)DebuggerMono</OutputPath>
+        <PublishDir>$(OutputPath)</PublishDir>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\DotRush.Debugging.MonoLib\Mono.Debugging.Soft\Mono.Debugging.Soft.csproj" />
+		<ProjectReference Include="..\DotRush.Common\DotRush.Common.csproj" />
+
+		<PackageReference Include="Microsoft.VisualStudio.Shared.VSCodeDebugProtocol" />
+		<PackageReference Include="Mono.Cecil" />
+		<PackageReference Include="Mono.Options" />
+		<PackageReference Include="StreamJsonRpc" />
+	</ItemGroup>
+</Project>
