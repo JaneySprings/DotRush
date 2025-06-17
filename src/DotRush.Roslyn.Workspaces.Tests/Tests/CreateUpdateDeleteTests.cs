@@ -15,7 +15,7 @@ public class CreateUpdateDeleteTests : TestFixture {
         var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
 
         await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
-        
+
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
         var documentIds = workspace.Solution!.GetDocumentIdsWithFilePathV2(documentPath);
         Assert.That(documentIds, Is.Empty);
@@ -49,7 +49,7 @@ public class CreateUpdateDeleteTests : TestFixture {
         var projectPath = CreateProject("MyProject", MultiTFM, "Exe");
 
         await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
-        
+
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
         var documentIds = workspace.Solution!.GetDocumentIdsWithFilePathV2(documentPath);
         Assert.That(documentIds, Is.Empty);
@@ -89,14 +89,14 @@ public class CreateUpdateDeleteTests : TestFixture {
         var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
 
         await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
-        
+
         var oldProjectFilesCount = GetProjectDocumentsCount(workspace.Solution!.Projects.Single());
         var newProjectFilesCount = oldProjectFilesCount;
 
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
         var documentIds = workspace.Solution!.GetDocumentIdsWithFilePathV2(documentPath);
         Assert.That(documentIds, Is.Empty);
-        
+
         workspace.CreateDocument(documentPath);
         oldProjectFilesCount++;
         newProjectFilesCount = GetProjectDocumentsCount(workspace.Solution!.Projects.Single());
@@ -125,16 +125,28 @@ public class CreateUpdateDeleteTests : TestFixture {
         var documentPath = CreateFileInProject(projectPath, "Program.cs", "class Program { static void Main() { } }");
 
         await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
-        
+
         var documentIds = workspace.Solution!.GetDocumentIdsWithFilePathV2(documentPath);
         Assert.That(documentIds, Is.Not.Empty);
-        
+
         workspace.DeleteDocument(documentPath);
         documentIds = workspace.Solution!.GetDocumentIdsWithFilePathV2(documentPath);
         Assert.That(documentIds, Is.Empty);
 
         workspace.DeleteDocument(documentPath);
         documentIds = workspace.Solution!.GetDocumentIdsWithFilePathV2(documentPath);
+        Assert.That(documentIds, Is.Empty);
+    }
+    [Test]
+    public async Task SkipCompilerGeneratedFilesTest() {
+        var workspace = new TestWorkspace();
+        var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
+        await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
+
+        var documentPath = CreateFileInProject(projectPath, "Program.g.cs", "class Program { static void Main() { } }");
+        workspace.CreateDocument(documentPath);
+
+        var documentIds = workspace.Solution!.GetDocumentIdsWithFilePathV2(documentPath);
         Assert.That(documentIds, Is.Empty);
     }
 }

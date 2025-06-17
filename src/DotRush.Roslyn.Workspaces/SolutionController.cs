@@ -203,6 +203,8 @@ public abstract class SolutionController : ProjectsController {
     private bool CanBeProcessed(string file, Project project) {
         if (PathExtensions.StartsWith(file, project.GetIntermediateOutputPath()))
             return false;
+        if (WorkspaceExtensions.IsCompilerGeneratedDocument(file))
+            return false;
 
         var folders = project.GetFolders(file);
         if (folders.Any() && folders.Any(f => f.StartsWith('.')))
