@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 namespace DotRush.Debugging.Mono;
 
 public class LaunchConfiguration {
-    public string WorkingDirectory { get; init; }
+    public string CurrentDirectory { get; init; }
     public int ProcessId { get; init; }
     public string? TransportId { get; init; }
     public DebuggerSessionOptions DebuggerSessionOptions { get; init; }
@@ -22,8 +22,9 @@ public class LaunchConfiguration {
         EnvironmentVariables = configurationProperties.TryGetValue("env")?.ToClass<Dictionary<string, string>>();
         UserAssemblies = configurationProperties.TryGetValue("userAssemblies")?.ToClass<List<string>>();
 
-        var workingDirectory = configurationProperties.TryGetValue("cwd").ToClass<string>()?.ToPlatformPath().TrimPathEnd();
-        WorkingDirectory = workingDirectory ?? Directory.GetCurrentDirectory();
+        CurrentDirectory = configurationProperties.TryGetValue("cwd").ToClass<string>()?.ToPlatformPath().TrimPathEnd() ?? Environment.CurrentDirectory;
+        if (Directory.Exists(CurrentDirectory) && CurrentDirectory != Environment.CurrentDirectory)
+            Environment.CurrentDirectory = CurrentDirectory;
     }
 
     public BaseLaunchAgent GetLaunchAgent() {

@@ -269,7 +269,7 @@ public class DebugSession : Session {
                 if (!string.IsNullOrEmpty(remappedSourcePath) && File.Exists(remappedSourcePath)) {
                     source = new DebugProtocol.Source() {
                         Name = Path.GetFileName(remappedSourcePath),
-                        Path = remappedSourcePath,
+                        Path = Path.GetFullPath(remappedSourcePath),
                     };
                 }
                 if (source == null) {

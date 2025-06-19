@@ -22,7 +22,7 @@ public class UnityDebugLaunchAgent : BaseLaunchAgent {
         debugSession.OnOutputDataReceived($"Attaching to Unity({editorInstance.ProcessId}) - {editorInstance.Version}");
 
         var port = Configuration.ProcessId != 0 ? Configuration.ProcessId : 56000 + (editorInstance.ProcessId % 1000);
-        var applicationName = Path.GetFileName(Configuration.WorkingDirectory);
+        var applicationName = Path.GetFileName(Configuration.CurrentDirectory);
         startInformation = new SoftDebuggerStartInfo(new SoftDebuggerConnectArgs(applicationName, IPAddress.Loopback, port));
         SetAssemblies(startInformation, debugSession);
     }
@@ -37,15 +37,15 @@ public class UnityDebugLaunchAgent : BaseLaunchAgent {
         if (Configuration.UserAssemblies != null && Configuration.UserAssemblies.Count > 0)
             return Configuration.UserAssemblies;
 
-        var projectAssemblyPath = Path.Combine(Configuration.WorkingDirectory, "Library", "ScriptAssemblies", "Assembly-CSharp.dll");
+        var projectAssemblyPath = Path.Combine(Configuration.CurrentDirectory, "Library", "ScriptAssemblies", "Assembly-CSharp.dll");
         if (File.Exists(projectAssemblyPath))
             return new[] { projectAssemblyPath };
 
-        var projectFilePaths = Directory.GetFiles(Configuration.WorkingDirectory, "*.csproj", SearchOption.TopDirectoryOnly);
+        var projectFilePaths = Directory.GetFiles(Configuration.CurrentDirectory, "*.csproj", SearchOption.TopDirectoryOnly);
         if (projectFilePaths.Length == 1) {
             var project = MSBuildProjectsLoader.LoadProject(projectFilePaths[0]);
             var assemblyName = project?.GetAssemblyName();
-            projectAssemblyPath = Path.Combine(Configuration.WorkingDirectory, "Library", "ScriptAssemblies", $"{assemblyName}.dll");
+            projectAssemblyPath = Path.Combine(Configuration.CurrentDirectory, "Library", "ScriptAssemblies", $"{assemblyName}.dll");
             if (File.Exists(projectAssemblyPath))
                 return new[] { projectAssemblyPath };
         }
@@ -55,7 +55,7 @@ public class UnityDebugLaunchAgent : BaseLaunchAgent {
     }
 
     private EditorInstance GetEditorInstance() {
-        var editorInfo = Path.Combine(Configuration.WorkingDirectory, "Library", "EditorInstance.json");
+        var editorInfo = Path.Combine(Configuration.CurrentDirectory, "Library", "EditorInstance.json");
         if (!File.Exists(editorInfo))
             throw ServerExtensions.GetProtocolException($"EditorInstance.json not found: '{editorInfo}'");
 
