@@ -14,6 +14,7 @@ public abstract class TestExplorerSyntaxWalker {
         var result = new Dictionary<string, TestFixture>();
         var options = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols);
         var documentPaths = Directory.GetFiles(projectDirectory, "*.cs", SearchOption.AllDirectories);
+        
         foreach (var documentPath in documentPaths) {
             var tree = CSharpSyntaxTree.ParseText(File.ReadAllText(documentPath), options);
             var root = tree.GetRoot();
@@ -22,7 +23,9 @@ public abstract class TestExplorerSyntaxWalker {
             foreach (var nspace in namespaces) {
                 var classes = nspace.DescendantNodes().OfType<ClassDeclarationSyntax>();
                 foreach (var klass in classes) {
-                    var fixtureId = $"{nspace.Name}.{klass.Identifier.Text}";
+                    var fullClassName = GetFullClassName(klass);
+                    var fixtureId = $"{nspace.Name}.{fullClassName}";
+                    
                     if (!result.TryGetValue(fixtureId, out var fixture)) {
                         fixture = new TestFixture(fixtureId, klass.Identifier.Text, documentPath);
                         fixture.IsAbstract = klass.Modifiers.Any(p => p.IsKind(SyntaxKind.AbstractKeyword));
@@ -37,10 +40,36 @@ public abstract class TestExplorerSyntaxWalker {
                 }
             }
         }
+        
+        // Organize nested fixtures
+        OrganizeNestedFixtures(result);
+        
         return result.Values;
     }
+    
+    private void OrganizeNestedFixtures(Dictionary<string, TestFixture> fixtures) {
+        // First pass: identify parent-child relationships based on class nesting
+        foreach (var fixture in fixtures.Values) {
+            var fixtureIdParts = fixture.Id.Split('.');
+            var className = fixtureIdParts[fixtureIdParts.Length - 1];
+            
+            // Identify the parent fixture Ids if the class name contains '+'
+            if (className.Contains('+')) {
+                var parts = className.Split('+');
+                var parentClassName = string.Join('+', parts.Take(parts.Length - 1));
+                var namespacePart = string.Join('.', fixtureIdParts.Take(fixtureIdParts.Length - 1));
+                var parentFixtureId = $"{namespacePart}.{parentClassName}";
+                
+                if (fixtures.TryGetValue(parentFixtureId, out var parentFixture)) {
+                    fixture.ParentFixtureId = parentFixture.Id;
+                    parentFixture.ChildFixtures.Add(fixture);
+                }
+            }
+        }
+    }
     protected IEnumerable<TestCase> GetTestCases(ClassDeclarationSyntax fixture, TestFixture parent, string documentPath) {
-        var methods = fixture.DescendantNodes().OfType<MethodDeclarationSyntax>().Where(node => {
+        // Only get methods that are direct children of this class, not from nested classes
+        var methods = fixture.ChildNodes().OfType<MethodDeclarationSyntax>().Where(node => {
             // XUnit
             var hasFactAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().EndsWith("Fact", StringComparison.InvariantCulture)));
             var hasTheoryAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().EndsWith("Theory", StringComparison.InvariantCulture)));
@@ -76,5 +105,18 @@ public abstract class TestExplorerSyntaxWalker {
 
         var baseTypesIdentifierTexts = klass.BaseList.Types.Select(p => p.Type).OfType<SimpleNameSyntax>().Select(p => p.Identifier.Text);
         return baseTypesIdentifierTexts.FirstOrDefault(it => !it.StartsWith("I", StringComparison.OrdinalIgnoreCase));
+    }
+
+    protected string GetFullClassName(ClassDeclarationSyntax klass) {
+        var classNames = new List<string>();
+        var currentNode = klass;
+
+        // Walk up the syntax tree to collect all containing class names
+        while (currentNode != null) {
+            classNames.Insert(0, currentNode.Identifier.Text);
+            currentNode = currentNode.Parent?.FirstAncestorOrSelf<ClassDeclarationSyntax>();
+        }
+
+        return string.Join("+", classNames);
     }
 }
