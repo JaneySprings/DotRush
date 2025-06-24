@@ -41,7 +41,31 @@ public abstract class TestExplorerSyntaxWalker {
             }
         }
         
+        // Organize nested fixtures
+        OrganizeNestedFixtures(result);
+        
         return result.Values;
+    }
+    
+    private void OrganizeNestedFixtures(Dictionary<string, TestFixture> fixtures) {
+        // First pass: identify parent-child relationships based on class nesting
+        foreach (var fixture in fixtures.Values) {
+            var fixtureIdParts = fixture.Id.Split('.');
+            var className = fixtureIdParts[fixtureIdParts.Length - 1];
+            
+            // Identify the parent fixture Ids if the class name contains '+'
+            if (className.Contains('+')) {
+                var parts = className.Split('+');
+                var parentClassName = string.Join('+', parts.Take(parts.Length - 1));
+                var namespacePart = string.Join('.', fixtureIdParts.Take(fixtureIdParts.Length - 1));
+                var parentFixtureId = $"{namespacePart}.{parentClassName}";
+                
+                if (fixtures.TryGetValue(parentFixtureId, out var parentFixture)) {
+                    fixture.ParentFixtureId = parentFixture.Id;
+                    parentFixture.ChildFixtures.Add(fixture);
+                }
+            }
+        }
     }
     protected IEnumerable<TestCase> GetTestCases(ClassDeclarationSyntax fixture, TestFixture parent, string documentPath) {
         // Only get methods that are direct children of this class, not from nested classes

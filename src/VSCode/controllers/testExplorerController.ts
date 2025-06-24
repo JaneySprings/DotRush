@@ -71,12 +71,23 @@ export class TestExplorerController {
             testArguments.conditional('--filter', () => filters.length > 0);
             testArguments.conditional(`'${filters.join('|')}'`, () => filters.length > 0);
 
+            // Create a test run with the specified include/exclude tests
             const testRun = TestExplorerController.controller.createTestRun(request);
+
+            // Collect all test items that will be included in this run
+            const testItems = TestExplorerController.collectTestItems(project, filters);
+            
+            // Explicitly mark each test as enqueued
+            testItems.forEach(item => testRun.enqueued(item));
+            
             if (preLaunchTask !== undefined) {
                 const executionSuccess = await Extensions.waitForTask(preLaunchTask);
-                if (!executionSuccess || token.isCancellationRequested)
+                if (!executionSuccess || token.isCancellationRequested) {
+                    testRun.end();
                     return;
+                }
             }
+            
             await Extensions.waitForTask(DotNetTaskProvider.getTestTask(project.uri!.fsPath, testArguments));
             await TestExplorerController.publishTestResults(testRun, project, testReport);
         });
@@ -121,30 +132,106 @@ export class TestExplorerController {
 
         return testItems;
     }
+    private static collectTestItems(project: vscode.TestItem, filters: string[]): vscode.TestItem[] {
+        const testItems: vscode.TestItem[] = [];
+        
+        // Recursive function to collect all test items in the tree
+        const collectTestsInItem = (item: vscode.TestItem): void => {
+            // If this is a test case (leaf node), collect it
+            if (item.children.size === 0) {
+                testItems.push(item);
+                return;
+            }
+            
+            // Otherwise, recursively collect all children
+            item.children.forEach(child => {
+                collectTestsInItem(child);
+            });
+        };
+        
+        // If specific filters are provided, only collect those tests
+        if (filters.length > 0) {
+            filters.forEach(filterId => {
+                // Find the test item with this ID
+                const findAndCollectItem = (container: vscode.TestItem, targetId: string): boolean => {
+                    if (container.id === targetId) {
+                        collectTestsInItem(container);
+                        return true;
+                    }
+                    
+                    let found = false;
+                    container.children.forEach(child => {
+                        if (!found) {
+                            found = findAndCollectItem(child, targetId);
+                        }
+                    });
+                    
+                    return found;
+                };
+                
+                findAndCollectItem(project, filterId);
+            });
+        } else {
+            // No filters, collect all tests in the project
+            collectTestsInItem(project);
+        }
+        
+        return testItems;
+    }
+    
     private static publishTestResults(testRun: vscode.TestRun, project: vscode.TestItem, testReport: string): Promise<void> {
         const findTestItem = (id: string) => {
             const fixtureId = id.substring(0, id.lastIndexOf('.'));
-            const fixture = project.children.get(fixtureId);
-            if (fixture === undefined)
-                return undefined;
-
-            return fixture.children.get(id);
-        }
+            
+            // Recursive function to search for a test item in the tree
+            const searchInItem = (container: vscode.TestItem, targetId: string): vscode.TestItem | undefined => {
+                // Check if this is the fixture we're looking for
+                if (container.id === targetId) {
+                    // If it's the fixture, look for the test case
+                    return container.children.get(id);
+                }
+                
+                // Check direct children first
+                const directMatch = container.children.get(targetId);
+                if (directMatch) {
+                    return directMatch.children.get(id);
+                }
+                
+                // Recursively search in all children
+                let result: vscode.TestItem | undefined;
+                container.children.forEach(child => {
+                    if (!result) {
+                        result = searchInItem(child, targetId);
+                    }
+                });
+                
+                return result;
+            };
+            
+            // Start search from the project root
+            return searchInItem(project, fixtureId);
+        };
 
         return Interop.getTestResults(testReport).then(testResults => {
-            testResults?.forEach(result => {
-                const duration = TestExtensions.toDurationNumber(result.duration);
-                const testItem = findTestItem(result.fullName);
-                if (testItem === undefined)
-                    return;
+            // Process all test results we received
+            if (testResults && testResults.length > 0) {
+                testResults.forEach(result => {
+                    const duration = TestExtensions.toDurationNumber(result.duration);
+                    const testItem = findTestItem(result.fullName);
+                    if (testItem === undefined)
+                        return;
 
-                if (result.state === 'Passed')
-                    testRun.passed(testItem, duration);
-                else if (result.state === 'Failed')
-                    testRun.failed(testItem, TestExtensions.toTestMessage(result), duration);
-                else
-                    testRun.skipped(testItem);
-            });
+                    if (result.state === 'Passed') {
+                        testRun.passed(testItem, duration);
+                    } else if (result.state === 'Failed') {
+                        testRun.failed(testItem, TestExtensions.toTestMessage(result), duration);
+                    } else {
+                        testRun.skipped(testItem);
+                    }
+                });
+            }
+            
+            // End the test run
             testRun.end();
         });
     }
