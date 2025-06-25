@@ -271,6 +271,7 @@ public abstract class DiscoverTestsBase : TestFixture {
         public class MyFixture {{
             [{TestCaseAttr}]
             public void MyTest() {{}}
+            [{TestCaseAttr}]
             [{TestDataAttr}(1)]
             [{TestDataAttr}(2)]
             public void MyTest2(int a) {{ Assert.Pass(); }}
@@ -295,13 +296,13 @@ public abstract class DiscoverTestsBase : TestFixture {
             Assert.That(testCase2.Name, Is.EqualTo("MyTest2"));
             Assert.That(testCase2.FilePath, Is.EqualTo(Path.Combine(TestProjectPath, "SingleFixture.cs")));
             Assert.That(testCase2.Range!.Start!.Line, Is.EqualTo(5));
-            Assert.That(testCase2.Range!.End!.Line, Is.EqualTo(7));
+            Assert.That(testCase2.Range!.End!.Line, Is.EqualTo(8));
 
             var testCase3 = GetTestCaseById(fixture.TestCases!, "TestProject.MyFixture.MyTest3");
             Assert.That(testCase3.Name, Is.EqualTo("MyTest3"));
             Assert.That(testCase3.FilePath, Is.EqualTo(Path.Combine(TestProjectPath, "SingleFixture.cs")));
-            Assert.That(testCase3.Range!.Start!.Line, Is.EqualTo(9));
-            Assert.That(testCase3.Range!.End!.Line, Is.EqualTo(12));
+            Assert.That(testCase3.Range!.Start!.Line, Is.EqualTo(10));
+            Assert.That(testCase3.Range!.End!.Line, Is.EqualTo(13));
         });
     }
     [Test]
