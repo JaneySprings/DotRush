@@ -1,0 +1,19 @@
+name: Feature Request
+description: Suggest an idea or enhancement
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        👋 Thanks for suggesting a feature! Please describe it clearly.
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: Feature idea
+      description: Please describe the feature you would like to see.
+      placeholder: |
+        If this feature exists in other IDEs, please provide examples and describe how it works there.
+        This will help me better understand your request and implement it effectively.
+    validations:
+      required: true
