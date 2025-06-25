@@ -51,12 +51,23 @@ export class Interop {
             .append(Interop.toolPath)
             .append(`--install-${id}`));
     }
-    public static async runTestHost(projectFile: string, filter: string): Promise<number | undefined> {
-        return await ProcessRunner.runDetached<number>(new ProcessArgumentBuilder('dotnet')
+    public static async runTestHost(projectFile: string, filter: string, additionalArgs?: string): Promise<number | undefined> {
+        const builder = new ProcessArgumentBuilder('dotnet')
             .append(Interop.toolPath)
             .append("--run")
             .append(projectFile)
-            .append(filter));
+            .append(filter);
+            
+        // Add additional arguments if provided
+        if (additionalArgs) {
+            // Split the additional arguments string by spaces, but respect quotes
+            const args = additionalArgs.match(/(?:[^\s"]+|"[^"]*")+/g);
+            if (args) {
+                args.forEach(arg => builder.append(arg));
+            }
+        }
+        
+        return await ProcessRunner.runDetached<number>(builder);
     }
     public static getPropertyValue(propertyName: string, projectPath: string, configuration: string | undefined, framework: string | undefined): string | undefined {
         return ProcessRunner.runSync(new ProcessArgumentBuilder("dotnet")

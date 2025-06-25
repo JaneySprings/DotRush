@@ -92,6 +92,20 @@
       }
     ],
     "menus": {
+      "testing/item/context": [
+        {
+          "command": "dotrush.selectRunSettingsFile",
+          "group": "inline",
+          "when": "testId =~ /^project:/"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "dotrush.selectRunSettingsFile",
+          "group": "navigation",
+          "when": "view == workbench.view.testing"
+        }
+      ],
       "explorer/context": [
         {
           "command": "dotrush.setStartupProject",
@@ -202,6 +216,12 @@
         "category": "%extension.displayName%",
         "icon": "$(file-binary)",
         "title": "%command.title.createHeapDump%"
+      },
+      {
+        "command": "dotrush.selectRunSettingsFile",
+        "category": "%extension.displayName%",
+        "icon": "$(settings-gear)",
+        "title": "%command.title.selectRunSettingsFile%"
       }
     ],
     "debuggers": [

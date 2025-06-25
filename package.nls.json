@@ -11,6 +11,7 @@
 	"command.title.clean": "Clean",
 	"command.title.attachTraceProfiler": "Attach Trace Profiler",
 	"command.title.createHeapDump": "Create Heap Dump",
+	"command.title.selectRunSettingsFile": "Select Run Settings File",
 
 	"configuration.description.roslyn.workspaceProperties": "Additional MSBuild properties to pass to the workspace (e.g. Configuration=Debug).",
 	"configuration.description.roslyn.skipUnrecognizedProjects": "Determines if unrecognized projects are skipped when projects are opened.",

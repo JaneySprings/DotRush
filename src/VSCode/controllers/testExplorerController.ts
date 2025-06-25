@@ -1,5 +1,6 @@
 import { ProcessArgumentBuilder } from '../interop/processArgumentBuilder';
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
+import { StateController } from '../controllers/stateController';
 import { TestExtensions } from '../models/test';
 import { Interop } from '../interop/interop';
 import { Extensions } from '../extensions';
@@ -12,12 +13,24 @@ import * as fs from 'fs';
 export class TestExplorerController {
     private static controller: vscode.TestController;
     private static testsResultDirectory: string;
+    private static runSettingsStatusBarItem: vscode.StatusBarItem;
 
     public static activate(context: vscode.ExtensionContext) {
         TestExplorerController.testsResultDirectory = path.join(context.extensionPath, "extension", "bin", "TestExplorer");
 
         TestExplorerController.controller = vscode.tests.createTestController(res.testExplorerViewId, res.testExplorerViewTitle);
         TestExplorerController.controller.refreshHandler = TestExplorerController.refreshTests;
+        
+        // Create a status bar item to show the currently selected .runsettings file
+        TestExplorerController.runSettingsStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+        TestExplorerController.runSettingsStatusBarItem.command = res.commandIdSelectRunSettingsFile;
+        context.subscriptions.push(TestExplorerController.runSettingsStatusBarItem);
+        
+        // Update the status bar to show the currently selected .runsettings file
+        TestExplorerController.updateTestControllerDescription();
+
+        // Register the command to select a .runsettings file
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdSelectRunSettingsFile, () => TestExplorerController.selectRunSettingsFile()));
 
         context.subscriptions.push(TestExplorerController.controller);
         context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileRun, vscode.TestRunProfileKind.Run, TestExplorerController.runTests, true));
@@ -67,6 +80,12 @@ export class TestExplorerController {
             const testArguments = new ProcessArgumentBuilder('test')
                 .append('--logger').append(`'trx;LogFileName=${testReport}'`);
 
+            // Add runsettings file if configured
+            const runSettingsFile = StateController.getLocal<string>('testRunSettingsFile');
+            if (runSettingsFile && fs.existsSync(runSettingsFile)) {
+                testArguments.append('--settings').append(`"${runSettingsFile}"`);
+            }
+
             testArguments.conditional('--no-build', () => preLaunchTask !== undefined);
             testArguments.conditional('--filter', () => filters.length > 0);
             testArguments.conditional(`'${filters.join('|')}'`, () => filters.length > 0);
@@ -99,7 +118,15 @@ export class TestExplorerController {
             if (!executionSuccess || token.isCancellationRequested)
                 return;
 
-            const processId = await Interop.runTestHost(project.uri!.fsPath, filters.join('|'));
+            // Check if a .runsettings file is configured
+            const runSettingsFile = StateController.getLocal<string>('testRunSettingsFile');
+            let additionalArgs = '';
+            
+            if (runSettingsFile && fs.existsSync(runSettingsFile)) {
+                additionalArgs = `--settings "${runSettingsFile}"`;
+            }
+
+            const processId = await Interop.runTestHost(project.uri!.fsPath, filters.join('|'), additionalArgs);
             await vscode.debug.startDebugging(Extensions.getWorkspaceFolder(), {
                 name: res.testExplorerProfileDebug,
                 type: res.debuggerNetCoreId,
@@ -179,6 +206,90 @@ export class TestExplorerController {
         return testItems;
     }
     
+    /**
+     * Allows the user to select a .runsettings file from the workspace to use for test runs
+     */
+    private static async selectRunSettingsFile(): Promise<void> {
+        // Find all .runsettings files in the workspace
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders) {
+            vscode.window.showErrorMessage('No workspace folder is open.');
+            return;
+        }
+
+        const runSettingsFiles: vscode.Uri[] = [];
+        
+        // Search for .runsettings files in all workspace folders
+        for (const folder of workspaceFolders) {
+            const pattern = new vscode.RelativePattern(folder, '**/*.runsettings');
+            const files = await vscode.workspace.findFiles(pattern);
+            runSettingsFiles.push(...files);
+        }
+
+        if (runSettingsFiles.length === 0) {
+            vscode.window.showInformationMessage('No .runsettings files found in the workspace.');
+            return;
+        }
+
+        // Create quick pick items for each .runsettings file
+        const items: vscode.QuickPickItem[] = runSettingsFiles.map(file => {
+            const relativePath = vscode.workspace.asRelativePath(file.fsPath);
+            return {
+                label: path.basename(file.fsPath),
+                description: relativePath,
+                detail: file.fsPath
+            };
+        });
+
+        // Add an option to clear the current selection
+        items.unshift({
+            label: '$(clear-all) Clear .runsettings file selection',
+            description: '',
+            detail: ''
+        });
+
+        // Show quick pick to select a .runsettings file
+        const selectedItem = await vscode.window.showQuickPick(items, {
+            placeHolder: 'Select a .runsettings file to use for test runs',
+            title: 'Select .runsettings File',
+        });
+
+        if (!selectedItem) {
+            return; // User cancelled the selection
+        }
+
+        if (selectedItem.detail === '') {
+            // User selected to clear the current selection
+            StateController.putLocal('testRunSettingsFile', '');
+            vscode.window.showInformationMessage('Cleared .runsettings file selection.');
+        } else {
+            // User selected a .runsettings file
+            StateController.putLocal('testRunSettingsFile', selectedItem.detail);
+            vscode.window.showInformationMessage(`Selected .runsettings file: ${selectedItem.label}`);
+        }
+        
+        // Update the test controller description to show the currently selected .runsettings file
+        TestExplorerController.updateTestControllerDescription();
+    }
+
+    /**
+     * Updates the status bar item to show the currently selected .runsettings file
+     */
+    private static updateTestControllerDescription(): void {
+        const runSettingsFile = StateController.getLocal<string>('testRunSettingsFile');
+        
+        if (runSettingsFile && fs.existsSync(runSettingsFile)) {
+            // Show the selected .runsettings file in the status bar
+            const fileName = path.basename(runSettingsFile);
+            TestExplorerController.runSettingsStatusBarItem.text = `$(settings-gear) ${fileName}`;
+            TestExplorerController.runSettingsStatusBarItem.tooltip = `Selected .runsettings file: ${runSettingsFile}\nClick to change`;
+            TestExplorerController.runSettingsStatusBarItem.show();
+        } else {
+            // No .runsettings file selected
+            TestExplorerController.runSettingsStatusBarItem.hide();
+        }
+    }
+
     private static publishTestResults(testRun: vscode.TestRun, project: vscode.TestItem, testReport: string): Promise<void> {
         const findTestItem = (id: string) => {
             const fixtureId = id.substring(0, id.lastIndexOf('.'));

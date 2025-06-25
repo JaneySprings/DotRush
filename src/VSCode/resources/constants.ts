@@ -22,6 +22,8 @@ export const commandIdCleanProject = "dotrush.clean";
 export const commandIdAttachTraceProfiler = "dotrush.attachTraceProfiler";
 export const commandIdCreateHeapDump = "dotrush.createHeapDump";
 
+export const commandIdSelectRunSettingsFile = "dotrush.selectRunSettingsFile";
+export const commandTitleSelectRunSettingsFile = "Select .runsettings File";
 export const commandIdSelectActiveFramework = "dotrush.selectActiveFramework";
 export const commandTitleSelectActiveFramework = "Select target framework";
 export const commandIdSelectActiveConfiguration = "dotrush.selectActiveConfiguration";
@@ -65,3 +67,4 @@ export const configIdMSBuildAdditionalTestArguments = "msbuild.additionalTestArg
 export const configIdTestExplorerAutoRefreshTests = "testExplorer.autoRefreshTests";
 export const configIdTestExplorerSkipInitialPauseEvent = "testExplorer.skipInitialPauseEvent";
 export const configIdTestExplorerPreLaunchTask = "testExplorer.preLaunchTask";
+export const configIdTestExplorerRunSettings = "testExplorer.runSettingsFile";
