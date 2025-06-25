@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.Text;
+using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
 
 namespace DotRush.Roslyn.Server.Services;
 
@@ -57,7 +58,7 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
             foreach (var pair in diagnostics) {
                 await LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams {
                     Uri = pair.Key,
-                    Diagnostics = pair.Value.Where(d => !d.IsHiddenInUI()).Select(d => d.ToServerDiagnostic()).ToList(),
+                    Diagnostics = FilterDiagnostics(pair.Value, configurationService.DiagnosticsFormat),
                 }).ConfigureAwait(false);
             }
         });
@@ -78,5 +79,12 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
     }
     IEnumerable<string> IAdditionalComponentsProvider.GetAdditionalAssemblies() {
         return configurationService.AnalyzerAssemblies;
+    }
+
+    private List<ProtocolModels.Diagnostic> FilterDiagnostics(IEnumerable<DiagnosticContext> diagnostics, DiagnosticsFormat format) {
+        if (format != DiagnosticsFormat.AsIs)
+            diagnostics = diagnostics.Where(d => !d.IsHiddenInUI());
+
+        return diagnostics.Select(d => d.ToServerDiagnostic(format)).ToList();
     }
 }

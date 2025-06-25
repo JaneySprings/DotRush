@@ -25,6 +25,7 @@ public class ConfigurationService {
     public bool ApplyWorkspaceChanges => configuration?.ApplyWorkspaceChanges ?? false;
     public AnalysisScope CompilerDiagnosticsScope => configuration?.CompilerDiagnosticsScope ?? AnalysisScope.Project;
     public AnalysisScope AnalyzerDiagnosticsScope => configuration?.AnalyzerDiagnosticsScope ?? AnalysisScope.Document;
+    public DiagnosticsFormat DiagnosticsFormat => configuration?.DiagnosticsFormat ?? DiagnosticsFormat.NoHints;
     public string DotNetSdkDirectory => configuration?.DotNetSdkDirectory ?? Environment.GetEnvironmentVariable("DOTNET_SDK_PATH") ?? string.Empty;
     public ReadOnlyDictionary<string, string> WorkspaceProperties => (configuration?.WorkspaceProperties ?? new List<string>()).ToPropertiesDictionary();
     public ReadOnlyCollection<string> ProjectOrSolutionFiles => (configuration?.ProjectOrSolutionFiles ?? new List<string>()).AsReadOnly();
@@ -107,6 +108,9 @@ internal sealed class RoslynSection {
 
     [JsonPropertyName("analyzerDiagnosticsScope")]
     public AnalysisScope AnalyzerDiagnosticsScope { get; set; }
+
+    [JsonPropertyName("diagnosticsFormat")]
+    public DiagnosticsFormat DiagnosticsFormat { get; set; }
 
     [JsonPropertyName("dotnetSdkDirectory")]
     public string? DotNetSdkDirectory { get; set; }
