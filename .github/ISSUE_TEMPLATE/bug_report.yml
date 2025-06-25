@@ -24,7 +24,7 @@ body:
     id: environment
     attributes:
       label: Environment
-      description: Please provide environment information
+      description: Please provide details about your development environment.
       placeholder: |
         - OS: Windows ## / macOS ## / Linux ##
         - Editor: VSCode
