@@ -498,6 +498,16 @@
               "Solution"
             ]
           },
+          "dotrush.roslyn.diagnosticsFormat": {
+            "type": "string",
+            "default": "NoHints",
+            "description": "%configuration.description.roslyn.diagnosticsFormat%",
+            "enum": [
+              "AsIs",
+              "NoHints",
+              "InfosAsHints"
+            ]
+          },
           "dotrush.roslyn.dotnetSdkDirectory": {
             "type": "string",
             "description": "%configuration.description.roslyn.dotnetSdkDirectory%"
