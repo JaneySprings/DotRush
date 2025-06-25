@@ -1,0 +1,46 @@
+name: Bug Report
+description: Report a reproducible issue or unexpected behavior
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: | 
+        ⚠️ **Issues without a reproduction project (or steps), screencast, or screenshot will be automatically closed.**
+        👋 Thanks for reporting a bug! Please fill out the details below. 
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Please list the exact steps to reproduce the issue.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Please provide environment information
+      placeholder: |
+        - OS: Windows ## / macOS ## / Linux ##
+        - Editor: VSCode
+        - DotRush version: ##.#.###
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: additional
+    attributes:
+      label: Additional information
+      options:
+        - label: I have disabled all extensions except DotRush and the issue persists
+          required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ If this issue contains **no attachments** or **no reproduction steps**, it will be automatically closed.
