@@ -25,11 +25,28 @@ public class TestExplorer : TestExplorerSyntaxWalker {
 
             fixture.Resolve(fixtures);
             
-            // Only add top-level fixtures with tests or child fixtures
-            if (fixture.TestCases.Count != 0 || fixture.ChildFixtures.Count != 0)
+            // Only add top-level fixtures with tests or child fixtures that have tests
+            if (HasTestCasesRecursively(fixture))
                 result.Add(fixture);
         }
 
         return result;
+    }
+    
+    /// <summary>
+    /// Checks recursively if a fixture or any of its child fixtures contain test cases
+    /// </summary>
+    /// <param name="fixture">The fixture to check</param>
+    /// <returns>True if the fixture or any of its child fixtures contain test cases</returns>
+    private bool HasTestCasesRecursively(TestFixture fixture) {
+        if (fixture.TestCases.Count > 0)
+            return true;
+            
+        foreach (var childFixture in fixture.ChildFixtures) {
+            if (HasTestCasesRecursively(childFixture))
+                return true;
+        }
+        
+        return false;
     }
 }

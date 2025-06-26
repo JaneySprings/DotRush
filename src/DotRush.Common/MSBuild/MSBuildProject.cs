@@ -30,7 +30,7 @@ public class MSBuildProject {
         if (IsLegacyFormat)
             return false;
 
-        return this.HasPackage("NUnit") || this.HasPackage("NUnitLite") || this.HasPackage("xunit") || this.HasPackage("MSTest.TestFramework") || this.HasPackage("MSTest.TestFramework");
+        return this.HasPackage("NUnit") || this.HasPackage("NUnitLite") || this.HasPackage("xunit") || this.HasPackage("MSTest.TestFramework") || this.HasPackage("MSTest.TestAdapter");
     }
     public string GetAssemblyName() {
         return this.EvaluateProperty("AssemblyName", SystemPath.GetFileNameWithoutExtension(Path)) ?? string.Empty;
