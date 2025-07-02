@@ -32,6 +32,7 @@ public class HoverHandler : HoverHandlerBase {
                 return null;
 
             var displayStrings = new Dictionary<string, List<string>>();
+            var documentation = string.Empty;
             foreach (var documentId in documentIds) {
                 var document = navigationService.Solution?.GetDocument(documentId);
                 if (document == null)
@@ -55,26 +56,32 @@ public class HoverHandler : HoverHandlerBase {
                     displayStrings.Add(displayString, new List<string>());
 
                 displayStrings[displayString].Add(document.Project.GetTargetFramework());
+                if (string.IsNullOrEmpty(documentation))
+                    documentation = symbol.GetDocumentationCommentXml();
             }
 
             if (displayStrings.Count == 1) {
-                return new HoverResponse { Contents = new MarkupContent {
-                    Kind = MarkupKind.Markdown,
-                    Value = MarkdownExtensions.Create(displayStrings.Keys.First(), "csharp")
-                }};
+                return new HoverResponse {
+                    Contents = new MarkupContent {
+                        Kind = MarkupKind.Markdown,
+                        Value = MarkdownExtensions.CreateDocumentation(displayStrings.Keys.First(), documentation, "csharp")
+                    }
+                };
             }
 
             if (displayStrings.Count > 1) {
                 var builder = new StringBuilder();
                 foreach (var pair in displayStrings) {
                     var frameworks = string.Join(", ", pair.Value);
-                    builder.AppendLine(MarkdownExtensions.Create($"{pair.Key}  ({frameworks})", "csharp"));
+                    builder.AppendLine(MarkdownExtensions.CreateDocumentation($"{pair.Key}  ({frameworks})", null, "csharp"));
                 }
 
-                return new HoverResponse { Contents = new MarkupContent {
-                    Kind = MarkupKind.Markdown,
-                    Value = builder.ToString()
-                }};
+                return new HoverResponse {
+                    Contents = new MarkupContent {
+                        Kind = MarkupKind.Markdown,
+                        Value = builder.ToString()
+                    }
+                };
             }
 
             return null;
