@@ -5,6 +5,7 @@ import * as path from "path";
 export interface Project {
     name: string;
     path: string;
+    directory: string;
     frameworks: string[];
     configurations: string[];
 }

@@ -6,7 +6,7 @@ namespace DotRush.Common.MSBuild;
 
 public static class MSBuildPropertyEvaluator {
     public static string? EvaluateProperty(this MSBuildProject project, string name, string? defaultValue = null) {
-        var propertyMatches = project.GetPropertyMatches(project.Path, name);
+        var propertyMatches = project.GetPropertyMatches(project.FilePath, name);
         if (propertyMatches == null)
             return defaultValue;
 
@@ -17,7 +17,7 @@ public static class MSBuildPropertyEvaluator {
         return propertyValue;
     }
     public static bool HasPackage(this MSBuildProject project, string packageName) {
-        return project.HasPackageMatches(project.Path, packageName);
+        return project.HasPackageMatches(project.FilePath, packageName);
     }
 
     private static MatchCollection? GetPropertyMatches(this MSBuildProject project, string projectPath, string propertyName, bool isEndPoint = false) {
@@ -91,7 +91,7 @@ public static class MSBuildPropertyEvaluator {
 
         return project.HasPackageMatches(propsFile, packageName, true);
     }
-    
+
     private static string GetPropertyValue(this MSBuildProject project, string propertyName, MatchCollection matches) {
         var includeRegex = new Regex(@"\$\((?<inc>.*?)\)");
         var resultSequence = new StringBuilder();

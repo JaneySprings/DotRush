@@ -1,22 +1,21 @@
 using System.Text.Json.Serialization;
-using SystemPath = System.IO.Path;
 
 namespace DotRush.Common.MSBuild;
 
 public class MSBuildProject {
-    [JsonPropertyName("name")] public string Name { get; set; }
-    [JsonPropertyName("path")] public string Path { get; set; }
+    [JsonPropertyName("name")] public string Name { get; init; }
+    [JsonPropertyName("path")] public string FilePath { get; init; }
+    [JsonPropertyName("directory")] public string? DirectoryPath { get; init; }
     [JsonPropertyName("frameworks")] public IEnumerable<string> Frameworks { get; set; }
     [JsonPropertyName("configurations")] public IEnumerable<string> Configurations { get; set; }
     [JsonPropertyName("isLegacyFormat")] public bool IsLegacyFormat { get; set; }
 
-    [JsonIgnore] public string Directory => SystemPath.GetDirectoryName(Path)!;
-
     internal MSBuildProject(string path) {
+        Name = Path.GetFileNameWithoutExtension(path);
+        FilePath = Path.GetFullPath(path);
+        DirectoryPath = Path.GetDirectoryName(FilePath);
         Frameworks = Enumerable.Empty<string>();
         Configurations = Enumerable.Empty<string>();
-        Name = SystemPath.GetFileNameWithoutExtension(path);
-        Path = SystemPath.GetFullPath(path);
     }
 
     public bool IsExecutable() {
@@ -33,6 +32,6 @@ public class MSBuildProject {
         return this.HasPackage("NUnit") || this.HasPackage("NUnitLite") || this.HasPackage("xunit");
     }
     public string GetAssemblyName() {
-        return this.EvaluateProperty("AssemblyName", SystemPath.GetFileNameWithoutExtension(Path)) ?? string.Empty;
+        return this.EvaluateProperty("AssemblyName", Path.GetFileNameWithoutExtension(FilePath)) ?? string.Empty;
     }
 }
