@@ -18,10 +18,10 @@ public static class MSBuildProjectsLoader {
     }
 
     private static bool IsLegacyFormat(MSBuildProject project) {
-        var document = XDocument.Load(project.Path);
+        var document = XDocument.Load(project.FilePath);
         if (document.Root == null || !document.Root.HasAttributes)
             return false;
-        
+
         return !document.Root.Attributes().Any(a => a.Name.LocalName == "Sdk");
     }
 
