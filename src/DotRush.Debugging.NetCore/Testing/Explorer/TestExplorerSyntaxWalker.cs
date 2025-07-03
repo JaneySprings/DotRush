@@ -71,13 +71,13 @@ public abstract class TestExplorerSyntaxWalker {
         // Only get methods that are direct children of this class, not from nested classes
         var methods = fixture.ChildNodes().OfType<MethodDeclarationSyntax>().Where(node => {
             // XUnit
-            var hasFactAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().EndsWith("Fact", StringComparison.InvariantCulture)));
-            var hasTheoryAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().EndsWith("Theory", StringComparison.InvariantCulture)));
+            var hasFactAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().Contains("Fact", StringComparison.InvariantCulture)));
+            var hasTheoryAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().Contains("Theory", StringComparison.InvariantCulture)));
             // NUnit
-            var hasTestAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().EndsWith("Test", StringComparison.InvariantCulture)));
-            var hasTestCaseAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().EndsWith("TestCase", StringComparison.InvariantCulture)));
+            var hasTestAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().Contains("Test", StringComparison.InvariantCulture)));
+            var hasTestCaseAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().Contains("TestCase", StringComparison.InvariantCulture)));
             // MSTest
-            var hasTestMethodAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().EndsWith("TestMethod", StringComparison.InvariantCulture)));
+            var hasTestMethodAttribute = node.AttributeLists.Any(p => p.Attributes.Any(a => a.Name.ToString().Contains("TestMethod", StringComparison.InvariantCulture)));
             
             return hasFactAttribute || hasTheoryAttribute || hasTestAttribute || hasTestCaseAttribute || hasTestMethodAttribute;
         });
