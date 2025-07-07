@@ -1,11 +1,15 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using DotRush.Common.Extensions;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
-public static class MarkdownExtensions {
-    public static string CreateDocumentation(string member, string? documentation, string lang = "") {
+public static partial class MarkdownExtensions {
+    public static string CreateDocumentation(string member, string lang = "") {
+        return CreateDocumentation(member, null, lang);
+    }
+    public static string CreateDocumentation(string member, string? documentation, string lang) {
         var sb = new StringBuilder();
         sb.AppendLine("```" + lang);
         sb.AppendLine(member);
@@ -99,7 +103,7 @@ public static class MarkdownExtensions {
                     case "see":
                         var cref = childElement.Attribute("cref")?.Value;
                         if (!string.IsNullOrEmpty(cref))
-                            sb.AppendLine($"`{TrimMemberName(cref)}`");
+                            sb.Append($"`{TrimMemberName(cref)}`");
                         else
                             sb.Append(childElement.Value);
                         break;
@@ -151,14 +155,9 @@ public static class MarkdownExtensions {
         if (fullName.Length > 2 && fullName[1] == ':')
             fullName = fullName.Substring(2);
 
-        var lastBracketIndex = fullName.LastIndexOf('(');
-        if (lastBracketIndex > 0) {
-            var typeName = fullName.Substring(0, lastBracketIndex);
-            var lastDotIndex = typeName.LastIndexOf('.');
-            if (lastDotIndex > 0)
-                return fullName.Substring(lastDotIndex + 1);
-        }
-
-        return fullName;
+        return AccessExpressionRegex().Replace(fullName, string.Empty);
     }
+
+    [GeneratedRegex(@"(\w+\.)+")]
+    private static partial Regex AccessExpressionRegex();
 }

@@ -73,7 +73,7 @@ public class HoverHandler : HoverHandlerBase {
                 return new HoverResponse {
                     Contents = new MarkupContent {
                         Kind = MarkupKind.Markdown,
-                        Value = MarkdownExtensions.CreateDocumentation(builder.ToString(), null, "csharp")
+                        Value = MarkdownExtensions.CreateDocumentation(builder.ToString(), "csharp")
                     }
                 };
             }
