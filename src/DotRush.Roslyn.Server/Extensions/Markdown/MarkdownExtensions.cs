@@ -58,14 +58,11 @@ public static class MarkdownExtensions {
                 sb.AppendLine($"**Exceptions:**").AppendLine();
                 exceptionElements.ForEach(element => {
                     var cref = element.Attribute("cref")?.Value ?? "Exception";
-                    sb.AppendLine($"`{TrimTypeName(cref)}` — {ProcessInlineContent(element)}").AppendLine();
+                    sb.AppendLine($"`{TrimMemberName(cref)}` — {ProcessInlineContent(element)}").AppendLine();
                 });
                 sb.AppendLine();
             }
 
-            // case "remarks":
-            //     sb.AppendLine(ProcessInlineContent(element));
-            //     break;
             // case "example":
             //     sb.AppendLine(ProcessInlineContent(element));
             //     break;
@@ -79,6 +76,11 @@ public static class MarkdownExtensions {
                 sb.AppendLine(ProcessInlineContent(returnsElement)).AppendLine();
             }
 
+            var remarksElement = memberElement.Element("remarks");
+            if (remarksElement != null) {
+                sb.AppendLine("**Remarks:**").AppendLine();
+                sb.AppendLine(ProcessInlineContent(remarksElement)).AppendLine();
+            }
         } catch {
             return string.Empty;
         }
@@ -96,16 +98,10 @@ public static class MarkdownExtensions {
                 switch (childElement.Name.LocalName.ToLower()) {
                     case "see":
                         var cref = childElement.Attribute("cref")?.Value;
-                        var langword = childElement.Attribute("langword")?.Value;
-                        if (!string.IsNullOrEmpty(cref)) {
-                            sb.Append($"`{TrimTypeName(cref)}`");
-                        }
-                        else if (!string.IsNullOrEmpty(langword)) {
-                            sb.Append($"`{langword}`");
-                        }
-                        else {
+                        if (!string.IsNullOrEmpty(cref))
+                            sb.AppendLine($"`{TrimMemberName(cref)}`");
+                        else
                             sb.Append(childElement.Value);
-                        }
                         break;
 
                     case "paramref":
@@ -134,6 +130,11 @@ public static class MarkdownExtensions {
                         sb.AppendLine(ProcessInlineContent(childElement));
                         break;
 
+                    case "br":
+                        sb.AppendLine();
+                        sb.AppendLine();
+                        break;
+
                     default:
                         sb.Append(ProcessInlineContent(childElement));
                         break;
@@ -143,16 +144,20 @@ public static class MarkdownExtensions {
 
         return sb.ToString().Trim();
     }
-    private static string TrimTypeName(string fullName) {
+    private static string TrimMemberName(string fullName) {
         if (string.IsNullOrEmpty(fullName))
             return string.Empty;
 
         if (fullName.Length > 2 && fullName[1] == ':')
             fullName = fullName.Substring(2);
 
-        var lastDotIndex = fullName.LastIndexOf('.');
-        if (lastDotIndex > 0)
-            return fullName.Substring(lastDotIndex + 1);
+        var lastBracketIndex = fullName.LastIndexOf('(');
+        if (lastBracketIndex > 0) {
+            var typeName = fullName.Substring(0, lastBracketIndex);
+            var lastDotIndex = typeName.LastIndexOf('.');
+            if (lastDotIndex > 0)
+                return fullName.Substring(lastDotIndex + 1);
+        }
 
         return fullName;
     }
