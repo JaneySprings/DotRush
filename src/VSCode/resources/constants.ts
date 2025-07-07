@@ -29,6 +29,7 @@ export const commandTitleSelectActiveFramework = "Select target framework";
 export const commandIdSelectActiveConfiguration = "dotrush.selectActiveConfiguration";
 export const commandTitleSelectActiveConfiguration = "select configuration";
 export const commandIdActiveProjectPath = "dotrush.activeProjectPath";
+export const commandIdActiveProjectDirectory = "dotrush.activeProjectDirectory";
 export const commandIdActiveConfiguration = "dotrush.activeConfiguration";
 export const commandIdActiveTargetFramework = "dotrush.activeTargetFramework";
 export const commandIdActiveTargetPath = "dotrush.activeTargetPath";

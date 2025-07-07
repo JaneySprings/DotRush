@@ -7,7 +7,6 @@ export interface TestFixture {
     filePath: string;
     range: Range | null;
     children: TestCase[];
-    childFixtures: TestFixture[];
 }
 
 export interface TestCase {
@@ -30,23 +29,8 @@ export class TestExtensions {
         const item = controller.createTestItem(fixture.id, `${Icons.module} ${fixture.name}`, Uri.file(fixture.filePath));
         if (fixture.range !== null)
             item.range = fixture.range;
-            
-        // Create a collection of test items for both test cases and child fixtures
-        const childItems: TestItem[] = [];
-        
-        // Add test cases
-        if (fixture.children !== null && fixture.children !== undefined) {
-            childItems.push(...fixture.children.map(tc => TestExtensions.testCaseToTestItem(tc, controller)));
-        }
-        
-        // Add child fixtures
-        if (fixture.childFixtures !== null && fixture.childFixtures !== undefined) {
-            childItems.push(...fixture.childFixtures.map(cf => TestExtensions.fixtureToTestItem(cf, controller)));
-        }
-        
-        // Replace the children collection with all items
-        item.children.replace(childItems);
-        
+        if (fixture.children !== null && fixture.children !== undefined)
+            item.children.replace(fixture.children.map(tc => TestExtensions.testCaseToTestItem(tc, controller)));
         return item;
     }
     public static testCaseToTestItem(testCase: TestCase, controller: TestController): TestItem {

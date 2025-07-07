@@ -11,7 +11,6 @@ using EmmyLua.LanguageServer.Framework.Protocol.Model.Markup;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
-using SymbolKind = Microsoft.CodeAnalysis.SymbolKind;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -31,50 +30,52 @@ public class HoverHandler : HoverHandlerBase {
             if (documentIds == null)
                 return null;
 
-            var displayStrings = new Dictionary<string, List<string>>();
+            var displayDictionary = new Dictionary<string, List<string>>();
+            var documentation = string.Empty;
             foreach (var documentId in documentIds) {
                 var document = navigationService.Solution?.GetDocument(documentId);
                 if (document == null)
                     continue;
 
                 var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
-                var semanticModel = await document.GetSemanticModelAsync(token).ConfigureAwait(false);
                 var offset = request.Position.ToOffset(sourceText);
                 var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset).ConfigureAwait(false);
-                if (symbol == null || semanticModel == null)
+                if (symbol == null)
                     continue;
 
                 if (symbol is IAliasSymbol aliasSymbol)
                     symbol = aliasSymbol.Target;
 
-                var displayString = symbol.Kind == SymbolKind.NamedType || symbol.Kind == SymbolKind.Namespace
-                    ? symbol.ToDisplayString(DisplayFormat.Default)
-                    : symbol.ToMinimalDisplayString(semanticModel, offset, DisplayFormat.Minimal);
+                var format = symbol.Kind == SymbolKind.NamedType || symbol.Kind == SymbolKind.Namespace ? DisplayFormat.Default : DisplayFormat.Minimal;
+                var displayString = symbol.ToDisplayString(format);
+                if (!displayDictionary.ContainsKey(displayString))
+                    displayDictionary[displayString] = new List<string>();
 
-                if (!displayStrings.ContainsKey(displayString))
-                    displayStrings.Add(displayString, new List<string>());
+                displayDictionary[displayString].Add(document.Project.GetTargetFramework());
 
-                displayStrings[displayString].Add(document.Project.GetTargetFramework());
+                if (string.IsNullOrEmpty(documentation))
+                    documentation = symbol.GetDocumentationCommentXml();
             }
 
-            if (displayStrings.Count == 1) {
-                return new HoverResponse { Contents = new MarkupContent {
-                    Kind = MarkupKind.Markdown,
-                    Value = MarkdownExtensions.Create(displayStrings.Keys.First(), "csharp")
-                }};
+            if (displayDictionary.Count == 1) {
+                return new HoverResponse {
+                    Contents = new MarkupContent {
+                        Kind = MarkupKind.Markdown,
+                        Value = MarkdownExtensions.CreateDocumentation(displayDictionary.Keys.First(), documentation, "csharp")
+                    }
+                };
             }
 
-            if (displayStrings.Count > 1) {
+            if (displayDictionary.Count > 1) {
                 var builder = new StringBuilder();
-                foreach (var pair in displayStrings) {
-                    var frameworks = string.Join(", ", pair.Value);
-                    builder.AppendLine(MarkdownExtensions.Create($"{pair.Key}  ({frameworks})", "csharp"));
-                }
+                displayDictionary.ForEach(kv => builder.AppendLine($"{kv.Key}  ({string.Join(", ", kv.Value)})"));
 
-                return new HoverResponse { Contents = new MarkupContent {
-                    Kind = MarkupKind.Markdown,
-                    Value = builder.ToString()
-                }};
+                return new HoverResponse {
+                    Contents = new MarkupContent {
+                        Kind = MarkupKind.Markdown,
+                        Value = MarkdownExtensions.CreateDocumentation(builder.ToString(), null, "csharp")
+                    }
+                };
             }
 
             return null;

@@ -26,6 +26,7 @@
 	"configuration.description.roslyn.applyWorkspaceChanges": "Determines if changes made to the workspace are applied to the project files.",
 	"configuration.description.roslyn.dotnetSdkDirectory": "Path to the SDK directory to use for .NET projects (e.g. C:\\Program Files\\dotnet\\sdk\\9.0.201).",
 	"configuration.description.roslyn.analyzerAssemblies": "Paths to additional Roslyn analyzer assemblies (.dll files) to include during analysis.",
+	"configuration.description.roslyn.diagnosticsFormat": "Determines how diagnostics are presented in the editor.",
 
 	"configuration.description.debugger.projectAssembliesOnly": "Use only project assemblies for debugging.",
 	"configuration.description.debugger.stepOverPropertiesAndOperators": "Step over properties and operators.",
