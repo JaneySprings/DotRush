@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.CodeAnalysis;
 using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
 
@@ -118,6 +119,65 @@ public static class SymbolExtensions {
         }
 
         return SemanticTokenType.Unknown;
+    }
+
+    public static string? GetInheritedDocumentationCommentXml(this ISymbol symbol, CultureInfo? preferredCulture = null, bool expandIncludes = false, CancellationToken cancellationToken = default(CancellationToken)) {
+        var xml = symbol.GetDocumentationCommentXml(preferredCulture, expandIncludes, cancellationToken);
+        if (!string.IsNullOrEmpty(xml))
+            return xml;
+
+        var overridenSymbol = symbol.GetOverridenSymbol();
+        while (overridenSymbol != null) {
+            xml = overridenSymbol.GetDocumentationCommentXml(preferredCulture, expandIncludes, cancellationToken);
+            if (!string.IsNullOrEmpty(xml))
+                return xml;
+
+            overridenSymbol = overridenSymbol.GetOverridenSymbol();
+        }
+
+        var interfaceSymbol = symbol.GetImplementedInterfaceMember();
+        if (interfaceSymbol != null) {
+            xml = interfaceSymbol.GetDocumentationCommentXml(preferredCulture, expandIncludes, cancellationToken);
+            if (!string.IsNullOrEmpty(xml))
+                return xml;
+        }
+
+        return null;
+    }
+    public static ISymbol? GetOverridenSymbol(this ISymbol symbol) {
+        if (symbol is IMethodSymbol methodSymbol)
+            return methodSymbol.OverriddenMethod;
+        if (symbol is IPropertySymbol propertySymbol)
+            return propertySymbol.OverriddenProperty;
+        if (symbol is IEventSymbol eventSymbol)
+            return eventSymbol.OverriddenEvent;
+
+        return null;
+    }
+    public static ISymbol? GetImplementedInterfaceMember(this ISymbol symbol) {
+        if (symbol is IMethodSymbol methodSymbol) {
+            foreach (var interfaceMethod in methodSymbol.ContainingType.AllInterfaces.SelectMany(i => i.GetMembers().OfType<IMethodSymbol>())) {
+                var implementation = methodSymbol.ContainingType.FindImplementationForInterfaceMember(interfaceMethod);
+                if (SymbolEqualityComparer.Default.Equals(implementation, methodSymbol))
+                    return interfaceMethod;
+            }
+        }
+        if (symbol is IPropertySymbol propertySymbol) {
+            foreach (var interfaceProperty in propertySymbol.ContainingType.AllInterfaces.SelectMany(i => i.GetMembers().OfType<IPropertySymbol>())) {
+                var implementation = propertySymbol.ContainingType.FindImplementationForInterfaceMember(interfaceProperty);
+                if (SymbolEqualityComparer.Default.Equals(implementation, propertySymbol))
+                    return interfaceProperty;
+            }
+        }
+        if (symbol is IEventSymbol eventSymbol) {
+            foreach (var interfaceEvent in eventSymbol.ContainingType.AllInterfaces.SelectMany(i => i.GetMembers().OfType<IEventSymbol>())) {
+                var implementation = eventSymbol.ContainingType.FindImplementationForInterfaceMember(interfaceEvent);
+                if (SymbolEqualityComparer.Default.Equals(implementation, eventSymbol))
+                    return interfaceEvent;
+            }
+        }
+
+        return null;
     }
 }
 

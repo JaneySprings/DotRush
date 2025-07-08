@@ -54,7 +54,7 @@ public class HoverHandler : HoverHandlerBase {
                 displayDictionary[displayString].Add(document.Project.GetTargetFramework());
 
                 if (string.IsNullOrEmpty(documentation))
-                    documentation = symbol.GetDocumentationCommentXml();
+                    documentation = symbol.GetInheritedDocumentationCommentXml();
             }
 
             if (displayDictionary.Count == 1) {
