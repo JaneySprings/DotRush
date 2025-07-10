@@ -25,6 +25,9 @@ public class LanguageServer {
     public static EmmyLuaLanguageServer Server => server;
 
     public static Task Main(string[] args) {
+        Console.SetError(TextWriter.Null);
+        Console.SetOut(TextWriter.Null);
+        Console.SetIn(TextReader.Null);
         ConfigureServices();
 
         server = EmmyLuaLanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
