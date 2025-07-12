@@ -1,6 +1,8 @@
 namespace DotRush.Common.Interop.Android;
 
 public static class AndroidSdkLocator {
+    public static string? UnityEditorPath { get; set; }
+
     public static string SdkLocation() {
         var path = Environment.GetEnvironmentVariable("ANDROID_SDK_ROOT");
         if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
@@ -26,6 +28,17 @@ public static class AndroidSdkLocator {
             path = Path.Combine(RuntimeInfo.ProgramX86Directory, "Android", "android-sdk");
         else if (RuntimeInfo.IsMacOS)
             path = Path.Combine(RuntimeInfo.HomeDirectory, "Library", "Developer", "Xamarin", "android-sdk-macosx");
+
+        if (Directory.Exists(path))
+            return path;
+
+        // Try to find the SDK path in the Unity Editor locations
+        if (!string.IsNullOrEmpty(UnityEditorPath)) {
+            if (RuntimeInfo.IsWindows)
+                path = Path.Combine(UnityEditorPath, "..", "Data", "PlaybackEngines", "AndroidPlayer", "SDK");
+            else //TODO: Check Linux path
+                path = Path.Combine(UnityEditorPath, "..", "PlaybackEngines", "AndroidPlayer", "SDK");
+        }
 
         if (Directory.Exists(path))
             return path;
