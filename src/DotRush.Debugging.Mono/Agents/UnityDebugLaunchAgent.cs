@@ -80,8 +80,8 @@ public class UnityDebugLaunchAgent : BaseLaunchAgent {
         }
 
         var port = Configuration.TransportArguments.Port != 0 ? Configuration.TransportArguments.Port : GetAndroidPlayerPort(serial);
-        ArgumentOutOfRangeException.ThrowIfZero(port, $"Failed to determine port for Android player with serial '{serial}'.");
-        debugSession.OnOutputDataReceived($"Connecting to Android player on serial '{serial}' at port '{port}'");
+        ArgumentOutOfRangeException.ThrowIfZero(port, $"Failed to determine port for '{serial}'.");
+        debugSession.OnOutputDataReceived($"Connecting to '{serial}' at port '{port}'");
 
         AndroidDebugBridge.Forward(serial, port);
         var logcatProcess = AndroidDebugBridge.Logcat(serial, debugSession);
