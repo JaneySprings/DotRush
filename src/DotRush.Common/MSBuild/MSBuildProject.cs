@@ -29,7 +29,10 @@ public class MSBuildProject {
         if (IsLegacyFormat)
             return false;
 
-        return this.HasPackage("NUnit") || this.HasPackage("NUnitLite") || this.HasPackage("xunit");
+        return this.HasPackage("Microsoft.NET.Test.Sdk")
+            || this.HasPackage("NUnit")
+            || this.HasPackage("NUnitLite")
+            || this.HasPackage("xunit");
     }
     public string GetAssemblyName() {
         return this.EvaluateProperty("AssemblyName", Path.GetFileNameWithoutExtension(FilePath)) ?? string.Empty;
