@@ -84,7 +84,7 @@ public class UnityDebugLaunchAgent : BaseLaunchAgent {
         debugSession.OnOutputDataReceived($"Connecting to '{serial}' at port '{port}'");
 
         AndroidDebugBridge.Forward(serial, port);
-        var logcatProcess = AndroidDebugBridge.Logcat(serial, debugSession);
+        var logcatProcess = AndroidDebugBridge.Logcat(serial, "system,crash", "*:I", debugSession);
         Disposables.Add(() => AndroidDebugBridge.RemoveForward(serial));
         Disposables.Add(() => logcatProcess.Terminate());
 
