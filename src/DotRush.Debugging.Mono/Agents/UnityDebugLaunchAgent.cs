@@ -1,7 +1,9 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using DotRush.Common.Extensions;
 using DotRush.Common.Interop;
+using DotRush.Common.Interop.Android;
 using DotRush.Common.MSBuild;
 using DotRush.Debugging.Mono.Extensions;
 using DotRush.Debugging.Mono.Models;
@@ -19,11 +21,13 @@ public class UnityDebugLaunchAgent : BaseLaunchAgent {
 
     public override void Prepare(DebugSession debugSession) {
         var editorInstance = GetEditorInstance();
-        debugSession.OnOutputDataReceived($"Attaching to Unity({editorInstance.ProcessId}) - {editorInstance.Version}");
 
-        var port = Configuration.ProcessId != 0 ? Configuration.ProcessId : 56000 + (editorInstance.ProcessId % 1000);
-        var applicationName = Path.GetFileName(Configuration.CurrentDirectory);
-        startInformation = new SoftDebuggerStartInfo(new SoftDebuggerConnectArgs(applicationName, IPAddress.Loopback, port));
+        if (Configuration.TransportArguments == null || Configuration.TransportArguments.Type == TransportType.Generic)
+            startInformation = AttachToUnityPlayer(debugSession, editorInstance);
+        if (Configuration.TransportArguments != null && Configuration.TransportArguments.Type == TransportType.Android)
+            startInformation = AttachToAndroidPlayer(debugSession, editorInstance);
+
+        ArgumentNullException.ThrowIfNull(startInformation, "Current transport configuration is not supported");
         SetAssemblies(startInformation, debugSession);
     }
     public override void Connect(SoftDebuggerSession session) {
@@ -54,15 +58,58 @@ public class UnityDebugLaunchAgent : BaseLaunchAgent {
         return Enumerable.Empty<string>();
     }
 
+    private SoftDebuggerStartInfo AttachToUnityPlayer(DebugSession debugSession, EditorInstance editorInstance) {
+        debugSession.OnOutputDataReceived($"Attaching to Unity({editorInstance.ProcessId}) - {editorInstance.Version}");
+
+        var applicationName = Path.GetFileName(Configuration.CurrentDirectory);
+        var port = Configuration.ProcessId != 0 ? Configuration.ProcessId : 56000 + (editorInstance.ProcessId % 1000);
+        return new SoftDebuggerStartInfo(new SoftDebuggerConnectArgs(applicationName, IPAddress.Loopback, port));
+    }
+    private SoftDebuggerStartInfo AttachToAndroidPlayer(DebugSession debugSession, EditorInstance editorInstance) {
+        debugSession.OnOutputDataReceived($"Attaching to Android process - Unity({editorInstance.Version})");
+        ArgumentNullException.ThrowIfNull(Configuration.TransportArguments);
+        AndroidSdkLocator.UnityEditorPath = editorInstance.AppPath;
+
+        var serial = Configuration.TransportArguments.Serial;
+        if (string.IsNullOrEmpty(serial)) {
+            var devices = AndroidDebugBridge.Devices();
+            if (devices.Count == 0)
+                throw new InvalidOperationException("No Android devices found.");
+
+            serial = devices[0];
+        }
+
+        var port = Configuration.TransportArguments.Port != 0 ? Configuration.TransportArguments.Port : GetAndroidPlayerPort(serial);
+        ArgumentOutOfRangeException.ThrowIfZero(port, $"Failed to determine port for '{serial}'.");
+        debugSession.OnOutputDataReceived($"Connecting to '{serial}' at port '{port}'");
+
+        AndroidDebugBridge.Forward(serial, port);
+        var logcatProcess = AndroidDebugBridge.Logcat(serial, "system,crash", "*:I", debugSession);
+        Disposables.Add(() => AndroidDebugBridge.RemoveForward(serial));
+        Disposables.Add(() => logcatProcess.Terminate());
+
+        var applicationName = Path.GetFileName(Configuration.CurrentDirectory);
+        return new SoftDebuggerStartInfo(new SoftDebuggerConnectArgs(applicationName, IPAddress.Loopback, port));
+    }
+
     private EditorInstance GetEditorInstance() {
         var editorInfo = Path.Combine(Configuration.CurrentDirectory, "Library", "EditorInstance.json");
         if (!File.Exists(editorInfo))
-            throw ServerExtensions.GetProtocolException($"EditorInstance.json not found: '{editorInfo}'");
+            throw ServerExtensions.GetProtocolException($"EditorInstance.json not found: '{editorInfo}'. Is your Unity Editor running?");
 
         var editorInstance = SafeExtensions.Invoke(() => JsonSerializer.Deserialize<EditorInstance>(File.ReadAllText(editorInfo)));
         if (editorInstance == null)
             throw ServerExtensions.GetProtocolException($"Failed to deserialize EditorInstance.json: '{editorInfo}'");
 
         return editorInstance;
+    }
+    private int GetAndroidPlayerPort(string serial) {
+        var debuggerLogs = AndroidDebugBridge.Logcat(serial, "managed debugger on port");
+        if (debuggerLogs.Count == 0)
+            return 0;
+
+        var portLine = debuggerLogs.Last();
+        var portString = portLine.Substring(portLine.LastIndexOf("port") + 5).Trim();
+        return int.Parse(portString, CultureInfo.InvariantCulture);
     }
 }

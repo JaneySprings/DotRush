@@ -28,7 +28,9 @@ export class MonoDebugConfigurationProvider implements vscode.DebugConfiguration
                     memberEvaluationTimeout: 5000,
                     allowTargetInvoke: true,
                     allowMethodEvaluation: true,
-                    allowToStringCalls: true,
+                    // Unity uses il2cpp, which very unstable with MonoDebugger,
+                    // so we disable it for now for better debugging.
+                    allowToStringCalls: options.transportArgs === undefined,
                     flattenHierarchy: false,
                     groupPrivateMembers: true,
                     groupStaticMembers: true,

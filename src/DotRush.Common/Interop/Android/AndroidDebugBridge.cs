@@ -149,6 +149,15 @@ public static class AndroidDebugBridge {
             .Append("-v", "tag");
         return new ProcessRunner(adb, arguments, logger).Start();
     }
+    public static List<string> Logcat(string serial, string filter) {
+        var adb = AndroidSdkLocator.AdbTool();
+        ProcessResult result = new ProcessRunner(adb, new ProcessArgumentBuilder()
+            .Append("-s", serial)
+            .Append("logcat", "-d"))
+            .WaitForExit();
+
+        return result.StandardOutput.Where(line => line.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
     public static void Push(string serial, string source, string destination, IProcessLogger? logger = null) {
         var adb = AndroidSdkLocator.AdbTool();
         var arguments = new ProcessArgumentBuilder()
