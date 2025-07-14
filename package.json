@@ -377,6 +377,15 @@
         "configurationAttributes": {
           "attach": {
             "properties": {
+              "program": {
+                "type": "string"
+              },
+              "processId": {
+                "type": "number"
+              },
+              "transportArgs": {
+                "type": "object"
+              },
               "cwd": {
                 "type": "string"
               },

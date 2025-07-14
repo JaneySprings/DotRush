@@ -48,7 +48,7 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 ## Running and Debugging .NET Core Applications
 &emsp;To run and debug your .NET Core applications, you can use the built-in .NET Core Debugger. You can start debugging by pressing **F5** and select the **.NET Core Debugger** configuration. You can also create a `launch.json` file with the following content:
 
-```json
+```jsonc
 {
     "version": "0.2.0",
     "configurations": [
@@ -82,13 +82,17 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 ## Debugging Unity Projects
 &emsp;To debug your Unity project, you can use the integrated Mono Debugger. Open the Unity project in VSCode (for example, by opening it from the Unity Editor) and start debugging by pressing **F5** and select the **Unity Debugger** configuration. You can also create a `launch.json` file with the following content:
 
-```json
+```jsonc
 {
     "version": "0.2.0",
     "configurations": [
         {
             "name": "Unity Debugger",
             "type": "unity",
+            // Attach to Android device
+            // "transportArgs": {
+            //     "type": "android"
+            // },
             "request": "attach"
         }
     ]
@@ -101,7 +105,7 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 
 ## Debugging Godot Projects
 &emsp;To debug your Godot project, open it in VSCode and create a `launch.json` file with the following content (adjust the `processPath` to the location of your Godot Engine executable):
-```json
+```jsonc
 {
     "version": "0.2.0",
     "configurations": [

@@ -6,28 +6,44 @@ using Newtonsoft.Json.Linq;
 namespace DotRush.Debugging.Mono;
 
 public class LaunchConfiguration {
-    public string CurrentDirectory { get; init; }
     public int ProcessId { get; init; }
-    public string? TransportId { get; init; }
-    public DebuggerSessionOptions DebuggerSessionOptions { get; init; }
+    public string? ProgramPath { get; init; }
+    public string CurrentDirectory { get; init; }
     public Dictionary<string, string>? EnvironmentVariables { get; init; }
+    public DebuggerSessionOptions DebuggerSessionOptions { get; init; }
     public List<string>? UserAssemblies { get; init; }
-    private bool SkipDebug { get; init; }
+
+    public string? TransportId { get; init; }
+    public TransportConfiguration? TransportArguments { get; init; }
 
     public LaunchConfiguration(Dictionary<string, JToken> configurationProperties) {
-        SkipDebug = configurationProperties.TryGetValue("skipDebug").ToValue<bool>();
         ProcessId = configurationProperties.TryGetValue("processId").ToValue<int>();
-        TransportId = configurationProperties.TryGetValue("transportId").ToClass<string>();
-        DebuggerSessionOptions = configurationProperties.TryGetValue("debuggerOptions")?.ToClass<DebuggerSessionOptions>() ?? ServerExtensions.DefaultDebuggerOptions;
-        EnvironmentVariables = configurationProperties.TryGetValue("env")?.ToClass<Dictionary<string, string>>();
-        UserAssemblies = configurationProperties.TryGetValue("userAssemblies")?.ToClass<List<string>>();
-
+        ProgramPath = configurationProperties.TryGetValue("program").ToClass<string>()?.ToPlatformPath();
         CurrentDirectory = configurationProperties.TryGetValue("cwd").ToClass<string>()?.ToPlatformPath().TrimPathEnd() ?? Environment.CurrentDirectory;
+        EnvironmentVariables = configurationProperties.TryGetValue("env")?.ToClass<Dictionary<string, string>>();
         if (Directory.Exists(CurrentDirectory) && CurrentDirectory != Environment.CurrentDirectory)
             Environment.CurrentDirectory = CurrentDirectory;
+
+        DebuggerSessionOptions = configurationProperties.TryGetValue("debuggerOptions")?.ToClass<DebuggerSessionOptions>() ?? ServerExtensions.DefaultDebuggerOptions;
+        UserAssemblies = configurationProperties.TryGetValue("userAssemblies")?.ToClass<List<string>>();
+        TransportId = configurationProperties.TryGetValue("transportId").ToClass<string>();
+        TransportArguments = configurationProperties.TryGetValue("transportArgs")?.ToClass<TransportConfiguration>();
     }
 
     public BaseLaunchAgent GetLaunchAgent() {
-        return new UnityDebugLaunchAgent(this); //NoDebug?
+        //TODO: Other launch agents can be added here in the future
+        return new UnityDebugLaunchAgent(this);
     }
+}
+
+[Serializable]
+public class TransportConfiguration {
+    public TransportType Type { get; set; }
+    public int Port { get; set; }
+    public string? Serial { get; set; }
+}
+
+public enum TransportType {
+    Generic,
+    Android
 }
