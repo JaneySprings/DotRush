@@ -59,7 +59,7 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
         _ = LanguageServer.Server.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectIndexCompositeFormat, projectName));
     }
     public override void OnProjectLoadCompleted(Project project) {
-        _ = LanguageServer.Server.SendNotification(new NotificationMessage(Resources.ProjectLoadedNotification, JsonSerializer.SerializeToDocument(project.FilePath)));
+        _ = LanguageServer.Server.SendNotification(Resources.ProjectLoadedNotification, JsonSerializer.SerializeToDocument(project.FilePath));
     }
     public override void OnProjectCompilationStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);

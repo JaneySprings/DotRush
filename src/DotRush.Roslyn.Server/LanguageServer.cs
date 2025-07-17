@@ -6,6 +6,7 @@ using DotRush.Roslyn.Server.Handlers.Framework;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Handlers.Workspace;
 using DotRush.Roslyn.Server.Services;
+using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Initialize;
 using EmmyLua.LanguageServer.Framework.Server;
 using EmmyLuaLanguageServer = EmmyLua.LanguageServer.Framework.Server.LanguageServer;
@@ -67,6 +68,7 @@ public class LanguageServer {
         await workspaceService.LoadAsync(parameters.WorkspaceFolders, CancellationToken.None).ConfigureAwait(false);
         codeAnalysisService.StartWorkerThread();
 
+        _ = LanguageServer.Server.SendNotification(Resources.LoadCompletedNotification, null);
         _ = LanguageServer.Proxy.RefreshWorkspaceTokens();
         _ = externalAccessService.StartListeningAsync(parameters.ProcessId, CancellationToken.None);
     }
