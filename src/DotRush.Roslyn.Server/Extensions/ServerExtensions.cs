@@ -39,22 +39,25 @@ public static class ServerExtensions {
             Token = Resources.WorkspaceServiceWorkDoneToken,
         }), CancellationToken.None).ConfigureAwait(false);
 
-        await server.SendNotification(new NotificationMessage("$/progress", JsonSerializer.SerializeToDocument(new ProgressParams {
+        await server.SendNotification("$/progress", JsonSerializer.SerializeToDocument(new ProgressParams {
             Token = Resources.WorkspaceServiceWorkDoneToken,
             Value = new WorkDoneProgressBegin() { Percentage = 0 },
-        }))).ConfigureAwait(false);
+        })).ConfigureAwait(false);
     }
     public static Task UpdateWorkDoneProgress(this EmmyLuaLanguageServer server, string token, string message) {
-        return server.SendNotification(new NotificationMessage("$/progress", JsonSerializer.SerializeToDocument(new ProgressParams {
+        return server.SendNotification("$/progress", JsonSerializer.SerializeToDocument(new ProgressParams {
             Value = new WorkDoneProgressReport() { Message = message, Percentage = 0 },
             Token = token,
-        })));
+        }));
     }
     public static Task EndWorkDoneProgress(this EmmyLuaLanguageServer server, string token) {
-        return server.SendNotification(new NotificationMessage("$/progress", JsonSerializer.SerializeToDocument(new ProgressParams {
+        return server.SendNotification("$/progress", JsonSerializer.SerializeToDocument(new ProgressParams {
             Value = new WorkDoneProgressEnd(),
             Token = token,
-        })));
+        }));
+    }
+    public static Task SendNotification(this EmmyLuaLanguageServer server, string method, JsonDocument? parameters) {
+        return server.SendNotification(new NotificationMessage(method, parameters));
     }
 
     public static ReadOnlyDictionary<string, string> ToPropertiesDictionary(this List<string> properties) {

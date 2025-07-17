@@ -1,4 +1,4 @@
-import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
+import { LanguageClient, LanguageClientOptions, ServerOptions, State } from "vscode-languageclient/node";
 import { TestExplorerController } from "./testExplorerController";
 import { PublicExports } from "../publicExports";
 import { Extensions } from "../extensions";
@@ -53,15 +53,19 @@ export class LanguageServerController {
         }));
     }
 
-    private static initialize() {
+    public static start() {
         LanguageServerController.client = new LanguageClient(res.extensionId, res.extensionId, LanguageServerController.serverOptions, LanguageServerController.clientOptions);
         LanguageServerController.client.onNotification('dotrush/projectLoaded', (project: string) => {
             TestExplorerController.loadProject(project);
             PublicExports.instance.onProjectLoaded.invoke(project);
         });
-    }
-    public static start() {
-        LanguageServerController.initialize();
+        LanguageServerController.client.onNotification('dotrush/loadCompleted', () => {
+            for (const document of vscode.workspace.textDocuments) {
+                LanguageServerController.client.sendNotification('textDocument/didOpen', {
+                    textDocument: { uri: document.uri.toString() }
+                });
+            }
+        })
         LanguageServerController.client.start();
         LanguageServerController.running = true;
     }
@@ -79,9 +83,6 @@ export class LanguageServerController {
             workspaceFolders: workspaceFolders,
         });
     }
-    public static isRunning(): boolean {
-        return LanguageServerController.running;
-    }
 
     private static async showQuickPickTargets(): Promise<void> {
         const result = await Extensions.selectProjectOrSolutionFiles();
@@ -89,7 +90,7 @@ export class LanguageServerController {
             return;
 
         await Extensions.putSetting(res.configIdRoslynProjectOrSolutionFiles, result, vscode.ConfigurationTarget.Workspace);
-        if (LanguageServerController.isRunning())
+        if (LanguageServerController.running)
             LanguageServerController.reload();
     }
     private static async shouldQuickPickTargets(): Promise<boolean> {
