@@ -135,6 +135,9 @@ export class Extensions {
             return undefined;
         }
     }
+    public static capitalize(text: string): string {
+        return text.charAt(0).toUpperCase() + text.slice(1);
+    }
 
     private static async findFiles(baseUri: vscode.Uri | undefined, extension: string): Promise<vscode.Uri[]> {
         if (baseUri?.fsPath !== undefined && path.extname(baseUri.fsPath) === extension)

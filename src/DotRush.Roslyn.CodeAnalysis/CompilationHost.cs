@@ -32,6 +32,11 @@ public class CompilationHost {
         await UpdateAnalyzerDiagnosticsAsync(documents, analyzerScope, cancellationToken).ConfigureAwait(false);
         EndAnalysis();
     }
+    public async Task AnalyzeAsync(Solution solution, CancellationToken cancellationToken) {
+        BeginAnalysis();
+        await DiagnoseWithSuppressorsAsync(solution, cancellationToken).ConfigureAwait(false);
+        EndAnalysis();
+    }
 
     private void BeginAnalysis() {
         workspaceDiagnostics.BeginUpdate();

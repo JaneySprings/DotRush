@@ -54,13 +54,13 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
                 CancellationToken.None
             ).ConfigureAwait(false);
 
-            var diagnostics = compilationHost.GetDiagnostics();
-            foreach (var pair in diagnostics) {
-                await LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams {
-                    Uri = pair.Key,
-                    Diagnostics = FilterDiagnostics(pair.Value, configurationService.DiagnosticsFormat),
-                }).ConfigureAwait(false);
-            }
+            await PublishDiagnosticsAsync().ConfigureAwait(false);
+        });
+    }
+    public void RequestDiagnosticsPublishing(Solution solution) {
+        workerTasks.Add(async () => {
+            await compilationHost.AnalyzeAsync(solution, CancellationToken.None).ConfigureAwait(false);
+            await PublishDiagnosticsAsync().ConfigureAwait(false);
         });
     }
 
@@ -74,17 +74,26 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
         return codeActionHost.GetCodeRefactoringProvidersForProject(project);
     }
 
-    bool IAdditionalComponentsProvider.IsEnabled {
-        get => configurationService.AnalyzerDiagnosticsScope != AnalysisScope.None;
+    private async Task PublishDiagnosticsAsync() {
+        var diagnostics = compilationHost.GetDiagnostics();
+        foreach (var pair in diagnostics) {
+            await LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams {
+                Uri = pair.Key,
+                Diagnostics = FilterDiagnostics(pair.Value, configurationService.DiagnosticsFormat),
+            }).ConfigureAwait(false);
+        }
     }
-    IEnumerable<string> IAdditionalComponentsProvider.GetAdditionalAssemblies() {
-        return configurationService.AnalyzerAssemblies;
-    }
-
     private List<ProtocolModels.Diagnostic> FilterDiagnostics(IEnumerable<DiagnosticContext> diagnostics, DiagnosticsFormat format) {
         if (format != DiagnosticsFormat.AsIs)
             diagnostics = diagnostics.Where(d => !d.IsHiddenInUI());
 
         return diagnostics.Select(d => d.ToServerDiagnostic(format)).ToList();
+    }
+
+    bool IAdditionalComponentsProvider.IsEnabled {
+        get => configurationService.AnalyzerDiagnosticsScope != AnalysisScope.None;
+    }
+    IEnumerable<string> IAdditionalComponentsProvider.GetAdditionalAssemblies() {
+        return configurationService.AnalyzerAssemblies;
     }
 }

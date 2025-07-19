@@ -425,6 +425,9 @@
         "type": "dotrush.task",
         "required": [],
         "properties": {
+          "project": {
+            "type": "string"
+          },
           "args": {
             "type": "array",
             "default": [],
