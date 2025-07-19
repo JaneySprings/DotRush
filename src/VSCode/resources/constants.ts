@@ -2,7 +2,6 @@ export const extensionId = "dotrush";
 export const extensionPublisher = "nromanov";
 
 export const extensionMicrosoftId = "ms-dotnettools.csharp";
-export const microsoftProblemMatcherId = "msCompile";
 export const vscodeAppName = "Visual Studio Code";
 export const debuggerNetCoreId = "coreclr";
 export const debuggerNetCoreTitle = ".NET Core Debugger";

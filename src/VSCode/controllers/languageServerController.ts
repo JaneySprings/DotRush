@@ -1,4 +1,4 @@
-import { LanguageClient, LanguageClientOptions, ServerOptions, State } from "vscode-languageclient/node";
+import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 import { TestExplorerController } from "./testExplorerController";
 import { PublicExports } from "../publicExports";
 import { Extensions } from "../extensions";
@@ -13,10 +13,8 @@ export class LanguageServerController {
     private static running: boolean;
 
     public static async activate(context: vscode.ExtensionContext): Promise<void> {
-        const serverExecutable = path.join(context.extensionPath, "extension", "bin", "LanguageServer", "DotRush");
-        const serverExtension = process.platform === 'win32' ? '.exe' : '';
         LanguageServerController.serverOptions = {
-            command: serverExecutable + serverExtension,
+            command: path.join(context.extensionPath, "extension", "bin", "LanguageServer", "DotRush" + (process.platform === 'win32' ? '.exe' : '')),
             options: { cwd: Extensions.getCurrentWorkingDirectory() }
         };
         LanguageServerController.clientOptions = {
@@ -50,6 +48,12 @@ export class LanguageServerController {
             const value = await vscode.window.showWarningMessage(res.messageProjectChanged, res.messageReload)
             if (value === res.messageReload)
                 LanguageServerController.reload();
+        }));
+        context.subscriptions.push(vscode.tasks.onDidStartTask(e => {
+            if (!Extensions.getSetting<boolean>('dotrush.msbuild.collectDiagnosticsOnBuild', true)) // TODO: publish or remove this
+                return;
+            if (e.execution.task.source === res.extensionId && e.execution.task.name === 'Build')
+                LanguageServerController.client.sendNotification('dotrush/solutionDiagnostics', {});
         }));
     }
 

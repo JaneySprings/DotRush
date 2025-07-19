@@ -51,6 +51,7 @@ public class LanguageServer {
               .AddHandler(new DidChangeConfigurationHandler(configurationService))
               .AddHandler(new WorkspaceSymbolHandler(workspaceService))
         // Framework handlers
+              .AddHandler(new SolutionDiagnosticsHandler(workspaceService, codeAnalysisService))
               .AddHandler(new ReloadWorkspaceHandler(workspaceService));
 
         server.OnInitialize(OnInitializeAsync);
