@@ -38,10 +38,9 @@ public static class DiagnosticExtensions {
             Source = context.SourceName,
         };
 
-        string helpUriString = context.Diagnostic.Descriptor.HelpLinkUri;
-        if (!string.IsNullOrEmpty(helpUriString) && Uri.TryCreate(helpUriString, UriKind.Absolute, out Uri? helpUri)) {
-            diagnostic.CodeDescription = new(helpUri);
-        }
+        var helpUriString = context.Diagnostic.Descriptor.HelpLinkUri;
+        if (!string.IsNullOrEmpty(helpUriString) && Uri.TryCreate(helpUriString, UriKind.Absolute, out Uri? helpUri))
+            diagnostic.CodeDescription = new ProtocolModels.CodeDescription(helpUri);
 
         return diagnostic;
     }
