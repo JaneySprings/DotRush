@@ -30,13 +30,20 @@ public static class DiagnosticExtensions {
         throw new NotImplementedException($"Unknown diagnostic severity: {severity}");
     }
     public static ProtocolModels.Diagnostic ToServerDiagnostic(this DiagnosticContext context, DiagnosticsFormat format) {
-        return new ProtocolModels.Diagnostic() {
+        var diagnostic = new ProtocolModels.Diagnostic() {
             Code = context.Diagnostic.Id,
             Message = context.Diagnostic.GetSubject(),
             Range = context.Diagnostic.Location.ToRange(),
             Severity = context.Diagnostic.Severity.ToServerSeverity(format),
             Source = context.SourceName,
         };
+
+        string helpUriString = context.Diagnostic.Descriptor.HelpLinkUri;
+        if (!string.IsNullOrEmpty(helpUriString) && Uri.TryCreate(helpUriString, UriKind.Absolute, out Uri? helpUri)) {
+            diagnostic.CodeDescription = new(helpUri);
+        }
+
+        return diagnostic;
     }
 
     public static bool IsHiddenInUI(this DiagnosticContext context) {
