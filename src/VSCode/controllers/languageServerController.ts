@@ -52,7 +52,7 @@ export class LanguageServerController {
         context.subscriptions.push(vscode.tasks.onDidStartTask(e => {
             if (!Extensions.getSetting<boolean>('dotrush.msbuild.collectDiagnosticsOnBuild', true)) // TODO: publish or remove this
                 return;
-            if (e.execution.task.source === res.extensionId && e.execution.task.name === 'Build')
+            if (e.execution.task.definition.type === res.taskDefinitionId && e.execution.task.name.includes('Build'))
                 LanguageServerController.client.sendNotification('dotrush/solutionDiagnostics', {});
         }));
     }

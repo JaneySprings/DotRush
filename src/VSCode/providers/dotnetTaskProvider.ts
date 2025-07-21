@@ -17,21 +17,22 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
     public static onMac: boolean = process.platform === 'darwin';
 
     resolveTask(task: vscode.Task, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task> { 
-        if (StatusBarController.activeProject == undefined || task.definition.type !== res.taskDefinitionId)
+        if (task.definition.type !== res.taskDefinitionId)
             return undefined;
         
         task.definition.target = DotNetTarget.Build;
         if (task.definition.project === undefined)
-            task.definition.project = StatusBarController.activeProject.path;
+            task.definition.project = StatusBarController.activeProject?.path;
 
         return DotNetTaskProvider.getTask(task.definition, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
     }
     provideTasks(token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task[]> {
-        if (StatusBarController.activeProject == undefined)
-            return undefined;
-        
         return [ 
-            DotNetTaskProvider.getTask({ type: res.taskDefinitionId, target: DotNetTarget.Build, project: StatusBarController.activeProject.path }, StatusBarController.activeConfiguration, StatusBarController.activeFramework),
+            DotNetTaskProvider.getTask({
+                type: res.taskDefinitionId,
+                target: DotNetTarget.Build,
+                project: `\${command:${res.commandIdActiveProjectPath}}`
+            }, StatusBarController.activeConfiguration, StatusBarController.activeFramework)
         ];
     }
 
