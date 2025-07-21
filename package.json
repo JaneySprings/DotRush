@@ -426,7 +426,8 @@
         "required": [],
         "properties": {
           "project": {
-            "type": "string"
+            "type": "string",
+            "default": "${command:dotrush.activeProjectPath}"
           },
           "args": {
             "type": "array",
