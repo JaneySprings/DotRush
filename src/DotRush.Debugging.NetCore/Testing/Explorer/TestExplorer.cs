@@ -5,8 +5,8 @@ namespace DotRush.Debugging.NetCore.Testing.Explorer;
 
 public class TestExplorer : TestExplorerSyntaxWalker {
     public IEnumerable<TestFixture> DiscoverTests(string projectFile) {
-        var project = MSBuildProjectsLoader.LoadProject(projectFile);
-        if (project == null || !project.IsTestProject())
+        var project = MSBuildProjectsLoader.LoadProject(projectFile, true);
+        if (project == null || !project.IsTestProject)
             return Enumerable.Empty<TestFixture>();
 
         var testProjectDirectory = Path.GetDirectoryName(projectFile)!;

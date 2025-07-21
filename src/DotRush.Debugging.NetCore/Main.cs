@@ -40,7 +40,7 @@ public class Program {
         Console.WriteLine(JsonSerializer.Serialize(processes));
     }
     public static void GetProject(string[] args) {
-        var project = MSBuildProjectsLoader.LoadProject(args[1], CurrentSessionLogger.Debug);
+        var project = MSBuildProjectsLoader.LoadProject(args[1]);
         Console.WriteLine(JsonSerializer.Serialize(project));
     }
     public static void DiscoverTests(string[] args) {

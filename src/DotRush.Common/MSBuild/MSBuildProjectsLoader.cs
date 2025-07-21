@@ -3,16 +3,18 @@ using System.Xml.Linq;
 namespace DotRush.Common.MSBuild;
 
 public static class MSBuildProjectsLoader {
-    public static MSBuildProject? LoadProject(string projectFile, Action<string>? callback = null) {
-        if (!File.Exists(projectFile)) {
-            callback?.Invoke($"Could not find workspace directory {projectFile}");
+    public static MSBuildProject? LoadProject(string? projectFile, bool resolveAdditionalProperties = false) {
+        if (!File.Exists(projectFile))
             return null;
-        }
 
         var project = new MSBuildProject(projectFile);
         project.Configurations = GetConfigurations(project);
         project.Frameworks = GetTargetFrameworks(project);
-        project.IsLegacyFormat = IsLegacyFormat(project);
+
+        if (resolveAdditionalProperties) {
+            project.IsLegacyFormat = IsLegacyFormat(project);
+            project.IsTestProject = IsTestProject(project);
+        }
 
         return project;
     }
@@ -23,6 +25,22 @@ public static class MSBuildProjectsLoader {
             return false;
 
         return !document.Root.Attributes().Any(a => a.Name.LocalName == "Sdk");
+    }
+    private static bool IsExecutable(MSBuildProject project) {
+        var outputType = project.EvaluateProperty("OutputType");
+        return outputType != null && outputType.Contains("exe", StringComparison.OrdinalIgnoreCase);
+    }
+    private static bool IsTestProject(MSBuildProject project) {
+        var isTestProject = project.EvaluateProperty("IsTestProject");
+        if (isTestProject != null && isTestProject.Contains("true", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (project.IsLegacyFormat)
+            return false;
+
+        return project.HasPackage("Microsoft.NET.Test.Sdk")
+            || project.HasPackage("NUnit")
+            || project.HasPackage("NUnitLite")
+            || project.HasPackage("xunit");
     }
 
     private static List<string> GetTargetFrameworks(MSBuildProject project) {
