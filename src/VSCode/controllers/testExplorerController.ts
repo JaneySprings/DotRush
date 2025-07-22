@@ -52,9 +52,13 @@ export class TestExplorerController {
 
         if (TestExplorerExtensions.isProjectItem(item)) {
             const fixtures = await LanguageServerController.sendRequest<TestFixture[]>('dotrush/testExplorer/fixtures', { document: item.uri });
+            if (fixtures !== undefined && fixtures.length > 0)
+                item.children.replace(fixtures.map(fixture => TestExplorerExtensions.createFixtureItem(TestExplorerController.controller, fixture)));
         }
         else if (TestExplorerExtensions.isFixtureItem(item)) {
             const testCases = await LanguageServerController.sendRequest<TestCase[]>('dotrush/testExplorer/tests', { document: item.uri });
+            if (testCases !== undefined && testCases.length > 0)
+                item.children.replace(testCases.map(testCase => TestExplorerExtensions.createTestCaseItem(TestExplorerController.controller, testCase)));
         }
     }
     
@@ -66,11 +70,17 @@ class TestExplorerExtensions {
         item.canResolveChildren = true;
         return item;
     }
-    public static createFixtureItem(controller: vscode.TestController): vscode.TestItem {
-        throw new Error('Method not implemented.');
+    public static createFixtureItem(controller: vscode.TestController, fixture: TestFixture): vscode.TestItem {
+        const item = controller.createTestItem(fixture.id, `${Icons.module} ${fixture.name}`, vscode.Uri.file(fixture.filePath));
+        item.range = fixture.range;
+        item.canResolveChildren = true;
+        return item;
     }
-    public static createTestCaseItem(controller: vscode.TestController): vscode.TestItem {
-        throw new Error('Method not implemented.');
+    public static createTestCaseItem(controller: vscode.TestController, testCase: TestCase): vscode.TestItem {
+        const item = controller.createTestItem(testCase.id, `${Icons.test} ${testCase.name}`, vscode.Uri.file(testCase.filePath));
+        item.range = testCase.range;
+        item.canResolveChildren = false;
+        return item;
     }
 
     public static isProjectItem(item: vscode.TestItem): boolean {
@@ -82,6 +92,24 @@ class TestExplorerExtensions {
     public static isTestCaseItem(item: vscode.TestItem): boolean {
         return item.parent !== undefined && item.parent.parent !== undefined;
     }
+
+    // public static toTestMessage(testResult: TestResult): TestMessage {
+    //     let message = testResult.errorMessage ?? '';
+    //     if (testResult.stackTrace !== null)
+    //         message += `\n\n${testResult.stackTrace}`;
+    //     return new TestMessage(message);
+    // }
+    // public static toDurationNumber(duration: string | null): number {
+    //     const match = duration?.match(/(\d+):(\d+):(\d+)\.(\d+)/);
+    //     if (duration === null || !match)
+    //         return 1;
+
+    //     const [_, hours, minutes, seconds, milliseconds] = match;
+    //     return parseInt(hours, 10) * 60 * 60 * 1000 +
+    //         parseInt(minutes, 10) * 60 * 1000 +
+    //         parseInt(seconds, 10) * 1000 +
+    //         parseInt(milliseconds.slice(0, 3), 10);
+    // }
 }
 
 //     private static async refreshTests(): Promise<void> {
