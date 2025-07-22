@@ -90,6 +90,13 @@ export class LanguageServerController {
         });
     }
 
+    public static sendRequest<T>(method: string, params?: any): Promise<T | undefined> {
+        if (!LanguageServerController.running)
+            return Promise.resolve(undefined);
+    
+        return LanguageServerController.client.sendRequest<T>(method, params);
+    }
+
     private static async showQuickPickTargets(): Promise<void> {
         const result = await Extensions.selectProjectOrSolutionFiles();
         if (result === undefined)

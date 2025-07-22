@@ -1,6 +1,5 @@
 import { ProcessArgumentBuilder } from '../interop/processArgumentBuilder';
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
-import { TestExtensions } from '../models/test';
 import { Interop } from '../interop/interop';
 import { Project } from '../models/project';
 import { Extensions } from '../extensions';
@@ -9,18 +8,17 @@ import * as res from '../resources/constants'
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { LanguageServerController } from './languageServerController';
+import { TestCase, TestFixture } from '../models/test';
 
 export class TestExplorerController {
     private static controller: vscode.TestController;
-    // private static testsResultDirectory: string;
 
     public static activate(context: vscode.ExtensionContext) {
-        // TestExplorerController.testsResultDirectory = path.join(context.extensionPath, "extension", "bin", "TestExplorer");
-
         TestExplorerController.controller = vscode.tests.createTestController(res.testExplorerViewId, res.testExplorerViewTitle);
-        // TestExplorerController.controller.refreshHandler = TestExplorerController.refreshTests;
-        TestExplorerController.controller.resolveHandler = (e) => {};
-
+        TestExplorerController.controller.refreshHandler = TestExplorerController.reloadProjects;
+        TestExplorerController.controller.resolveHandler = TestExplorerController.resolveTestItem;
+        
         context.subscriptions.push(TestExplorerController.controller);
         // context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileRun, vscode.TestRunProfileKind.Run, TestExplorerController.runTests, true));
         // context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileDebug, vscode.TestRunProfileKind.Debug, TestExplorerController.debugTests, true));
@@ -38,12 +36,51 @@ export class TestExplorerController {
     }
 
     public static loadProject(project: Project): void {
-        const root = TestExplorerController.controller.createTestItem(project.name, `${Icons.solution} ${project.name}`, vscode.Uri.file(project.path));
-        root.canResolveChildren = true;
-        TestExplorerController.controller.items.add(root);
+        const item = TestExplorerExtensions.createProjectItem(TestExplorerController.controller, project);
+        TestExplorerController.controller.items.add(item);
     }
     public static unloadProjects() {
         TestExplorerController.controller.items.replace([]);
+    }
+    public static reloadProjects() {
+
+    }
+
+    private static async resolveTestItem(item: vscode.TestItem | undefined): Promise<void> {
+        if (item === undefined || item.children.size > 0)
+            return;
+
+        if (TestExplorerExtensions.isProjectItem(item)) {
+            const fixtures = await LanguageServerController.sendRequest<TestFixture[]>('dotrush/testExplorer/fixtures', { document: item.uri });
+        }
+        else if (TestExplorerExtensions.isFixtureItem(item)) {
+            const testCases = await LanguageServerController.sendRequest<TestCase[]>('dotrush/testExplorer/tests', { document: item.uri });
+        }
+    }
+    
+}
+
+class TestExplorerExtensions {
+    public static createProjectItem(controller: vscode.TestController, project: Project): vscode.TestItem {
+        const item = controller.createTestItem(project.name, `${Icons.solution} ${project.name}`, vscode.Uri.file(project.path));
+        item.canResolveChildren = true;
+        return item;
+    }
+    public static createFixtureItem(controller: vscode.TestController): vscode.TestItem {
+        throw new Error('Method not implemented.');
+    }
+    public static createTestCaseItem(controller: vscode.TestController): vscode.TestItem {
+        throw new Error('Method not implemented.');
+    }
+
+    public static isProjectItem(item: vscode.TestItem): boolean {
+        return item.parent === undefined;
+    }
+    public static isFixtureItem(item: vscode.TestItem): boolean {
+        return item.parent !== undefined && item.parent.parent === undefined;
+    }
+    public static isTestCaseItem(item: vscode.TestItem): boolean {
+        return item.parent !== undefined && item.parent.parent !== undefined;
     }
 }
 
