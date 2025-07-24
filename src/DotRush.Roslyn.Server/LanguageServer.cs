@@ -20,6 +20,7 @@ public class LanguageServer {
     private static WorkspaceService workspaceService = null!;
     private static CodeAnalysisService codeAnalysisService = null!;
     private static NavigationService navigationService = null!;
+    private static TestExplorerService testExplorerService = null!;
     private static ExternalAccessService externalAccessService = null!;
 
     public static ClientProxy Proxy => server.Client;
@@ -52,7 +53,8 @@ public class LanguageServer {
               .AddHandler(new WorkspaceSymbolHandler(workspaceService))
         // Framework handlers
               .AddHandler(new SolutionDiagnosticsHandler(workspaceService, codeAnalysisService))
-              .AddHandler(new ReloadWorkspaceHandler(workspaceService));
+              .AddHandler(new ReloadWorkspaceHandler(workspaceService))
+              .AddHandler(new TestExplorerHandler(testExplorerService, workspaceService));
 
         server.OnInitialize(OnInitializeAsync);
         return server.Run();
@@ -93,6 +95,7 @@ public class LanguageServer {
     private static void ConfigureServices() {
         configurationService = new ConfigurationService();
         navigationService = new NavigationService();
+        testExplorerService = new TestExplorerService();
         codeAnalysisService = new CodeAnalysisService(configurationService);
         workspaceService = new WorkspaceService(configurationService);
         externalAccessService = new ExternalAccessService(workspaceService);

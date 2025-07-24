@@ -51,12 +51,12 @@ export class TestExplorerController {
             return;
 
         if (TestExplorerExtensions.isProjectItem(item)) {
-            const fixtures = await LanguageServerController.sendRequest<TestFixture[]>('dotrush/testExplorer/fixtures', { document: item.uri });
+            const fixtures = await LanguageServerController.sendRequest<TestFixture[]>('dotrush/testExplorer/fixtures', { textDocument: Extensions.documentIdFromUri(item.uri)});
             if (fixtures !== undefined && fixtures.length > 0)
                 item.children.replace(fixtures.map(fixture => TestExplorerExtensions.createFixtureItem(TestExplorerController.controller, fixture)));
         }
         else if (TestExplorerExtensions.isFixtureItem(item)) {
-            const testCases = await LanguageServerController.sendRequest<TestCase[]>('dotrush/testExplorer/tests', { document: item.uri });
+            const testCases = await LanguageServerController.sendRequest<TestCase[]>('dotrush/testExplorer/tests', { textDocument: Extensions.documentIdFromUri(item.uri)});
             if (testCases !== undefined && testCases.length > 0)
                 item.children.replace(testCases.map(testCase => TestExplorerExtensions.createTestCaseItem(TestExplorerController.controller, testCase)));
         }

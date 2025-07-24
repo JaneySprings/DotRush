@@ -1,4 +1,5 @@
 using System.Globalization;
+using DotRush.Roslyn.Navigation.Extensions;
 using Microsoft.CodeAnalysis;
 using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
 
@@ -178,6 +179,13 @@ public static class SymbolExtensions {
         }
 
         return null;
+    }
+
+    public static bool HasAttribute(this ISymbol symbol, string attributeName) {
+        return symbol.GetAttributes().Any(a => a.AttributeClass?.GetNamedTypeFullName() == attributeName);
+    }
+    public static bool HasAttribute(this ISymbol symbol, string[] attributeNames) {
+        return symbol.GetAttributes().Any(a => attributeNames.Contains(a.AttributeClass?.GetNamedTypeFullName() ?? string.Empty));
     }
 }
 
