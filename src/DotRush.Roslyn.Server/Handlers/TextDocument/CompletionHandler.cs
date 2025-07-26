@@ -37,7 +37,7 @@ public class CompletionHandler : CompletionHandlerBase {
 
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
         serverCapabilities.CompletionProvider = new CompletionOptions {
-            TriggerCharacters = new List<string> { ".", " ", "(", "<" },
+            TriggerCharacters = new List<string> { ".", "#", ">", ":" },
             ResolveProvider = true,
         };
     }
