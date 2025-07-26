@@ -68,18 +68,18 @@ export class TestExplorerController {
 
 class TestExplorerExtensions {
     public static createProjectItem(controller: vscode.TestController, project: Project): vscode.TestItem {
-        const item = controller.createTestItem(project.name, `${Icons.solution} ${project.name}`, vscode.Uri.file(project.path));
+        const item = controller.createTestItem(project.name, `${Icons.library} ${project.name}`, vscode.Uri.file(project.path));
         item.canResolveChildren = true;
         return item;
     }
     public static createFixtureItem(controller: vscode.TestController, fixture: TestFixture): vscode.TestItem {
-        const item = controller.createTestItem(fixture.id, `${Icons.module} ${fixture.name}`, vscode.Uri.file(fixture.filePath));
+        const item = controller.createTestItem(fixture.id, fixture.name, vscode.Uri.file(fixture.filePath));
         item.range = fixture.range;
         item.canResolveChildren = true;
         return item;
     }
     public static createTestCaseItem(controller: vscode.TestController, testCase: TestCase): vscode.TestItem {
-        const item = controller.createTestItem(testCase.id, `${Icons.test} ${testCase.name}`, vscode.Uri.file(testCase.filePath));
+        const item = controller.createTestItem(testCase.id, testCase.name, vscode.Uri.file(testCase.filePath));
         item.range = testCase.range;
         item.canResolveChildren = false;
         return item;
