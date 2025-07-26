@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Text.Json;
 using DotRush.Common.Extensions;
 using DotRush.Common.InteropV2;
+using DotRush.Common.MSBuild;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces;
 using DotRush.Roslyn.Workspaces.FileSystem;
@@ -59,7 +60,8 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
         _ = LanguageServer.Server.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectIndexCompositeFormat, projectName));
     }
     public override void OnProjectLoadCompleted(Project project) {
-        _ = LanguageServer.Server.SendNotification(Resources.ProjectLoadedNotification, JsonSerializer.SerializeToDocument(project.FilePath));
+        var projectModel = MSBuildProjectsLoader.LoadProject(project.FilePath, true);
+        _ = LanguageServer.Server.SendNotification(Resources.ProjectLoadedNotification, JsonSerializer.SerializeToDocument(projectModel));
     }
     public override void OnProjectCompilationStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);

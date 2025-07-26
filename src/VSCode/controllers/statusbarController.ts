@@ -71,8 +71,8 @@ export class StatusBarController {
 
         StatusBarController.configurationStatusBarItem.tooltip = StatusBarController.activeProject?.name;
         StatusBarController.configurationStatusBarItem.text = framework === undefined
-            ? `${Icons.target} ${configuration}`
-            : `${Icons.target} ${configuration} | ${framework}`;
+            ? `${Icons.project} ${configuration}`
+            : `${Icons.project} ${configuration} | ${framework}`;
 
         PublicExports.instance.onActiveConfigurationChanged.invoke(configuration);
         PublicExports.instance.onActiveFrameworkChanged.invoke(framework);

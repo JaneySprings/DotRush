@@ -108,7 +108,7 @@ export class Extensions {
         });
         return executionExitCode === 0;
     }
-    public static async getTask(taskName: string | undefined): Promise<vscode.Task | undefined> {
+    public static async getTask(taskName?: string): Promise<vscode.Task | undefined> {
         if (taskName === undefined)
             return undefined;
 
@@ -137,6 +137,13 @@ export class Extensions {
     }
     public static capitalize(text: string): string {
         return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    public static documentIdFromUri(uri?: vscode.Uri): any {
+        return { uri: uri?.toString() }
+    }
+    public static documentIdFromDocument(document?: vscode.TextDocument): any {
+        return { uri: document?.uri?.toString() };
     }
 
     private static async findFiles(baseUri: vscode.Uri | undefined, extension: string): Promise<vscode.Uri[]> {

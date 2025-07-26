@@ -8,6 +8,8 @@ export interface Project {
     directory: string;
     frameworks: string[];
     configurations: string[];
+    isLegacyFormat: boolean;
+    isTestProject: boolean;
 }
 
 export class ProjectOrSolutionItem implements QuickPickItem {

@@ -6,10 +6,10 @@ using DotRush.Common.Logging;
 namespace DotRush.Common.MSBuild;
 
 public static class MSBuildSolutionLoader {
-    public static IEnumerable<MSBuildProject> LoadProjects(string solutionFile, Action<string>? callback = null) {
+    public static IEnumerable<MSBuildProject> LoadProjects(string solutionFile) {
         var projectFiles = GetProjectFiles(solutionFile);
         foreach (var projectFile in projectFiles) {
-            var project = MSBuildProjectsLoader.LoadProject(projectFile, callback);
+            var project = MSBuildProjectsLoader.LoadProject(projectFile);
             if (project == null) {
                 CurrentSessionLogger.Error($"Failed to load project: {projectFile}");
                 continue;
