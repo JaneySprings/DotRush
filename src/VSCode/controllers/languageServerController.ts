@@ -78,7 +78,6 @@ export class LanguageServerController {
     public static stop() {
         LanguageServerController.client.stop();
         LanguageServerController.running = false;
-        TestExplorerController.unloadProjects();
     }
     public static reload() {
         if (!LanguageServerController.running)

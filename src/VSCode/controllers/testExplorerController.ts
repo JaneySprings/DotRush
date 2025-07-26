@@ -1,6 +1,5 @@
 import { ProcessArgumentBuilder } from '../interop/processArgumentBuilder';
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
-import { Interop } from '../interop/interop';
 import { Project } from '../models/project';
 import { Extensions } from '../extensions';
 import { Icons } from '../resources/icons';
@@ -16,7 +15,7 @@ export class TestExplorerController {
 
     public static activate(context: vscode.ExtensionContext) {
         TestExplorerController.controller = vscode.tests.createTestController(res.testExplorerViewId, res.testExplorerViewTitle);
-        TestExplorerController.controller.refreshHandler = TestExplorerController.reloadProjects;
+        TestExplorerController.controller.refreshHandler = TestExplorerController.refreshTestItems;
         TestExplorerController.controller.resolveHandler = TestExplorerController.resolveTestItem;
         
         context.subscriptions.push(TestExplorerController.controller);
@@ -39,13 +38,16 @@ export class TestExplorerController {
         const item = TestExplorerExtensions.createProjectItem(TestExplorerController.controller, project);
         TestExplorerController.controller.items.add(item);
     }
-    public static unloadProjects() {
-        TestExplorerController.controller.items.replace([]);
-    }
-    public static reloadProjects() {
 
+    private static refreshTestItems() {
+        const refreshedItems: vscode.TestItem[] = [];
+        TestExplorerController.controller.items.forEach(oldItem => {
+            const item = TestExplorerController.controller.createTestItem(oldItem.id, oldItem.label, oldItem.uri);
+            item.canResolveChildren = true;
+            refreshedItems.push(item);
+        });
+        TestExplorerController.controller.items.replace(refreshedItems);
     }
-
     private static async resolveTestItem(item: vscode.TestItem | undefined): Promise<void> {
         if (item === undefined || item.children.size > 0)
             return;
@@ -56,7 +58,7 @@ export class TestExplorerController {
                 item.children.replace(fixtures.map(fixture => TestExplorerExtensions.createFixtureItem(TestExplorerController.controller, fixture)));
         }
         else if (TestExplorerExtensions.isFixtureItem(item)) {
-            const testCases = await LanguageServerController.sendRequest<TestCase[]>('dotrush/testExplorer/tests', { textDocument: Extensions.documentIdFromUri(item.uri)});
+            const testCases = await LanguageServerController.sendRequest<TestCase[]>('dotrush/testExplorer/tests', { textDocument: Extensions.documentIdFromUri(item.uri), fixtureId: item.id });
             if (testCases !== undefined && testCases.length > 0)
                 item.children.replace(testCases.map(testCase => TestExplorerExtensions.createTestCaseItem(TestExplorerController.controller, testCase)));
         }

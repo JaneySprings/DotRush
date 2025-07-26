@@ -1,4 +1,5 @@
 using DotRush.Common.Extensions;
+using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
@@ -6,7 +7,6 @@ using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabi
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.TypeDefinition;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model;
 

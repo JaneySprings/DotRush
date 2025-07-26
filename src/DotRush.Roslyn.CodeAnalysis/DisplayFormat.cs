@@ -29,4 +29,11 @@ public static class DisplayFormat {
         miscellaneousOptions:
             SymbolDisplayMiscellaneousOptions.UseSpecialTypes
     );
+    public static readonly SymbolDisplayFormat Type = new SymbolDisplayFormat(
+        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+        genericsOptions: SymbolDisplayGenericsOptions.None,
+        memberOptions: SymbolDisplayMemberOptions.None,
+        kindOptions: SymbolDisplayKindOptions.None,
+        miscellaneousOptions: SymbolDisplayMiscellaneousOptions.None
+    );
 }

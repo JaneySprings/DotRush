@@ -1,9 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DotRush.Common.Extensions;
-using DotRush.Roslyn.Navigation.Extensions;
+using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
+using DotRush.Roslyn.Workspaces.Extensions;
 using EmmyLua.LanguageServer.Framework;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
@@ -35,8 +36,19 @@ public class TestExplorerHandler : IJsonHandler {
             return fixtureSymbols.Select(symbol => new TestItem(symbol)).ToList();
         });
     }
-    protected async Task<List<TestItem>?> Handle(TestCaseParams? request, CancellationToken token) {
-        return new List<TestItem> { };
+    protected Task<List<TestItem>?> Handle(TestCaseParams? request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync<List<TestItem>?>(async () => {
+            var documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request?.TextDocument?.Uri.FileSystemPath);
+            var document = workspaceService.Solution?.GetDocument(documentId?.FirstOrDefault());
+            if (document == null)
+                return null;
+
+            if (string.IsNullOrEmpty(request?.FixtureId))
+                return null;
+
+            var testCases = await testExplorerService.GetTestCasesAsync(document, request.FixtureId, token).ConfigureAwait(false);
+            return testCases.Select(symbol => new TestItem(symbol)).ToList();
+        });
     }
 
 
@@ -70,7 +82,7 @@ public class TestItem {
     [JsonPropertyName("range")] public DocumentRange Range { get; set; }
 
     public TestItem(ISymbol symbol) {
-        Id = symbol.GetNamedTypeFullName();
+        Id = symbol.GetFullName();
         Name = symbol.Name;
 
         var location = symbol.Locations.FirstOrDefault();
