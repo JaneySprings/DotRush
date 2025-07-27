@@ -6,7 +6,6 @@ using DotRush.Roslyn.Server.Handlers.Framework;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Handlers.Workspace;
 using DotRush.Roslyn.Server.Services;
-using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Initialize;
 using EmmyLua.LanguageServer.Framework.Server;
 using EmmyLuaLanguageServer = EmmyLua.LanguageServer.Framework.Server.LanguageServer;
@@ -96,8 +95,8 @@ public class LanguageServer {
         configurationService = new ConfigurationService();
         navigationService = new NavigationService();
         testExplorerService = new TestExplorerService();
-        codeAnalysisService = new CodeAnalysisService(configurationService);
         workspaceService = new WorkspaceService(configurationService);
+        codeAnalysisService = new CodeAnalysisService(configurationService);
         externalAccessService = new ExternalAccessService(workspaceService);
     }
 }

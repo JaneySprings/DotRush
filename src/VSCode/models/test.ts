@@ -1,15 +1,6 @@
-import { Range, TestItem, TestController, Uri, TestMessage } from "vscode";
-import { Icons } from "../resources/icons";
+import { Range } from "vscode";
 
-export interface TestFixture {
-    id: string;
-    name: string;
-    filePath: string;
-    range: Range;
-    children: TestCase[];
-}
-
-export interface TestCase {
+export interface TestItem {
     id: string;
     name: string;
     filePath: string;
@@ -22,4 +13,5 @@ export interface TestResult {
     state: string | null;
     stackTrace: string | null;
     errorMessage: string | null;
+    children: TestItem[];
 }

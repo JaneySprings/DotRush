@@ -7,7 +7,7 @@ export class Extensions {
     public static readonly projectExtPattern: string = '.csproj';
     public static readonly solutionExtPattern: string = '.{sln,slnf,slnx}';
 
-    public static getSetting<TValue>(id: string, fallback: TValue | undefined = undefined): TValue | undefined {
+    public static getSetting<TValue>(id: string, fallback?: TValue): TValue | undefined {
         return vscode.workspace.getConfiguration(res.extensionId).get<TValue>(id) ?? fallback;
     }
     public static putSetting<TValue>(id: string, value: TValue, target: vscode.ConfigurationTarget): Thenable<void> {
@@ -23,7 +23,7 @@ export class Extensions {
     public static async getSolutionFiles(): Promise<string[]> {
         return (await Extensions.findFiles(undefined, Extensions.solutionExtPattern)).map(x => x.fsPath);
     }
-    public static async selectProjectOrSolutionFile(baseUri: vscode.Uri | undefined = undefined): Promise<string | undefined> {
+    public static async selectProjectOrSolutionFile(baseUri?: vscode.Uri): Promise<string | undefined> {
         if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath).startsWith('.sln'))
             return baseUri.fsPath;
         if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath) === '.csproj')
@@ -52,7 +52,7 @@ export class Extensions {
         const selectedItem = await vscode.window.showQuickPick<any>(items, { placeHolder: res.messageSelectProjectTitle });
         return selectedItem?.item;
     }
-    public static async selectProjectOrSolutionFiles(baseUri: vscode.Uri | undefined = undefined): Promise<string[] | undefined> {
+    public static async selectProjectOrSolutionFiles(baseUri?: vscode.Uri): Promise<string[] | undefined> {
         const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionExtPattern);
         const projectFiles = await Extensions.findFiles(baseUri, Extensions.projectExtPattern);
         if (projectFiles.length === 0 && solutionFiles.length === 0) {
@@ -72,7 +72,7 @@ export class Extensions {
         const selectedItems = await vscode.window.showQuickPick(items, { canPickMany: true, placeHolder: res.messageSelectTargetTitle });
         return selectedItems?.map((it: any) => it.item);
     }
-    public static async selectProjecFile(baseUri: vscode.Uri | undefined = undefined): Promise<string | undefined> {
+    public static async selectProjecFile(baseUri?: vscode.Uri): Promise<string | undefined> {
         if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath) === '.csproj')
             return baseUri.fsPath;
 
@@ -89,13 +89,6 @@ export class Extensions {
         return selectedItem?.item;
     }
 
-    public static async parallelForEach<T>(items: T[], action: (item: T) => Promise<void>): Promise<void> {
-        const parallel = 4;
-        for (let i = 0; i < items.length; i += parallel) {
-            const slice = items.slice(i, i + parallel);
-            await Promise.all(slice.map(action));
-        }
-    }
     public static async waitForTask(task: vscode.Task): Promise<boolean> {
         const execution = await vscode.tasks.executeTask(task);
         const executionExitCode = await new Promise<number>((resolve) => {

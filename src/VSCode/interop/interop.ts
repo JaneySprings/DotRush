@@ -3,7 +3,7 @@ import { ProcessRunner } from './processRunner';
 import { Project } from '../models/project';
 import { Process } from '../models/process';
 import { Status } from '../models/status';
-import { TestFixture, TestResult } from '../models/test';
+import { TestResult } from '../models/test';
 import * as path from 'path';
 
 
@@ -27,12 +27,6 @@ export class Interop {
         return await ProcessRunner.runAsync<Project>(new ProcessArgumentBuilder('dotnet')
             .append(Interop.toolPath)
             .append("--project")
-            .append(projectFile));
-    }
-    public static async getTests(projectFile: string): Promise<TestFixture[] | undefined> {
-        return await ProcessRunner.runAsync<TestFixture[]>(new ProcessArgumentBuilder('dotnet')
-            .append(Interop.toolPath)
-            .append("--list-tests")
             .append(projectFile));
     }
     public static async getTestResults(reportFile: string): Promise<TestResult[] | undefined> {

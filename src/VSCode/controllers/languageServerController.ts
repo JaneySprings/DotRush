@@ -66,11 +66,8 @@ export class LanguageServerController {
                 TestExplorerController.loadProject(project);
         });
         LanguageServerController.client.onNotification('dotrush/loadCompleted', () => {
-            for (const document of vscode.workspace.textDocuments) {
-                LanguageServerController.client.sendNotification('textDocument/didOpen', {
-                    textDocument: { uri: document.uri.toString() }
-                });
-            }
+            for (const document of vscode.workspace.textDocuments)
+                TestExplorerController.loadFixtures(document.fileName);
         })
         LanguageServerController.client.start();
         LanguageServerController.running = true;

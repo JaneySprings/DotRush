@@ -5,6 +5,7 @@ using DotRush.Roslyn.CodeAnalysis;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.Server.Extensions;
+using DotRush.Roslyn.Workspaces.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
@@ -42,11 +43,13 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
     public void StartWorkerThread() {
         workerThread.Start();
     }
-    public void RequestDiagnosticsPublishing(IEnumerable<Document> documents) {
-        if (!documents.Any())
-            return;
-
+    public void RequestDiagnosticsPublishing(string filePath, WorkspaceService workspaceService) {
         workerTasks.Add(async () => {
+            var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
+            var documents = workspaceService.Solution?.GetDocuments(documentIds);
+            if (documents == null || documents.Length == 0)
+                return;
+
             await compilationHost.AnalyzeAsync(
                 documents,
                 configurationService.CompilerDiagnosticsScope,
