@@ -67,7 +67,7 @@ export class TestExplorerController {
         else if (TestExplorerExtensions.isFixtureItem(item)) {
             const testCases = await LanguageServerController.sendRequest<TestItem[]>('dotrush/testExplorer/tests', { textDocument: Extensions.documentIdFromUri(item.uri), fixtureId: item.id });
             if (testCases !== undefined && testCases.length > 0)
-                item.children.replace(testCases.map(testCase => TestExplorerExtensions.createTestItem(TestExplorerController.controller, testCase)));
+                item.children.replace(testCases.map(testCase => TestExplorerExtensions.createTestItem(TestExplorerController.controller, testCase, false, item.id)));
         }
     }
 }
@@ -78,8 +78,9 @@ class TestExplorerExtensions {
         item.canResolveChildren = true;
         return item;
     }
-    public static createTestItem(controller: vscode.TestController, modelItem: TestItem, canResolve: boolean = false): vscode.TestItem {
-        const item = controller.createTestItem(modelItem.id, modelItem.name, vscode.Uri.file(modelItem.filePath));
+    public static createTestItem(controller: vscode.TestController, modelItem: TestItem, canResolve: boolean, parentId?: string): vscode.TestItem {
+        const id = parentId ? `${parentId}.${modelItem.id}` : modelItem.id;
+        const item = controller.createTestItem(id, modelItem.name, vscode.Uri.file(modelItem.filePath));
         item.range = modelItem.range;
         item.canResolveChildren = canResolve;
         return item;

@@ -26,8 +26,8 @@ public class TestExplorerHandler : IJsonHandler {
         this.workspaceService = workspaceService;
     }
 
-    protected Task<List<TestItem>?> Handle(TestFixtureParams? request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync<List<TestItem>?>(async () => {
+    protected Task<ICollection<TestItem>?> Handle(TestFixtureParams? request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync<ICollection<TestItem>?>(async () => {
             var project = workspaceService.Solution?.Projects.FirstOrDefault(p => PathExtensions.Equals(p.FilePath, request?.TextDocument?.Uri.FileSystemPath));
             if (project == null)
                 return null;
@@ -36,8 +36,8 @@ public class TestExplorerHandler : IJsonHandler {
             return fixtureSymbols.Select(symbol => new TestItem(symbol)).ToList();
         });
     }
-    protected Task<List<TestItem>?> Handle(TestCaseParams? request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync<List<TestItem>?>(async () => {
+    protected Task<ICollection<TestItem>?> Handle(TestCaseParams? request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync<ICollection<TestItem>?>(async () => {
             var documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request?.TextDocument?.Uri.FileSystemPath);
             var document = workspaceService.Solution?.GetDocument(documentId?.FirstOrDefault());
             if (document == null)
@@ -47,7 +47,7 @@ public class TestExplorerHandler : IJsonHandler {
                 return null;
 
             var testCases = await testExplorerService.GetTestCasesAsync(document, request.FixtureId, token).ConfigureAwait(false);
-            return testCases.Select(symbol => new TestItem(symbol)).ToList();
+            return testCases.Select(symbol => new TestItem(symbol)).ToHashSet();
         });
     }
 
@@ -90,5 +90,14 @@ public class TestItem {
             FilePath = location.SourceTree?.FilePath;
             Range = location.ToRange();
         }
+    }
+
+    public override int GetHashCode() {
+        return Id.GetHashCode();
+    }
+    public override bool Equals(object? obj) {
+        if (obj is TestItem other)
+            return Id == other.Id;
+        return false;
     }
 }

@@ -20,5 +20,6 @@
     <ItemGroup>
         <InternalsVisibleTo Include="DotRush.Roslyn.Workspaces.Tests" />
         <InternalsVisibleTo Include="DotRush.Roslyn.CodeAnalysis.Tests" />
+        <InternalsVisibleTo Include="DotRush.Roslyn.Server.Tests" />
     </ItemGroup>
 </Project>

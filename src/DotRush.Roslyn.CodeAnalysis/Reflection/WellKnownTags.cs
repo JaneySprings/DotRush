@@ -1,10 +1,10 @@
 
-namespace DotRush.Roslyn.CodeAnalysis;
+namespace DotRush.Roslyn.CodeAnalysis.Reflection;
 
 public static class InternalWellKnownTags {
     public const string Deprecated = "Deprecated";
-	public const string TargetTypeMatch = "TargetTypeMatch";
-	public const string StatusInformation = "StatusInformation";
-	public const string AddReference = "AddReference";
-	public const string NuGet = "NuGet";
+    public const string TargetTypeMatch = "TargetTypeMatch";
+    public const string StatusInformation = "StatusInformation";
+    public const string AddReference = "AddReference";
+    public const string NuGet = "NuGet";
 }

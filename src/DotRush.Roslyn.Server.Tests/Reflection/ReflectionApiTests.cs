@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Text.Json;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.CodeAnalysis.Reflection;
 using Microsoft.CodeAnalysis;
@@ -8,9 +7,10 @@ using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Tags;
 using NUnit.Framework;
 
-namespace DotRush.Roslyn.CodeAnalysis.Tests;
+namespace DotRush.Roslyn.Server.Tests;
 
-public class ReflectionApiTests : TestFixture {
+[TestFixture]
+public class ReflectionApiTests {
 
     [TestCase("example.dll", "example")]
     [TestCase("path/to/example.dll", "example")]

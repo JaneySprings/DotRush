@@ -1,18 +1,15 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
-using DotRush.Common.Logging;
 using DotRush.Common.MSBuild;
 using DotRush.Debugging.NetCore.Installers;
 using DotRush.Debugging.NetCore.Models;
 using DotRush.Debugging.NetCore.Testing;
-using DotRush.Debugging.NetCore.Testing.Explorer;
 
 namespace DotRush.Debugging.NetCore;
 
 public class Program {
     public static readonly Dictionary<string, Action<string[]>> CommandHandler = new() {
         { "--list-proc", ListProcesses },
-        { "--list-tests", DiscoverTests },
         { "--install-vsdbg", InstallVsdbg },
         { "--install-ncdbg", InstallNcdbg },
         { "--convert", ConvertReport },
@@ -42,10 +39,6 @@ public class Program {
     public static void GetProject(string[] args) {
         var project = MSBuildProjectsLoader.LoadProject(args[1]);
         Console.WriteLine(JsonSerializer.Serialize(project));
-    }
-    public static void DiscoverTests(string[] args) {
-        var tests = new TestExplorer().DiscoverTests(args[1]);
-        Console.WriteLine(JsonSerializer.Serialize(tests));
     }
     public static void ConvertReport(string[] args) {
         var results = ReportConverter.ReadReport(args[1]);
