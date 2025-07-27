@@ -11,9 +11,9 @@ using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
 using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
+using EmmyLua.LanguageServer.Framework.Server;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
-using EmmyLuaLanguageServer = EmmyLua.LanguageServer.Framework.Server.LanguageServer;
 
 namespace DotRush.Roslyn.Server.Handlers.Framework;
 
@@ -64,7 +64,7 @@ public class TestExplorerHandler : IJsonHandler {
     }
     public void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
     }
-    public void RegisterDynamicCapability(EmmyLuaLanguageServer server, ClientCapabilities clientCapabilities) {
+    public void RegisterDynamicCapability(LanguageServer server, ClientCapabilities clientCapabilities) {
     }
 }
 

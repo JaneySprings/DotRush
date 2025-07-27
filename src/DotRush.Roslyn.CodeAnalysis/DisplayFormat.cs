@@ -32,7 +32,7 @@ public static class DisplayFormat {
     public static readonly SymbolDisplayFormat Type = new SymbolDisplayFormat(
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
         genericsOptions: SymbolDisplayGenericsOptions.None,
-        memberOptions: SymbolDisplayMemberOptions.None,
+        memberOptions: SymbolDisplayMemberOptions.IncludeContainingType,
         kindOptions: SymbolDisplayKindOptions.None,
         miscellaneousOptions: SymbolDisplayMiscellaneousOptions.None
     );

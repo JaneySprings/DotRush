@@ -201,7 +201,7 @@ public abstract class SolutionController : ProjectsController {
     }
 
     private bool CanBeProcessed(string file, Project project) {
-        if (PathExtensions.StartsWith(file, project.GetIntermediateOutputPath()))
+        if (PathExtensions.StartsWith(file, project.GetIntermediateOutputPath()) || PathExtensions.StartsWith(file, project.GetOutputPath()))
             return false;
         if (WorkspaceExtensions.IsCompilerGeneratedDocument(file))
             return false;
