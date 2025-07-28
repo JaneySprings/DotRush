@@ -5,6 +5,7 @@ export interface TestItem {
     name: string;
     filePath: string;
     range: Range;
+    locations: string[];
 }
 
 export interface TestResult {

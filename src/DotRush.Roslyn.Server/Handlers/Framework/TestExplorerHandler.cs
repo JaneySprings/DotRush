@@ -33,7 +33,7 @@ public class TestExplorerHandler : IJsonHandler {
                 return null;
 
             var fixtureSymbols = await testExplorerService.GetTestFixturesAsync(project, token).ConfigureAwait(false);
-            return fixtureSymbols.Select(symbol => new TestItem(symbol)).ToList();
+            return fixtureSymbols.Select(symbol => new TestItem(symbol)).ToHashSet();
         });
     }
     protected Task<ICollection<TestItem>?> Handle(TestCaseParams? request, CancellationToken token) {
@@ -80,15 +80,16 @@ public class TestItem {
     [JsonPropertyName("name")] public string Name { get; set; }
     [JsonPropertyName("filePath")] public string? FilePath { get; set; }
     [JsonPropertyName("range")] public DocumentRange Range { get; set; }
+    [JsonPropertyName("locations")] public string[]? Locations { get; set; }
 
     public TestItem(ISymbol symbol) {
         Id = symbol.GetFullName();
         Name = symbol.Name;
 
-        var location = symbol.Locations.FirstOrDefault();
-        if (location != null) {
-            FilePath = location.SourceTree?.FilePath;
-            Range = location.ToRange();
+        if (symbol.Locations.Length > 0) {
+            FilePath = symbol.Locations[0].SourceTree?.FilePath;
+            Range = symbol.Locations[0].ToRange();
+            Locations = symbol.Locations.Select(l => l.SourceTree?.FilePath).WhereNotNull().ToArray();
         }
     }
 
