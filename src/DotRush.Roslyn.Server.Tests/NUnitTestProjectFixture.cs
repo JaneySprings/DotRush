@@ -2,7 +2,7 @@
 namespace DotRush.Roslyn.Server.Tests;
 
 public class NUnitTestProjectFixture : BaseProjectTestFixture {
-    public NUnitTestProjectFixture() : base("NUnitTestProject") { }
+    public NUnitTestProjectFixture() : base(nameof(NUnitTestProjectFixture)) { }
 
     protected override string CreateProjectFileContent() {
         return @"

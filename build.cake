@@ -76,7 +76,7 @@ Task("test")
 			Loggers = new[] { "trx" }
 		}
 	))
-	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.CodeAnalysis.Tests", "DotRush.Roslyn.CodeAnalysis.Tests.csproj"),
+	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server.Tests", "DotRush.Roslyn.Server.Tests.csproj"),
 		new DotNetTestSettings {  
 			Configuration = configuration,
 			Verbosity = DotNetVerbosity.Quiet,
