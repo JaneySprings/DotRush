@@ -9,10 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.CommandLine" />
     <ProjectReference Include="..\DotRush.Common\DotRush.Common.csproj" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="Microsoft.TestPlatform.TranslationLayer" />
     <PackageReference Include="Microsoft.TestPlatform.TestHost" />
+    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="StreamJsonRpc" />
   </ItemGroup>
 </Project>

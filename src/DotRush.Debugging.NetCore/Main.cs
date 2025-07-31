@@ -59,7 +59,7 @@ public class Program {
 
             var testAssemblies = result.GetValue(testAssembliesOption) ?? Array.Empty<string>();
             var testCaseFilter = result.GetValue(testCaseFilterOption) ?? Array.Empty<string>();
-            var testHostAdapter = new TestHostAdapter(null);
+            var testHostAdapter = new TestHostAdapter(new RpcTestRunEventsHandler());
             testHostAdapter.StartSession(testAssemblies, testCaseFilter);
         });
 
