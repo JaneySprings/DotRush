@@ -1,54 +1,70 @@
-﻿using System.Diagnostics;
+﻿using System.CommandLine;
+using System.Diagnostics;
 using System.Text.Json;
 using DotRush.Common.MSBuild;
 using DotRush.Debugging.NetCore.Installers;
 using DotRush.Debugging.NetCore.Models;
-using DotRush.Debugging.NetCore.Testing;
+using DotRush.Debugging.NetCore.TestPlatform;
 
 namespace DotRush.Debugging.NetCore;
 
 public class Program {
-    public static readonly Dictionary<string, Action<string[]>> CommandHandler = new() {
-        { "--list-proc", ListProcesses },
-        { "--install-vsdbg", InstallVsdbg },
-        { "--install-ncdbg", InstallNcdbg },
-        { "--convert", ConvertReport },
-        { "--project", GetProject },
-        { "--run", RunTestHost }
-    };
+    public static int Main(string[] args) {
+        var waitDebuggerOption = new Option<bool>("--debug", "-d");
+        var testAssembliesOption = new Option<string[]>("--assemblies", "-a");
+        var testCaseFilterOption = new Option<string[]>("--filter", "-f");
+        // Helpers
+        var installVsdbgOption = new Option<bool>("--install-vsdbg", "-vsdbg");
+        var installNcdbgOption = new Option<bool>("--install-ncdbg", "-ncdbg");
+        var evaluateProjectOption = new Option<string>("--project", "-p");
+        var listProcessesOption = new Option<bool>("--processes", "-ps");
 
-    private static void Main(string[] args) {
-        if (args.Length == 0)
-            return;
-        if (CommandHandler.TryGetValue(args[0], out var command))
-            command.Invoke(args);
-    }
+        var rootCommand = new RootCommand("DotRush Test Host") {
+            Options = {
+                waitDebuggerOption,
+                testAssembliesOption,
+                testCaseFilterOption,
+                installVsdbgOption,
+                installNcdbgOption,
+                evaluateProjectOption,
+                listProcessesOption
+            }
+        };
+        rootCommand.SetAction(result => {
+            if (result.GetValue(waitDebuggerOption)) {
+                while (!Debugger.IsAttached)
+                    Thread.Sleep(200);
+            }
 
-    public static void InstallVsdbg(string[] args) {
-        var workingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".."));
-        InstallDebugger(new VsdbgInstaller(workingDirectory));
-    }
-    public static void InstallNcdbg(string[] args) {
-        var workingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".."));
-        InstallDebugger(new NcdbgInstaller(workingDirectory));
-    }
-    public static void ListProcesses(string[] args) {
-        var processes = Process.GetProcesses().Select(it => new ProcessInfo(it));
-        Console.WriteLine(JsonSerializer.Serialize(processes));
-    }
-    public static void GetProject(string[] args) {
-        var project = MSBuildProjectsLoader.LoadProject(args[1]);
-        Console.WriteLine(JsonSerializer.Serialize(project));
-    }
-    public static void ConvertReport(string[] args) {
-        var results = ReportConverter.ReadReport(args[1]);
-        Console.WriteLine(JsonSerializer.Serialize(results));
-    }
-    public static void RunTestHost(string[] args) {
-        var result = TestHost.RunForDebugAsync(args[1], args[2]).Result;
-        Console.WriteLine(JsonSerializer.Serialize(result));
-    }
+            if (result.GetValue(installVsdbgOption)) {
+                var workingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".."));
+                InstallDebugger(new VsdbgInstaller(workingDirectory));
+                return;
+            }
+            if (result.GetValue(installNcdbgOption)) {
+                var workingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".."));
+                InstallDebugger(new NcdbgInstaller(workingDirectory));
+                return;
+            }
+            if (result.GetValue(listProcessesOption)) {
+                var processes = Process.GetProcesses().Select(it => new ProcessInfo(it));
+                Console.WriteLine(JsonSerializer.Serialize(processes));
+                return;
+            }
+            if (result.GetValue(evaluateProjectOption) is string projectPath) {
+                var project = MSBuildProjectsLoader.LoadProject(args[1]);
+                Console.WriteLine(JsonSerializer.Serialize(project));
+                return;
+            }
 
+            var testAssemblies = result.GetValue(testAssembliesOption) ?? Array.Empty<string>();
+            var testCaseFilter = result.GetValue(testCaseFilterOption) ?? Array.Empty<string>();
+            var testHostAdapter = new TestHostAdapter(null);
+            testHostAdapter.StartSession(testAssemblies, testCaseFilter);
+        });
+
+        return rootCommand.Parse(args).Invoke();
+    }
 
     private static void InstallDebugger(IDebuggerInstaller installer) {
         void SetResult(Status status) {

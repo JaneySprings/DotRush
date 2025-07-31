@@ -3,13 +3,16 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <AssemblyName>dotrushde</AssemblyName>
-    <OutputPath>$(AssetsPath)TestExplorer</OutputPath>
+    <AssemblyName>testhost</AssemblyName>
+    <OutputPath>$(AssetsPath)TestHost</OutputPath>
     <PublishDir>$(OutputPath)</PublishDir>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.CommandLine" />
     <ProjectReference Include="..\DotRush.Common\DotRush.Common.csproj" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.TestPlatform.TranslationLayer" />
+    <PackageReference Include="Microsoft.TestPlatform.TestHost" />
   </ItemGroup>
 </Project>
