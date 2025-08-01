@@ -81,17 +81,31 @@ export class TestExplorerController {
                 const targetPath = await Interop.getPropertyValue('TargetPath', project.uri!.fsPath, "Debug", undefined);
                 testAssemblies.push(targetPath!);
             }
+            
+            if (testAssemblies.length === 0 || token.isCancellationRequested)
+                return;
 
             const testRun = TestExplorerController.controller.createTestRun(request);
-            const testHostRpc = Interop.createTestHostRpc([
-                "-a", ...testAssemblies,
-                "-f", ...filter
-            ]);
-            testHostRpc.onNotification('HandleMessage', (data: string) => testRun.appendOutput(`${data.trimEnd()}\r\n`));
-            testHostRpc.onNotification('HandleTestRunComplete', (_) => {
+            const testHostRpc = Interop.createTestHostRpc(builder => {
+                builder.append('-a', ...testAssemblies);
+                builder.conditional('-d', () => attachDebugger);
+                if (filter.length > 0)
+                    builder.append('-f', ...filter);
+            });
+            testHostRpc.onNotification('handleMessage', (data: string) => testRun.appendOutput(`${data.trimEnd()}\r\n`));
+            testHostRpc.onRequest('attachDebuggerToProcess', async (processId: number) => {
+                await vscode.debug.startDebugging(Extensions.getWorkspaceFolder(), {
+                    name: res.testExplorerProfileDebug,
+                    type: res.debuggerNetCoreId,
+                    processId: processId,
+                    request: 'attach',
+                });
+                return true;
+            });
+            testHostRpc.onNotification('handleTestRunComplete', (_) => {
                 testRun.end();
                 testHostRpc.dispose();
-            })
+            });
         });
     }
 }

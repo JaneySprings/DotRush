@@ -5,13 +5,13 @@ using DotRush.Common.MSBuild;
 namespace DotRush.Debugging.NetCore.TestPlatform;
 
 public class TestHostAdapter {
-    private VsTestConsoleWrapper vsTestConsoleWrapper;
-    private ITestRunEventsHandler testRunEventsHandler;
+    private readonly VsTestConsoleWrapper vsTestConsoleWrapper;
+    private readonly RpcTestHostNotificationHandler testHostNotificationHandler;
 
-    public TestHostAdapter(ITestRunEventsHandler testRunEventsHandler) {
-        this.testRunEventsHandler = testRunEventsHandler;
+    public TestHostAdapter(bool attachDebugger = false) {
         var consoleTestHostPath = MSBuildLocator.GetConsoleTestHostLocation();
         vsTestConsoleWrapper = new VsTestConsoleWrapper(consoleTestHostPath);
+        testHostNotificationHandler = new RpcTestHostNotificationHandler(attachDebugger);
     }
 
     public void StartSession(string[] testAssemblies, string[] typeFilters) {
@@ -24,10 +24,12 @@ public class TestHostAdapter {
         if (File.Exists(runSettingsFilePath))
             runSettings = File.ReadAllText(runSettingsFilePath);
         if (typeFilters.Length > 0)
-            testOptions = new TestPlatformOptions { TestCaseFilter = string.Join(";", typeFilters) };
+            testOptions = new TestPlatformOptions {
+                TestCaseFilter = string.Join(";", typeFilters),
+            };
 
         vsTestConsoleWrapper.StartSession();
-        vsTestConsoleWrapper.RunTests(testAssemblies, runSettings, testOptions, testRunEventsHandler);
+        vsTestConsoleWrapper.RunTestsWithCustomTestHost(testAssemblies, runSettings, testOptions, testHostNotificationHandler, testHostNotificationHandler);
         vsTestConsoleWrapper.EndSession();
     }
 }

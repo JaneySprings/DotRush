@@ -10,7 +10,7 @@ namespace DotRush.Debugging.NetCore;
 
 public class Program {
     public static int Main(string[] args) {
-        var waitDebuggerOption = new Option<bool>("--debug", "-d");
+        var attachDebuggerOption = new Option<bool>("--debug", "-d");
         var testAssembliesOption = new Option<string[]>("--assemblies", "-a");
         var testCaseFilterOption = new Option<string[]>("--filter", "-f");
         // Helpers
@@ -21,7 +21,7 @@ public class Program {
 
         var rootCommand = new RootCommand("DotRush Test Host") {
             Options = {
-                waitDebuggerOption,
+                attachDebuggerOption,
                 testAssembliesOption,
                 testCaseFilterOption,
                 installVsdbgOption,
@@ -31,11 +31,6 @@ public class Program {
             }
         };
         rootCommand.SetAction(result => {
-            if (result.GetValue(waitDebuggerOption)) {
-                while (!Debugger.IsAttached)
-                    Thread.Sleep(200);
-            }
-
             if (result.GetValue(installVsdbgOption)) {
                 var workingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".."));
                 InstallDebugger(new VsdbgInstaller(workingDirectory));
@@ -59,7 +54,7 @@ public class Program {
 
             var testAssemblies = result.GetValue(testAssembliesOption) ?? Array.Empty<string>();
             var testCaseFilter = result.GetValue(testCaseFilterOption) ?? Array.Empty<string>();
-            var testHostAdapter = new TestHostAdapter(new RpcTestRunEventsHandler());
+            var testHostAdapter = new TestHostAdapter(result.GetValue(attachDebuggerOption));
             testHostAdapter.StartSession(testAssemblies, testCaseFilter);
         });
 

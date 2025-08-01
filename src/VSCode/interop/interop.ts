@@ -48,9 +48,11 @@ export class Interop {
     public static createProcess(executable: string): number | undefined {
         return ProcessRunner.createProcess(new ProcessArgumentBuilder(executable));
     }
-    public static createTestHostRpc(args: string[]): rpc.MessageConnection {
-        const finalArgs = [ Interop.testHostPath, ...args ];
-        const childProcess = spawn('dotnet', finalArgs, { stdio: ['pipe', 'pipe', 'pipe'] });
+    public static createTestHostRpc(configurator: (args: ProcessArgumentBuilder) => void): rpc.MessageConnection {
+        const builder = new ProcessArgumentBuilder('dotnet').append(Interop.testHostPath);
+        configurator(builder);
+    
+        const childProcess = spawn(builder.getCommand(), builder.getArguments(), { stdio: ['pipe', 'pipe', 'pipe'] });
         const connection = rpc.createMessageConnection(
             new rpc.StreamMessageReader(childProcess.stdout),
             new rpc.StreamMessageWriter(childProcess.stdin)
