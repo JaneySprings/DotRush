@@ -1,4 +1,3 @@
-import { ProcessArgumentBuilder } from '../interop/processArgumentBuilder';
 import { LanguageServerController } from './languageServerController';
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
 import { TestItem, TestResult } from '../models/test';
@@ -9,7 +8,6 @@ import { Interop } from '../interop/interop';
 import * as res from '../resources/constants'
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
 
 export class TestExplorerController {
     private static controller: vscode.TestController;
@@ -20,16 +18,11 @@ export class TestExplorerController {
         TestExplorerController.controller.resolveHandler = TestExplorerController.resolveTestItem;
 
         context.subscriptions.push(TestExplorerController.controller);
-        context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileRun, vscode.TestRunProfileKind.Run, TestExplorerController.runTests, true));
-        context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileDebug, vscode.TestRunProfileKind.Debug, TestExplorerController.debugTests, true));
+        context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileRun, vscode.TestRunProfileKind.Run, async (r, ct) => await TestExplorerController.createTestRun(r, false, ct), true));
+        context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileDebug, vscode.TestRunProfileKind.Debug, async (r, ct) => await TestExplorerController.createTestRun(r, true, ct), true));
 
         context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(async ev => await TestExplorerController.loadFixtures(ev.uri.fsPath)));
         context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async ev => await TestExplorerController.loadFixtures(ev.uri.fsPath)));
-        //TODO: TestHost
-        TestExplorerController.testsResultDirectory = path.join(context.extensionPath, "extension", "bin", "TestExplorer");
-        if (Extensions.getSetting(res.configIdTestExplorerSkipInitialPauseEvent) && Extensions.onVSCode(true, false)) {
-            context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerNetCoreId, new ContinueAfterInitialPauseTracker()));
-        }
     }
     public static loadProject(project: Project): void {
         const item = TestExplorerExtensions.createProjectItem(TestExplorerController.controller, project);
@@ -65,97 +58,40 @@ export class TestExplorerController {
                 item.children.replace(testCases.map(testCase => TestExplorerExtensions.createTestItem(TestExplorerController.controller, testCase, false, item.id)));
         }
     }
+    private static async createTestRun(request: vscode.TestRunRequest, attachDebugger: boolean, token: vscode.CancellationToken): Promise<void> {
+        return TestExplorerExtensions.convertTestRequest(request, async (projects, filter) => {
+            if (projects.length === 0)
+                TestExplorerController.controller.items.forEach(item => projects.push(item));
 
-    //TODO: TestHost
-    private static testsResultDirectory: string;
-    private static async runTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
-        TestExplorerController.convertTestRequest(request).forEach(async (filters, project) => {
             const preLaunchTask = await Extensions.getTask(Extensions.getSetting<string>(res.configIdTestExplorerPreLaunchTask));
-            const testReport = path.join(TestExplorerController.testsResultDirectory, `${project.id}.trx`);
-            if (fs.existsSync(testReport))
-                vscode.workspace.fs.delete(vscode.Uri.file(testReport));
-
-            const testArguments = new ProcessArgumentBuilder('test')
-                .append('--logger').append(`'trx;LogFileName=${testReport}'`);
-
-            testArguments.conditional('--no-build', () => preLaunchTask !== undefined);
-            testArguments.conditional('--filter', () => filters.length > 0);
-            testArguments.conditional(`'${filters.join('|')}'`, () => filters.length > 0);
-
-            const testRun = TestExplorerController.controller.createTestRun(request);
             if (preLaunchTask !== undefined) {
                 const executionSuccess = await Extensions.waitForTask(preLaunchTask);
                 if (!executionSuccess || token.isCancellationRequested)
                     return;
             }
-            await Extensions.waitForTask(DotNetTaskProvider.getTestTask(project.uri!.fsPath, testArguments));
-            await TestExplorerController.publishTestResults(testRun, project, testReport);
-        });
-    }
-    private static async debugTests(request: vscode.TestRunRequest, token: vscode.CancellationToken): Promise<void> {
-        TestExplorerController.convertTestRequest(request).forEach(async (filters, project) => {
-            const preLaunchTask = await Extensions.getTask(Extensions.getSetting<string>(res.configIdTestExplorerPreLaunchTask));
-            const executionSuccess = await Extensions.waitForTask(preLaunchTask ?? DotNetTaskProvider.getBuildTask(project.uri!.fsPath));
-            if (!executionSuccess || token.isCancellationRequested)
-                return;
-
-            const processId = await Interop.runTestHost(project.uri!.fsPath, filters.join('|'));
-            await vscode.debug.startDebugging(Extensions.getWorkspaceFolder(), {
-                name: res.testExplorerProfileDebug,
-                type: res.debuggerNetCoreId,
-                processId: processId,
-                request: 'attach',
-            });
-        });
-    }
-    private static convertTestRequest(request: vscode.TestRunRequest): Map<vscode.TestItem, string[]> {
-        const testItems = new Map<vscode.TestItem, string[]>();
-        const getRootNode = (item: vscode.TestItem): vscode.TestItem => {
-            if (item.parent === undefined)
-                return item;
-            return getRootNode(item.parent);
-        }
-
-        if (request.include === undefined) {
-            TestExplorerController.controller.items.forEach(item => testItems.set(item, []));
-            return testItems;
-        }
-
-        request.include?.forEach(item => {
-            const rootNode = getRootNode(item);
-            if (!testItems.has(rootNode))
-                testItems.set(rootNode, []);
-            if (item.id !== rootNode.id)
-                testItems.get(rootNode)?.push(item.id);
-        });
-
-        return testItems;
-    }
-    private static publishTestResults(testRun: vscode.TestRun, project: vscode.TestItem, testReport: string): Promise<void> {
-        const findTestItem = (id: string) => {
-            const fixtureId = id.substring(0, id.lastIndexOf('.'));
-            const fixture = project.children.get(fixtureId);
-            if (fixture === undefined)
-                return undefined;
-
-            return fixture.children.get(id);
-        }
-
-        return Interop.getTestResults(testReport).then(testResults => {
-            testResults?.forEach(result => {
-                const duration = TestExplorerExtensions.toDurationNumber(result.duration);
-                const testItem = findTestItem(result.fullName);
-                if (testItem === undefined)
+            else for (const project of projects) {
+                const preLaunchTask = DotNetTaskProvider.getBuildTask(project.uri!.fsPath);
+                const executionSuccess = await Extensions.waitForTask(preLaunchTask);
+                if (!executionSuccess || token.isCancellationRequested)
                     return;
+            }
 
-                if (result.state === 'Passed')
-                    testRun.passed(testItem, duration);
-                else if (result.state === 'Failed')
-                    testRun.failed(testItem, TestExplorerExtensions.toTestMessage(result), duration);
-                else
-                    testRun.skipped(testItem);
-            });
-            testRun.end();
+            const testAssemblies: string[] = [];
+            for (const project of projects) {
+                const targetPath = await Interop.getPropertyValue('TargetPath', project.uri!.fsPath, "Debug", undefined);
+                testAssemblies.push(targetPath!);
+            }
+
+            const testRun = TestExplorerController.controller.createTestRun(request);
+            const testHostRpc = Interop.createTestHostRpc([
+                "-a", ...testAssemblies,
+                "-f", ...filter
+            ]);
+            testHostRpc.onNotification('HandleMessage', (data: string) => testRun.appendOutput(`${data.trimEnd()}\r\n`));
+            testHostRpc.onNotification('HandleTestRunComplete', (_) => {
+                testRun.end();
+                testHostRpc.dispose();
+            })
         });
     }
 }
@@ -199,6 +135,26 @@ class TestExplorerExtensions {
         }
         return undefined;
     }
+    public static async convertTestRequest(request: vscode.TestRunRequest, handler: (projects: vscode.TestItem[], filter: string[]) => Promise<void>): Promise<void> {
+        if (request.include === undefined)
+            return handler([], []);
+
+        const getRootNode = (item: vscode.TestItem): vscode.TestItem => {
+            if (item.parent === undefined)
+                return item;
+            return getRootNode(item.parent);
+        }
+        
+        const projectItems: vscode.TestItem[] = [];
+        const filter = request.include.map(item => item.id);
+        request.include?.forEach(item => {
+            const rootNode = getRootNode(item);
+            if (!projectItems.includes(rootNode))
+                projectItems.push(rootNode);
+        });
+
+        return handler(projectItems, filter);
+    }
 
     //TODO: TestHost
     public static toTestMessage(testResult: TestResult): vscode.TestMessage {
@@ -217,27 +173,5 @@ class TestExplorerExtensions {
             parseInt(minutes, 10) * 60 * 1000 +
             parseInt(seconds, 10) * 1000 +
             parseInt(milliseconds.slice(0, 3), 10);
-    }
-}
-
-// https://github.com/microsoft/vstest/blob/06101ef5feb95048cbe850472ed49604863d54ff/src/vstest.console/Program.cs#L37
-class ContinueAfterInitialPauseTracker implements vscode.DebugAdapterTrackerFactory {
-    private isInitialStoppedEvent: boolean = false;
-
-    public createDebugAdapterTracker(session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
-        const self = this;
-        return {
-            onDidSendMessage(message: any) {
-                if (session.name !== res.testExplorerProfileDebug)
-                    return;
-
-                if (message.type == 'response' && message.command == 'initialize')
-                    self.isInitialStoppedEvent = true;
-                if (message.type == 'event' && message.event == 'stopped' && self.isInitialStoppedEvent) {
-                    session.customRequest('continue', { threadId: message.body.threadId });
-                    self.isInitialStoppedEvent = false;
-                }
-            }
-        }
     }
 }

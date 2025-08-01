@@ -41,15 +41,23 @@ public class RpcTestRunEventsHandler : ITestRunEventsHandler {
     }
 
     private class TestRunTextWritter : TextWriter {
-        private ITestRunEventsHandler hanler;
+        private readonly StringBuilder lineBuffer;
+        private readonly ITestRunEventsHandler hanler;
 
         public TestRunTextWritter(ITestRunEventsHandler handler) {
             this.hanler = handler;
+            this.lineBuffer = new StringBuilder();
         }
 
         public override Encoding Encoding => Encoding.UTF8;
-        public override void WriteLine(string? value) {
-            hanler.HandleRawMessage(value ?? string.Empty);
+        public override void Write(char value) {
+            if (value == '\n') {
+                hanler.HandleRawMessage(lineBuffer.ToString());
+                lineBuffer.Clear();
+            }
+            else if (value != '\r') {
+                lineBuffer.Append(value);
+            }
         }
     }
 }

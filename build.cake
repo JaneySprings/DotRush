@@ -52,7 +52,7 @@ Task("debugging")
 	}))
 	.Does(() => {
 		if (!bundle) return;
-		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestExplorer", "dotrushde.dll")} --install-ncdbg");
+		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestHost", "testhost.dll")} -ncdbg");
 	});
 
 Task("diagnostics")
