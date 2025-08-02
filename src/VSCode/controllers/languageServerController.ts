@@ -2,6 +2,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-lan
 import { TestExplorerController } from "./testExplorerController";
 import { PublicExports } from "../publicExports";
 import { Extensions } from "../extensions";
+import { Project } from "../models/project";
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -59,16 +60,14 @@ export class LanguageServerController {
 
     public static start() {
         LanguageServerController.client = new LanguageClient(res.extensionId, res.extensionId, LanguageServerController.serverOptions, LanguageServerController.clientOptions);
-        LanguageServerController.client.onNotification('dotrush/projectLoaded', (project: string) => {
-            TestExplorerController.loadProject(project);
+        LanguageServerController.client.onNotification('dotrush/projectLoaded', (project: Project) => {
             PublicExports.instance.onProjectLoaded.invoke(project);
+            if (project.isTestProject)
+                TestExplorerController.loadProject(project);
         });
         LanguageServerController.client.onNotification('dotrush/loadCompleted', () => {
-            for (const document of vscode.workspace.textDocuments) {
-                LanguageServerController.client.sendNotification('textDocument/didOpen', {
-                    textDocument: { uri: document.uri.toString() }
-                });
-            }
+            for (const document of vscode.workspace.textDocuments)
+                TestExplorerController.resolveTestItemsByPath(document.fileName);
         })
         LanguageServerController.client.start();
         LanguageServerController.running = true;
@@ -76,7 +75,6 @@ export class LanguageServerController {
     public static stop() {
         LanguageServerController.client.stop();
         LanguageServerController.running = false;
-        TestExplorerController.unloadProjects();
     }
     public static reload() {
         if (!LanguageServerController.running)
@@ -86,6 +84,13 @@ export class LanguageServerController {
         LanguageServerController.client.sendNotification('dotrush/reloadWorkspace', {
             workspaceFolders: workspaceFolders,
         });
+    }
+
+    public static sendRequest<T>(method: string, params?: any): Promise<T | undefined> {
+        if (!LanguageServerController.running)
+            return Promise.resolve(undefined);
+
+        return LanguageServerController.client.sendRequest<T>(method, params);
     }
 
     private static async showQuickPickTargets(): Promise<void> {

@@ -10,7 +10,7 @@ public class DebuggerInstallerTests : TestFixture {
     private readonly string workingDirectory = AppDomain.CurrentDomain.BaseDirectory;
     private IDebuggerInstaller? debuggerInstaller;
 
-    [Test]
+    [Test, Retry(3)]
     public void InstallDebuggerVsdbgTest() {
         debuggerInstaller = new VsdbgInstaller(workingDirectory);
 
@@ -35,7 +35,7 @@ public class DebuggerInstallerTests : TestFixture {
         }
     }
 
-    [Test]
+    [Test, Retry(3)]
     public void InstallDebuggerNcdbgTest() {
         debuggerInstaller = new NcdbgInstaller(workingDirectory);
 

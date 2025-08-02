@@ -1,4 +1,4 @@
-using DotRush.Roslyn.CodeAnalysis;
+using DotRush.Roslyn.CodeAnalysis.Reflection;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Tags;

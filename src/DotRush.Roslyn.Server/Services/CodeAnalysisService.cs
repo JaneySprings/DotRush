@@ -5,7 +5,9 @@ using DotRush.Roslyn.CodeAnalysis;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.Server.Extensions;
+using DotRush.Roslyn.Workspaces.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
+using EmmyLua.LanguageServer.Framework.Server;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -16,13 +18,15 @@ namespace DotRush.Roslyn.Server.Services;
 
 public class CodeAnalysisService : IAdditionalComponentsProvider {
     private readonly ConfigurationService configurationService;
+    private readonly LanguageServer? serverFacade;
     private readonly CodeActionHost codeActionHost;
     private readonly CompilationHost compilationHost;
     private readonly Thread workerThread;
     private readonly BlockingCollection<Func<Task>> workerTasks;
 
-    public CodeAnalysisService(ConfigurationService configurationService) {
+    public CodeAnalysisService(ConfigurationService configurationService, LanguageServer? serverFacade) {
         this.configurationService = configurationService;
+        this.serverFacade = serverFacade;
         this.codeActionHost = new CodeActionHost(this);
         this.compilationHost = new CompilationHost(this);
         this.workerTasks = new BlockingCollection<Func<Task>>();
@@ -42,11 +46,13 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
     public void StartWorkerThread() {
         workerThread.Start();
     }
-    public void RequestDiagnosticsPublishing(IEnumerable<Document> documents) {
-        if (!documents.Any())
-            return;
-
+    public void RequestDiagnosticsPublishing(string filePath, WorkspaceService workspaceService) {
         workerTasks.Add(async () => {
+            var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
+            var documents = workspaceService.Solution?.GetDocuments(documentIds);
+            if (documents == null || documents.Length == 0)
+                return;
+
             await compilationHost.AnalyzeAsync(
                 documents,
                 configurationService.CompilerDiagnosticsScope,
@@ -75,9 +81,12 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
     }
 
     private async Task PublishDiagnosticsAsync() {
+        if (serverFacade == null)
+            return;
+
         var diagnostics = compilationHost.GetDiagnostics();
         foreach (var pair in diagnostics) {
-            await LanguageServer.Proxy.PublishDiagnostics(new PublishDiagnosticsParams {
+            await serverFacade.Client.PublishDiagnostics(new PublishDiagnosticsParams {
                 Uri = pair.Key,
                 Diagnostics = FilterDiagnostics(pair.Value, configurationService.DiagnosticsFormat),
             }).ConfigureAwait(false);

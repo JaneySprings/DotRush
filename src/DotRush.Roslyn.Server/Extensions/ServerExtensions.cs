@@ -3,25 +3,22 @@ using System.Text.Json;
 using DotRush.Common.Logging;
 using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.ShowMessage;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Configuration;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Progress;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.WorkDoneProgress;
 using EmmyLua.LanguageServer.Framework.Server;
-using EmmyLuaLanguageServer = EmmyLua.LanguageServer.Framework.Server.LanguageServer;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
 public static class ServerExtensions {
-    public static void ShowError(this ClientProxy clientProxy, string message) {
-        _ = clientProxy.ShowErrorAsync(message);
+    public static void ShowError(this LanguageServer server, string message) {
+        _ = server.ShowErrorAsync(message);
     }
-    public static void ShowInfo(this ClientProxy clientProxy, string message) {
-        _ = clientProxy.ShowInfoAsync(message);
+    public static void ShowInfo(this LanguageServer server, string message) {
+        _ = server.Client.ShowInfoAsync(message);
     }
-    public static Task ShowErrorAsync(this ClientProxy clientProxy, string message) {
+    public static Task ShowErrorAsync(this LanguageServer server, string message) {
         CurrentSessionLogger.Error(message);
-        return clientProxy.ShowMessage(new ShowMessageParams {
+        return server.Client.ShowMessage(new ShowMessageParams {
             Type = MessageType.Error,
             Message = message
         });
@@ -34,7 +31,10 @@ public static class ServerExtensions {
         });
     }
 
-    public static async Task CreateWorkDoneProgress(this EmmyLuaLanguageServer server, string token) {
+    public static async Task CreateWorkDoneProgress(this LanguageServer? server, string token) {
+        if (server == null)
+            return;
+
         await server.SendRequest("window/workDoneProgress/create", JsonSerializer.SerializeToDocument(new ProgressParams {
             Token = Resources.WorkspaceServiceWorkDoneToken,
         }), CancellationToken.None).ConfigureAwait(false);
@@ -44,19 +44,22 @@ public static class ServerExtensions {
             Value = new WorkDoneProgressBegin() { Percentage = 0 },
         })).ConfigureAwait(false);
     }
-    public static Task UpdateWorkDoneProgress(this EmmyLuaLanguageServer server, string token, string message) {
+    public static Task UpdateWorkDoneProgress(this LanguageServer server, string token, string message) {
         return server.SendNotification("$/progress", JsonSerializer.SerializeToDocument(new ProgressParams {
             Value = new WorkDoneProgressReport() { Message = message, Percentage = 0 },
             Token = token,
         }));
     }
-    public static Task EndWorkDoneProgress(this EmmyLuaLanguageServer server, string token) {
+    public static Task EndWorkDoneProgress(this LanguageServer? server, string token) {
+        if (server == null)
+            return Task.CompletedTask;
+
         return server.SendNotification("$/progress", JsonSerializer.SerializeToDocument(new ProgressParams {
             Value = new WorkDoneProgressEnd(),
             Token = token,
         }));
     }
-    public static Task SendNotification(this EmmyLuaLanguageServer server, string method, JsonDocument? parameters) {
+    public static Task SendNotification(this LanguageServer server, string method, JsonDocument? parameters) {
         return server.SendNotification(new NotificationMessage(method, parameters));
     }
 

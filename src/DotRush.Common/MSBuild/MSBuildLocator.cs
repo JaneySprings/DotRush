@@ -53,4 +53,16 @@ public static class MSBuildLocator {
             .OrderByDescending(d => Path.GetFileName(d))
             .FirstOrDefault() ?? string.Empty;
     }
+
+    public static string GetConsoleTestHostLocation() {
+        var dotnetSdkPath = GetLatestSdkLocation();
+        if (string.IsNullOrEmpty(dotnetSdkPath))
+            throw new DirectoryNotFoundException("Could not find dotnet sdk path");
+
+        var vstestConsolePath = Path.Combine(dotnetSdkPath, "vstest.console.dll");
+        if (!File.Exists(vstestConsolePath))
+            throw new FileNotFoundException("Could not find vstest.console.dll");
+
+        return vstestConsolePath;
+    }
 }

@@ -14,9 +14,16 @@ import * as fs from 'fs';
 export class DebugAdapterController {
     public static async activate(context: vscode.ExtensionContext): Promise<void> {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickProcess, async () => await DebugAdapterController.showQuickPickProcess()));
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveTargetPath, async () => await DebugAdapterController.getProjectTargetPath()));
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveTargetBinaryPath, async () => await DebugAdapterController.getProjectTargetBinaryPath()));
-
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveTargetPath, async () => await DebugAdapterController.getProjectTargetPath(
+            StatusBarController.activeProject?.path,
+            StatusBarController.activeConfiguration,
+            StatusBarController.activeFramework
+        )));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveTargetBinaryPath, async () => await DebugAdapterController.getProjectTargetBinaryPath(
+            StatusBarController.activeProject?.path,
+            StatusBarController.activeConfiguration,
+            StatusBarController.activeFramework
+        )));
         context.subscriptions.push(vscode.tasks.registerTaskProvider(res.taskDefinitionId, new DotNetTaskProvider()));
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerNetCoreId, new DotNetDebugConfigurationProvider()));
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerUnityId, new MonoDebugConfigurationProvider()));
@@ -52,6 +59,29 @@ export class DebugAdapterController {
 
         return settingsPath;
     }
+    public static async getProjectTargetPath(projectPath?: string, configuration?: string, framework?: string): Promise<string | undefined> {
+        if (projectPath === undefined)
+            projectPath = StatusBarController.activeProject?.path;
+        if (configuration === undefined)
+            configuration = StatusBarController.activeConfiguration;
+        if (projectPath === undefined)
+            return await DebugAdapterController.showQuickPickProgram();
+
+        const targetPath = Interop.getPropertyValue('TargetPath', projectPath, configuration, framework);
+        if (!targetPath)
+            return await DebugAdapterController.showQuickPickProgram();
+
+        return targetPath;
+    }
+    public static async getProjectTargetBinaryPath(projectPath?: string, configuration?: string, framework?: string): Promise<string | undefined> {
+        const assemblyPath = await DebugAdapterController.getProjectTargetPath(projectPath, configuration, framework);
+        if (assemblyPath === undefined)
+            return undefined;
+
+        const programDirectory = path.dirname(assemblyPath);
+        const programFile = path.basename(assemblyPath, '.dll');
+        return path.join(programDirectory, programFile + Interop.execExtension);
+    }
 
     private static async installDebugger(id: string): Promise<void> {
         const getNameByDebuggerId = (id: string) => {
@@ -67,25 +97,6 @@ export class DebugAdapterController {
             cancellable: false
         };
         await vscode.window.withProgress(options, (_p, _ct) => Interop.installDebugger(id));
-    }
-    private static async getProjectTargetPath(): Promise<string | undefined> {
-        if (StatusBarController.activeProject === undefined || StatusBarController.activeConfiguration === undefined)
-            return await DebugAdapterController.showQuickPickProgram();
-
-        const targetPath = Interop.getPropertyValue('TargetPath', StatusBarController.activeProject.path, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
-        if (!targetPath)
-            return await DebugAdapterController.showQuickPickProgram();
-
-        return targetPath;
-    }
-    private static async getProjectTargetBinaryPath(): Promise<string | undefined> {
-        const assemblyPath = await DebugAdapterController.getProjectTargetPath();
-        if (assemblyPath === undefined)
-            return undefined;
-
-        const programDirectory = path.dirname(assemblyPath);
-        const programFile = path.basename(assemblyPath, '.dll');
-        return path.join(programDirectory, programFile + Interop.execExtension);
     }
     private static async showQuickPickProgram(): Promise<string | undefined> {
         const programPath = await vscode.window.showOpenDialog({
