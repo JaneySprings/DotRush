@@ -1,9 +1,10 @@
+using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
 
 namespace DotRush.Roslyn.Navigation.Extensions;
 
-public static class SymbolExtensions {
-    public static string GetNamedTypeFullName(this ISymbol symbol) {
+internal static class SymbolExtensions {
+    internal static string GetNamedTypeFullName(this ISymbol symbol) {
         var containingType = symbol.GetNamedTypeSymbol();
         var stack = new Stack<string>();
         if (containingType?.MetadataName == null)
@@ -17,12 +18,5 @@ public static class SymbolExtensions {
         } while (ns != null && !ns.IsGlobalNamespace);
 
         return string.Join(".", stack);
-    }
-
-    public static INamedTypeSymbol GetNamedTypeSymbol(this ISymbol symbol) {
-        if (symbol is INamedTypeSymbol namedType)
-            return namedType;
-
-        return symbol.ContainingType;
     }
 }

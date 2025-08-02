@@ -21,7 +21,12 @@ export class ProcessArgumentBuilder {
     }
     public conditional(arg: string, condition: () => any): ProcessArgumentBuilder {
         if (condition())
-            this.arguments.push(arg);
+            this.append(arg);
+        return this;
+    }
+    public conditional2(condition: () => any, ...args: string[]): ProcessArgumentBuilder {
+        if (condition())
+            this.append(...args);
         return this;
     }
     public override(arg: string): ProcessArgumentBuilder {
@@ -31,7 +36,7 @@ export class ProcessArgumentBuilder {
             return this;
         }
         const index = this.arguments.findIndex(a => a.startsWith(argPair[0]));
-        if (index > -1) 
+        if (index > -1)
             this.arguments.splice(index, 1);
         if (argPair[1])
             this.arguments.push(arg);

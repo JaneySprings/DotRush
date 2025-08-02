@@ -59,7 +59,7 @@ public class AssemblyDecompiler {
     }
     private CSharpDecompiler ValidateDecompilerTypeSystem(CSharpDecompiler decompiler, FullTypeName fullTypeName) {
         var type = decompiler.TypeSystem.FindType(fullTypeName.TopLevelTypeName).GetDefinition();
-    
+
         if (type?.ParentModule != null && type.ParentModule != decompiler.TypeSystem.MainModule) {
             var parentModulePath = type.ParentModule.MetadataFile?.FileName;
             if (File.Exists(parentModulePath))
@@ -77,7 +77,7 @@ public class AssemblyDecompiler {
         public byte[]? PublicKeyToken { get; init; }
         public bool IsRetargetable { get; init; }
         public bool IsWindowsRuntime => false;
-    
+
         public AssemblyReference(IAssemblySymbol assemblySymbol) {
             Name = assemblySymbol.Identity.Name;
             FullName = assemblySymbol.Identity.GetDisplayName();

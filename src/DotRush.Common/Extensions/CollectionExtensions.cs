@@ -22,6 +22,14 @@ public static class CollectionExtensions {
     public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> collection) where T : class {
         return collection.Where(item => item != null)!;
     }
+    public static Dictionary<TKey, TValue> ToNotNullDictionary<TKey, TValue>(this IDictionary<TKey, TValue?> collection) where TKey : notnull {
+        var result = new Dictionary<TKey, TValue>();
+        foreach (var kvp in collection) {
+            if (kvp.Value != null)
+                result[kvp.Key] = kvp.Value;
+        }
+        return result;
+    }
 }
 
 public class NullableCollection<T> : List<T?> where T : class {

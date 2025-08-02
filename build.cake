@@ -52,7 +52,7 @@ Task("debugging")
 	}))
 	.Does(() => {
 		if (!bundle) return;
-		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestExplorer", "dotrushde.dll")} --install-ncdbg");
+		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestHost", "testhost.dll")} -ncdbg");
 	});
 
 Task("diagnostics")
@@ -76,15 +76,7 @@ Task("test")
 			Loggers = new[] { "trx" }
 		}
 	))
-	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.CodeAnalysis.Tests", "DotRush.Roslyn.CodeAnalysis.Tests.csproj"),
-		new DotNetTestSettings {  
-			Configuration = configuration,
-			Verbosity = DotNetVerbosity.Quiet,
-			ResultsDirectory = ArtifactsDirectory,
-			Loggers = new[] { "trx" }
-		}
-	))
-	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.NetCore.Tests", "DotRush.Debugging.NetCore.Tests.csproj"),
+	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server.Tests", "DotRush.Roslyn.Server.Tests.csproj"),
 		new DotNetTestSettings {  
 			Configuration = configuration,
 			Verbosity = DotNetVerbosity.Quiet,

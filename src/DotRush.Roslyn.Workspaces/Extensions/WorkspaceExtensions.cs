@@ -62,6 +62,18 @@ public static class WorkspaceExtensions {
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePathV2(this Solution solution, string? filePath) {
         return solution.Projects.SelectMany(it => it.GetAdditionalDocumentIdsWithFilePath(filePath)) ?? Enumerable.Empty<DocumentId>();
     }
+    public static Document[] GetDocuments(this Solution solution, IEnumerable<DocumentId>? documentIds) {
+        if (documentIds == null || !documentIds.Any())
+            return Array.Empty<Document>();
+
+        return documentIds.Select(documentId => solution.GetDocument(documentId)).OfType<Document>().ToArray();
+    }
+    public static AdditionalDocument[] GetAdditionalDocuments(this Solution solution, IEnumerable<DocumentId>? documentIds) {
+        if (documentIds == null || !documentIds.Any())
+            return Array.Empty<AdditionalDocument>();
+
+        return documentIds.Select(documentId => solution.GetAdditionalDocument(documentId)).OfType<AdditionalDocument>().ToArray();
+    }
 
     public static async Task<ProcessResult> RestoreProjectAsync(this MSBuildWorkspace workspace, string projectPath, CancellationToken cancellationToken) {
         var processInfo = ProcessRunner.CreateProcess("dotnet", $"restore \"{projectPath}\"", captureOutput: true, displayWindow: false, cancellationToken: cancellationToken);

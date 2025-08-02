@@ -39,7 +39,5 @@
 	"configuration.description.msbuild.additionalBuildArguments": "Additional arguments to pass to the build command.",
 	"configuration.description.msbuild.additionalTestArguments": "Additional arguments to pass to the test command.",
 
-	"configuration.description.testExplorer.autoRefreshTests": "Automatically refresh tests on source code save.",
-	"configuration.description.testExplorer.skipInitialPauseEvent": "Skip the initial pause event when starting the tests debugging. This option will be ignored for netcoredbg.",
 	"configuration.description.testExplorer.preLaunchTask": "Task to run before launching the test run."
 }

@@ -8,6 +8,6 @@
     <ItemGroup>
         <PackageReference Include="ICSharpCode.Decompiler" />
         <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" />
-        <ProjectReference Include="..\DotRush.Common\DotRush.Common.csproj" />
+        <ProjectReference Include="..\DotRush.Roslyn.CodeAnalysis\DotRush.Roslyn.CodeAnalysis.csproj" />
     </ItemGroup>
 </Project>

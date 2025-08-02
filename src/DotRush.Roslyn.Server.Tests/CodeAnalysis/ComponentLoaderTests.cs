@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.Diagnostics;
 using NUnit.Framework;
 
-namespace DotRush.Roslyn.CodeAnalysis.Tests;
+namespace DotRush.Roslyn.Server.Tests;
 
 public class CodeRefactoringProvidersLoaderTests : ComponentsLoaderTests<CodeRefactoringProvider> {
     private CodeRefactoringProvidersLoader loader = null!;
@@ -61,17 +61,13 @@ public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAn
 }
 
 
-public abstract class ComponentsLoaderTests<TValue> : WorkspaceTestFixture, IAdditionalComponentsProvider where TValue : class {
+public abstract class ComponentsLoaderTests<TValue> : MultitargetProjectFixture, IAdditionalComponentsProvider where TValue : class {
     protected abstract IComponentLoader<TValue> ComponentsLoader { get; }
     protected abstract int ComponentsCount { get; }
 
-    protected override string CreateProject(string name, string tfm, string outputType) {
-        return base.CreateProject("TestProjectCL", MultiTFM, "Library");
-    }
-
     [Test]
     public virtual void LoadProjectComponentsTest() {
-        var projects = Workspace!.Solution!.Projects;
+        var projects = Workspace.Solution!.Projects;
         Assert.That(projects.Count(), Is.EqualTo(2));
 
         foreach (var project in projects) {

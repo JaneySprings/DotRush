@@ -9,6 +9,7 @@ public class MSBuildProject {
     [JsonPropertyName("frameworks")] public IEnumerable<string> Frameworks { get; set; }
     [JsonPropertyName("configurations")] public IEnumerable<string> Configurations { get; set; }
     [JsonPropertyName("isLegacyFormat")] public bool IsLegacyFormat { get; set; }
+    [JsonPropertyName("isTestProject")] public bool IsTestProject { get; set; }
 
     internal MSBuildProject(string path) {
         Name = Path.GetFileNameWithoutExtension(path);
@@ -18,22 +19,6 @@ public class MSBuildProject {
         Configurations = Enumerable.Empty<string>();
     }
 
-    public bool IsExecutable() {
-        var outputType = this.EvaluateProperty("OutputType");
-        return outputType != null && outputType.Contains("exe", StringComparison.OrdinalIgnoreCase);
-    }
-    public bool IsTestProject() {
-        var isTestProject = this.EvaluateProperty("IsTestProject");
-        if (isTestProject != null && isTestProject.Contains("true", StringComparison.OrdinalIgnoreCase))
-            return true;
-        if (IsLegacyFormat)
-            return false;
-
-        return this.HasPackage("Microsoft.NET.Test.Sdk")
-            || this.HasPackage("NUnit")
-            || this.HasPackage("NUnitLite")
-            || this.HasPackage("xunit");
-    }
     public string GetAssemblyName() {
         return this.EvaluateProperty("AssemblyName", Path.GetFileNameWithoutExtension(FilePath)) ?? string.Empty;
     }

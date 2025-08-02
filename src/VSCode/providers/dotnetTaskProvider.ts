@@ -16,10 +16,10 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
     public static onLinux: boolean = process.platform === 'linux';
     public static onMac: boolean = process.platform === 'darwin';
 
-    resolveTask(task: vscode.Task, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task> { 
+    resolveTask(task: vscode.Task, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task> {
         if (task.definition.type !== res.taskDefinitionId)
             return undefined;
-        
+
         task.definition.target = DotNetTarget.Build;
         if (task.definition.project === undefined)
             task.definition.project = StatusBarController.activeProject?.path;
@@ -27,7 +27,7 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
         return DotNetTaskProvider.getTask(task.definition, StatusBarController.activeConfiguration, StatusBarController.activeFramework);
     }
     provideTasks(token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task[]> {
-        return [ 
+        return [
             DotNetTaskProvider.getTask({
                 type: res.taskDefinitionId,
                 target: DotNetTarget.Build,
@@ -36,9 +36,6 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
         ];
     }
 
-    public static getTestTask(projectFile: string, builder: ProcessArgumentBuilder | undefined = undefined): vscode.Task {
-        return DotNetTaskProvider.getTask({ type: res.taskDefinitionId, target: DotNetTarget.Test, project: projectFile, args: builder?.getArguments() }, StatusBarController.activeConfiguration);
-    }
     public static getBuildTask(projectFile: string): vscode.Task {
         return DotNetTaskProvider.getTask({ type: res.taskDefinitionId, target: DotNetTarget.Build, project: projectFile }, StatusBarController.activeConfiguration);
     }
@@ -52,7 +49,7 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
     private static getTask(definition: vscode.TaskDefinition, configuration: string | undefined = undefined, framework: string | undefined = undefined): vscode.Task {
         const options: vscode.ShellExecutionOptions = { cwd: Extensions.getCurrentWorkingDirectory() };
         const builder = new ProcessArgumentBuilder('dotnet')
-            .append(definition.target).append(definition.project)
+            .append(definition.target).append(Extensions.toUnixPath(definition.project) /*DotRush/issues/88*/)
             .conditional(`-p:Configuration=${configuration}`, () => configuration !== undefined)
             .conditional(`-p:TargetFramework=${framework}`, () => framework !== undefined);
 

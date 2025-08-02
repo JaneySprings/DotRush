@@ -19,4 +19,5 @@
     "explorer.fileNesting.patterns": {
         "package.json": "package*.json",
     },
+    "debug.onTaskErrors": "debugAnyway"
 }

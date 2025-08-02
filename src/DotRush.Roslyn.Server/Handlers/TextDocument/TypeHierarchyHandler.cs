@@ -1,16 +1,17 @@
-using DotRush.Roslyn.CodeAnalysis;
 using DotRush.Common.Extensions;
+using DotRush.Roslyn.CodeAnalysis;
+using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.TypeHierarchy;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -100,7 +101,7 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
     private TypeHierarchyItem CreateTypeHierarchyItem(ISymbol symbol, string fallbackUri, DocumentRange fallbackRange) {
         var key = symbol.ToDisplayString().GetHashCode();
         typeHierarchyCache.TryAdd(key, symbol);
-        
+
         var location = symbol.Locations.FirstOrDefault();
         return new TypeHierarchyItem {
             Name = symbol.ToDisplayString(DisplayFormat.Member),
