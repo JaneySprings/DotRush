@@ -78,6 +78,8 @@ public class RpcTestHostNotificationHandler : ITestRunEventsHandler, ITestHostLa
             currentClassLogger.Error($"{nameof(TestProcessStartInfo.FileName)} is null or empty");
             ArgumentNullException.ThrowIfNull(startInfo.FileName, nameof(startInfo.FileName));
         }
+
+        currentClassLogger.Debug($"Launching test host: {startInfo.FileName} {startInfo.Arguments}");
         return ProcessRunner.CreateProcess(
             executable: startInfo.FileName,
             arguments: startInfo.Arguments ?? string.Empty,

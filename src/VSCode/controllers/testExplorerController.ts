@@ -1,4 +1,5 @@
 import { LanguageServerController } from './languageServerController';
+import { DebugAdapterController } from './debugAdapterController';
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
 import { Outcome, TestItem } from '../models/test';
 import { Extensions } from '../extensions';
@@ -8,7 +9,6 @@ import { Interop } from '../interop/interop';
 import * as res from '../resources/constants'
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { DebugAdapterController } from './debugAdapterController';
 
 export class TestExplorerController {
     private static controller: vscode.TestController;
@@ -65,18 +65,19 @@ export class TestExplorerController {
                 TestExplorerController.controller.items.forEach(item => projects.push(item));
 
             // Build projects
-            // const preLaunchTask = await Extensions.getTask(Extensions.getSetting<string>(res.configIdTestExplorerPreLaunchTask));
-            // if (preLaunchTask !== undefined) {
-            //     const executionSuccess = await Extensions.waitForTask(preLaunchTask);
-            //     if (!executionSuccess || token.isCancellationRequested)
-            //         return;
-            // }
-            // else for (const project of projects) {
-            //     const preLaunchTask = DotNetTaskProvider.getBuildTask(project.uri!.fsPath);
-            //     const executionSuccess = await Extensions.waitForTask(preLaunchTask);
-            //     if (!executionSuccess || token.isCancellationRequested)
-            //         return;
-            // }
+            const preLaunchTask = await Extensions.getTask(Extensions.getSetting<string>(res.configIdTestExplorerPreLaunchTask));
+            if (preLaunchTask !== undefined) {
+                const executionSuccess = await Extensions.waitForTask(preLaunchTask);
+                if (!executionSuccess || token.isCancellationRequested)
+                    return;
+            }
+            else for (const project of projects) {
+                const preLaunchTask = DotNetTaskProvider.getBuildTask(project.uri!.fsPath);
+                const executionSuccess = await Extensions.waitForTask(preLaunchTask);
+                if (!executionSuccess || token.isCancellationRequested)
+                    return;
+            }
+            vscode.commands.executeCommand('workbench.panel.testResults.view.focus');
 
             // Collect test assemblies
             const testAssemblies: string[] = [];
@@ -91,9 +92,9 @@ export class TestExplorerController {
             // Run tests
             const testRun = TestExplorerController.controller.createTestRun(request);
             const testHostRpc = Interop.createTestHostRpc(builder => builder
-                .append('-a', ...testAssemblies)
-                .conditional('-d', () => attachDebugger)
-                .conditional2(() => filter.length > 0, '-f', ...filter));
+                .append(...testAssemblies.map(assembly => `-a:"${assembly}"`))
+                .conditional2(() => filter.length > 0, ...filter.map(f => `-f:${f}`))
+                .conditional('-d', () => attachDebugger));
 
             testHostRpc.onRequest('attachDebuggerToProcess', async (processId: number) => {
                 await vscode.debug.startDebugging(Extensions.getWorkspaceFolder(), {
@@ -166,9 +167,11 @@ class TestExplorerExtensions {
         }
 
         const projectItems: vscode.TestItem[] = [];
-        const filter = request.include.map(item => item.id);
+        const filter: string[] = [];
         request.include?.forEach(item => {
             const rootNode = getRootNode(item);
+            if (!TestExplorerExtensions.isProjectItem(item))
+                filter.push(item.id);
             if (!projectItems.includes(rootNode))
                 projectItems.push(rootNode);
         });

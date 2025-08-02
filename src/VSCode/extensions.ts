@@ -131,6 +131,9 @@ export class Extensions {
     public static capitalize(text: string): string {
         return text.charAt(0).toUpperCase() + text.slice(1);
     }
+    public static toUnixPath(filePath: string): string {
+        return filePath.replace(/\\/g, '/');
+    }
 
     public static documentIdFromUri(uri?: vscode.Uri): any {
         return { uri: uri?.toString() }
