@@ -26,31 +26,30 @@ public class TestExplorerHandler : IJsonHandler {
         this.workspaceService = workspaceService;
     }
 
-    protected Task<ICollection<TestItem>?> Handle(TestFixtureParams? request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync<ICollection<TestItem>?>(async () => {
+    protected Task<ICollection<TestItem>> Handle(TestFixtureParams? request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync<ICollection<TestItem>>(Array.Empty<TestItem>(), async () => {
             var project = workspaceService.Solution?.Projects.FirstOrDefault(p => PathExtensions.Equals(p.FilePath, request?.TextDocument?.Uri.FileSystemPath));
             if (project == null)
-                return null;
+                return Array.Empty<TestItem>();
 
             var fixtureSymbols = await testExplorerService.GetTestFixturesAsync(project, token).ConfigureAwait(false);
             return fixtureSymbols.Select(symbol => new TestItem(symbol)).ToHashSet();
         });
     }
-    protected Task<ICollection<TestItem>?> Handle(TestCaseParams? request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync<ICollection<TestItem>?>(async () => {
+    protected Task<ICollection<TestItem>> Handle(TestCaseParams? request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync<ICollection<TestItem>>(Array.Empty<TestItem>(), async () => {
             var documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request?.TextDocument?.Uri.FileSystemPath);
             var document = workspaceService.Solution?.GetDocument(documentId?.FirstOrDefault());
             if (document == null)
-                return null;
+                return Array.Empty<TestItem>();
 
             if (string.IsNullOrEmpty(request?.FixtureId))
-                return null;
+                return Array.Empty<TestItem>();
 
             var testCases = await testExplorerService.GetTestCasesAsync(document, request.FixtureId, token).ConfigureAwait(false);
             return testCases.Select(symbol => new TestItem(symbol)).ToHashSet();
         });
     }
-
 
     public void RegisterHandler(LSPCommunicationBase lspCommunication) {
         lspCommunication.AddRequestHandler("dotrush/testExplorer/fixtures", async delegate (RequestMessage message, CancellationToken token) {

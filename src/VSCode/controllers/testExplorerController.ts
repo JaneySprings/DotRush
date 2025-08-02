@@ -22,21 +22,23 @@ export class TestExplorerController {
         context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileRun, vscode.TestRunProfileKind.Run, async (r, ct) => await TestExplorerController.createTestRun(r, false, ct), true));
         context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileDebug, vscode.TestRunProfileKind.Debug, async (r, ct) => await TestExplorerController.createTestRun(r, true, ct), true));
 
-        context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(async ev => await TestExplorerController.loadFixtures(ev.uri.fsPath)));
-        context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async ev => await TestExplorerController.loadFixtures(ev.uri.fsPath)));
+        context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(async ev => await TestExplorerController.resolveTestItemsByPath(ev.uri.fsPath)));
+        context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async ev => await TestExplorerController.resolveTestItemsByPath(ev.uri.fsPath)));
     }
     public static loadProject(project: Project): void {
         const item = TestExplorerExtensions.createProjectItem(TestExplorerController.controller, project);
         TestExplorerController.controller.items.add(item);
     }
-    public static async loadFixtures(itemPath: string): Promise<void> {
-        const project = TestExplorerExtensions.findProjectItem(itemPath, TestExplorerController.controller.items);
+    public static async resolveTestItemsByPath(documentPath: string): Promise<void> {
+        const project = TestExplorerExtensions.findProjectItem(documentPath, TestExplorerController.controller.items);
         if (project === undefined)
             return;
 
-        await TestExplorerController.resolveTestItem(project);
+        if (project.children.size === 0)
+            return TestExplorerController.resolveTestItem(project);
+
         project.children.forEach(fixture => {
-            if (fixture.tags.find(t => t.id === itemPath) !== undefined)
+            if (fixture.tags.find(t => t.id === documentPath) !== undefined)
                 TestExplorerController.resolveTestItem(fixture);
         });
     }
@@ -50,19 +52,27 @@ export class TestExplorerController {
 
         if (TestExplorerExtensions.isProjectItem(item)) {
             const fixtures = await LanguageServerController.sendRequest<TestItem[]>('dotrush/testExplorer/fixtures', { textDocument: Extensions.documentIdFromUri(item.uri) });
-            if (fixtures !== undefined && fixtures.length > 0)
+            if (fixtures !== undefined)
                 item.children.replace(fixtures.map(fixture => TestExplorerExtensions.createTestItem(TestExplorerController.controller, fixture, true)));
+
+            for (const child of item.children)
+                await TestExplorerController.resolveTestItem(child[1]);
         }
         else if (TestExplorerExtensions.isFixtureItem(item)) {
             const testCases = await LanguageServerController.sendRequest<TestItem[]>('dotrush/testExplorer/tests', { textDocument: Extensions.documentIdFromUri(item.uri), fixtureId: item.id });
-            if (testCases !== undefined && testCases.length > 0)
+            if (testCases !== undefined)
                 item.children.replace(testCases.map(testCase => TestExplorerExtensions.createTestItem(TestExplorerController.controller, testCase, false, item.id)));
         }
     }
     private static async createTestRun(request: vscode.TestRunRequest, attachDebugger: boolean, token: vscode.CancellationToken): Promise<void> {
         return TestExplorerExtensions.convertTestRequest(request, async (projects, filter) => {
+            // Initialize projects
             if (projects.length === 0)
                 TestExplorerController.controller.items.forEach(item => projects.push(item));
+            for (const project of projects) {
+                if (project.children.size === 0)
+                    await TestExplorerController.resolveTestItem(project);
+            }
 
             // Build projects
             const preLaunchTask = await Extensions.getTask(Extensions.getSetting<string>(res.configIdTestExplorerPreLaunchTask));
@@ -108,6 +118,26 @@ export class TestExplorerController {
             testHostRpc.onNotification('handleMessage', (data: string) => testRun.appendOutput(`${data.trimEnd()}\r\n`));
             testHostRpc.onNotification('handleTestRunStatsChange', (data: any) => data?.NewTestResults?.forEach((result: any) => {
                 testRun.appendOutput(`[${Outcome[result.Outcome]}]: ${result.DisplayName}\r\n`);
+                const findTestItem = (id: string) => {
+                    const fixtureId = id.substring(0, id.lastIndexOf('.'));
+                    for (const project of projects) {
+                        const fixture = project.children.get(fixtureId);
+                        if (fixture !== undefined)
+                            return fixture.children.get(id);
+                    }
+                    return undefined;
+                };
+
+                const testItem = findTestItem(result.TestCase.FullyQualifiedName);
+                if (testItem === undefined)
+                    return;
+
+                if (result.Outcome === Outcome.Passed)
+                    testRun.passed(testItem, TestExplorerExtensions.toDurationNumber(result.Duration));
+                else if (result.Outcome === Outcome.Failed)
+                    testRun.failed(testItem, TestExplorerExtensions.toTestMessage(result.ErrorMessage, result.ErrorStackTrace), TestExplorerExtensions.toDurationNumber(result.Duration));
+                else if (result.Outcome === Outcome.Skipped)
+                    testRun.skipped(testItem);
             }));
             testHostRpc.onNotification('handleTestRunComplete', (_) => {
                 testRun.end();
@@ -189,5 +219,11 @@ class TestExplorerExtensions {
             parseInt(minutes, 10) * 60 * 1000 +
             parseInt(seconds, 10) * 1000 +
             parseInt(milliseconds.slice(0, 3), 10);
+    }
+    public static toTestMessage(error?: string, stackTrace?: string): vscode.TestMessage {
+        if (error === undefined || stackTrace === undefined)
+            return new vscode.TestMessage(error ?? "No error message provided");
+
+        return new vscode.TestMessage(`${error}\n\n${stackTrace}`);
     }
 }

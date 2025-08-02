@@ -67,7 +67,7 @@ export class LanguageServerController {
         });
         LanguageServerController.client.onNotification('dotrush/loadCompleted', () => {
             for (const document of vscode.workspace.textDocuments)
-                TestExplorerController.loadFixtures(document.fileName);
+                TestExplorerController.resolveTestItemsByPath(document.fileName);
         })
         LanguageServerController.client.start();
         LanguageServerController.running = true;
@@ -89,7 +89,7 @@ export class LanguageServerController {
     public static sendRequest<T>(method: string, params?: any): Promise<T | undefined> {
         if (!LanguageServerController.running)
             return Promise.resolve(undefined);
-    
+
         return LanguageServerController.client.sendRequest<T>(method, params);
     }
 
