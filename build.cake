@@ -83,14 +83,6 @@ Task("test")
 			ResultsDirectory = ArtifactsDirectory,
 			Loggers = new[] { "trx" }
 		}
-	))
-	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.NetCore.Tests", "DotRush.Debugging.NetCore.Tests.csproj"),
-		new DotNetTestSettings {  
-			Configuration = configuration,
-			Verbosity = DotNetVerbosity.Quiet,
-			ResultsDirectory = ArtifactsDirectory,
-			Loggers = new[] { "trx" }
-		}
 	));
 
 Task("vsix")

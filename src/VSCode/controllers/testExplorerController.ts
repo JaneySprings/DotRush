@@ -117,7 +117,7 @@ export class TestExplorerController {
             });
             testHostRpc.onNotification('handleMessage', (data: string) => testRun.appendOutput(`${data.trimEnd()}\r\n`));
             testHostRpc.onNotification('handleTestRunStatsChange', (data: any) => data?.NewTestResults?.forEach((result: any) => {
-                testRun.appendOutput(`[${Outcome[result.Outcome]}]: ${result.DisplayName}\r\n`);
+                testRun.appendOutput(`[${TestExplorerExtensions.toTestStatus(result.Outcome)}]: ${result.DisplayName}\r\n`);
                 const findTestItem = (id: string) => {
                     const fixtureId = id.substring(0, id.lastIndexOf('.'));
                     for (const project of projects) {
@@ -167,9 +167,6 @@ class TestExplorerExtensions {
     }
     public static isFixtureItem(item: vscode.TestItem): boolean {
         return item.parent !== undefined && item.parent.parent === undefined;
-    }
-    public static isTestCaseItem(item: vscode.TestItem): boolean {
-        return item.parent !== undefined && item.parent.parent !== undefined;
     }
 
     public static findProjectItem(childPath: string, items: vscode.TestItemCollection): vscode.TestItem | undefined {
@@ -224,6 +221,28 @@ class TestExplorerExtensions {
         if (error === undefined || stackTrace === undefined)
             return new vscode.TestMessage(error ?? "No error message provided");
 
+        const lines = stackTrace.split('\n');
+        for (const line of lines) {
+            const match = line.match(/in (.+):line (\d+)/);
+            if (match) {
+                const filePath = match[1].trim();
+                const lineNumber = parseInt(match[2], 10);
+                const message = new vscode.TestMessage(`${error}\n\n${stackTrace}`);
+                message.location = new vscode.Location(vscode.Uri.file(filePath), new vscode.Position(lineNumber - 1, 0));
+                return message;
+            }
+        }
+
         return new vscode.TestMessage(`${error}\n\n${stackTrace}`);
+    }
+    public static toTestStatus(outcome: Outcome): string {
+        if (outcome === Outcome.Passed)
+            return `\x1b[32m${Outcome[outcome]}\x1b[0m`;
+        if (outcome === Outcome.Failed)
+            return `\x1b[31m${Outcome[outcome]}\x1b[0m`; // Red
+        if (outcome === Outcome.NotFound)
+            return `\x1b[33m${Outcome[outcome]}\x1b[0m`; // Yellow
+
+        return Outcome[outcome];
     }
 }

@@ -34,7 +34,7 @@ public class TestHostAdapter {
             runSettings = File.ReadAllText(runSettingsFilePath);
         if (typeFilters.Length > 0)
             testOptions = new TestPlatformOptions {
-                TestCaseFilter = string.Join('|', typeFilters.Select(filter => $"FullyQualifiedName={filter}"))
+                TestCaseFilter = string.Join('|', typeFilters.Select(filter => $"FullyQualifiedName~{filter}"))
             };
 
         currentClassLogger.Debug($"\tFilter: {testOptions?.TestCaseFilter}");
