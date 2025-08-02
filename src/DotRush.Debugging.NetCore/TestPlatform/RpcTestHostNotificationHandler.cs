@@ -1,4 +1,6 @@
 using System.Text;
+using DotRush.Common.Extensions;
+using DotRush.Common.InteropV2;
 using DotRush.Common.Logging;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
@@ -61,17 +63,29 @@ public class RpcTestHostNotificationHandler : ITestRunEventsHandler, ITestHostLa
         return RequestDebuggerAttach(pid);
     }
     int ITestHostLauncher.LaunchTestHost(TestProcessStartInfo defaultTestHostStartInfo) {
-        currentClassLogger.Debug($"[Error]: Request to launch test host: {defaultTestHostStartInfo.FileName} {defaultTestHostStartInfo.Arguments}");
-        throw new NotImplementedException();
+        return LaunchTestHost(defaultTestHostStartInfo);
     }
     int ITestHostLauncher.LaunchTestHost(TestProcessStartInfo defaultTestHostStartInfo, CancellationToken cancellationToken) {
-        currentClassLogger.Debug($"[Error]: Request to launch test host with cancellation: {defaultTestHostStartInfo.FileName} {defaultTestHostStartInfo.Arguments}");
-        throw new NotImplementedException();
+        return LaunchTestHost(defaultTestHostStartInfo);
     }
     #endregion
 
     private bool RequestDebuggerAttach(int processId) {
         return rpcServer?.InvokeAsync<bool>("attachDebuggerToProcess", processId).Result ?? false;
+    }
+    private int LaunchTestHost(TestProcessStartInfo startInfo) {
+        if (string.IsNullOrEmpty(startInfo.FileName)) {
+            currentClassLogger.Error($"{nameof(TestProcessStartInfo.FileName)} is null or empty");
+            ArgumentNullException.ThrowIfNull(startInfo.FileName, nameof(startInfo.FileName));
+        }
+        return ProcessRunner.CreateProcess(
+            executable: startInfo.FileName,
+            arguments: startInfo.Arguments ?? string.Empty,
+            workingDirectory: startInfo.WorkingDirectory,
+            environmentVariables: startInfo.EnvironmentVariables?.ToNotNullDictionary(),
+            captureOutput: false,
+            displayWindow: false
+        ).Id;
     }
 
     private class TestRunTextWritter : TextWriter {

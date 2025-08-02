@@ -8,11 +8,10 @@ export interface TestItem {
     locations: string[];
 }
 
-export interface TestResult {
-    fullName: string;
-    duration: string | null;
-    state: string | null;
-    stackTrace: string | null;
-    errorMessage: string | null;
-    children: TestItem[];
+export enum Outcome {
+    None = 0,
+    Passed = 1,
+    Failed = 2,
+    Skipped = 3,
+    NotFound = 4,
 }

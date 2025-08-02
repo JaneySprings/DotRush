@@ -1,6 +1,6 @@
 import { LanguageServerController } from './languageServerController';
 import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
-import { TestItem, TestResult } from '../models/test';
+import { Outcome, TestItem } from '../models/test';
 import { Extensions } from '../extensions';
 import { Project } from '../models/project';
 import { Icons } from '../resources/icons';
@@ -8,6 +8,7 @@ import { Interop } from '../interop/interop';
 import * as res from '../resources/constants'
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { DebugAdapterController } from './debugAdapterController';
 
 export class TestExplorerController {
     private static controller: vscode.TestController;
@@ -63,36 +64,37 @@ export class TestExplorerController {
             if (projects.length === 0)
                 TestExplorerController.controller.items.forEach(item => projects.push(item));
 
-            const preLaunchTask = await Extensions.getTask(Extensions.getSetting<string>(res.configIdTestExplorerPreLaunchTask));
-            if (preLaunchTask !== undefined) {
-                const executionSuccess = await Extensions.waitForTask(preLaunchTask);
-                if (!executionSuccess || token.isCancellationRequested)
-                    return;
-            }
-            else for (const project of projects) {
-                const preLaunchTask = DotNetTaskProvider.getBuildTask(project.uri!.fsPath);
-                const executionSuccess = await Extensions.waitForTask(preLaunchTask);
-                if (!executionSuccess || token.isCancellationRequested)
-                    return;
-            }
+            // Build projects
+            // const preLaunchTask = await Extensions.getTask(Extensions.getSetting<string>(res.configIdTestExplorerPreLaunchTask));
+            // if (preLaunchTask !== undefined) {
+            //     const executionSuccess = await Extensions.waitForTask(preLaunchTask);
+            //     if (!executionSuccess || token.isCancellationRequested)
+            //         return;
+            // }
+            // else for (const project of projects) {
+            //     const preLaunchTask = DotNetTaskProvider.getBuildTask(project.uri!.fsPath);
+            //     const executionSuccess = await Extensions.waitForTask(preLaunchTask);
+            //     if (!executionSuccess || token.isCancellationRequested)
+            //         return;
+            // }
 
+            // Collect test assemblies
             const testAssemblies: string[] = [];
             for (const project of projects) {
-                const targetPath = await Interop.getPropertyValue('TargetPath', project.uri!.fsPath, "Debug", undefined);
-                testAssemblies.push(targetPath!);
+                const targetPath = await DebugAdapterController.getProjectTargetPath(project.uri!.fsPath);
+                if (targetPath != undefined)
+                    testAssemblies.push(targetPath);
             }
-            
             if (testAssemblies.length === 0 || token.isCancellationRequested)
                 return;
 
+            // Run tests
             const testRun = TestExplorerController.controller.createTestRun(request);
-            const testHostRpc = Interop.createTestHostRpc(builder => {
-                builder.append('-a', ...testAssemblies);
-                builder.conditional('-d', () => attachDebugger);
-                if (filter.length > 0)
-                    builder.append('-f', ...filter);
-            });
-            testHostRpc.onNotification('handleMessage', (data: string) => testRun.appendOutput(`${data.trimEnd()}\r\n`));
+            const testHostRpc = Interop.createTestHostRpc(builder => builder
+                .append('-a', ...testAssemblies)
+                .conditional('-d', () => attachDebugger)
+                .conditional2(() => filter.length > 0, '-f', ...filter));
+
             testHostRpc.onRequest('attachDebuggerToProcess', async (processId: number) => {
                 await vscode.debug.startDebugging(Extensions.getWorkspaceFolder(), {
                     name: res.testExplorerProfileDebug,
@@ -102,6 +104,10 @@ export class TestExplorerController {
                 });
                 return true;
             });
+            testHostRpc.onNotification('handleMessage', (data: string) => testRun.appendOutput(`${data.trimEnd()}\r\n`));
+            testHostRpc.onNotification('handleTestRunStatsChange', (data: any) => data?.NewTestResults?.forEach((result: any) => {
+                testRun.appendOutput(`[${Outcome[result.Outcome]}]: ${result.DisplayName}\r\n`);
+            }));
             testHostRpc.onNotification('handleTestRunComplete', (_) => {
                 testRun.end();
                 testHostRpc.dispose();
@@ -158,7 +164,7 @@ class TestExplorerExtensions {
                 return item;
             return getRootNode(item.parent);
         }
-        
+
         const projectItems: vscode.TestItem[] = [];
         const filter = request.include.map(item => item.id);
         request.include?.forEach(item => {
@@ -170,13 +176,6 @@ class TestExplorerExtensions {
         return handler(projectItems, filter);
     }
 
-    //TODO: TestHost
-    public static toTestMessage(testResult: TestResult): vscode.TestMessage {
-        let message = testResult.errorMessage ?? '';
-        if (testResult.stackTrace !== null)
-            message += `\n\n${testResult.stackTrace}`;
-        return new vscode.TestMessage(message);
-    }
     public static toDurationNumber(duration: string | null): number {
         const match = duration?.match(/(\d+):(\d+):(\d+)\.(\d+)/);
         if (duration === null || !match)
