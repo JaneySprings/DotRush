@@ -71,7 +71,14 @@ public class RpcTestHostNotificationHandler : ITestRunEventsHandler, ITestHostLa
     #endregion
 
     private bool RequestDebuggerAttach(int processId) {
-        return rpcServer?.InvokeAsync<bool>("attachDebuggerToProcess", processId).Result ?? false;
+        var result = rpcServer?.InvokeAsync<bool>("attachDebuggerToProcess", processId).Result ?? false;
+        if (result) {
+            // VSCode resolves debugger after executable is launched,
+            // so we need to wait a bit while debugger is attached.
+            Thread.Sleep(2000);
+        }
+
+        return result;
     }
     private int LaunchTestHost(TestProcessStartInfo startInfo) {
         if (string.IsNullOrEmpty(startInfo.FileName)) {

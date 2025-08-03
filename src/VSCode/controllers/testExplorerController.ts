@@ -107,18 +107,20 @@ export class TestExplorerController {
                 .conditional('-d', () => attachDebugger));
 
             testHostRpc.onRequest('attachDebuggerToProcess', async (processId: number) => {
-                await vscode.debug.startDebugging(Extensions.getWorkspaceFolder(), {
+                return await vscode.debug.startDebugging(Extensions.getWorkspaceFolder(), {
                     name: res.testExplorerProfileDebug,
                     type: res.debuggerNetCoreId,
                     processId: processId,
                     request: 'attach',
                 });
-                return true;
             });
             testHostRpc.onNotification('handleMessage', (data: string) => testRun.appendOutput(`${data.trimEnd()}\r\n`));
             testHostRpc.onNotification('handleTestRunStatsChange', (data: any) => data?.NewTestResults?.forEach((result: any) => {
                 testRun.appendOutput(`[${TestExplorerExtensions.toTestStatus(result.Outcome)}]: ${result.DisplayName}\r\n`);
-                const findTestItem = (id: string) => {
+
+                function findTestItem(id: string): vscode.TestItem | undefined {
+                    if (id.includes('('))
+                        id = id.substring(0, id.indexOf('('));
                     const fixtureId = id.substring(0, id.lastIndexOf('.'));
                     for (const project of projects) {
                         const fixture = project.children.get(fixtureId);
@@ -187,7 +189,7 @@ class TestExplorerExtensions {
         if (request.include === undefined)
             return handler([], []);
 
-        const getRootNode = (item: vscode.TestItem): vscode.TestItem => {
+        function getRootNode(item: vscode.TestItem): vscode.TestItem {
             if (item.parent === undefined)
                 return item;
             return getRootNode(item.parent);
