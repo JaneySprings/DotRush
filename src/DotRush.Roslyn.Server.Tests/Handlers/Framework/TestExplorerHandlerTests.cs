@@ -32,7 +32,7 @@ public class TestExplorerHandlerTests : NUnitTestProjectFixture {
 [TestFixture]
 public class MyFixture {}
 ");
-        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocument() };
+        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocumentId() };
         var result = await handler.Handle(arguments).ConfigureAwait(false);
 
         Assert.That(result, Is.Null.Or.Empty);
@@ -48,7 +48,7 @@ public class MyFixture<T> {
         Assert.Pass();
     }
 }");
-        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocument() };
+        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocumentId() };
         var result = await handler.Handle(arguments).ConfigureAwait(false);
 
         Assert.That(result, Has.Length.EqualTo(1));
@@ -57,7 +57,7 @@ public class MyFixture<T> {
         Assert.That(result[0].FilePath, Is.EqualTo(documentPath));
         Assert.That(result[0].Range.Start.Line, Is.EqualTo(6));
 
-        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocument(), FixtureId = result[0].Id }).ConfigureAwait(false);
+        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = result[0].Id }).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(1));
         Assert.That(result[0].Name, Is.EqualTo("MyTest"));
         Assert.That(result[0].Id, Is.EqualTo("MyTest"));
@@ -78,7 +78,7 @@ public class MyFixture {
         Assert.Pass();
     }
 }");
-        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocument() };
+        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocumentId() };
         var result = await handler.Handle(arguments).ConfigureAwait(false);
 
         Assert.That(result, Has.Length.EqualTo(1));
@@ -87,7 +87,7 @@ public class MyFixture {
         Assert.That(result[0].FilePath, Is.EqualTo(documentPath));
         Assert.That(result[0].Range.Start.Line, Is.EqualTo(6));
 
-        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocument(), FixtureId = result[0].Id }).ConfigureAwait(false);
+        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = result[0].Id }).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(3));
 
         var test1 = result.FirstOrDefault(t => t.Name == "MyTest");
@@ -118,11 +118,11 @@ public class MyFixture {
     public void MyTest() {}
 }
 #endif");
-        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocument() };
+        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocumentId() };
         var result = await handler.Handle(arguments).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(1));
 
-        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocument(), FixtureId = result[0].Id }).ConfigureAwait(false);
+        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = result[0].Id }).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(1));
     }
     [Test]
@@ -135,11 +135,11 @@ public class MyFixture {
     [Test]
     public void MyTest(int a) { Assert.Pass(); }
 }");
-        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocument() };
+        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocumentId() };
         var result = await handler.Handle(arguments).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(1));
 
-        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocument(), FixtureId = result[0].Id }).ConfigureAwait(false);
+        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = result[0].Id }).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(1));
     }
     [Test]
@@ -158,11 +158,11 @@ public class MyFixture {
     [TestCase(2)]
     public void MyTest3(int a) { Assert.Pass(); }
 }");
-        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocument() };
+        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocumentId() };
         var result = await handler.Handle(arguments).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(1));
 
-        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocument(), FixtureId = result[0].Id }).ConfigureAwait(false);
+        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = result[0].Id }).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(3));
     }
     [Test]
@@ -179,14 +179,14 @@ public abstract class MyBaseFixture {
         Assert.Pass();
     }
 }");
-        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocument() };
+        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocumentId() };
         var result = await handler.Handle(arguments).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(1));
         Assert.That(result[0].Name, Is.EqualTo("MyFixture"));
         Assert.That(result[0].Id, Is.EqualTo("NUnitTestProject.MyFixture"));
         Assert.That(result[0].FilePath, Is.EqualTo(documentPath));
 
-        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocument(), FixtureId = result[0].Id }).ConfigureAwait(false);
+        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = result[0].Id }).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(2));
 
         var testCase1 = result.FirstOrDefault(t => t.Name == "MyTest");
@@ -218,7 +218,7 @@ public class MyBaseFixture {
         Assert.Pass();
     }
 }");
-        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocument() };
+        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocumentId() };
         var result = await handler.Handle(arguments).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(3));
 
@@ -226,21 +226,21 @@ public class MyBaseFixture {
         Assert.That(fixture1, Is.Not.Null);
         Assert.That(fixture1.Id, Is.EqualTo("NUnitTestProject.MyFixture2"));
         Assert.That(fixture1.FilePath, Is.EqualTo(documentPath));
-        var tests1 = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocument(), FixtureId = fixture1.Id }).ConfigureAwait(false);
+        var tests1 = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = fixture1.Id }).ConfigureAwait(false);
         Assert.That(tests1, Has.Length.EqualTo(2));
 
         var fixture2 = result.FirstOrDefault(f => f.Name == "MyBaseFixture");
         Assert.That(fixture2, Is.Not.Null);
         Assert.That(fixture2.Id, Is.EqualTo("NUnitTestProject.MyBaseFixture"));
         Assert.That(fixture2.FilePath, Is.EqualTo(documentPath));
-        var tests2 = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocument(), FixtureId = fixture2.Id }).ConfigureAwait(false);
+        var tests2 = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = fixture2.Id }).ConfigureAwait(false);
         Assert.That(tests2, Has.Length.EqualTo(1));
 
         var fixture3 = result.FirstOrDefault(f => f.Name == "MyFixture");
         Assert.That(fixture3, Is.Not.Null);
         Assert.That(fixture3.Id, Is.EqualTo("NUnitTestProject.MyFixture"));
         Assert.That(fixture3.FilePath, Is.EqualTo(documentPath));
-        var tests3 = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocument(), FixtureId = fixture3.Id }).ConfigureAwait(false);
+        var tests3 = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = fixture3.Id }).ConfigureAwait(false);
         Assert.That(tests3, Has.Length.EqualTo(1));
     }
     [Test]
@@ -257,20 +257,20 @@ public class MyBaseFixture {
         Assert.Pass();
     }
 }");
-        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocument() };
+        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocumentId() };
         var result = await handler.Handle(arguments).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(2));
 
         var fixture1 = result.FirstOrDefault(f => f.Name == "MyFixture");
         Assert.That(fixture1, Is.Not.Null);
         Assert.That(fixture1.Id, Is.EqualTo("NUnitTestProject.MyFixture"));
-        var tests1 = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocument(), FixtureId = fixture1.Id }).ConfigureAwait(false);
+        var tests1 = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = fixture1.Id }).ConfigureAwait(false);
         Assert.That(tests1, Has.Length.EqualTo(1));
 
         var fixture2 = result.FirstOrDefault(f => f.Name == "MyBaseFixture");
         Assert.That(fixture2, Is.Not.Null);
         Assert.That(fixture2.Id, Is.EqualTo("NUnitTestProject.MyBaseFixture"));
-        var tests2 = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocument(), FixtureId = fixture2.Id }).ConfigureAwait(false);
+        var tests2 = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = fixture2.Id }).ConfigureAwait(false);
         Assert.That(tests2, Has.Length.EqualTo(1));
     }
     [Test]
@@ -281,11 +281,11 @@ public class MyFixture : NotExistFixture {
     [Test]
     public void MyTest() {}
 }");
-        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocument() };
+        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocumentId() };
         var result = await handler.Handle(arguments).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(1));
 
-        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocument(), FixtureId = result[0].Id }).ConfigureAwait(false);
+        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = result[0].Id }).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(1));
     }
     [Test]
@@ -301,7 +301,7 @@ public class MyFixture {
         public void MyInnerTest() {}
     }
 }");
-        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocument() };
+        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocumentId() };
         var result = await handler.Handle(arguments).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(2));
 

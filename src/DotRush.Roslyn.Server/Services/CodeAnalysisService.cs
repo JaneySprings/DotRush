@@ -80,6 +80,10 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
         return codeActionHost.GetCodeRefactoringProvidersForProject(project);
     }
 
+    internal Task AnalyzeAsync(IEnumerable<Document> documents, AnalysisScope compilerScope, AnalysisScope analyzerScope, CancellationToken cancellationToken) {
+        return compilationHost.AnalyzeAsync(documents, compilerScope, analyzerScope, cancellationToken);
+    }
+
     private async Task PublishDiagnosticsAsync() {
         if (serverFacade == null)
             return;
