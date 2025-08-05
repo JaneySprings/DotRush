@@ -12,7 +12,7 @@ namespace DotRush.Roslyn.CodeAnalysis.Embedded.Refactorings;
 
 [ExportCodeRefactoringProvider(LanguageNames.CSharp, Name = nameof(OrganizeImportsRefactoringProvider)), Shared]
 public class OrganizeImportsRefactoringProvider : CodeRefactoringProvider {
-    private object? organizeImportsService = InternalCSharpOrganizeImportsService.CreateNew();
+    private static object? organizeImportsService = InternalCSharpOrganizeImportsService.CreateNew();
 
     public sealed override async Task ComputeRefactoringsAsync(CodeRefactoringContext context) {
         var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
@@ -49,7 +49,7 @@ public class OrganizeImportsRefactoringProvider : CodeRefactoringProvider {
             return Task.FromResult(document);
 
         InternalOrganizeImportsOptions.AssignValues(organizeImportsOptions, placeSystemFirst, separateGroups);
-        
+
         var newDocumentTask = InternalCSharpOrganizeImportsService.OrganizeImportsAsync(organizeImportsService, document, organizeImportsOptions, cancellationToken);
         if (newDocumentTask == null)
             return Task.FromResult(document);

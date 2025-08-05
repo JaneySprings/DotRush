@@ -8,8 +8,6 @@ public static class InternalCSharpOrganizeImportsService {
     internal static readonly Type? csharpOrganizeImportsServiceType;
     internal static readonly MethodInfo? organizeImportsAsyncMethod;
 
-    public static bool IsInitialized => csharpOrganizeImportsServiceType != null && organizeImportsAsyncMethod != null;
-
     static InternalCSharpOrganizeImportsService() {
         csharpOrganizeImportsServiceType = ReflectionExtensions.GetTypeFromLoadedAssembly(KnownAssemblies.CSharpWorkspacesAssemblyName, "Microsoft.CodeAnalysis.CSharp.OrganizeImports.CSharpOrganizeImportsService");
         organizeImportsAsyncMethod = csharpOrganizeImportsServiceType?.GetMethod("OrganizeImportsAsync");
