@@ -97,4 +97,35 @@ public class ReflectionApiTests {
         Assert.That(targetTypeMatchField, Is.Not.Null);
         Assert.That(targetTypeMatchField!.GetValue(null), Is.EqualTo(InternalWellKnownTags.TargetTypeMatch));
     }
+
+    [Test]
+    public void BlockStructureOptionsTest() {
+        Assert.That(InternalBlockStructureOptions.blockStructureOptionsType, Is.Not.Null);
+        var instance = InternalBlockStructureOptions.CreateNew();
+        Assert.That(instance, Is.Not.Null);
+    }
+    [Test]
+    public void CSharpBlockStructureServiceTest() {
+        Assert.That(InternalCSharpBlockStructureService.csharpBlockStructureServiceType, Is.Not.Null);
+        Assert.That(InternalCSharpBlockStructureService.getBlockStructureAsyncMethod, Is.Not.Null);
+
+        var parameters = InternalCSharpBlockStructureService.getBlockStructureAsyncMethod!.GetParameters();
+        Assert.That(parameters, Has.Length.EqualTo(3));
+        Assert.That(parameters[0].ParameterType, Is.EqualTo(typeof(Document)));
+        Assert.That(parameters[1].ParameterType.Name, Is.EqualTo("BlockStructureOptions"));
+        Assert.That(parameters[2].ParameterType, Is.EqualTo(typeof(CancellationToken)));
+
+        var returnType = InternalCSharpBlockStructureService.getBlockStructureAsyncMethod.ReturnType;
+        Assert.That(returnType.IsGenericType, Is.True);
+        Assert.That(returnType.GetGenericTypeDefinition(), Is.EqualTo(typeof(Task<>)));
+        Assert.That(returnType.GetGenericArguments()[0].Name, Is.EqualTo("BlockStructure"));
+    }
+    [Test]
+    public void BlockStructureTest() {
+        Assert.That(InternalBlockStructure.blockStructureType, Is.Not.Null);
+        Assert.That(InternalBlockStructure.blockSpanType, Is.Not.Null);
+        Assert.That(InternalBlockStructure.spansProperty, Is.Not.Null);
+        Assert.That(InternalBlockStructure.bannerTextProperty, Is.Not.Null);
+        Assert.That(InternalBlockStructure.textSpanProperty, Is.Not.Null);
+    }
 }
