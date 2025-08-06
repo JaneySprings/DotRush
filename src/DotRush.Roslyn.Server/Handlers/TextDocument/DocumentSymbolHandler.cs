@@ -5,6 +5,7 @@ using DotRush.Roslyn.Workspaces.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -106,6 +107,18 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
     }
     private static DocumentSymbol CreateSymbol(string name, SymbolKind kind, MemberDeclarationSyntax memberDeclaration, bool includeChildren = false) {
         var range = memberDeclaration.GetLocation().ToRange();
+
+        if (memberDeclaration.AttributeLists.Count > 0) {
+            var sourceText = memberDeclaration.SyntaxTree.GetText();
+            if (sourceText != null) {
+                var startLine = memberDeclaration.AttributeLists.FullSpan.ToRange(sourceText).End.Line;
+                range = new DocumentRange(
+                    new Position(startLine, range.Start.Character),
+                    new Position(range.End.Line, range.End.Character)
+                );
+            }
+        }
+
         return new DocumentSymbol() {
             Name = GetFormattedName(memberDeclaration, name),
             Kind = kind,
