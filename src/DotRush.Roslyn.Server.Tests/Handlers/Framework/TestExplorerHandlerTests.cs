@@ -55,14 +55,14 @@ public class MyFixture<T> {
         Assert.That(result[0].Name, Is.EqualTo("MyFixture"));
         Assert.That(result[0].Id, Is.EqualTo("NUnitTestProject.MyFixture"));
         Assert.That(result[0].FilePath, Is.EqualTo(documentPath));
-        Assert.That(result[0].Range.Start.Line, Is.EqualTo(6));
+        Assert.That(result[0].Range, Is.EqualTo(PositionExtensions.CreateRange(5, 0, 12, 1)));
 
         result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = result[0].Id }).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(1));
         Assert.That(result[0].Name, Is.EqualTo("MyTest"));
         Assert.That(result[0].Id, Is.EqualTo("MyTest"));
         Assert.That(result[0].FilePath, Is.EqualTo(documentPath));
-        Assert.That(result[0].Range.Start.Line, Is.EqualTo(8));
+        Assert.That(result[0].Range, Is.EqualTo(PositionExtensions.CreateRange(7, 4, 8, 30)));
     }
     [Test]
     public async Task DiscoverFixtureWithMultipleCaseTest() {
@@ -85,7 +85,7 @@ public class MyFixture {
         Assert.That(result[0].Name, Is.EqualTo("MyFixture"));
         Assert.That(result[0].Id, Is.EqualTo("NUnitTestProject.MyFixture"));
         Assert.That(result[0].FilePath, Is.EqualTo(documentPath));
-        Assert.That(result[0].Range.Start.Line, Is.EqualTo(6));
+        Assert.That(result[0].Range, Is.EqualTo(PositionExtensions.CreateRange(5, 0, 15, 1)));
 
         result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = result[0].Id }).ConfigureAwait(false);
         Assert.That(result, Has.Length.EqualTo(3));
@@ -94,19 +94,19 @@ public class MyFixture {
         Assert.That(test1, Is.Not.Null);
         Assert.That(test1.Id, Is.EqualTo("MyTest"));
         Assert.That(test1.FilePath, Is.EqualTo(documentPath));
-        Assert.That(test1.Range.Start.Line, Is.EqualTo(8));
+        Assert.That(test1.Range, Is.EqualTo(PositionExtensions.CreateRange(7, 4, 8, 27)));
 
         var test2 = result.FirstOrDefault(t => t.Name == "MyTest2");
         Assert.That(test2, Is.Not.Null);
         Assert.That(test2.Id, Is.EqualTo("MyTest2"));
         Assert.That(test2.FilePath, Is.EqualTo(documentPath));
-        Assert.That(test2.Range.Start.Line, Is.EqualTo(10));
+        Assert.That(test2.Range, Is.EqualTo(PositionExtensions.CreateRange(9, 4, 10, 44)));
 
         var test3 = result.FirstOrDefault(t => t.Name == "MyTest3");
         Assert.That(test3, Is.Not.Null);
         Assert.That(test3.Id, Is.EqualTo("MyTest3"));
         Assert.That(test3.FilePath, Is.EqualTo(documentPath));
-        Assert.That(test3.Range.Start.Line, Is.EqualTo(12));
+        Assert.That(test3.Range, Is.EqualTo(PositionExtensions.CreateRange(11, 4, 14, 5)));
     }
     [Test]
     public async Task DiscoverFixturesInsideDirectiveTest() {
@@ -193,13 +193,13 @@ public abstract class MyBaseFixture {
         Assert.That(testCase1, Is.Not.Null);
         Assert.That(testCase1.Id, Is.EqualTo("MyTest"));
         Assert.That(testCase1.FilePath, Is.EqualTo(documentPath));
-        Assert.That(testCase1.Range.Start.Line, Is.EqualTo(8));
+        Assert.That(testCase1.Range, Is.EqualTo(PositionExtensions.CreateRange(7, 4, 8, 27)));
 
         var testCase2 = result.FirstOrDefault(t => t.Name == "MyTest2");
         Assert.That(testCase2, Is.Not.Null);
         Assert.That(testCase2.Id, Is.EqualTo("MyTest2"));
         Assert.That(testCase2.FilePath, Is.EqualTo(documentPath));
-        Assert.That(testCase2.Range.Start.Line, Is.EqualTo(12));
+        Assert.That(testCase2.Range, Is.EqualTo(PositionExtensions.CreateRange(11, 4, 14, 5)));
     }
     [Test]
     public async Task DiscoverFixturesWithHierarchy2Test() {
@@ -309,12 +309,12 @@ public class MyFixture {
         Assert.That(fixture1, Is.Not.Null);
         Assert.That(fixture1.Id, Is.EqualTo("NUnitTestProject.MyFixture"));
         Assert.That(fixture1.FilePath, Is.EqualTo(documentPath));
-        Assert.That(fixture1.Range.Start.Line, Is.EqualTo(6));
+        Assert.That(fixture1.Range, Is.EqualTo(PositionExtensions.CreateRange(5, 0, 14, 1)));
 
         var fixture2 = result.FirstOrDefault(f => f.Name == "InnerFixture");
         Assert.That(fixture2, Is.Not.Null);
         Assert.That(fixture2.Id, Is.EqualTo("NUnitTestProject.MyFixture.InnerFixture"));
         Assert.That(fixture2.FilePath, Is.EqualTo(documentPath));
-        Assert.That(fixture2.Range.Start.Line, Is.EqualTo(10));
+        Assert.That(fixture2.Range, Is.EqualTo(PositionExtensions.CreateRange(10, 4, 13, 5)));
     }
 }
