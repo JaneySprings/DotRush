@@ -86,8 +86,14 @@ public class TestItem {
         Name = symbol.Name;
 
         if (symbol.Locations.Length > 0) {
+            var reference = symbol.DeclaringSyntaxReferences.FirstOrDefault();
+            var sourceText = symbol.Locations[0].SourceTree?.GetText();
+            if (reference != null && sourceText != null)
+                Range = reference.Span.ToRange(sourceText);
+            else
+                Range = symbol.Locations[0].ToRange();
+
             FilePath = symbol.Locations[0].SourceTree?.FilePath;
-            Range = symbol.Locations[0].ToRange();
             Locations = symbol.Locations.Select(l => l.SourceTree?.FilePath).WhereNotNull().ToArray();
         }
     }
