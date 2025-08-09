@@ -49,20 +49,20 @@ class CodeActionTest {
         Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(13));
         result.CommandOrCodeActions.ForEach(ca => Assert.That(ca.CodeAction, Is.Not.Null));
         // QuickFix
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "using System.Text.Json;"));
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate property 'JsonSerializer'"));
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate field 'JsonSerializer'"));
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate read-only field 'JsonSerializer'"));
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate local 'JsonSerializer'"));
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate parameter 'JsonSerializer'"));
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate class 'JsonSerializer'"));
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate class 'JsonSerializer' in new file"));
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate nested class 'JsonSerializer'"));
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "System.Text.Json.JsonSerializer"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "using System.Text.Json;"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate property 'JsonSerializer'"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate field 'JsonSerializer'"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate read-only field 'JsonSerializer'"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate local 'JsonSerializer'"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate parameter 'JsonSerializer'"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate class 'JsonSerializer'"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate class 'JsonSerializer' in new file"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Generate nested class 'JsonSerializer'"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "System.Text.Json.JsonSerializer"));
         // Refactor
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Extract method"));
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Extract local function"));
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Use expression body for method"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Extract method"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Extract local function"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Use expression body for method"));
 
         var usingCodeAction = result.CommandOrCodeActions.Single(it => it.CodeAction!.Title == "using System.Text.Json;");
         var resolvedResult = await handler.Resolve(usingCodeAction.CodeAction!, CancellationToken.None).ConfigureAwait(false);
@@ -99,7 +99,7 @@ sealed class CodeActionTest {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
-        Assert.That(result.CommandOrCodeActions, Has.Some.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Remove unused variable"));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Remove unused variable"));
 
         var removeCodeAction = result.CommandOrCodeActions.Single(it => it.CodeAction!.Title == "Remove unused variable");
         var resolvedResult = await handler.Resolve(removeCodeAction.CodeAction!, CancellationToken.None).ConfigureAwait(false);

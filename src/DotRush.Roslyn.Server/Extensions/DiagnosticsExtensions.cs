@@ -1,5 +1,4 @@
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
-using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
 using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
 
@@ -32,7 +31,7 @@ public static class DiagnosticExtensions {
     public static ProtocolModels.Diagnostic ToServerDiagnostic(this DiagnosticContext context, DiagnosticsFormat format) {
         var diagnostic = new ProtocolModels.Diagnostic() {
             Code = context.Diagnostic.Id,
-            Message = context.Diagnostic.GetSubject(),
+            Message = context.GetSubject(),
             Range = context.Diagnostic.Location.ToRange(),
             Severity = context.Diagnostic.Severity.ToServerSeverity(format),
             Source = context.SourceName,

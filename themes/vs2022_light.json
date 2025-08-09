@@ -4,50 +4,51 @@
     "type": "light",
     "colors": {
         // Window area
-        "titleBar.activeBackground": "#fdfbff", // surface
+        "titleBar.activeBackground": "#f7f7f7", // surface
         "titleBar.activeForeground": "#1a1c1e", // onSurface
-        "titleBar.inactiveBackground": "#fdfbff", // surface
+        "titleBar.inactiveBackground": "#f7f7f7", // surface
         // Editor area
-        "editor.background": "#fdfbff", // surface
+        "editor.background": "#ffffff",
         "editorIndentGuide.background1": "#c4c6cf", // outlineVariant
         "editorIndentGuide.activeBackground1": "#74777f", // outline
         "editor.inlineValuesBackground": "#0000",
         "editor.inlineValuesForeground": "#1a1c1e", // onSurface
-        "editorGroupHeader.tabsBackground": "#fdfbff",  // surface
-        "tab.activeBackground": "#fdfbff",  // surface
+        "editorGroupHeader.tabsBackground": "#f7f7f7",  // surface
+        "editorGroup.emptyBackground": "#f7f7f7", // surface
+        "tab.activeBackground": "#ffffff",
         "tab.activeForeground": "#1a1c1e",  // onSurface
-        "tab.inactiveBackground": "#f1f0f4",    // neutral95
+        "tab.inactiveBackground": "#f7f7f7",    // surface
         "tab.inactiveForeground": "#1a1c1e61",   // onSurface(38%)
-        "tab.activeBorderTop": "#1c5eab", // primary
+        "tab.activeBorderTop": "#5649b0", // primary
         "tab.border": "#c4c6cf61",  // outlineVariant(38%)
 
         // SideBar area
-        "sideBar.background": "#fdfbff",    // surface
+        "sideBar.background": "#f7f7f7",    // surface
         "sideBar.foreground": "#1a1c1e",    // onSurface
         "sideBar.border": "#c4c6cf",    // outlineVariant
         "sideBarTitle.foreground": "#1a1c1e61",   // onSurface(38%)
-        "sideBarSectionHeader.background": "#fdfbff", // surface
+        "sideBarSectionHeader.background": "#f7f7f7", // surface
         "sideBarSectionHeader.foreground": "#1a1c1e", // onSurface
         "scrollbarSlider.background": "#c4c6cf",    // outlineVariant 
         "scrollbar.shadow": "#0000",
-        "list.activeSelectionBackground": "#1c5eab85",  // primary(48%)
+        "list.activeSelectionBackground": "#5649b085",  // primary(48%)
         "list.inactiveSelectionBackground": "#555f7131", // secondary(16%)
         
         // StatusBar area
-        "statusBar.background": "#1c5eab",  // primary
+        "statusBar.background": "#5649b0",  // primary
         "statusBar.foreground": "#ffffff",  // onPrimary
-        "statusBar.debuggingBackground": "#9e430a", // customContainer(#BC5922)
+        "statusBar.debuggingBackground": "#bc4b09", // customContainer(#BC5922)
         "statusBar.debuggingForeground": "#ffffff", // onCustomContainer(#BC5922)
-        "statusBar.noFolderBackground": "#1c5eab",  // primary
+        "statusBar.noFolderBackground": "#6c6c6c",  // primary
         "statusBar.noFolderForeground": "#ffffff",  // onPrimary
 
         // Picker area
-        "pickerGroup.foreground": "#1c5eab",    // primary
+        "pickerGroup.foreground": "#5649b0",    // primary
         "pickerGroup.border": "#c4c6cf",    // outlineVariant
         "quickInput.background": "#f1f0f4", // neutral95
         "quickInput.foreground": "#1a1c1e", // onSurface
         "quickInputTitle.background": "#f1f0f4", // neutral95
-        "list.highlightForeground": "#1c5eab",  // primary
+        "list.highlightForeground": "#5649b0",  // primary
         "list.focusHighlightForeground": "#1c5eab", // primary
         "input.placeholderForeground": "#1a1c1e61", // onSurface(38%)
         "input.foreground": "#1a1c1e",  // onSurface
@@ -63,15 +64,17 @@
         "editorSuggestWidget.foreground": "#1a1c1e",    // onSurface
 
         // ActivityBar area
-        "activityBar.background": "#f1f0f4",    // neutral95
-        "activityBar.foreground": "#001b3c",    // onPrimaryContainer
-        "activityBarBadge.background": "#d5e3ff",   // primaryContainer
-        "activityBarBadge.foreground": "#001b3c",   // onPrimaryContainer
+        "activityBar.background": "#f7f7f7",  // neutral95
+        "activityBar.foreground": "#1a1c1e",  // onPrimaryContainer
+        "activityBarBadge.background": "#e4dfff", // primaryContainer
+        "activityBarBadge.foreground": "#463f77", // onPrimaryContainer
         
         // Other
         "focusBorder": "#c4c6cf", // outlineVariant
-        "panelTitle.activeBorder": "#1c5eab", // primary
-        "panelSectionHeader.background": "#fdfbff" // surface
+        "panelTitle.activeBorder": "#5649b0", // primary
+        "panelSectionHeader.background": "#f7f7f7", // surface
+        "panel.background": "#f7f7f7", // surface
+        "debugTokenExpression.name":"#1a1c1e", // onSurface
     },
     "semanticHighlighting": true,
     "semanticTokenColors": {
