@@ -26,7 +26,7 @@ stages:
       - job: Linux
         pool:
           vmImage: ubuntu-latest
-        timeoutInMinutes: 10
+        timeoutInMinutes: 20
         steps:
         - task: UseDotNet@2
           inputs:
@@ -53,7 +53,7 @@ stages:
       - job: MacOS
         pool:
           vmImage: macos-latest
-        timeoutInMinutes: 10
+        timeoutInMinutes: 20
         steps:
         - task: UseDotNet@2
           inputs:
@@ -80,7 +80,7 @@ stages:
       - job: Windows
         pool:
           vmImage: windows-latest
-        timeoutInMinutes: 15
+        timeoutInMinutes: 20
         steps:
         - task: UseDotNet@2
           inputs:
@@ -111,7 +111,7 @@ stages:
           vmImage: ubuntu-latest
         variables:
         - group: secrets
-        timeoutInMinutes: 5
+        timeoutInMinutes: 10
         steps:
         - download: current
           artifact: 'Linux Build'
@@ -151,7 +151,7 @@ stages:
       - job: MacOS
         pool:
           vmImage: macos-latest
-        timeoutInMinutes: 10
+        timeoutInMinutes: 20
         steps:
         - task: UseDotNet@2
           inputs:
@@ -174,7 +174,7 @@ stages:
       - job: Linux
         pool:
           vmImage: ubuntu-latest
-        timeoutInMinutes: 10
+        timeoutInMinutes: 20
         steps:
         - task: UseDotNet@2
           inputs:
@@ -197,7 +197,7 @@ stages:
       - job: Windows
         pool:
           vmImage: windows-latest
-        timeoutInMinutes: 15
+        timeoutInMinutes: 20
         steps:
         - task: UseDotNet@2
           inputs:

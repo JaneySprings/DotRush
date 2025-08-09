@@ -25,6 +25,14 @@ public class DiagnosticContext {
         Document = project.GetDocumentWithFilePath(FilePath).FirstOrDefault();
     }
 
+    public string GetSubject() {
+        var message = Diagnostic.GetMessage();
+        if (string.IsNullOrEmpty(message))
+            return $"Missing subject for {Diagnostic.Id}";
+
+        return message;
+    }
+
     private string GetDebuggerDisplay() {
         return $"{SourceName}: {Diagnostic.ToString()}";
     }

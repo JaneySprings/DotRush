@@ -50,11 +50,11 @@ namespace Tests {
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.FoldingRanges, Has.Count.EqualTo(6));
-        Assert.That(result.FoldingRanges, Has.Some.Matches<FoldingRange>(x => x.StartLine == 1 && x.EndLine == 2));
-        Assert.That(result.FoldingRanges, Has.Some.Matches<FoldingRange>(x => x.StartLine == 4 && x.EndLine == 15));
-        Assert.That(result.FoldingRanges, Has.Some.Matches<FoldingRange>(x => x.StartLine == 5 && x.EndLine == 14));
-        Assert.That(result.FoldingRanges, Has.Some.Matches<FoldingRange>(x => x.StartLine == 6 && x.EndLine == 8));
-        Assert.That(result.FoldingRanges, Has.Some.Matches<FoldingRange>(x => x.StartLine == 9 && x.EndLine == 13));
-        Assert.That(result.FoldingRanges, Has.Some.Matches<FoldingRange>(x => x.StartLine == 10 && x.EndLine == 12));
+        Assert.That(result.FoldingRanges, Has.One.Matches<FoldingRange>(x => x.StartLine == 1 && x.EndLine == 2));
+        Assert.That(result.FoldingRanges, Has.One.Matches<FoldingRange>(x => x.StartLine == 4 && x.EndLine == 15));
+        Assert.That(result.FoldingRanges, Has.One.Matches<FoldingRange>(x => x.StartLine == 5 && x.EndLine == 14));
+        Assert.That(result.FoldingRanges, Has.One.Matches<FoldingRange>(x => x.StartLine == 6 && x.EndLine == 8));
+        Assert.That(result.FoldingRanges, Has.One.Matches<FoldingRange>(x => x.StartLine == 9 && x.EndLine == 13));
+        Assert.That(result.FoldingRanges, Has.One.Matches<FoldingRange>(x => x.StartLine == 10 && x.EndLine == 12));
     }
 }
