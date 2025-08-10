@@ -497,4 +497,35 @@ public class TestClass {
         Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
         Assert.That(result.Contents.Value, Does.Contain("System.Collections.Generic.List<System.String>").Or.Contain("MyList"));
     }
+
+    [Test]
+    public async Task HoverOnConditionalTypeAliasMultiTargetingTest() {
+        var documentPath = CreateDocument(nameof(HoverHandlerTests), @"
+#if NET8_0
+using MyObj = System.String;
+#else
+using MyObj = System.Int32;
+#endif
+
+namespace Tests;
+
+public class TestClass {
+    public void TestMethod() {
+        MyObj obj = default(MyObj);
+        var result = obj.ToString();
+    }
+}
+");
+        navigationService.UpdateSolution(Workspace.Solution);
+        var result = await handler.Handle(new HoverParams {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(11, 8)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Contents, Is.Not.Null);
+        Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
+        Assert.That(result.Contents.Value, Does.Contain("System.String  (net8.0)"));
+        Assert.That(result.Contents.Value, Does.Contain("System.Int32  (net10.0)"));
+    }
 }
