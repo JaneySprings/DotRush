@@ -444,4 +444,57 @@ public class TestClass {
         Assert.That(result.Contents.Value, Does.Contain("Second operand"));
         Assert.That(result.Contents.Value, Does.Contain("Result of the calculation"));
     }
+
+    [Test]
+    public async Task HoverOnTypeAliasTest() {
+        var documentPath = CreateDocument(nameof(HoverHandlerTests), @"
+using MyString = System.String;
+
+namespace Tests;
+
+public class TestClass {
+    public void TestMethod() {
+        MyString text = ""Hello"";
+        var result = text.Length;
+    }
+}
+");
+        navigationService.UpdateSolution(Workspace.Solution);
+        var result = await handler.Handle(new HoverParams {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(7, 12)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Contents, Is.Not.Null);
+        Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
+        Assert.That(result.Contents.Value, Does.Contain("System.String"));
+    }
+
+    [Test]
+    public async Task HoverOnGenericTypeAliasTest() {
+        var documentPath = CreateDocument(nameof(HoverHandlerTests), @"
+using System.Collections.Generic;
+using MyList = System.Collections.Generic.List<string>;
+
+namespace Tests;
+
+public class TestClass {
+    public void TestMethod() {
+        MyList items = new MyList();
+        var count = items.Count;
+    }
+}
+");
+        navigationService.UpdateSolution(Workspace.Solution);
+        var result = await handler.Handle(new HoverParams {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(8, 13)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Contents, Is.Not.Null);
+        Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
+        Assert.That(result.Contents.Value, Does.Contain("System.Collections.Generic.List<System.String>").Or.Contain("MyList"));
+    }
 }
