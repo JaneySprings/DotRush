@@ -42,8 +42,7 @@ public class ReferenceHandler : ReferenceHandlerBase {
                 .Where(l => File.Exists(l.Document.FilePath));
 
             foreach (var location in referenceLocations) {
-                var locationSourceText = await location.Document.GetTextAsync(cancellationToken);
-                var referenceLocation = location.ToLocation(locationSourceText);
+                var referenceLocation = location.Location.ToLocation();
                 if (referenceLocation != null)
                     result.Add(referenceLocation.Value);
             }

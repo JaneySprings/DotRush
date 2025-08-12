@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace DotRush.Roslyn.Workspaces.Tests;
 
-public class TestWorkspace : DotRushWorkspace, IWorkspaceChangeListener {
+public class TestWorkspace : DotRushWorkspace {
     private readonly ReadOnlyDictionary<string, string> workspaceProperties;
     private readonly bool loadMetadataForReferencedProjects;
     private readonly bool skipUnrecognizedProjects;
@@ -26,8 +26,6 @@ public class TestWorkspace : DotRushWorkspace, IWorkspaceChangeListener {
     protected override bool CompileProjectsAfterLoading => compileProjectsAfterLoading;
     protected override bool ApplyWorkspaceChanges => applyWorkspaceChanges;
     protected override string DotNetSdkDirectory => string.Empty;
-
-    bool IWorkspaceChangeListener.IsGitEventsSupported => false;
 
     public TestWorkspace(
         Dictionary<string, string>? workspaceProperties = null,
@@ -64,18 +62,4 @@ public class TestWorkspace : DotRushWorkspace, IWorkspaceChangeListener {
         var projects = Solution!.Projects.Select(it => it.FilePath).Distinct().ToList();
         projects.ForEach(path => Assert.That(loadedProjects, Contains.Item(path)));
     }
-
-    void IWorkspaceChangeListener.OnDocumentsCreated(IEnumerable<string> documentPaths) {
-        CreateDocuments(documentPaths.ToArray());
-        CreatedDocuments.AddRange(documentPaths);
-    }
-    void IWorkspaceChangeListener.OnDocumentsDeleted(IEnumerable<string> documentPaths) {
-        DeleteDocuments(documentPaths.ToArray());
-        DeletedDocuments.AddRange(documentPaths);
-    }
-    void IWorkspaceChangeListener.OnDocumentsChanged(IEnumerable<string> documentPaths) {
-        UpdateDocuments(documentPaths.ToArray());
-        UpdatedDocuments.AddRange(documentPaths);
-    }
-    void IWorkspaceChangeListener.OnCommitChanges() { }
 }

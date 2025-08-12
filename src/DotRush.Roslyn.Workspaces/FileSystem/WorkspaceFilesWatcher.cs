@@ -1,114 +1,61 @@
-using DotRush.Common.Extensions;
-using DotRush.Common.Logging;
-using DotRush.Roslyn.Workspaces.Extensions;
-
 namespace DotRush.Roslyn.Workspaces.FileSystem;
 
-public class WorkspaceFilesWatcher : IDisposable {
-    private const int UpdateTreshold = 2500;
-
-    private readonly CurrentClassLogger currentClassLogger;
+public sealed class WorkspaceFilesWatcher : IDisposable {
     private readonly IWorkspaceChangeListener listener;
-    private readonly Thread workerThread;
-    private IEnumerable<string> workspaceFolders;
-    private Dictionary<string, long> workspaceFiles;
-    private string? repositoryPath;
-    private bool isDisposed;
+    private readonly List<FileSystemWatcher> fileWatchers;
 
     public WorkspaceFilesWatcher(IWorkspaceChangeListener listener) {
         this.listener = listener;
-        currentClassLogger = new CurrentClassLogger(nameof(WorkspaceFilesWatcher));
-        workspaceFolders = Enumerable.Empty<string>();
-        workspaceFiles = new Dictionary<string, long>();
-        workerThread = new Thread(() => SafeExtensions.Invoke(() => {
-            CheckWorkspaceChanges(); // Fill initial workspace files
-
-            while (!isDisposed) {
-                CheckWorkspaceChanges();
-                Thread.Sleep(UpdateTreshold);
-            }
-        }));
-        workerThread.IsBackground = true;
-        workerThread.Name = nameof(WorkspaceFilesWatcher);
+        this.fileWatchers = new List<FileSystemWatcher>();
     }
 
-    public void StartObserving(IEnumerable<string> workspaceFolders) {
-        if (workerThread.ThreadState == ThreadState.Running)
-            return;
+    public void StartObserving(string[] workspaceFolders) {
+        if (fileWatchers.Count > 0)
+            throw new InvalidOperationException("File watchers are already initialized.");
 
-        this.workspaceFolders = workspaceFolders;
-        currentClassLogger.Debug($"Start observing workspace folders: {string.Join("; ", workspaceFolders)}");
-
-        if (listener.IsGitEventsSupported)
-            repositoryPath = GitExtensions.GetRepositoryFolder(workspaceFolders);
-
-        workerThread.Start();
-    }
-
-    private void CheckWorkspaceChanges() {
-        if (listener.IsGitEventsSupported && GitExtensions.IsRepositoryLocked(repositoryPath)) {
-            currentClassLogger.Debug($"Repository '{repositoryPath}' is locked, skipping workspace changes check");
-            return;
-        }
-
-        var newWorkspaceFiles = ProcessDirectoryFiles();
-        if (workspaceFiles.Count == 0) {
-            workspaceFiles = newWorkspaceFiles;
-            return;
-        }
-
-        // Create files
-        var hasChanges = false;
-        var addedFiles = new HashSet<string>(newWorkspaceFiles.Keys.Except(workspaceFiles.Keys));
-        if (addedFiles.Count > 0) {
-            listener.OnDocumentsCreated(addedFiles);
-            hasChanges = true;
-        }
-
-        // Delete files
-        var removedFiles = new HashSet<string>(workspaceFiles.Keys.Except(newWorkspaceFiles.Keys));
-        if (removedFiles.Count > 0) {
-            listener.OnDocumentsDeleted(removedFiles);
-            hasChanges = true;
-        }
-
-        // Update files
-        var changedFiles = new HashSet<string>();
-        foreach (var newFile in newWorkspaceFiles) {
-            if (workspaceFiles.TryGetValue(newFile.Key, out var oldMetadata) && oldMetadata != newFile.Value)
-                changedFiles.Add(newFile.Key);
-        }
-        if (changedFiles.Count > 0)
-            listener.OnDocumentsChanged(changedFiles);
-
-        // Commit changes
-        workspaceFiles = newWorkspaceFiles;
-        if (hasChanges)
-            listener.OnCommitChanges();
-    }
-    private Dictionary<string, long> ProcessDirectoryFiles() {
-        var newWorkspaceFiles = new Dictionary<string, long>(workspaceFiles.Count);
-        var enumerationOptions = new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = true };
-        foreach (var folder in workspaceFolders) {
-            if (!Directory.Exists(folder))
+        foreach (var folderPath in workspaceFolders) {
+            if (!Directory.Exists(folderPath))
                 continue;
 
-            foreach (var file in Directory.EnumerateFiles(folder, "*", enumerationOptions)) {
-                if (!WorkspaceExtensions.IsRelevantDocument(file))
-                    continue;
-
-                newWorkspaceFiles[file] = File.GetLastWriteTime(file).Ticks;
-            }
+            var fileWatcher = new FileSystemWatcher {
+                Path = folderPath,
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.Size,
+                IncludeSubdirectories = true,
+                EnableRaisingEvents = true,
+                Filter = "*.*",
+            };
+            fileWatcher.Created += OnCreated;
+            fileWatcher.Changed += OnChanged;
+            fileWatcher.Deleted += OnDeleted;
+            fileWatcher.Renamed += OnRenamed;
+            fileWatchers.Add(fileWatcher);
         }
+    }
 
-        return newWorkspaceFiles;
+    private void OnCreated(object source, FileSystemEventArgs e) {
+        listener.OnDocumentCreated(e.FullPath);
+        listener.OnCommitChanges();
+    }
+    private void OnChanged(object source, FileSystemEventArgs e) {
+        listener.OnDocumentChanged(e.FullPath);
+    }
+    private void OnDeleted(object source, FileSystemEventArgs e) {
+        listener.OnDocumentDeleted(e.FullPath);
+    }
+    private void OnRenamed(object sender, RenamedEventArgs e) {
+        listener.OnDocumentDeleted(e.OldFullPath);
+        listener.OnDocumentCreated(e.FullPath);
+        listener.OnCommitChanges();
     }
 
     public void Dispose() {
-        if (workerThread.ThreadState == ThreadState.Unstarted || workerThread.ThreadState == ThreadState.Stopped)
-            return;
-        
-        isDisposed = true;
-        currentClassLogger.Debug("Stopped observing workspace folders");
+        foreach (var watcher in fileWatchers) {
+            watcher.Created -= OnCreated;
+            watcher.Changed -= OnChanged;
+            watcher.Deleted -= OnDeleted;
+            watcher.Renamed -= OnRenamed;
+            watcher.Dispose();
+        }
+        fileWatchers.Clear();
     }
 }

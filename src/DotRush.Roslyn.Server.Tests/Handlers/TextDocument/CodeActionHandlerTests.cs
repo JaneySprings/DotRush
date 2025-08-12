@@ -26,7 +26,7 @@ public class CodeActionHandleTests : MultitargetProjectFixture {
     [SetUp]
     public void SetUp() {
         codeAnalysisService = new CodeAnalysisService(new ConfigurationService(), null);
-        handler = new CodeActionHandlerMock((WorkspaceService)Workspace, codeAnalysisService);
+        handler = new CodeActionHandlerMock(Workspace, codeAnalysisService);
     }
 
     [Test]
@@ -95,7 +95,7 @@ sealed class CodeActionTest {
         await codeAnalysisService.AnalyzeAsync(documents, AnalysisScope.Document, AnalysisScope.None, CancellationToken.None).ConfigureAwait(false);
         var result = await handler.Handle(new CodeActionParams() {
             TextDocument = documents.First().CreateDocumentId(),
-            Range = PositionExtensions.CreateRange(5, 6)
+            Range = PositionExtensions.CreateRange(startLine, endLine)
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);

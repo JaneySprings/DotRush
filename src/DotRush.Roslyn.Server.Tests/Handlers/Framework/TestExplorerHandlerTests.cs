@@ -23,7 +23,7 @@ public class TestExplorerHandlerTests : NUnitTestProjectFixture {
     [SetUp]
     public void SetUp() {
         testExplorerService = new TestExplorerService();
-        handler = new TestExplorerHandlerMock(testExplorerService, (WorkspaceService)Workspace);
+        handler = new TestExplorerHandlerMock(testExplorerService, Workspace);
     }
 
     [Test]

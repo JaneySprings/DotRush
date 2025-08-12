@@ -21,7 +21,7 @@ public class RenameHandlerTests : MultitargetProjectFixture {
 
     [SetUp]
     public void SetUp() {
-        handler = new RenameHandlerMock((WorkspaceService)Workspace);
+        handler = new RenameHandlerMock(Workspace);
     }
 
     [Test]

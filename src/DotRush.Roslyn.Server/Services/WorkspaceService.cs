@@ -14,7 +14,7 @@ using Project = Microsoft.CodeAnalysis.Project;
 
 namespace DotRush.Roslyn.Server.Services;
 
-public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
+public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDisposable {
     private readonly ConfigurationService configurationService;
     private readonly WorkspaceFilesWatcher fileWatcher;
     private readonly LanguageServer? serverFacade;
@@ -84,7 +84,7 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
         });
     }
 
-    private IEnumerable<string>? GetProjectOrSolutionFiles(IEnumerable<string>? workspaceFolders) {
+    internal IEnumerable<string>? GetProjectOrSolutionFiles(IEnumerable<string>? workspaceFolders) {
         if (configurationService.ProjectOrSolutionFiles.Count != 0)
             return configurationService.ProjectOrSolutionFiles.Select(it => Path.GetFullPath(it.ToPlatformPath())).ToArray();
 
@@ -100,20 +100,24 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
 
         return null;
     }
+    internal void StartObserving(string[] workspaceFolders) {
+        fileWatcher.StartObserving(workspaceFolders);
+    }
 
-    bool IWorkspaceChangeListener.IsGitEventsSupported {
-        get => configurationService.ApplyWorkspaceChanges;
+    void IWorkspaceChangeListener.OnDocumentCreated(string documentPath) {
+        CreateDocument(documentPath);
     }
-    void IWorkspaceChangeListener.OnDocumentsCreated(IEnumerable<string> documentPaths) {
-        CreateDocuments(documentPaths.ToArray());
+    void IWorkspaceChangeListener.OnDocumentDeleted(string documentPath) {
+        DeleteDocument(documentPath);
     }
-    void IWorkspaceChangeListener.OnDocumentsDeleted(IEnumerable<string> documentPaths) {
-        DeleteDocuments(documentPaths.ToArray());
-    }
-    void IWorkspaceChangeListener.OnDocumentsChanged(IEnumerable<string> documentPaths) {
-        UpdateDocuments(documentPaths.ToArray());
+    void IWorkspaceChangeListener.OnDocumentChanged(string documentPath) {
+        UpdateDocument(documentPath);
     }
     void IWorkspaceChangeListener.OnCommitChanges() {
         ApplyChanges();
+    }
+
+    public void Dispose() {
+        fileWatcher.Dispose();
     }
 }
