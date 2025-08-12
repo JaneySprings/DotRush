@@ -37,10 +37,16 @@ export class TestExplorerController {
         if (project.children.size === 0)
             return TestExplorerController.resolveTestItem(project);
 
+        var isProcessed = false;
         project.children.forEach(fixture => {
-            if (fixture.tags.find(t => t.id === documentPath) !== undefined)
+            if (fixture.tags.find(t => t.id === documentPath) !== undefined) {
                 TestExplorerController.resolveTestItem(fixture);
+                isProcessed = true;
+            }
         });
+        if (!isProcessed) {
+            TestExplorerController.resolveNewDocument(documentPath);
+        }
     }
 
     private static refreshTestItems() {
@@ -63,6 +69,15 @@ export class TestExplorerController {
             if (testCases !== undefined)
                 item.children.replace(testCases.map(testCase => TestExplorerExtensions.createTestItem(TestExplorerController.controller, testCase, false, item.id)));
         }
+    }
+    private static async resolveNewDocument(documentPath: string): Promise<void> {
+        const project = TestExplorerExtensions.findProjectItem(documentPath, TestExplorerController.controller.items);
+        if (project === undefined)
+            return;
+        const documentId = Extensions.documentIdFromUri(vscode.Uri.file(documentPath));
+        const fixtures = await LanguageServerController.sendRequest<TestItem[]>('dotrush/testExplorer/fixtures', { textDocument: documentId });
+        if (fixtures !== undefined)
+            project.children.replace(fixtures.map(fixture => TestExplorerExtensions.createTestItem(TestExplorerController.controller, fixture, true)));
     }
     private static async createTestRun(request: vscode.TestRunRequest, attachDebugger: boolean, token: vscode.CancellationToken): Promise<void> {
         return TestExplorerExtensions.convertTestRequest(request, async (projects, filter) => {
