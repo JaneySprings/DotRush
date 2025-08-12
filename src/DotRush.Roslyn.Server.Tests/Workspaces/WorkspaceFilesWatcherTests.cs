@@ -19,21 +19,34 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
     [TestCase(1)]
     [TestCase(2)]
     [TestCase(5)]
-    public async Task CreateAndDeleteFilesTest(int fileCount) {
+    public async Task CreateUpdateDeleteFilesTest(int fileCount) {
         for (int i = 0; i < fileCount; i++)
             CreateFile($"{nameof(WorkspaceFilesWatcherTests)}{i}", "public class TestFile1 {}");
         await Task.Delay(FSDelay).ConfigureAwait(false);
-
         for (int i = 0; i < fileCount; i++) {
             var path = Path.Combine(ProjectDirectory, $"{nameof(WorkspaceFilesWatcherTests)}{i}.cs");
             var result = Workspace.Solution!.GetDocumentIdsWithFilePathV2(path).ToArray();
             Assert.That(result, Has.Length.EqualTo(2));
         }
 
+        for (int i = 0; i < fileCount; i++) {
+            var path = Path.Combine(ProjectDirectory, $"{nameof(WorkspaceFilesWatcherTests)}{i}.cs");
+            File.WriteAllText(path, "public class TestFile2 {}");
+        }
+        await Task.Delay(FSDelay).ConfigureAwait(false);
+        for (int i = 0; i < fileCount; i++) {
+            var path = Path.Combine(ProjectDirectory, $"{nameof(WorkspaceFilesWatcherTests)}{i}.cs");
+            var result = Workspace.Solution!.GetDocumentIdsWithFilePathV2(path).ToArray();
+            foreach (var documentId in result) {
+                var document = Workspace.Solution!.GetDocument(documentId);
+                var text = await document!.GetTextAsync().ConfigureAwait(false);
+                Assert.That(text.ToString(), Does.Contain("TestFile2"));
+            }
+        }
+
         for (int i = 0; i < fileCount; i++)
             DeleteFile($"{nameof(WorkspaceFilesWatcherTests)}{i}");
         await Task.Delay(FSDelay).ConfigureAwait(false);
-
         for (int i = 0; i < fileCount; i++) {
             var path = Path.Combine(ProjectDirectory, $"{nameof(WorkspaceFilesWatcherTests)}{i}.cs");
             var result = Workspace.Solution!.GetDocumentIdsWithFilePathV2(path).ToArray();
@@ -48,22 +61,63 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
         for (int i = 0; i < fileCount; i++)
             CreateFile($"{nameof(WorkspaceFilesWatcherTests)}{i}", "TestFolder", "public class TestFile1 {}");
         await Task.Delay(FSDelay).ConfigureAwait(false);
-
         for (int i = 0; i < fileCount; i++) {
             var path = Path.Combine(ProjectDirectory, "TestFolder", $"{nameof(WorkspaceFilesWatcherTests)}{i}.cs");
             var result = Workspace.Solution!.GetDocumentIdsWithFilePathV2(path).ToArray();
             Assert.That(result, Has.Length.EqualTo(2));
         }
 
+        for (int i = 0; i < fileCount; i++) {
+            var path = Path.Combine(ProjectDirectory, "TestFolder", $"{nameof(WorkspaceFilesWatcherTests)}{i}.cs");
+            File.WriteAllText(path, "public class TestFile2 {}");
+        }
+        await Task.Delay(FSDelay).ConfigureAwait(false);
+        for (int i = 0; i < fileCount; i++) {
+            var path = Path.Combine(ProjectDirectory, "TestFolder", $"{nameof(WorkspaceFilesWatcherTests)}{i}.cs");
+            var result = Workspace.Solution!.GetDocumentIdsWithFilePathV2(path).ToArray();
+            foreach (var documentId in result) {
+                var document = Workspace.Solution!.GetDocument(documentId);
+                var text = await document!.GetTextAsync().ConfigureAwait(false);
+                Assert.That(text.ToString(), Does.Contain("TestFile2"));
+            }
+        }
+
         Directory.Delete(Path.Combine(ProjectDirectory, "TestFolder"), true);
         await Task.Delay(FSDelay).ConfigureAwait(false);
-
         for (int i = 0; i < fileCount; i++) {
             var path = Path.Combine(ProjectDirectory, $"{nameof(WorkspaceFilesWatcherTests)}{i}.cs");
             var result = Workspace.Solution!.GetDocumentIdsWithFilePathV2(path).ToArray();
             Assert.That(result, Is.Empty);
         }
     }
+
+    [Test]
+    public async Task SkipFilesSyncInIntermidiateFoldersTest() {
+        var filePaths = new List<string>();
+        foreach (var project in Workspace.Solution!.Projects) {
+            var path1 = Path.Combine(project.GetIntermediateOutputPath(), $"{nameof(WorkspaceFilesWatcherTests)}.cs");
+            var path2 = Path.Combine(project.GetOutputPath(), $"{nameof(WorkspaceFilesWatcherTests)}.cs");
+            File.WriteAllText(path1, "public class TestFile1 {}");
+            File.WriteAllText(path2, "public class TestFile2 {}");
+            filePaths.Add(path1);
+            filePaths.Add(path2);
+        }
+        await Task.Delay(FSDelay).ConfigureAwait(false);
+
+        Assert.That(filePaths, Has.Count.EqualTo(4));
+        filePaths.ForEach(path => Assert.That(Workspace.Solution!.GetDocumentIdsWithFilePathV2(path), Is.Empty));
+    }
+
+    [TestCase("g.cs")]
+    [TestCase("sg.cs")]
+    public async Task SkipCompilerGeneratedFilesSyncTest(string ext) {
+        var path = Path.Combine(ProjectDirectory, $"{nameof(WorkspaceFilesWatcherTests)}.{ext}");
+        File.WriteAllText(path, "public class TestFile1 {}");
+        await Task.Delay(FSDelay).ConfigureAwait(false);
+
+        Assert.That(Workspace.Solution!.GetDocumentIdsWithFilePathV2(path), Is.Empty);
+    }
+
 
     private string CreateFile(string fileName, string content) {
         var documentPath = Path.Combine(ProjectDirectory, $"{fileName}.cs");

@@ -1,3 +1,4 @@
+using DotRush.Common.Extensions;
 using DotRush.Roslyn.Server.Services;
 using NUnit.Framework;
 using FSExtensions = DotRush.Common.Extensions.FileSystemExtensions;
@@ -39,6 +40,7 @@ public abstract class BaseProjectTestFixture {
 
     [OneTimeSetUp]
     public async Task GlobalSetup() {
+        SafeExtensions.ThrowOnExceptions = true;
         FSExtensions.TryDeleteDirectory(sandboxDirectory);
         Directory.CreateDirectory(sandboxDirectory);
 

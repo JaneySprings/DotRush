@@ -16,7 +16,11 @@ public static class ProjectExtensions {
         if (string.IsNullOrEmpty(project.OutputFilePath))
             return fallbackPath;
 
-        return Path.GetDirectoryName(project.OutputFilePath) ?? fallbackPath;
+        var directory = new DirectoryInfo(Path.GetDirectoryName(project.OutputFilePath)!);
+        if (directory.Name.Contains("net", StringComparison.OrdinalIgnoreCase))
+            return directory.Parent?.FullName ?? fallbackPath;
+
+        return directory.FullName;
     }
     public static string GetIntermediateOutputPath(this Project project) {
         var fallbackPath = Path.Combine(Path.GetDirectoryName(project.FilePath)!, "obj");

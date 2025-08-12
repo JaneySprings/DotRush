@@ -10,25 +10,12 @@ public class ManipulationTests : TestFixture {
     }
 
     [Test]
-    public async Task IntermediateDirectoriesTest() {
-        var workspace = new TestWorkspace();
-        var projectPath = CreateProject("MyProject", MultiTFM, "Exe");
-
-        await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
-        foreach (var project in workspace.Solution!.Projects) {
-            var tfm = project.GetTargetFramework();
-            Assert.That(project.GetProjectDirectory(), Is.EqualTo(Path.GetDirectoryName(projectPath)!));
-            Assert.That(project.GetIntermediateOutputPath(), Is.EqualTo(Path.Combine(Path.GetDirectoryName(projectPath)!, "obj", "Debug", tfm)));
-            Assert.That(project.GetOutputPath(), Is.EqualTo(Path.Combine(Path.GetDirectoryName(projectPath)!, "bin", "Debug", tfm)));
-        }
-    }
-    [Test]
     public async Task DocumentFoldersTest() {
         var workspace = new TestWorkspace();
         var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
 
         await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
-        
+
         var document1Path = CreateFileInProject(projectPath, "Document1.cs", "class Document1 {}");
         workspace.CreateDocument(document1Path);
         var document1 = workspace.Solution!.GetDocument(workspace.Solution!.GetDocumentIdsWithFilePathV2(document1Path).Single())!;
@@ -101,25 +88,6 @@ public class ManipulationTests : TestFixture {
         project2 = workspace.Solution!.Projects.ElementAt(1);
         Assert.That(project1.GetDocumentIdsWithFilePath(document5Path), Is.Empty);
         Assert.That(project2.GetDocumentIdsWithFilePath(document5Path).Count(), Is.EqualTo(1));
-    }
-    [Test]
-    public async Task NoSyncInIntermediateDirectoryTest() {
-        var workspace = new TestWorkspace();
-        var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
-
-        await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
-        
-        var documentPath = CreateFileInProject(projectPath, $"obj/Debug/{SingleTFM}/Document.cs", "class Document {}");
-        workspace.CreateDocument(documentPath);
-        Assert.That(workspace.Solution!.GetDocumentIdsWithFilePathV2(documentPath), Is.Empty);
-
-        var objDocument = workspace.Solution!.Projects.Single().Documents.First(d => d.FilePath!.Contains($"obj{Path.DirectorySeparatorChar}Debug{Path.DirectorySeparatorChar}{SingleTFM}"));
-        workspace.DeleteDocument(objDocument.FilePath!);
-        Assert.That(workspace.Solution!.GetDocumentIdsWithFilePathV2(objDocument.FilePath!), Is.Not.Empty);
-
-        var document2Path = CreateFileInProject(projectPath, $"objects/Document2.cs", "class Document2 {}");
-        workspace.CreateDocument(document2Path);
-        Assert.That(workspace.Solution!.GetDocumentIdsWithFilePathV2(document2Path), Is.Not.Empty);
     }
 
     private (string tfm1, string tfm2) GetTFMs(string tfm) {

@@ -19,7 +19,7 @@ public class CodeActionHandlerMock : CodeActionHandler {
     }
 }
 
-public class CodeActionHandleTests : MultitargetProjectFixture {
+public class CodeActionHandlerTests : MultitargetProjectFixture {
     private CodeAnalysisService codeAnalysisService;
     private CodeActionHandlerMock handler;
 
@@ -31,7 +31,7 @@ public class CodeActionHandleTests : MultitargetProjectFixture {
 
     [Test]
     public async Task GeneralHandlerTest() {
-        var documents = CreateAndGetDocuments(nameof(CodeActionHandleTests), @"
+        var documents = CreateAndGetDocuments(nameof(CodeActionHandlerTests), @"
 namespace Tests;
 class CodeActionTest {
     private void Method() {
@@ -79,7 +79,7 @@ class CodeActionTest {
     [TestCase(7, 8)]
     [TestCase(9, 10)]
     public async Task ApplyCodeActionInConditionsTest(int startLine, int endLine) {
-        var documents = CreateAndGetDocuments(nameof(CodeActionHandleTests), @"
+        var documents = CreateAndGetDocuments(nameof(CodeActionHandlerTests), @"
 namespace Tests;
 sealed class CodeActionTest {
     private static void Method() {
