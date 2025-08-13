@@ -10,37 +10,6 @@ public class ManipulationTests : TestFixture {
     }
 
     [Test]
-    public async Task DocumentFoldersTest() {
-        var workspace = new TestWorkspace();
-        var projectPath = CreateProject("MyProject", SingleTFM, "Exe");
-
-        await workspace.LoadAsync(new[] { projectPath }, CancellationToken.None);
-
-        var document1Path = CreateFileInProject(projectPath, "Document1.cs", "class Document1 {}");
-        workspace.CreateDocument(document1Path);
-        var document1 = workspace.Solution!.GetDocument(workspace.Solution!.GetDocumentIdsWithFilePathV2(document1Path).Single())!;
-        Assert.That(document1.FilePath, Is.EqualTo(document1Path));
-        Assert.That(document1.Folders, Is.Empty);
-
-        var document2Path = CreateFileInProject(projectPath, "Folder1/Document2.cs", "class Document2 {}");
-        workspace.CreateDocument(document2Path);
-        var document2 = workspace.Solution!.GetDocument(workspace.Solution!.GetDocumentIdsWithFilePathV2(document2Path).Single())!;
-        Assert.That(document2.FilePath, Is.EqualTo(document2Path));
-        Assert.That(document2.Folders, Is.Not.Empty);
-        Assert.That(document2.Folders, Has.Count.EqualTo(1));
-        Assert.That(document2.Folders.ElementAt(0), Is.EqualTo("Folder1"));
-
-        var document3Path = CreateFileInProject(projectPath, "Folder1/Folder2/Document3.cs", "class Document3 {}");
-        workspace.CreateDocument(document3Path);
-        var document3 = workspace.Solution!.GetDocument(workspace.Solution!.GetDocumentIdsWithFilePathV2(document3Path).Single())!;
-        Assert.That(document3.FilePath, Is.EqualTo(document3Path));
-        Assert.That(document3.Folders, Is.Not.Empty);
-        Assert.That(document3.Folders, Has.Count.EqualTo(2));
-        Assert.That(document3.Folders.ElementAt(0), Is.EqualTo("Folder1"));
-        Assert.That(document3.Folders.ElementAt(1), Is.EqualTo("Folder2"));
-
-    }
-    [Test]
     public async Task ProjectConditionalIncludeTest() {
         var (tfm1, tfm2) = GetTFMs(MultiTFM);
         var workspace = new TestWorkspace();

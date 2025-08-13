@@ -1,3 +1,4 @@
+using DotRush.Common;
 using DotRush.Roslyn.Workspaces.Extensions;
 using NUnit.Framework;
 
@@ -8,6 +9,7 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
 
     protected override void OnGlobalSetup() {
         Workspace.StartObserving(new[] { ProjectDirectory });
+        WaitLinux();
     }
 
     [SetUp]
@@ -20,7 +22,6 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
         }
     }
 
-    [Retry(3)]
     [TestCase(1)]
     [TestCase(2)]
     [TestCase(5)]
@@ -59,7 +60,6 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
         }
     }
 
-    [Retry(3)]
     [TestCase(1)]
     [TestCase(2)]
     [TestCase(5)]
@@ -97,7 +97,7 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
         }
     }
 
-    [Test, Retry(3)]
+    [Test]
     public async Task SkipFilesSyncInIntermidiateFoldersTest() {
         var filePaths = new List<string>();
         foreach (var project in Workspace.Solution!.Projects) {
@@ -114,7 +114,6 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
         filePaths.ForEach(path => Assert.That(Workspace.Solution!.GetDocumentIdsWithFilePathV2(path), Is.Empty));
     }
 
-    [Retry(3)]
     [TestCase("g.cs")]
     [TestCase("sg.cs")]
     public async Task SkipCompilerGeneratedFilesSyncTest(string ext) {
@@ -137,11 +136,20 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
         if (!Directory.Exists(directoryPath))
             Directory.CreateDirectory(directoryPath!);
 
+        WaitLinux();
+
         File.WriteAllText(documentPath, content);
         return documentPath;
     }
     private void DeleteFile(string fileName) {
         var documentPath = Path.Combine(ProjectDirectory, $"{fileName}.cs");
         DotRush.Common.Extensions.FileSystemExtensions.TryDeleteFile(documentPath);
+    }
+
+    private void WaitLinux() {
+        if (RuntimeInfo.IsLinux) {
+            // https://github.com/dotnet/runtime/blob/a6eb1100c1965e3e7ec6f14267e2146ac14fd3b4/src/libraries/System.IO.FileSystem.Watcher/src/System/IO/FileSystemWatcher.Linux.cs#L14-L16
+            Thread.Sleep(FSDelay);
+        }
     }
 }
