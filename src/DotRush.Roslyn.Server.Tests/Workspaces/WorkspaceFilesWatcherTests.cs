@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace DotRush.Roslyn.Server.Tests;
 
 public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
-    private const int FSDelay = 250;
+    private const int FSDelay = 500;
 
     protected override void OnGlobalSetup() {
         Workspace.StartObserving(new[] { ProjectDirectory });
