@@ -30,6 +30,18 @@ public class WorkspaceExtensionsTests : MultitargetProjectFixture {
         }
     }
 
+    [Test]
+    public void ConditionalDocumentIncludeTest() {
+        Assert.That(Workspace.Solution!.Projects.Count(), Is.EqualTo(2), "Expected two projects in the solution, one for each target framework.");
+        var expectedProject = Workspace.Solution.Projects.First();
+        var intermediatePath = expectedProject.GetIntermediateOutputPath(); // obj/Debug/netX.0
+        var documentPath = Path.Combine(intermediatePath, $"{nameof(WorkspaceExtensionsTests)}.cs");
+        var projectIds = Workspace.Solution.GetProjectIdsMayContainsFilePath(documentPath);
+
+        Assert.That(projectIds.Count(), Is.EqualTo(1));
+        Assert.That(projectIds.First(), Is.EqualTo(expectedProject.Id), $"ProjectId is not {expectedProject.Name}");
+    }
+
 
     private Document[] CreateAndGetDocuments(string[] parts, string content) {
         if (parts.Length == 0)
