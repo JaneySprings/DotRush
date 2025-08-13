@@ -34,13 +34,15 @@ export class TestExplorerController {
         if (project === undefined)
             return;
 
-        if (project.children.size === 0)
-            return TestExplorerController.resolveTestItem(project);
-
+        let processed = false;
         project.children.forEach(fixture => {
-            if (fixture.tags.find(t => t.id === documentPath) !== undefined)
+            if (fixture.uri?.fsPath === documentPath) {
                 TestExplorerController.resolveTestItem(fixture);
+                processed = true;
+            }
         });
+        if (!processed)
+            await TestExplorerController.resolveTestItem(project);
     }
 
     private static refreshTestItems() {
@@ -159,7 +161,6 @@ class TestExplorerExtensions {
         const id = parentId ? `${parentId}.${modelItem.id}` : modelItem.id;
         const item = controller.createTestItem(id, modelItem.name, vscode.Uri.file(modelItem.filePath));
         item.range = modelItem.range;
-        item.tags = modelItem.locations.map(location => new vscode.TestTag(location));
         item.canResolveChildren = canResolve;
         return item;
     }
