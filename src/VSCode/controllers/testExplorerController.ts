@@ -42,7 +42,7 @@ export class TestExplorerController {
             }
         });
         if (!processed)
-            TestExplorerController.resolveTestItem(project);
+            await TestExplorerController.resolveTestItem(project);
     }
 
     private static refreshTestItems() {
