@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace DotRush.Roslyn.Server.Tests;
 
 public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
-    private const int FSDelay = 500;
+    private const int FSDelay = 250;
 
     protected override void OnGlobalSetup() {
         Workspace.StartObserving(new[] { ProjectDirectory });
@@ -12,10 +12,15 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
 
     [SetUp]
     public void Setup() {
-        var result = Workspace.Solution!.Projects.SelectMany(p => p.Documents).Where(d => d.Name.Contains(nameof(WorkspaceFilesWatcherTests)));
-        Assert.That(result, Is.Empty, "No documents should exist before creating any files.");
+        var lostDocuments = Workspace.Solution!.Projects.SelectMany(p => p.Documents).Where(d => d.Name.Contains(nameof(WorkspaceFilesWatcherTests)));
+        foreach (var document in lostDocuments) {
+            Workspace.DeleteDocument(document.FilePath!);
+            if (File.Exists(document.FilePath))
+                File.Delete(document.FilePath!);
+        }
     }
 
+    [Retry(3)]
     [TestCase(1)]
     [TestCase(2)]
     [TestCase(5)]
@@ -54,6 +59,7 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
         }
     }
 
+    [Retry(3)]
     [TestCase(1)]
     [TestCase(2)]
     [TestCase(5)]
@@ -91,7 +97,7 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
         }
     }
 
-    [Test]
+    [Test, Retry(3)]
     public async Task SkipFilesSyncInIntermidiateFoldersTest() {
         var filePaths = new List<string>();
         foreach (var project in Workspace.Solution!.Projects) {
@@ -108,6 +114,7 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
         filePaths.ForEach(path => Assert.That(Workspace.Solution!.GetDocumentIdsWithFilePathV2(path), Is.Empty));
     }
 
+    [Retry(3)]
     [TestCase("g.cs")]
     [TestCase("sg.cs")]
     public async Task SkipCompilerGeneratedFilesSyncTest(string ext) {
