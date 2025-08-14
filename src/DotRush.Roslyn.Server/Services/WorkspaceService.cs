@@ -5,6 +5,7 @@ using DotRush.Common.InteropV2;
 using DotRush.Common.MSBuild;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces;
+using DotRush.Roslyn.Workspaces.Extensions;
 using DotRush.Roslyn.Workspaces.FileSystem;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
@@ -106,15 +107,16 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
 
     void IWorkspaceChangeListener.OnDocumentCreated(string documentPath) {
         CreateDocument(documentPath);
+        if (ApplyWorkspaceChanges && WorkspaceExtensions.IsSourceCodeDocument(documentPath))
+            DefaultItemsRewriter.AddCompilerItem(documentPath);
     }
     void IWorkspaceChangeListener.OnDocumentDeleted(string documentPath) {
         DeleteDocument(documentPath);
+        if (ApplyWorkspaceChanges && WorkspaceExtensions.IsSourceCodeDocument(documentPath))
+            DefaultItemsRewriter.RemoveCompilerItem(documentPath);
     }
     void IWorkspaceChangeListener.OnDocumentChanged(string documentPath) {
         UpdateDocument(documentPath);
-    }
-    void IWorkspaceChangeListener.OnCommitChanges() {
-        ApplyChanges();
     }
 
     public void Dispose() {

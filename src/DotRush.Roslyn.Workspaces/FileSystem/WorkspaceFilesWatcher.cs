@@ -34,7 +34,6 @@ public sealed class WorkspaceFilesWatcher : IDisposable {
 
     private void OnCreated(object source, FileSystemEventArgs e) {
         listener.OnDocumentCreated(e.FullPath);
-        listener.OnCommitChanges();
     }
     private void OnChanged(object source, FileSystemEventArgs e) {
         listener.OnDocumentChanged(e.FullPath);
@@ -45,7 +44,6 @@ public sealed class WorkspaceFilesWatcher : IDisposable {
     private void OnRenamed(object sender, RenamedEventArgs e) {
         listener.OnDocumentDeleted(e.OldFullPath);
         listener.OnDocumentCreated(e.FullPath);
-        listener.OnCommitChanges();
     }
 
     public void Dispose() {
