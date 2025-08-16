@@ -9,15 +9,15 @@ public static class DefaultItemsRewriter {
         foreach (var xmlPath in GetProjectFiles(itemPath)) {
             var xmlDocument = LoadXmlDocument(xmlPath);
             if (xmlDocument == null)
-                return;
+                continue;
 
             var itemGroup = FindOrCreateCompileItemGroup(xmlDocument);
             if (itemGroup == null)
-                return;
+                continue;
 
             var relativePath = GetItemPath(itemPath, xmlPath);
             if (CompileItemExists(itemGroup, relativePath))
-                return;
+                continue;
 
             InsertCompileItemAlphabetically(itemGroup, relativePath);
             xmlDocument.Save(xmlPath);
@@ -27,19 +27,19 @@ public static class DefaultItemsRewriter {
         foreach (var xmlPath in GetProjectFiles(itemPath)) {
             var xmlDocument = LoadXmlDocument(xmlPath);
             if (xmlDocument == null)
-                return;
+                continue;
 
             var relativePath = GetItemPath(itemPath, xmlPath);
             var itemGroups = xmlDocument.SelectNodes("//Project/ItemGroup");
             if (itemGroups == null)
-                return;
+                continue;
 
             foreach (XmlNode itemGroup in itemGroups) {
                 var compileItem = itemGroup.SelectSingleNode($"Compile[@Include='{relativePath}']");
                 if (compileItem != null) {
                     itemGroup.RemoveChild(compileItem);
                     xmlDocument.Save(xmlPath);
-                    return;
+                    continue;
                 }
             }
         }
