@@ -33,9 +33,19 @@ public sealed class WorkspaceFilesWatcher : IDisposable {
     }
 
     private void OnCreated(object source, FileSystemEventArgs e) {
+        if (Directory.Exists(e.FullPath)) {
+            foreach (var filePath in Directory.EnumerateFiles(e.FullPath, "*.*", SearchOption.AllDirectories))
+                listener.OnDocumentCreated(filePath);
+            return;
+        }
         listener.OnDocumentCreated(e.FullPath);
     }
     private void OnChanged(object source, FileSystemEventArgs e) {
+        if (Directory.Exists(e.FullPath)) {
+            foreach (var filePath in Directory.EnumerateFiles(e.FullPath, "*.*", SearchOption.AllDirectories))
+                listener.OnDocumentChanged(filePath);
+            return;
+        }
         listener.OnDocumentChanged(e.FullPath);
     }
     private void OnDeleted(object source, FileSystemEventArgs e) {

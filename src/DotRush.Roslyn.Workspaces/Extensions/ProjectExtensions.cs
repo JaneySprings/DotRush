@@ -37,17 +37,23 @@ public static class ProjectExtensions {
         return Path.GetDirectoryName(project.FilePath) ?? string.Empty;
     }
 
-    public static IEnumerable<Document> GetDocumentWithFilePath(this Project project, string? filePath) {
+    public static IEnumerable<Document> GetDocumentsWithFilePath(this Project project, string? filePath) {
         return project.Documents.Where(it => PathExtensions.Equals(it.FilePath, filePath));
     }
-    public static IEnumerable<TextDocument> GetAdditionalDocumentWithFilePath(this Project project, string? filePath) {
+    public static IEnumerable<TextDocument> GetAdditionalDocumentsWithFilePath(this Project project, string? filePath) {
         return project.AdditionalDocuments.Where(it => PathExtensions.Equals(it.FilePath, filePath));
     }
     public static IEnumerable<DocumentId> GetDocumentIdsWithFilePath(this Project project, string? filePath) {
-        return project.GetDocumentWithFilePath(filePath).Select(it => it.Id);
+        return project.GetDocumentsWithFilePath(filePath).Select(it => it.Id);
     }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(this Project project, string? filePath) {
-        return project.GetAdditionalDocumentWithFilePath(filePath).Select(it => it.Id);
+        return project.GetAdditionalDocumentsWithFilePath(filePath).Select(it => it.Id);
+    }
+    public static IEnumerable<Document> GetDocumentsWithDirectoryPath(this Project project, string? dirPath) {
+        return project.Documents.Where(it => PathExtensions.StartsWith(it.FilePath, dirPath));
+    }
+    public static IEnumerable<TextDocument> GetAdditionalDocumentsWithDirectoryPath(this Project project, string? dirPath) {
+        return project.AdditionalDocuments.Where(it => PathExtensions.Equals(it.FilePath, dirPath));
     }
 
     public static IEnumerable<string> GetFolders(this Project project, string documentPath) {

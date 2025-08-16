@@ -75,11 +75,17 @@ public abstract class SolutionController : ProjectsController {
         if (WorkspaceExtensions.IsSourceCodeDocument(file))
             UpdateSourceCodeDocument(file, text);
     }
-    public void DeleteDocument(string file) {
-        if (WorkspaceExtensions.IsAdditionalDocument(file))
-            DeleteAdditionalDocument(file);
-        if (WorkspaceExtensions.IsSourceCodeDocument(file))
-            DeleteSourceCodeDocument(file);
+    public void DeleteDocument(string path) {
+        if (WorkspaceExtensions.IsAdditionalDocument(path))
+            DeleteAdditionalDocument(path);
+        if (WorkspaceExtensions.IsSourceCodeDocument(path))
+            DeleteSourceCodeDocument(path);
+
+        // From FileSystemWatcher, we can get directory changes as well.
+        if (Directory.Exists(path)) {
+            Solution?.GetDocumentsWithDirectoryPath(path)?.ForEach(x => DeleteDocument(x.FilePath ?? string.Empty));
+            Solution?.GetAdditionalDocumentsWithDirectoryPath(path)?.ForEach(x => DeleteDocument(x.FilePath ?? string.Empty));
+        }
     }
 
     private void CreateSourceCodeDocument(string file) {

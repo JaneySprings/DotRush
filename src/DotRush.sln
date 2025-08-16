@@ -15,8 +15,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Roslyn.ExternalAcce
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Roslyn.Server", "DotRush.Roslyn.Server\DotRush.Roslyn.Server.csproj", "{F838B442-B458-4A80-BC5D-3756AEDCA2AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Roslyn.Workspaces.Tests", "DotRush.Roslyn.Workspaces.Tests\DotRush.Roslyn.Workspaces.Tests.csproj", "{4ED00E86-1F70-43C8-B20E-D8800007AE3F}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Debugging.Mono", "DotRush.Debugging.Mono\DotRush.Debugging.Mono.csproj", "{C8FB5D14-0685-42AD-BC21-743539922ADE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Debugging.NetCore", "DotRush.Debugging.NetCore\DotRush.Debugging.NetCore.csproj", "{0FA0A58D-5ABD-4A8F-855F-3E8DB4FA3AF8}"
@@ -105,18 +103,6 @@ Global
 		{F838B442-B458-4A80-BC5D-3756AEDCA2AC}.Release|x64.Build.0 = Release|Any CPU
 		{F838B442-B458-4A80-BC5D-3756AEDCA2AC}.Release|x86.ActiveCfg = Release|Any CPU
 		{F838B442-B458-4A80-BC5D-3756AEDCA2AC}.Release|x86.Build.0 = Release|Any CPU
-		{4ED00E86-1F70-43C8-B20E-D8800007AE3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4ED00E86-1F70-43C8-B20E-D8800007AE3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4ED00E86-1F70-43C8-B20E-D8800007AE3F}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{4ED00E86-1F70-43C8-B20E-D8800007AE3F}.Debug|x64.Build.0 = Debug|Any CPU
-		{4ED00E86-1F70-43C8-B20E-D8800007AE3F}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{4ED00E86-1F70-43C8-B20E-D8800007AE3F}.Debug|x86.Build.0 = Debug|Any CPU
-		{4ED00E86-1F70-43C8-B20E-D8800007AE3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4ED00E86-1F70-43C8-B20E-D8800007AE3F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4ED00E86-1F70-43C8-B20E-D8800007AE3F}.Release|x64.ActiveCfg = Release|Any CPU
-		{4ED00E86-1F70-43C8-B20E-D8800007AE3F}.Release|x64.Build.0 = Release|Any CPU
-		{4ED00E86-1F70-43C8-B20E-D8800007AE3F}.Release|x86.ActiveCfg = Release|Any CPU
-		{4ED00E86-1F70-43C8-B20E-D8800007AE3F}.Release|x86.Build.0 = Release|Any CPU
 		{C8FB5D14-0685-42AD-BC21-743539922ADE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C8FB5D14-0685-42AD-BC21-743539922ADE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8FB5D14-0685-42AD-BC21-743539922ADE}.Debug|x64.ActiveCfg = Debug|Any CPU
