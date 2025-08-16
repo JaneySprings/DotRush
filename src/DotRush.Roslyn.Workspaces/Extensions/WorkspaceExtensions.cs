@@ -57,10 +57,16 @@ public static class WorkspaceExtensions {
     }
 
     public static IEnumerable<DocumentId> GetDocumentIdsWithFilePathV2(this Solution solution, string? filePath) {
-        return solution.Projects.SelectMany(it => it.GetDocumentIdsWithFilePath(filePath)) ?? Enumerable.Empty<DocumentId>();
+        return solution.Projects.SelectMany(it => it.GetDocumentIdsWithFilePath(filePath));
     }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePathV2(this Solution solution, string? filePath) {
-        return solution.Projects.SelectMany(it => it.GetAdditionalDocumentIdsWithFilePath(filePath)) ?? Enumerable.Empty<DocumentId>();
+        return solution.Projects.SelectMany(it => it.GetAdditionalDocumentIdsWithFilePath(filePath));
+    }
+    public static IEnumerable<Document> GetDocumentsWithDirectoryPath(this Solution solution, string? filePath) {
+        return solution.Projects.SelectMany(it => it.GetDocumentsWithDirectoryPath(filePath));
+    }
+    public static IEnumerable<TextDocument> GetAdditionalDocumentsWithDirectoryPath(this Solution solution, string? filePath) {
+        return solution.Projects.SelectMany(it => it.GetAdditionalDocumentsWithDirectoryPath(filePath));
     }
     public static Document[] GetDocuments(this Solution solution, IEnumerable<DocumentId>? documentIds) {
         if (documentIds == null || !documentIds.Any())

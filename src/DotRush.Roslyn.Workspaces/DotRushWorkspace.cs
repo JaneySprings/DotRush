@@ -28,13 +28,13 @@ public abstract class DotRushWorkspace : SolutionController {
         return registrationResult;
     }
 
-    public void ApplyChanges() {
-        ArgumentNullException.ThrowIfNull(workspace);
-        if (Solution != null && ApplyWorkspaceChanges) {
-            workspace.TryApplyChanges(Solution);
-            OnWorkspaceStateChanged(workspace.CurrentSolution);
-        }
-    }
+    // public void ApplyChanges() {
+    //     ArgumentNullException.ThrowIfNull(workspace);
+    //     if (Solution != null && ApplyWorkspaceChanges) {
+    //         workspace.TryApplyChanges(Solution);
+    //         OnWorkspaceStateChanged(workspace.CurrentSolution);
+    //     }
+    // }
 
     public Task LoadSolutionAsync(IEnumerable<string> solutionFiles, CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(workspace);
@@ -79,7 +79,7 @@ public abstract class DotRushWorkspace : SolutionController {
             var latestSdkPath = DotRushMSBuildLocator.GetLatestSdkLocation();
             if (string.IsNullOrEmpty(latestSdkPath))
                 return false;
-            
+
             CurrentSessionLogger.Debug($"Registering MSBuild path: {latestSdkPath}");
             MSBuildLocator.RegisterMSBuildPath(latestSdkPath);
             return true;

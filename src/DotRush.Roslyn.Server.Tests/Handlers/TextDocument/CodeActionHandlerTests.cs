@@ -19,19 +19,19 @@ public class CodeActionHandlerMock : CodeActionHandler {
     }
 }
 
-public class CodeActionHandleTests : MultitargetProjectFixture {
+public class CodeActionHandlerTests : MultitargetProjectFixture {
     private CodeAnalysisService codeAnalysisService;
     private CodeActionHandlerMock handler;
 
     [SetUp]
     public void SetUp() {
         codeAnalysisService = new CodeAnalysisService(new ConfigurationService(), null);
-        handler = new CodeActionHandlerMock((WorkspaceService)Workspace, codeAnalysisService);
+        handler = new CodeActionHandlerMock(Workspace, codeAnalysisService);
     }
 
     [Test]
     public async Task GeneralHandlerTest() {
-        var documents = CreateAndGetDocuments(nameof(CodeActionHandleTests), @"
+        var documents = CreateAndGetDocuments(nameof(CodeActionHandlerTests), @"
 namespace Tests;
 class CodeActionTest {
     private void Method() {
@@ -79,7 +79,7 @@ class CodeActionTest {
     [TestCase(7, 8)]
     [TestCase(9, 10)]
     public async Task ApplyCodeActionInConditionsTest(int startLine, int endLine) {
-        var documents = CreateAndGetDocuments(nameof(CodeActionHandleTests), @"
+        var documents = CreateAndGetDocuments(nameof(CodeActionHandlerTests), @"
 namespace Tests;
 sealed class CodeActionTest {
     private static void Method() {
@@ -95,7 +95,7 @@ sealed class CodeActionTest {
         await codeAnalysisService.AnalyzeAsync(documents, AnalysisScope.Document, AnalysisScope.None, CancellationToken.None).ConfigureAwait(false);
         var result = await handler.Handle(new CodeActionParams() {
             TextDocument = documents.First().CreateDocumentId(),
-            Range = PositionExtensions.CreateRange(5, 6)
+            Range = PositionExtensions.CreateRange(startLine, endLine)
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);

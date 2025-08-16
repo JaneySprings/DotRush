@@ -70,7 +70,7 @@ public class RenameHandler : RenameHandlerBase {
                         workspaceEdits.Add(newDocument.FilePath, new List<TextEdit>());
 
                     foreach (var textEdit in textEdits) {
-                        if (!workspaceEdits[newDocument.FilePath].Any(x => x.Range.OverlapsWith(textEdit.Range)))
+                        if (!workspaceEdits[newDocument.FilePath].Any(x => x.Range == textEdit.Range))
                             workspaceEdits[newDocument.FilePath].Add(textEdit);
                     }
                 }
