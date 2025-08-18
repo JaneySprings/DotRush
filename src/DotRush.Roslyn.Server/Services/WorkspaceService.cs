@@ -112,7 +112,7 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
     }
     void IWorkspaceChangeListener.OnDocumentDeleted(string documentPath) {
         DeleteDocument(documentPath);
-        if (ApplyWorkspaceChanges && WorkspaceExtensions.IsSourceCodeDocument(documentPath))
+        if (ApplyWorkspaceChanges)
             DefaultItemsRewriter.RemoveCompilerItem(documentPath);
     }
     void IWorkspaceChangeListener.OnDocumentChanged(string documentPath) {

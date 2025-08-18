@@ -1,4 +1,4 @@
-using System.Xml;
+using System.Xml.Linq;
 
 namespace DotRush.Common.MSBuild;
 
@@ -7,41 +7,43 @@ public static class DefaultItemsRewriter {
 
     public static void AddCompilerItem(string itemPath) {
         foreach (var xmlPath in GetProjectFiles(itemPath)) {
-            var xmlDocument = LoadXmlDocument(xmlPath);
-            if (xmlDocument == null)
+            var document = LoadXmlDocument(xmlPath);
+            if (document?.Root == null)
                 continue;
 
-            var itemGroup = FindOrCreateCompileItemGroup(xmlDocument);
-            if (itemGroup == null)
-                continue;
-
+            var itemGroup = FindOrCreateCompileItemGroup(document);
             var relativePath = GetItemPath(itemPath, xmlPath);
+
             if (CompileItemExists(itemGroup, relativePath))
                 continue;
 
             InsertCompileItemAlphabetically(itemGroup, relativePath);
-            xmlDocument.Save(xmlPath);
+            document.Save(xmlPath);
         }
     }
     public static void RemoveCompilerItem(string itemPath) {
         foreach (var xmlPath in GetProjectFiles(itemPath)) {
-            var xmlDocument = LoadXmlDocument(xmlPath);
-            if (xmlDocument == null)
+            var document = LoadXmlDocument(xmlPath);
+            if (document?.Root == null)
                 continue;
 
             var relativePath = GetItemPath(itemPath, xmlPath);
-            var itemGroups = xmlDocument.SelectNodes("//Project/ItemGroup");
-            if (itemGroups == null)
-                continue;
+            var itemGroups = GetItemGroups(document);
 
-            foreach (XmlNode itemGroup in itemGroups) {
-                var compileItem = itemGroup.SelectSingleNode($"Compile[@Include='{relativePath}']");
-                if (compileItem != null) {
-                    itemGroup.RemoveChild(compileItem);
-                    xmlDocument.Save(xmlPath);
-                    continue;
+            bool documentModified = false;
+            foreach (var itemGroup in itemGroups) {
+                var compileItems = GetCompileItems(itemGroup)
+                    .Where(c => c.Attribute("Include")?.Value?.StartsWith(relativePath, StringComparison.OrdinalIgnoreCase) == true)
+                    .ToList();
+
+                foreach (var compileItem in compileItems) {
+                    compileItem.Remove();
+                    documentModified = true;
                 }
             }
+
+            if (documentModified)
+                document.Save(xmlPath);
         }
     }
 
@@ -53,6 +55,7 @@ public static class DefaultItemsRewriter {
         var relativePath = itemPath.Substring(xmlDirectory.Length + 1);
         return relativePath.Replace('/', pathSeparator).Replace('\\', pathSeparator);
     }
+
     private static string[] GetProjectFiles(string itemPath) {
         var itemDirectory = Path.GetDirectoryName(itemPath);
         while (itemDirectory != null) {
@@ -64,50 +67,55 @@ public static class DefaultItemsRewriter {
         }
         return Array.Empty<string>();
     }
-    private static XmlDocument? LoadXmlDocument(string xmlPath) {
-        var xmlDocument = new XmlDocument();
-        xmlDocument.Load(xmlPath);
-        return xmlDocument;
-    }
-    private static XmlNode? FindOrCreateCompileItemGroup(XmlDocument xmlDocument) {
-        var itemGroups = xmlDocument.SelectNodes("//Project/ItemGroup");
-        if (itemGroups != null) {
-            foreach (XmlNode itemGroup in itemGroups) {
-                if (itemGroup.SelectSingleNode("Compile") != null)
-                    return itemGroup;
-            }
-        }
 
-        // If no ItemGroup with Compile items exists, create a new one
-        var projectNode = xmlDocument.SelectSingleNode("//Project");
-        if (projectNode == null)
+    private static XDocument? LoadXmlDocument(string xmlPath) {
+        try {
+            return XDocument.Load(xmlPath);
+        } catch {
             return null;
+        }
+    }
 
-        var newItemGroup = xmlDocument.CreateElement("ItemGroup");
-        projectNode.AppendChild(newItemGroup);
+    private static IEnumerable<XElement> GetItemGroups(XDocument document) {
+        return document.Root?.Elements().Where(e => e.Name.LocalName == "ItemGroup") ?? Enumerable.Empty<XElement>();
+    }
+
+    private static IEnumerable<XElement> GetCompileItems(XElement itemGroup) {
+        return itemGroup.Elements().Where(e => e.Name.LocalName == "Compile");
+    }
+
+    private static XElement FindOrCreateCompileItemGroup(XDocument document) {
+        var itemGroups = GetItemGroups(document);
+        var existingGroup = itemGroups.FirstOrDefault(g => GetCompileItems(g).Any());
+
+        if (existingGroup != null)
+            return existingGroup;
+
+        // Create new ItemGroup
+        var newItemGroup = new XElement(document.Root!.GetDefaultNamespace() + "ItemGroup");
+        document.Root.Add(newItemGroup);
         return newItemGroup;
     }
-    private static bool CompileItemExists(XmlNode itemGroup, string relativePath) {
-        return itemGroup.SelectSingleNode($"Compile[@Include='{relativePath}']") != null;
+
+    private static bool CompileItemExists(XElement itemGroup, string relativePath) {
+        return GetCompileItems(itemGroup).Any(c => c.Attribute("Include")?.Value == relativePath);
     }
-    private static void InsertCompileItemAlphabetically(XmlNode itemGroup, string relativePath) {
-        var newCompileItem = itemGroup.OwnerDocument!.CreateElement("Compile");
-        newCompileItem.SetAttribute("Include", relativePath);
 
-        var compileItems = itemGroup.SelectNodes("Compile")?.Cast<XmlNode>().ToList() ?? new List<XmlNode>();
+    private static void InsertCompileItemAlphabetically(XElement itemGroup, string relativePath) {
+        var newCompileItem = new XElement(itemGroup.GetDefaultNamespace() + "Compile",
+            new XAttribute("Include", relativePath));
 
-        XmlNode? insertBefore = null;
-        foreach (var compileItem in compileItems) {
-            var existingInclude = compileItem.Attributes?["Include"]?.Value;
-            if (existingInclude != null && string.Compare(relativePath, existingInclude, StringComparison.OrdinalIgnoreCase) < 0) {
-                insertBefore = compileItem;
-                break;
-            }
+        var compileItems = GetCompileItems(itemGroup).ToList();
+        var insertIndex = compileItems
+            .Select((item, index) => new { item, index })
+            .FirstOrDefault(x => string.Compare(relativePath, x.item.Attribute("Include")?.Value, StringComparison.OrdinalIgnoreCase) < 0)
+            ?.index;
+
+        if (insertIndex.HasValue && insertIndex.Value < compileItems.Count) {
+            compileItems[insertIndex.Value].AddBeforeSelf(newCompileItem);
         }
-
-        if (insertBefore != null)
-            itemGroup.InsertBefore(newCompileItem, insertBefore);
-        else
-            itemGroup.AppendChild(newCompileItem);
+        else {
+            itemGroup.Add(newCompileItem);
+        }
     }
 }
