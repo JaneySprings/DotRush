@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace DotRush.Common.Extensions;
 
 public static class FileSystemExtensions {
@@ -11,14 +13,15 @@ public static class FileSystemExtensions {
 
         File.WriteAllText(filePath, content);
     }
-    public static string TryReadText(string filePath) {
+    [return: NotNullIfNotNull(nameof(fallback))]
+    public static string? TryReadText(string filePath, string? fallback = null) {
         if (!File.Exists(filePath))
-            return string.Empty;
+            return fallback;
 
         try {
             return File.ReadAllText(filePath);
         } catch {
-            return string.Empty;
+            return fallback;
         }
     }
     public static bool TryDeleteDirectory(string directoryPath) {

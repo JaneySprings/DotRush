@@ -1,45 +1,59 @@
 using System.Text;
 using System.Text.Json;
-using Microsoft.CodeAnalysis;
+using DotRush.Common.Extensions;
+using DotRush.Roslyn.Server.Services;
 using NUnit.Framework;
-using FileSystemExtensions = DotRush.Common.Extensions.FileSystemExtensions;
 
-namespace DotRush.Roslyn.Workspaces.Tests;
+namespace DotRush.Roslyn.Server.Tests;
 
 [TestFixture]
-public abstract class TestFixture {
-    protected const string SingleTFM = "net8.0";
-    protected const string MultiTFM = "net8.0;net9.0";
+public abstract class SimpleWorkspaceFixture {
+    protected string SandboxDirectory { get; }
 
-    protected string SandboxDirectory { get; set; }
-    
-    public TestFixture() {
+    protected WorkspaceService Workspace { get; private set; } = null!;
+
+    protected SimpleWorkspaceFixture() {
         SandboxDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sandbox");
+    }
+
+    protected virtual void OnSetup() { }
+    protected virtual void OnTearDown() { }
+    protected virtual WorkspaceService CreateInitializedWorkspace() {
+        var workspace = new WorkspaceService(new ConfigurationService(), null);
+        if (!workspace.InitializeWorkspace())
+            throw new InvalidOperationException("Failed to initialize workspace.");
+
+        return workspace;
     }
 
     [SetUp]
     public void Setup() {
+        SafeExtensions.ThrowOnExceptions = true;
         FileSystemExtensions.TryDeleteDirectory(SandboxDirectory);
         Directory.CreateDirectory(SandboxDirectory);
+
+        Workspace = CreateInitializedWorkspace();
+        OnSetup();
     }
+
     [TearDown]
     public void TearDown() {
         FileSystemExtensions.TryDeleteDirectory(SandboxDirectory);
+        Workspace.Dispose();
+        Workspace = null!;
+        OnTearDown();
     }
 
-    protected string CreateProject(string name, string tfm, string outputType) {
-        return CreateProject(name, Path.GetFileNameWithoutExtension(name), tfm, outputType);
-    }
-    protected string CreateProject(string name, string directory, string tfm, string outputType) {
-        var projectDirectory = Path.Combine(SandboxDirectory, directory);
-        if (!Directory.Exists(projectDirectory))
-            Directory.CreateDirectory(projectDirectory);
+
+    protected string CreateProject(string name, string targetFramework = "net10.0", string outputType = "Exe") {
+        var projectDirectory = Path.Combine(SandboxDirectory, name);
+        Directory.CreateDirectory(projectDirectory);
 
         var projectFile = Path.Combine(projectDirectory, $"{name}.csproj");
         var projectContent = $@"<Project Sdk=""Microsoft.NET.Sdk"">
             <PropertyGroup>
                 <OutputType>{outputType}</OutputType>
-                <TargetFrameworks>{tfm}</TargetFrameworks>
+                <TargetFrameworks>{targetFramework}</TargetFrameworks>
                 <ImplicitUsings>enable</ImplicitUsings>
                 <Nullable>enable</Nullable>
             </PropertyGroup>
@@ -74,7 +88,7 @@ EndGlobal";
         foreach (var project in projects)
             solutionContent.AppendLine($"  <Project Path=\"{project}\" />");
         solutionContent.AppendLine("</Solution>");
-        
+
         File.WriteAllText(solutionFile, solutionContent.ToString());
         return solutionFile;
     }
@@ -92,26 +106,4 @@ EndGlobal";
         return solutionFilterFile;
     }
 
-    protected string CreateFileInProject(string project, string name, string content) {
-        if (project.EndsWith(".csproj"))
-            project = Path.GetDirectoryName(project)!;
-        
-        var file = Path.Combine(project, name);
-        var directory = Path.GetDirectoryName(file);
-        if (!Directory.Exists(directory))
-            Directory.CreateDirectory(directory!);
-
-        File.WriteAllText(file, content);
-        return file;
-    }
-
-    protected int GetProjectDocumentsCount(Project project) {
-        return project.Documents.Count();
-    }
-    protected int GetProjectAdditionalDocumentsCount(Project project) {
-        return project.AdditionalDocuments.Count();
-    }
-    protected int GetProjectFilesCount(Project project) {
-        return GetProjectDocumentsCount(project) + GetProjectAdditionalDocumentsCount(project);
-    }
 }

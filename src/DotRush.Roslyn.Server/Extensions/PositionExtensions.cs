@@ -1,5 +1,4 @@
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Text;
 using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model;
 
@@ -49,16 +48,6 @@ public static class PositionExtensions {
         };
     }
 
-    public static ProtocolModels.Location? ToLocation(this ReferenceLocation location, SourceText sourceText) {
-        if (location.Document.FilePath == null)
-            return null;
-
-        return new ProtocolModels.Location() {
-            Uri = location.Document.FilePath,
-            Range = location.Location.SourceSpan.ToRange(sourceText)
-        };
-    }
-
     public static TextSpan ToTextSpan(this ProtocolModels.DocumentRange range, SourceText sourceText) {
         return TextSpan.FromBounds(
             range.Start.ToOffset(sourceText),
@@ -78,11 +67,4 @@ public static class PositionExtensions {
 
     public static ProtocolModels.DocumentRange EmptyRange => new ProtocolModels.DocumentRange(EmptyPosition, EmptyPosition);
     public static ProtocolModels.Position EmptyPosition => new ProtocolModels.Position(0, 0);
-
-    public static bool OverlapsWith(this ProtocolModels.DocumentRange baseRange, ProtocolModels.DocumentRange otherRange) {
-        return baseRange.Start.Line <= otherRange.End.Line
-            && baseRange.End.Line >= otherRange.Start.Line
-            && baseRange.Start.Character <= otherRange.End.Character
-            && baseRange.End.Character >= otherRange.Start.Character;
-    }
 }

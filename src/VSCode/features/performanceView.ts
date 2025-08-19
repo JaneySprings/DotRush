@@ -14,12 +14,12 @@ enum DotNetProfilerType {
 export class PerformanceView implements vscode.DebugAdapterTrackerFactory {
     public static feature: PerformanceView = new PerformanceView();
 
-    private processId: number | undefined;
+    private processId?: number;
 
     public activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerNetCoreId, this));
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdAttachTraceProfiler, async () => await PerformanceView.feature.startProfiler(this.processId, DotNetProfilerType.Trace)));
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdCreateHeapDump, async () => await PerformanceView.feature.startProfiler(this.processId, DotNetProfilerType.Dump)));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdAttachTraceProfiler, async () => await PerformanceView.feature.startProfiler(DotNetProfilerType.Trace, this.processId)));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdCreateHeapDump, async () => await PerformanceView.feature.startProfiler(DotNetProfilerType.Dump, this.processId)));
         context.subscriptions.push(vscode.debug.onDidStartDebugSession(s => {
             if (s.type === res.debuggerNetCoreId && s.configuration.processId !== undefined)
                 this.processId = s.configuration.processId;
@@ -41,7 +41,7 @@ export class PerformanceView implements vscode.DebugAdapterTrackerFactory {
         }
     }
 
-    private async startProfiler(processId: number | undefined, profilerType: DotNetProfilerType): Promise<vscode.TaskExecution | undefined> {
+    private async startProfiler(profilerType: DotNetProfilerType, processId?: number): Promise<vscode.TaskExecution | undefined> {
         if (processId === undefined)
             processId = await vscode.commands.executeCommand(res.commandIdPickProcess);
         if (processId === undefined)
@@ -60,10 +60,10 @@ export class PerformanceView implements vscode.DebugAdapterTrackerFactory {
         if (profilerType === DotNetProfilerType.Trace) {
             builder.append('--format').append('speedscope');
         }
-    
+
         return new vscode.Task(
-            { type: res.taskDefinitionId }, 
-            vscode.TaskScope.Workspace, 
+            { type: res.taskDefinitionId },
+            vscode.TaskScope.Workspace,
             'Profile',
             res.extensionId,
             new vscode.ShellExecution(builder.getCommand(), builder.getArguments(), options),

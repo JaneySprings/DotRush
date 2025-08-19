@@ -4,7 +4,7 @@ using DotRush.Common.Extensions;
 
 namespace DotRush.Common.MSBuild;
 
-public static class MSBuildPropertyEvaluator {
+public static class PropertyEvaluator {
     public static string? EvaluateProperty(this MSBuildProject project, string name, string? defaultValue = null) {
         var propertyMatches = project.GetPropertyMatches(project.FilePath, name);
         if (propertyMatches == null)

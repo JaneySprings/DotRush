@@ -1,7 +1,5 @@
+using DotRush.Common.Extensions;
 using DotRush.Roslyn.Server.Services;
-using DotRush.Roslyn.Workspaces;
-using DotRush.Roslyn.Workspaces.Extensions;
-using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 using FSExtensions = DotRush.Common.Extensions.FileSystemExtensions;
 
@@ -12,7 +10,7 @@ public abstract class BaseProjectTestFixture {
     private string sandboxDirectory;
     private string projectName;
 
-    protected DotRushWorkspace Workspace { get; private set; } = null!;
+    protected WorkspaceService Workspace { get; private set; } = null!;
     protected string ProjectDirectory { get; private set; } = null!;
     protected string ProjectFilePath { get; private set; } = null!;
 
@@ -24,7 +22,7 @@ public abstract class BaseProjectTestFixture {
     protected abstract string CreateProjectFileContent();
     protected virtual void OnGlobalSetup() { }
     protected virtual void OnGlobalTearDown() { }
-    protected virtual DotRushWorkspace CreateInitializedWorkspace() {
+    protected virtual WorkspaceService CreateInitializedWorkspace() {
         var workspace = new WorkspaceService(new ConfigurationService(), null);
         if (!workspace.InitializeWorkspace())
             throw new InvalidOperationException("Failed to initialize workspace.");
@@ -42,6 +40,7 @@ public abstract class BaseProjectTestFixture {
 
     [OneTimeSetUp]
     public async Task GlobalSetup() {
+        SafeExtensions.ThrowOnExceptions = true;
         FSExtensions.TryDeleteDirectory(sandboxDirectory);
         Directory.CreateDirectory(sandboxDirectory);
 
@@ -54,6 +53,7 @@ public abstract class BaseProjectTestFixture {
     [OneTimeTearDown]
     public void GlobalTearDown() {
         FSExtensions.TryDeleteDirectory(sandboxDirectory);
+        Workspace.Dispose();
         Workspace = null!;
         OnGlobalTearDown();
     }

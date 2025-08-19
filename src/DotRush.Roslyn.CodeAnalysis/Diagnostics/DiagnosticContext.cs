@@ -22,7 +22,7 @@ public class DiagnosticContext {
     public DiagnosticContext(Diagnostic diagnostic, Project project) {
         Diagnostic = diagnostic;
         SourceName = project.Name;
-        Document = project.GetDocumentWithFilePath(FilePath).FirstOrDefault();
+        Document = project.GetDocumentsWithFilePath(FilePath).FirstOrDefault();
     }
 
     public string GetSubject() {

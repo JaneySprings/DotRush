@@ -68,14 +68,6 @@ Task("diagnostics")
 
 Task("test")
 	.IsDependentOn("clean")
-	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Workspaces.Tests", "DotRush.Roslyn.Workspaces.Tests.csproj"),
-		new DotNetTestSettings {  
-			Configuration = configuration,
-			Verbosity = DotNetVerbosity.Quiet,
-			ResultsDirectory = ArtifactsDirectory,
-			Loggers = new[] { "trx" }
-		}
-	))
 	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server.Tests", "DotRush.Roslyn.Server.Tests.csproj"),
 		new DotNetTestSettings {  
 			Configuration = configuration,
