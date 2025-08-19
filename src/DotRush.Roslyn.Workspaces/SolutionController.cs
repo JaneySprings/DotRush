@@ -75,11 +75,18 @@ public abstract class SolutionController : ProjectsController {
         if (WorkspaceExtensions.IsSourceCodeDocument(file))
             UpdateSourceCodeDocument(file, text);
     }
-    public void DeleteDocument(string file) {
-        if (WorkspaceExtensions.IsAdditionalDocument(file))
-            DeleteAdditionalDocument(file);
-        if (WorkspaceExtensions.IsSourceCodeDocument(file))
-            DeleteSourceCodeDocument(file);
+    public void DeleteDocument(string path) {
+        if (WorkspaceExtensions.IsAdditionalDocument(path)) {
+            DeleteAdditionalDocument(path);
+            return;
+        }
+        if (WorkspaceExtensions.IsSourceCodeDocument(path)) {
+            DeleteSourceCodeDocument(path);
+            return;
+        }
+        // From FileSystemWatcher, we can get directory changes as well.
+        Solution?.GetDocumentsWithDirectoryPath(path)?.ForEach(x => DeleteDocument(x.FilePath ?? string.Empty));
+        Solution?.GetAdditionalDocumentsWithDirectoryPath(path)?.ForEach(x => DeleteDocument(x.FilePath ?? string.Empty));
     }
 
     private void CreateSourceCodeDocument(string file) {
@@ -97,7 +104,7 @@ public abstract class SolutionController : ProjectsController {
             if (!CanBeProcessed(file, project))
                 continue;
 
-            var sourceText = SourceText.From(FileSystemExtensions.TryReadText(file));
+            var sourceText = SourceText.From(FileSystemExtensions.TryReadText(file, string.Empty));
             var folders = project.GetFolders(file);
             var updates = project.AddDocument(Path.GetFileName(file), sourceText, folders, file);
             OnWorkspaceStateChanged(updates.Project.Solution);
@@ -109,10 +116,11 @@ public abstract class SolutionController : ProjectsController {
     }
     private void UpdateSourceCodeDocument(string file, string? text = null) {
         var documentIds = Solution?.GetDocumentIdsWithFilePathV2(file);
-        if (documentIds == null || !File.Exists(file))
+        text ??= FileSystemExtensions.TryReadText(file);
+        if (documentIds == null || text == null)
             return;
 
-        var sourceText = SourceText.From(text ?? FileSystemExtensions.TryReadText(file));
+        var sourceText = SourceText.From(text);
         foreach (var documentId in documentIds) {
             var document = Solution?.GetDocument(documentId);
             if (document == null || document.Project == null)
@@ -137,7 +145,7 @@ public abstract class SolutionController : ProjectsController {
             if (!CanBeProcessed(file, project))
                 continue;
 
-            var sourceText = SourceText.From(FileSystemExtensions.TryReadText(file));
+            var sourceText = SourceText.From(FileSystemExtensions.TryReadText(file, string.Empty));
             var folders = project.GetFolders(file);
             var updates = project.AddAdditionalDocument(Path.GetFileName(file), sourceText, folders, file);
             OnWorkspaceStateChanged(updates.Project.Solution);
@@ -149,10 +157,11 @@ public abstract class SolutionController : ProjectsController {
     }
     private void UpdateAdditionalDocument(string file, string? text = null) {
         var documentIds = Solution?.GetAdditionalDocumentIdsWithFilePathV2(file);
-        if (documentIds == null || !File.Exists(file))
+        text ??= FileSystemExtensions.TryReadText(file);
+        if (documentIds == null || text == null)
             return;
 
-        var sourceText = SourceText.From(text ?? FileSystemExtensions.TryReadText(file));
+        var sourceText = SourceText.From(text);
         foreach (var documentId in documentIds) {
             var project = Solution?.GetProject(documentId.ProjectId);
             if (project == null)

@@ -5,6 +5,7 @@ using DotRush.Common.InteropV2;
 using DotRush.Common.MSBuild;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces;
+using DotRush.Roslyn.Workspaces.Extensions;
 using DotRush.Roslyn.Workspaces.FileSystem;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
@@ -14,7 +15,7 @@ using Project = Microsoft.CodeAnalysis.Project;
 
 namespace DotRush.Roslyn.Server.Services;
 
-public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
+public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDisposable {
     private readonly ConfigurationService configurationService;
     private readonly WorkspaceFilesWatcher fileWatcher;
     private readonly LanguageServer? serverFacade;
@@ -84,7 +85,7 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
         });
     }
 
-    private IEnumerable<string>? GetProjectOrSolutionFiles(IEnumerable<string>? workspaceFolders) {
+    internal IEnumerable<string>? GetProjectOrSolutionFiles(IEnumerable<string>? workspaceFolders) {
         if (configurationService.ProjectOrSolutionFiles.Count != 0)
             return configurationService.ProjectOrSolutionFiles.Select(it => Path.GetFullPath(it.ToPlatformPath())).ToArray();
 
@@ -100,20 +101,25 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener {
 
         return null;
     }
+    internal void StartObserving(string[] workspaceFolders) {
+        fileWatcher.StartObserving(workspaceFolders);
+    }
 
-    bool IWorkspaceChangeListener.IsGitEventsSupported {
-        get => configurationService.ApplyWorkspaceChanges;
+    void IWorkspaceChangeListener.OnDocumentCreated(string documentPath) {
+        CreateDocument(documentPath);
+        if (ApplyWorkspaceChanges && WorkspaceExtensions.IsSourceCodeDocument(documentPath))
+            DefaultItemsRewriter.AddCompilerItem(documentPath);
     }
-    void IWorkspaceChangeListener.OnDocumentsCreated(IEnumerable<string> documentPaths) {
-        CreateDocuments(documentPaths.ToArray());
+    void IWorkspaceChangeListener.OnDocumentDeleted(string documentPath) {
+        DeleteDocument(documentPath);
+        if (ApplyWorkspaceChanges)
+            DefaultItemsRewriter.RemoveCompilerItem(documentPath);
     }
-    void IWorkspaceChangeListener.OnDocumentsDeleted(IEnumerable<string> documentPaths) {
-        DeleteDocuments(documentPaths.ToArray());
+    void IWorkspaceChangeListener.OnDocumentChanged(string documentPath) {
+        UpdateDocument(documentPath);
     }
-    void IWorkspaceChangeListener.OnDocumentsChanged(IEnumerable<string> documentPaths) {
-        UpdateDocuments(documentPaths.ToArray());
-    }
-    void IWorkspaceChangeListener.OnCommitChanges() {
-        ApplyChanges();
+
+    public void Dispose() {
+        fileWatcher.Dispose();
     }
 }
