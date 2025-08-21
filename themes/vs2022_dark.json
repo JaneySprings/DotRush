@@ -75,7 +75,6 @@
         "panelTitle.activeBorder": "#453a8e", // primaryContainer
         "panelSectionHeader.background": "#1c1b1f", // surface
         "panel.background": "#1c1b1f", // surface
-        "debugTokenExpression.name":"#e5e1e6", // onSurface
     },
     "semanticHighlighting": true,
     "semanticTokenColors": {

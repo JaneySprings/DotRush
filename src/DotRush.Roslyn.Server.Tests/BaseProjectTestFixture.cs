@@ -23,7 +23,7 @@ public abstract class BaseProjectTestFixture {
     protected virtual void OnGlobalSetup() { }
     protected virtual void OnGlobalTearDown() { }
     protected virtual WorkspaceService CreateInitializedWorkspace() {
-        var workspace = new WorkspaceService(new ConfigurationService(), null);
+        var workspace = new WorkspaceService(new ConfigurationService(null), null);
         if (!workspace.InitializeWorkspace())
             throw new InvalidOperationException("Failed to initialize workspace.");
 

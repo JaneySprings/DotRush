@@ -521,6 +521,19 @@
               "InfosAsHints"
             ]
           },
+          "dotrush.roslyn.dispatcherType": {
+            "type": "string",
+            "default": "SingleThread",
+            "description": "%configuration.description.roslyn.dispatcherType%",
+            "enum": [
+              "SingleThread",
+              "MultiThread",
+              "PerformanceCounter"
+            ],
+            "tags": [
+              "experimental"
+            ]
+          },
           "dotrush.roslyn.dotnetSdkDirectory": {
             "type": "string",
             "description": "%configuration.description.roslyn.dotnetSdkDirectory%"
