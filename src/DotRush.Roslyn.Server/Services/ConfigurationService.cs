@@ -4,8 +4,11 @@ using System.Text.Json.Serialization;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
+using DotRush.Roslyn.Server.Dispatchers;
 using DotRush.Roslyn.Server.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using EmmyLua.LanguageServer.Framework.Server;
+using EmmyLua.LanguageServer.Framework.Server.Scheduler;
 
 namespace DotRush.Roslyn.Server.Services;
 
@@ -13,6 +16,7 @@ public class ConfigurationService {
     private const string ConfigurationFileName = "dotrush.config.json";
     private readonly CurrentClassLogger currentClassLogger;
     private readonly JsonSerializerOptions jsonSerializerOptions;
+    private readonly LanguageServer? languageServer;
     private RoslynSection? configuration;
 
     public bool ShowItemsFromUnimportedNamespaces => configuration?.ShowItemsFromUnimportedNamespaces ?? false;
@@ -34,7 +38,8 @@ public class ConfigurationService {
     private readonly TaskCompletionSource initializeTaskSource;
     public Task InitializeTask => initializeTaskSource.Task;
 
-    public ConfigurationService() {
+    public ConfigurationService(LanguageServer? serverFacade) {
+        languageServer = serverFacade;
         currentClassLogger = new CurrentClassLogger(nameof(ConfigurationService));
         jsonSerializerOptions = new JsonSerializerOptions {
             PropertyNameCaseInsensitive = true,
@@ -68,7 +73,29 @@ public class ConfigurationService {
 
         configuration = section.DotRush.Roslyn;
         initializeTaskSource.TrySetResult();
+        UpdateServerDispatcher(configuration.DispatcherType);
         currentClassLogger.Debug("configuration updated");
+    }
+    private void UpdateServerDispatcher(DispatcherType dispatcherType) {
+        if (languageServer == null)
+            return;
+
+        currentClassLogger.Debug($"Setting server dispatcher type: {dispatcherType}");
+        switch (dispatcherType) {
+            case DispatcherType.SingleThread:
+                languageServer.SetScheduler(new SingleThreadScheduler());
+                break;
+            case DispatcherType.MultiThread:
+                languageServer.SetScheduler(new SimpleMultiThreadScheduler());
+                break;
+            case DispatcherType.PerformanceCounter:
+                languageServer.SetScheduler(new PerformanceCounterDispatcher());
+                break;
+            default:
+                currentClassLogger.Error($"Unknown dispatcher type: {dispatcherType}");
+                break;
+        }
+
     }
 }
 
@@ -112,6 +139,9 @@ internal sealed class RoslynSection {
     [JsonPropertyName("diagnosticsFormat")]
     public DiagnosticsFormat DiagnosticsFormat { get; set; }
 
+    [JsonPropertyName("dispatcherType")]
+    public DispatcherType DispatcherType { get; set; }
+
     [JsonPropertyName("dotnetSdkDirectory")]
     public string? DotNetSdkDirectory { get; set; }
 
@@ -123,4 +153,10 @@ internal sealed class RoslynSection {
 
     [JsonPropertyName("analyzerAssemblies")]
     public List<string>? AnalyzerAssemblies { get; set; }
+}
+
+public enum DispatcherType {
+    SingleThread,
+    MultiThread,
+    PerformanceCounter
 }

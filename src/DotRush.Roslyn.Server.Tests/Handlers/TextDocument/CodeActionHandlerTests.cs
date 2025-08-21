@@ -25,7 +25,7 @@ public class CodeActionHandlerTests : MultitargetProjectFixture {
 
     [SetUp]
     public void SetUp() {
-        codeAnalysisService = new CodeAnalysisService(new ConfigurationService(), null);
+        codeAnalysisService = new CodeAnalysisService(new ConfigurationService(null), null);
         handler = new CodeActionHandlerMock(Workspace, codeAnalysisService);
     }
 

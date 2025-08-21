@@ -88,7 +88,7 @@ public class Program {
         serverInfo.Name = Assembly.GetExecutingAssembly().GetName().Name ?? string.Empty;
     }
     private static void ConfigureServices() {
-        configurationService = new ConfigurationService();
+        configurationService = new ConfigurationService(languageServer);
         navigationService = new NavigationService();
         testExplorerService = new TestExplorerService();
         workspaceService = new WorkspaceService(configurationService, languageServer);
