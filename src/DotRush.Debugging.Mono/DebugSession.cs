@@ -146,6 +146,7 @@ public class DebugSession : Session {
     #endregion Pause
     #region SetExceptionBreakpoints
     protected override SetExceptionBreakpointsResponse HandleSetExceptionBreakpointsRequest(SetExceptionBreakpointsArguments arguments) {
+        session.SkipPauseOnExceptions = false;
         session.Breakpoints.ClearCatchpoints();
         if (arguments.FilterOptions == null || arguments.FilterOptions.Count == 0)
             return new SetExceptionBreakpointsResponse();
@@ -161,6 +162,10 @@ public class DebugSession : Session {
             }
 
             if (option.Condition.StartsWith('!')) {
+                if (option.Condition.Length == 1) {
+                    session.SkipPauseOnExceptions = true;
+                    continue;
+                }
                 var catchpoint = session.Breakpoints.AddCatchpoint(allExceptionFilter);
                 foreach (var condition in option.Condition.Substring(1).Split(',', StringSplitOptions.RemoveEmptyEntries))
                     catchpoint.AddIgnore(condition.Trim());
