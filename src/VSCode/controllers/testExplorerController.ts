@@ -147,6 +147,9 @@ export class TestExplorerController {
                 testRun.end();
                 testHostRpc.dispose();
             });
+            token.onCancellationRequested(() => {
+                testHostRpc.sendNotification('handleTestRunCancel');
+            });
         });
     }
 }
