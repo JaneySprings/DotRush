@@ -14,7 +14,7 @@ public class TestHostAdapter {
     public TestHostAdapter(bool attachDebugger = false) {
         var consoleTestHostPath = MSBuildLocator.GetConsoleTestHostLocation();
         vsTestConsoleWrapper = new VsTestConsoleWrapper(consoleTestHostPath);
-        testHostNotificationHandler = new RpcTestHostNotificationHandler(attachDebugger);
+        testHostNotificationHandler = new RpcTestHostNotificationHandler(attachDebugger, vsTestConsoleWrapper.CancelTestRun);
         currentClassLogger = new CurrentClassLogger(nameof(TestHostAdapter));
     }
 

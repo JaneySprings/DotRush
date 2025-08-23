@@ -16,7 +16,7 @@ public class RpcTestHostNotificationHandler : ITestRunEventsHandler, ITestHostLa
 
     public bool IsDebug { get; init; }
 
-    public RpcTestHostNotificationHandler(bool attachDebugger = false) {
+    public RpcTestHostNotificationHandler(bool attachDebugger, Action? endSessionCallback = null) {
         var redirectedTextWriter = new TestRunTextWritter(this);
         Console.SetOut(redirectedTextWriter);
         Console.SetError(redirectedTextWriter);
@@ -26,6 +26,11 @@ public class RpcTestHostNotificationHandler : ITestRunEventsHandler, ITestHostLa
 
         currentClassLogger = new CurrentClassLogger(nameof(RpcTestHostNotificationHandler));
         rpcServer = JsonRpc.Attach(Console.OpenStandardOutput(), Console.OpenStandardInput());
+        rpcServer.AllowModificationWhileListening = true;
+        rpcServer.AddLocalRpcMethod("handleTestRunCancel", () => {
+            HandleRawMessage("Cancelling test run...");
+            endSessionCallback?.Invoke();
+        });
     }
 
     #region ITestRunEventsHandler
