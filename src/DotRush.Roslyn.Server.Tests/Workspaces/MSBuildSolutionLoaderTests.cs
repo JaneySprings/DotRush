@@ -13,7 +13,7 @@ public class MSBuildSolutionLoaderTests : SimpleWorkspaceFixture {
         var projects = MSBuildSolutionLoader.GetProjectFiles(solutionPath);
 
         Assert.That(projects, Is.Not.Null);
-        Assert.That(projects, Has.Count.EqualTo(2));
+        Assert.That(projects, Has.Length.EqualTo(2));
         Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project1)));
         Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project2)));
     }
@@ -26,7 +26,7 @@ public class MSBuildSolutionLoaderTests : SimpleWorkspaceFixture {
         var projects = MSBuildSolutionLoader.GetProjectFiles(solutionPath);
 
         Assert.That(projects, Is.Not.Null);
-        Assert.That(projects, Has.Count.EqualTo(2));
+        Assert.That(projects, Has.Length.EqualTo(2));
         Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project1)));
         Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project2)));
     }
@@ -41,7 +41,7 @@ public class MSBuildSolutionLoaderTests : SimpleWorkspaceFixture {
         var projects = MSBuildSolutionLoader.GetProjectFiles(filterPath);
 
         Assert.That(projects, Is.Not.Null);
-        Assert.That(projects, Has.Count.EqualTo(2));
+        Assert.That(projects, Has.Length.EqualTo(2));
         Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project1)));
         Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project2)));
     }
@@ -114,7 +114,7 @@ EndGlobal";
         var projects = MSBuildSolutionLoader.GetProjectFiles(solutionPath);
 
         Assert.That(projects, Is.Not.Null);
-        Assert.That(projects, Has.Count.EqualTo(2), "Solution folders should be skipped");
+        Assert.That(projects, Has.Length.EqualTo(2), "Solution folders should be skipped");
         Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project1)));
         Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project2)));
     }
