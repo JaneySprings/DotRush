@@ -41,12 +41,12 @@ public static class ServerExtensions {
 
         await server.SendNotification("$/progress", JsonSerializer.SerializeToDocument(new ProgressParams {
             Token = Resources.WorkspaceServiceWorkDoneToken,
-            Value = new WorkDoneProgressBegin() { Percentage = 0 },
+            Value = new WorkDoneProgressBegin(),
         })).ConfigureAwait(false);
     }
-    public static Task UpdateWorkDoneProgress(this LanguageServer server, string token, string message) {
+    public static Task UpdateWorkDoneProgress(this LanguageServer server, string token, string message, int percentage = 0) {
         return server.SendNotification("$/progress", JsonSerializer.SerializeToDocument(new ProgressParams {
-            Value = new WorkDoneProgressReport() { Message = message, Percentage = 0 },
+            Value = new WorkDoneProgressReport() { Message = message, Percentage = percentage },
             Token = token,
         }));
     }

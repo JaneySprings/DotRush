@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Xml.Linq;
 using DotRush.Common.Logging;
@@ -17,7 +16,7 @@ public static class MSBuildSolutionLoader {
             yield return project;
         }
     }
-    public static ReadOnlyCollection<string> GetProjectFiles(string solutionFile) {
+    public static string[] GetProjectFiles(string solutionFile) {
         try {
             switch (Path.GetExtension(solutionFile)) {
                 case ".sln":
@@ -31,10 +30,10 @@ public static class MSBuildSolutionLoader {
             CurrentSessionLogger.Error(e);
         }
 
-        return ReadOnlyCollection<string>.Empty;
+        return Array.Empty<string>();
     }
 
-    private static ReadOnlyCollection<string> GetProjectsFromClassicSolution(string solutionPath) {
+    private static string[] GetProjectsFromClassicSolution(string solutionPath) {
         var projects = new List<string>();
         var solutionContent = File.ReadAllLines(solutionPath);
         var solutionDirectory = Path.GetDirectoryName(solutionPath)!;
@@ -56,13 +55,13 @@ public static class MSBuildSolutionLoader {
             projects.Add(Path.GetFullPath(projectPath));
         }
 
-        return projects.AsReadOnly();
+        return projects.ToArray();
     }
-    private static ReadOnlyCollection<string> GetProjectsFromSolutionFilter(string solutionPath) {
+    private static string[] GetProjectsFromSolutionFilter(string solutionPath) {
         var solutionFilterDirectory = Path.GetDirectoryName(solutionPath)!;
         var solutionFilter = JsonSerializer.Deserialize<MSBuildSolutionFilter>(File.ReadAllText(solutionPath));
         if (solutionFilter?.Solution == null || solutionFilter.Solution.Projects == null)
-            return ReadOnlyCollection<string>.Empty;
+            return Array.Empty<string>();
 
         var projects = new List<string>();
         foreach (var path in solutionFilter.Solution.Projects) {
@@ -73,16 +72,16 @@ public static class MSBuildSolutionLoader {
             projects.Add(Path.GetFullPath(currentPath));
         }
 
-        return projects.AsReadOnly();
+        return projects.ToArray();
     }
-    private static ReadOnlyCollection<string> GetProjectsFromSolutionX(string solutionPath) {
+    private static string[] GetProjectsFromSolutionX(string solutionPath) {
         var solutionXDirectory = Path.GetDirectoryName(solutionPath)!;
         var solutionX = XDocument.Load(solutionPath);
 
         var projects = new List<string>();
         var projectElements = solutionX.Root?.Elements("Project");
         if (projectElements == null)
-            return ReadOnlyCollection<string>.Empty;
+            return Array.Empty<string>();
 
         foreach (var projectElement in projectElements) {
             var projectPath = projectElement.Attribute("Path")?.Value;
@@ -95,6 +94,6 @@ public static class MSBuildSolutionLoader {
             projects.Add(Path.GetFullPath(projectPath));
         }
 
-        return projects.AsReadOnly();
+        return projects.ToArray();
     }
 }

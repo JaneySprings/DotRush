@@ -23,27 +23,27 @@ public abstract class ProjectsController {
     public virtual void OnProjectCompilationCompleted(Project project) { }
     protected abstract void OnWorkspaceStateChanged(Solution newSolution);
 
-    protected async Task LoadProjectsAsync(MSBuildWorkspace workspace, IEnumerable<string> projectFilePaths, CancellationToken cancellationToken) {
+    protected async Task LoadProjectsAsync(MSBuildWorkspace workspace, string[] projectFilePaths, CancellationToken cancellationToken) {
         CurrentSessionLogger.Debug($"Loading projects: {string.Join(';', projectFilePaths)}"); ;
 
-        foreach (var projectFile in projectFilePaths) {
+        foreach (var path in projectFilePaths) {
             await SafeExtensions.InvokeAsync(async () => {
                 if (RestoreProjectsBeforeLoading) {
-                    OnProjectRestoreStarted(projectFile);
-                    var result = await workspace.RestoreProjectAsync(projectFile, cancellationToken);
+                    OnProjectRestoreStarted(path);
+                    var result = await workspace.RestoreProjectAsync(path, cancellationToken);
                     if (result.ExitCode != 0)
-                        OnProjectRestoreFailed(projectFile, result);
-                    OnProjectRestoreCompleted(projectFile);
+                        OnProjectRestoreFailed(path, result);
+                    OnProjectRestoreCompleted(path);
                 }
 
-                OnProjectLoadStarted(projectFile);
-                var project = await workspace.OpenProjectAsync(projectFile, null, cancellationToken);
+                OnProjectLoadStarted(path);
+                var project = await workspace.OpenProjectAsync(path, null, cancellationToken);
                 OnProjectLoadCompleted(project);
 
                 OnWorkspaceStateChanged(workspace.CurrentSolution);
 
                 if (CompileProjectsAfterLoading) {
-                    OnProjectCompilationStarted(projectFile);
+                    OnProjectCompilationStarted(path);
                     _ = await project.GetCompilationAsync(cancellationToken);
                     OnProjectCompilationCompleted(project);
                 }

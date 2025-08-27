@@ -86,7 +86,7 @@ public class ConfigurationService {
                 languageServer.SetScheduler(new SingleThreadScheduler());
                 break;
             case DispatcherType.MultiThread:
-                languageServer.SetScheduler(new SimpleMultiThreadScheduler());
+                languageServer.SetScheduler(new MultiThreadDispatcher());
                 break;
             case DispatcherType.PerformanceCounter:
                 languageServer.SetScheduler(new PerformanceCounterDispatcher());
