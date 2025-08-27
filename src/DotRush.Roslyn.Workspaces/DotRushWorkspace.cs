@@ -36,11 +36,11 @@ public abstract class DotRushWorkspace : SolutionController {
     //     }
     // }
 
-    public Task LoadSolutionAsync(IEnumerable<string> solutionFiles, CancellationToken cancellationToken) {
+    public Task LoadSolutionAsync(string[] solutionFiles, CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(workspace);
         return LoadSolutionAsync(workspace, solutionFiles, cancellationToken);
     }
-    public Task LoadProjectsAsync(IEnumerable<string> projectFiles, CancellationToken cancellationToken) {
+    public Task LoadProjectsAsync(string[] projectFiles, CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(workspace);
         return LoadProjectsAsync(workspace, projectFiles, cancellationToken);
     }
