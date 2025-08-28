@@ -627,6 +627,10 @@
           "dotrush.testExplorer.preLaunchTask": {
             "type": "string",
             "description": "%configuration.description.testExplorer.preLaunchTask%"
+          },
+          "dotrush.testExplorer.runSettingsPath": {
+            "type": "string",
+            "description": "%configuration.description.testExplorer.runSettingsPath%"
           }
         }
       }

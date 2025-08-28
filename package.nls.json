@@ -40,5 +40,6 @@
 	"configuration.description.msbuild.additionalBuildArguments": "Additional arguments to pass to the build command.",
 	"configuration.description.msbuild.additionalTestArguments": "Additional arguments to pass to the test command.",
 
-	"configuration.description.testExplorer.preLaunchTask": "Task to run before launching the test run."
+	"configuration.description.testExplorer.preLaunchTask": "Task to run before launching the test run.",
+	"configuration.description.testExplorer.runSettingsPath": "Path to a .runsettings file to use when running tests."
 }
