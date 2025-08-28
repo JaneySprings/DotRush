@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using System.Diagnostics;
 using System.Text.Json;
+using DotRush.Common.Extensions;
 using DotRush.Common.MSBuild;
 using DotRush.Debugging.NetCore.Installers;
 using DotRush.Debugging.NetCore.Models;
@@ -13,6 +14,7 @@ public class Program {
         var attachDebuggerOption = new Option<bool>("--debug", "-d");
         var testAssembliesOption = new Option<string[]>("--assemblies", "-a");
         var testCaseFilterOption = new Option<string[]>("--filter", "-f");
+        var runSettingsOption = new Option<string>("--settings", "-s");
         // Helpers
         var installVsdbgOption = new Option<bool>("--install-vsdbg", "-vsdbg");
         var installNcdbgOption = new Option<bool>("--install-ncdbg", "-ncdbg");
@@ -24,6 +26,7 @@ public class Program {
                 attachDebuggerOption,
                 testAssembliesOption,
                 testCaseFilterOption,
+                runSettingsOption,
                 installVsdbgOption,
                 installNcdbgOption,
                 evaluateProjectOption,
@@ -52,10 +55,12 @@ public class Program {
                 return;
             }
 
-            var testAssemblies = result.GetValue(testAssembliesOption) ?? Array.Empty<string>();
-            var testCaseFilter = result.GetValue(testCaseFilterOption) ?? Array.Empty<string>();
             var testHostAdapter = new TestHostAdapter(result.GetValue(attachDebuggerOption));
-            testHostAdapter.StartSession(testAssemblies, testCaseFilter);
+            testHostAdapter.StartSession(
+                result.GetTrimmedValue(testAssembliesOption),
+                result.GetTrimmedValue(testCaseFilterOption),
+                result.GetTrimmedValue(runSettingsOption)
+            );
         });
 
         return rootCommand.Parse(args).Invoke();
@@ -82,5 +87,24 @@ public class Program {
         } catch (Exception ex) {
             SetResult((Status.Fail(ex.Message)));
         }
+    }
+}
+
+internal static class CommandLineExtensions {
+    public static string? GetTrimmedValue(this ParseResult result, Option<string> option) {
+        var rawValue = result.GetValue(option);
+        if (!string.IsNullOrEmpty(rawValue))
+            return TrimPath(rawValue);
+        return rawValue;
+    }
+    public static string[] GetTrimmedValue(this ParseResult result, Option<string[]> option) {
+        var rawValues = result.GetValue(option);
+        if (rawValues != null && rawValues.Length > 0)
+            return rawValues.Select(TrimPath).ToArray();
+        return rawValues ?? Array.Empty<string>();
+    }
+
+    private static string TrimPath(string rawPath) {
+        return rawPath.Trim('"', '\'').ToPlatformPath();
     }
 }

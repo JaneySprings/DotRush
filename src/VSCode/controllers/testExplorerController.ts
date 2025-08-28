@@ -102,10 +102,12 @@ export class TestExplorerController {
                 return;
 
             // Run tests
+            const runSettings = Extensions.getSetting<string>(res.configIdTestExplorerRunSettings);
             const testRun = TestExplorerController.controller.createTestRun(request);
             const testHostRpc = Interop.createTestHostRpc(builder => builder
                 .append(...testAssemblies.map(assembly => `-a:"${assembly}"`))
                 .conditional2(() => filter.length > 0, ...filter.map(f => `-f:${f}`))
+                .conditional(`-s:"${runSettings}"`, () => runSettings)
                 .conditional('-d', () => attachDebugger));
 
             testHostRpc.onRequest('attachDebuggerToProcess', async (processId: number) => {

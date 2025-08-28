@@ -7,6 +7,7 @@ import { spawn } from 'child_process';
 import * as path from 'path';
 import * as rpc from 'vscode-jsonrpc/node';
 import * as vscode from 'vscode';
+import { Extensions } from '../extensions';
 
 
 export class Interop {
@@ -51,8 +52,8 @@ export class Interop {
     public static createTestHostRpc(configurator: (args: ProcessArgumentBuilder) => void): rpc.MessageConnection {
         const builder = new ProcessArgumentBuilder('dotnet').append(Interop.testHostPath);
         configurator(builder);
-    
-        const childProcess = spawn(builder.getCommand(), builder.getArguments(), { stdio: ['pipe', 'pipe', 'pipe'] });
+
+        const childProcess = spawn(builder.getCommand(), builder.getArguments(), { stdio: ['pipe', 'pipe', 'pipe'], cwd: Extensions.getCurrentWorkingDirectory() });
         const connection = rpc.createMessageConnection(
             new rpc.StreamMessageReader(childProcess.stdout),
             new rpc.StreamMessageWriter(childProcess.stdin)
