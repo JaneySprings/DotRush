@@ -9,7 +9,7 @@ public static class NUnitFilterExtensions {
         if (!testAssemblies.Any(IsNUnitAssembly))
             return runSettings;
 
-        var whereFilter = string.Join(" or ", typeFilters.Select(filter => $"test=~/{filter}/"));
+        var whereFilter = string.Join(" or ", typeFilters.Select(filter => $"test==/{filter}/"));
         if (string.IsNullOrEmpty(whereFilter))
             return runSettings;
         if (string.IsNullOrEmpty(runSettings))
