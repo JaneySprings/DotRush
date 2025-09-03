@@ -27,7 +27,7 @@ public class TestHostAdapter {
 
         var testOptions = new TestPlatformOptions();
         if (typeFilters.Length > 0)
-            testOptions.TestCaseFilter = string.Join('|', typeFilters.Select(filter => $"FullyQualifiedName~{filter}"));
+            testOptions.TestCaseFilter = string.Join('|', typeFilters.Select(filter => $"FullyQualifiedName={filter}"));
         currentClassLogger.Debug($"\tFilter: '{testOptions.TestCaseFilter}'");
 
         string? runSettings = null;
