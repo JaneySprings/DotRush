@@ -176,6 +176,9 @@ class TestExplorerExtensions {
     public static isFixtureItem(item: vscode.TestItem): boolean {
         return item.parent !== undefined && item.parent.parent === undefined;
     }
+    public static isTestCaseItem(item: vscode.TestItem): boolean {
+        return item.parent !== undefined && item.parent.parent !== undefined;
+    }
 
     public static findProjectItem(childPath: string, items: vscode.TestItemCollection): vscode.TestItem | undefined {
         if (!childPath.endsWith('.cs'))
@@ -205,7 +208,9 @@ class TestExplorerExtensions {
         const filter: string[] = [];
         request.include?.forEach(item => {
             const rootNode = getRootNode(item);
-            if (!TestExplorerExtensions.isProjectItem(item))
+            if (TestExplorerExtensions.isFixtureItem(item))
+                item.children.forEach(test => filter.push(test.id));
+            else if (TestExplorerExtensions.isTestCaseItem(item))
                 filter.push(item.id);
             if (!projectItems.includes(rootNode))
                 projectItems.push(rootNode);
