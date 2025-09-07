@@ -37,12 +37,17 @@ public class CompletionHandler : CompletionHandlerBase {
 
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
         serverCapabilities.CompletionProvider = new CompletionOptions {
-            TriggerCharacters = new List<string> { ".", "#", ">", ":" },
+            TriggerCharacters = new List<string> { " ", ".", "#", ">", ":" },
             ResolveProvider = true,
         };
     }
     protected override Task<CompletionResponse?> Handle(CompletionParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(async () => {
+            if (request.Context.TriggerKind == CompletionTriggerKind.TriggerCharacter && !configurationService.TriggerCompletionOnSpace) {
+                if (request.Context.TriggerCharacter == " ")
+                    return null;
+            }
+
             documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath).FirstOrDefault();
             var document = workspaceService.Solution?.GetDocument(documentId);
             var completionService = RoslynCompletionService.GetService(document);
@@ -78,19 +83,14 @@ public class CompletionHandler : CompletionHandlerBase {
             return item;
 
         if (!completionItemsCache.TryGetValue((int)item.Data.Value, out var roslynCompletionItem)) {
-            CurrentSessionLogger.Debug($"Completion item with data:[{item.Data.Value}] not found in cache.");
+            currentClassLogger.Debug($"Completion item with data:[{item.Data.Value}] not found in cache.");
             return item;
         }
 
         var document = workspaceService.Solution?.GetDocument(documentId);
-        if (document == null || workspaceService.Solution == null) {
-            CurrentSessionLogger.Debug($"Document with identifier:[{documentId}] not found.");
-            return item;
-        }
-
         var completionService = RoslynCompletionService.GetService(document);
-        if (completionService == null) {
-            CurrentSessionLogger.Debug($"Roslyn completion service not found for document:[{documentId}].");
+        if (completionService == null || document == null) {
+            currentClassLogger.Debug($"Roslyn completion service not found for document:[{document}].");
             return item;
         }
 
