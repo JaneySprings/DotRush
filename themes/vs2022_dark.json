@@ -4,31 +4,31 @@
     "type": "dark",
     "colors": {
         // Window area
-        "titleBar.activeBackground": "#0e0e13", // surface
+        "titleBar.activeBackground": "#141318", // surface
         "titleBar.activeForeground": "#e5e1e6",   // onSurface
-        "titleBar.inactiveBackground": "#0e0e13",  // surface
+        "titleBar.inactiveBackground": "#141318",  // surface
     
         // Editor area
-        "editor.background": "#0e0e13", // surface
+        "editor.background": "#141318", // surface
         "editorIndentGuide.background1": "#35343a", // outlineVariant
         "editorIndentGuide.activeBackground1": "#47464f", // outline
         "editor.inlineValuesBackground": "#0000",
         "editor.inlineValuesForeground": "#e5e1e6", // onSurface
-        "editorGroup.emptyBackground": "#0e0e13", // surface
-        "editorGroupHeader.tabsBackground": "#0e0e13",  // surface
+        "editorGroup.emptyBackground": "#141318", // surface
+        "editorGroupHeader.tabsBackground": "#141318",  // surface
         "tab.activeBackground": "#313034",  // neutral20
         "tab.activeForeground": "#e5e1e6",  // onSurface
-        "tab.inactiveBackground": "#0e0e13",    // surface
+        "tab.inactiveBackground": "#141318",    // surface
         "tab.inactiveForeground": "#e5e1e661",   // onSurface(38%)
         "tab.activeBorderTop": "#453a8e",  // primaryContainer
         "tab.border": "#35343a",  // outlineVariant
 
         // SideBar area
-        "sideBar.background": "#0e0e13",    // surface
+        "sideBar.background": "#141318",    // surface
         "sideBar.foreground": "#e5e1e6",    // onSurface
         "sideBar.border": "#35343a",    // outlineVariant
         "sideBarTitle.foreground": "#e5e1e661",   // onSurface(38%)
-        "sideBarSectionHeader.background": "#0e0e13", // surface
+        "sideBarSectionHeader.background": "#141318", // surface
         "sideBarSectionHeader.foreground": "#e5e1e6", // onSurface
         "scrollbarSlider.background": "#35343a",    // outlineVariant 
         "scrollbar.shadow": "#0000",
@@ -40,7 +40,7 @@
         "statusBar.foreground": "#e5deff",  // onPrimaryContainer
         "statusBar.debuggingBackground": "#7f2832", // customContainer(#7b252f)
         "statusBar.debuggingForeground": "#ffdada", // onCustomContainer(#7b252f)
-        "statusBar.noFolderBackground": "#0e0e13",  // surface
+        "statusBar.noFolderBackground": "#141318",  // surface
         "statusBar.noFolderForeground": "#e5e1e6",  // onSurface
 
         // Picker area
@@ -73,8 +73,8 @@
         // Other
         "focusBorder": "#47445961", // secondaryContainer(38%)
         "panelTitle.activeBorder": "#453a8e", // primaryContainer
-        "panelSectionHeader.background": "#0e0e13", // surface
-        "panel.background": "#0e0e13", // surface
+        "panelSectionHeader.background": "#141318", // surface
+        "panel.background": "#141318", // surface
     },
     "semanticHighlighting": true,
     "semanticTokenColors": {
