@@ -43,7 +43,7 @@ public class NavigationHost {
         var documentPath = location.SourceTree?.FilePath;
         if (location.SourceTree == null || documentPath == null)
             return null;
-        
+
         var outputFilePath = Path.Combine(GeneratedCodeDirectory, project.Name, documentPath);
         var sourceText = await location.SourceTree.GetTextAsync(cancellationToken).ConfigureAwait(false);
         FileSystemExtensions.WriteAllText(outputFilePath, sourceText.ToString());
@@ -58,8 +58,8 @@ public class NavigationHost {
         if (project.Documents.Any(d => PathExtensions.Equals(d.FilePath, documentPath)))
             return;
         if (sourceText == null)
-            sourceText = SourceText.From(FileSystemExtensions.TryReadText(documentPath));
-        
+            sourceText = SourceText.From(FileSystemExtensions.TryReadText(documentPath, string.Empty));
+
         var documentName = Path.GetFileName(documentPath);
         var document = project.AddDocument(documentName, sourceText, filePath: documentPath);
         Solution = document.Project.Solution;

@@ -11,6 +11,7 @@ public class TestExplorerService {
         "Xunit.TheoryAttribute",
         "NUnit.Framework.TestAttribute",
         "NUnit.Framework.TestCaseAttribute",
+        "NUnit.Framework.TestCaseSourceAttribute",
         "Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute"
     };
 

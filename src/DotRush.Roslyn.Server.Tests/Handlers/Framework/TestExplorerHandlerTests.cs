@@ -317,4 +317,26 @@ public class MyFixture {
         Assert.That(fixture2.FilePath, Is.EqualTo(documentPath));
         Assert.That(fixture2.Range, Is.EqualTo(PositionExtensions.CreateRange(10, 4, 13, 5)));
     }
+    [Test]
+    public async Task DiscoverCasesWithTestCaseSourceTest() {
+        var documentPath = CreateUnitTestDocument(@"
+[TestFixture]
+public class MyFixture {
+    [Test]
+    public void MyTest() {}
+    [TestCaseSource(nameof(TestCases))]
+    public void MyTest2(int a) { Assert.Pass(); }
+
+    public static IEnumerable<int> TestCases() {
+        yield return 1;
+        yield return 2;
+    }
+}");
+        var arguments = new TestFixtureParams { TextDocument = ProjectFilePath.CreateDocumentId() };
+        var result = await handler.Handle(arguments).ConfigureAwait(false);
+        Assert.That(result, Has.Length.EqualTo(1));
+
+        result = await handler.Handle(new TestCaseParams { TextDocument = documentPath.CreateDocumentId(), FixtureId = result[0].Id }).ConfigureAwait(false);
+        Assert.That(result, Has.Length.EqualTo(2));
+    }
 }
