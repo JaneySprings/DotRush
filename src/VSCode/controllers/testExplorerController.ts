@@ -94,9 +94,15 @@ export class TestExplorerController {
             // Collect test assemblies
             const testAssemblies: string[] = [];
             for (const project of projects) {
-                const targetPath = await DebugAdapterController.getProjectTargetPath(project.uri!.fsPath);
-                if (targetPath != undefined)
-                    testAssemblies.push(targetPath);
+                const frameworks: any[] = project.tags.map(tag => tag.id);
+                if (frameworks.length == 0)
+                    frameworks.push(undefined);
+
+                for (const framework of frameworks) {
+                    const targetPath = await DebugAdapterController.getProjectTargetPath(project.uri!.fsPath, undefined, framework);
+                    if (targetPath != undefined)
+                        testAssemblies.push(targetPath);
+                }
             }
             if (testAssemblies.length === 0 || token.isCancellationRequested)
                 return;
@@ -160,6 +166,7 @@ class TestExplorerExtensions {
     public static createProjectItem(controller: vscode.TestController, project: Project): vscode.TestItem {
         const item = controller.createTestItem(project.name, `${Icons.library} ${project.name}`, vscode.Uri.file(project.path));
         item.canResolveChildren = true;
+        item.tags = project.frameworks?.map(tfm => new vscode.TestTag(tfm));
         return item;
     }
     public static createTestItem(controller: vscode.TestController, modelItem: TestItem, canResolve: boolean, parentId?: string): vscode.TestItem {
