@@ -19,7 +19,7 @@ public class CodeRefactoringProvidersLoaderTests : ComponentsLoaderTests<CodeRef
 public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider> {
     private CodeFixProvidersLoader loader = null!;
     protected override IComponentLoader<CodeFixProvider> ComponentsLoader => loader;
-    protected override int ComponentsCount => 298;
+    protected override int ComponentsCount => 299;
 
     [SetUp]
     public void SetUp() {
@@ -29,7 +29,7 @@ public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider
 public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAnalyzer> {
     private DiagnosticAnalyzersLoader loader = null!;
     protected override IComponentLoader<DiagnosticAnalyzer> ComponentsLoader => loader;
-    protected override int ComponentsCount => 393;
+    protected override int ComponentsCount => 394;
     protected int SuppressorsCount => 1;
 
     [SetUp]

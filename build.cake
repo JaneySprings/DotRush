@@ -68,6 +68,7 @@ Task("diagnostics")
 
 Task("test")
 	.IsDependentOn("clean")
+	.IsDependentOn("debugging")
 	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server.Tests", "DotRush.Roslyn.Server.Tests.csproj"),
 		new DotNetTestSettings {  
 			Configuration = configuration,
@@ -75,7 +76,15 @@ Task("test")
 			ResultsDirectory = ArtifactsDirectory,
 			Loggers = new[] { "trx" }
 		}
-	));
+	))
+	.Does(() => {
+		var debuggerDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "Debugger");
+		EnsureDirectoryDeleted(debuggerDirectory);
+		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestHost", "testhost.dll")} -ncdbg");
+
+		EnsureDirectoryDeleted(debuggerDirectory);
+		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestHost", "testhost.dll")} -vsdbg");
+	});
 
 Task("vsix")
 	.IsDependentOn("clean")
@@ -102,6 +111,10 @@ void ExecuteCommand(string command, string arguments) {
 void EnsureFileDeleted(string path) {
 	if (FileExists(path)) 
 		DeleteFile(path);
+}
+void EnsureDirectoryDeleted(string path) {
+	if (DirectoryExists(path)) 
+		DeleteDirectory(path, new DeleteDirectorySettings { Recursive = true, Force = true });
 }
 
 RunTarget(target);
