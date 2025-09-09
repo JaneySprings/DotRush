@@ -7,14 +7,6 @@ trigger:
     include:
     - main
 
-pr:
-  branches:
-    include:
-    - '*'
-  paths:
-    include:
-    - '*'
-
 stages:
   - stage: Build
     condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
@@ -138,24 +130,3 @@ stages:
               for filename in $(Pipeline.Workspace)/**/DotRush.v*.vsix; do
                 vsce publish --packagePath "$filename" -p $VS_TOKEN
               done
-
-
-
-  - stage: Tests
-    condition: not(startsWith(variables['Build.SourceBranch'], 'refs/tags'))
-    dependsOn: []
-    jobs:
-#//////////////////////////////////////////////////////////////////////
-#// Linux Tests
-#//////////////////////////////////////////////////////////////////////
-      - job: Linux
-        pool:
-          vmImage: ubuntu-latest
-        timeoutInMinutes: 20
-        steps:
-        - task: UseDotNet@2
-          inputs:
-            version: '10.x'
-            includePreviewVersions: true
-        - script: dotnet tool restore
-          displayName: 'Restore .NET tools'
