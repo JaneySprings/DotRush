@@ -146,7 +146,8 @@
         {
           "id": "dotrush.modulesView",
           "name": "Modules",
-          "when": "debugType == coreclr || debugType == unity"
+          "when": "debugType == coreclr || debugType == unity",
+          "icon": "$(symbol-namespace)"
         }
       ]
     },
@@ -545,6 +546,7 @@
           },
           "dotrush.roslyn.analyzerAssemblies": {
             "type": "array",
+            "scope": "application",
             "items": {
               "type": "string"
             },

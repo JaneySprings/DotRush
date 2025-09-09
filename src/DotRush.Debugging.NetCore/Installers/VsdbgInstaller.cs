@@ -75,9 +75,13 @@ public class VsdbgInstaller : IDebuggerInstaller {
 
         using var archive = new ZipArchive(response.Content.ReadAsStream());
         foreach (var entry in archive.Entries) {
-            var targetPath = Path.Combine(debuggerDirectory, entry.FullName);
-            var targetDirectory = Path.GetDirectoryName(targetPath)!;
+            var targetPath = Path.GetFullPath(Path.Combine(debuggerDirectory, entry.FullName));
+            if (!PathExtensions.StartsWith(targetPath, debuggerDirectory)) {
+                CurrentSessionLogger.Error($"Entry is outside the target directory: {entry.FullName}");
+                continue;
+            }
 
+            var targetDirectory = Path.GetDirectoryName(targetPath)!;
             if (string.IsNullOrEmpty(Path.GetFileName(targetPath)))
                 continue;
             if (!Directory.Exists(targetDirectory))

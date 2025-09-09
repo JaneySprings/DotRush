@@ -24,6 +24,9 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
     private readonly Thread workerThread;
     private readonly BlockingCollection<Func<Task>> workerTasks;
 
+    internal AnalysisScope CompilerDiagnosticsScope => configurationService.CompilerDiagnosticsScope;
+    internal AnalysisScope AnalyzerDiagnosticsScope => configurationService.AnalyzerDiagnosticsScope;
+
     public CodeAnalysisService(ConfigurationService configurationService, LanguageServer? serverFacade) {
         this.configurationService = configurationService;
         this.serverFacade = serverFacade;
