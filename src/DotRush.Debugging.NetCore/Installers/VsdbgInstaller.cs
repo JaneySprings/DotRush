@@ -73,24 +73,10 @@ public class VsdbgInstaller : IDebuggerInstaller {
 
         CurrentSessionLogger.Debug($"Extracting debugger to '{debuggerDirectory}'");
 
-        using var archive = new ZipArchive(response.Content.ReadAsStream());
-        foreach (var entry in archive.Entries) {
-            var targetPath = Path.GetFullPath(Path.Combine(debuggerDirectory, entry.FullName));
-            if (!PathExtensions.StartsWith(targetPath, debuggerDirectory)) {
-                CurrentSessionLogger.Error($"Entry is outside the target directory: {entry.FullName}");
-                continue;
-            }
-
-            var targetDirectory = Path.GetDirectoryName(targetPath)!;
-            if (string.IsNullOrEmpty(Path.GetFileName(targetPath)))
-                continue;
-            if (!Directory.Exists(targetDirectory))
-                Directory.CreateDirectory(targetDirectory);
-
-            using var fileStream = File.Create(targetPath);
-            using var stream = entry.Open();
-            stream.CopyTo(fileStream);
-        }
+        using var memoryStream = new MemoryStream();
+        response.Content.ReadAsStream().CopyTo(memoryStream);
+        memoryStream.Position = 0;
+        ZipFile.ExtractToDirectory(memoryStream, debuggerDirectory);
 
         var executable = Path.Combine(debuggerDirectory, "vsdbg-ui" + RuntimeInfo.ExecExtension);
         if (!File.Exists(executable)) {

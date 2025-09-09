@@ -96,7 +96,9 @@ export class DebugAdapterController {
             location: vscode.ProgressLocation.Notification,
             cancellable: false
         };
-        await vscode.window.withProgress(options, (_p, _ct) => Interop.installDebugger(id));
+        const status = await vscode.window.withProgress(options, (_p, _ct) => Interop.installDebugger(id));
+        if (status !== undefined && !status.isSuccess)
+            vscode.window.showErrorMessage(`${res.messageInstallingComponentFailed}: ${status.message}`);
     }
     private static async showQuickPickProgram(): Promise<string | undefined> {
         const programPath = await vscode.window.showOpenDialog({

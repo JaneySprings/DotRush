@@ -50,6 +50,7 @@ export const messageSelectProgramTitle = "Select a Program to Debug";
 export const messageSelectTargetTitle = "Select Project or Solution files";
 export const messageReload = "Reload";
 export const messageInstallingComponentTitle = "Installing component: ";
+export const messageInstallingComponentFailed = "Component installation failed";
 
 export const configIdRoslynProjectOrSolutionFiles = "roslyn.projectOrSolutionFiles";
 export const configIdDebuggerProjectAssembliesOnly = "debugger.projectAssembliesOnly";
