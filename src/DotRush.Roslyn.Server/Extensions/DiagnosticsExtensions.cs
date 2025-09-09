@@ -1,4 +1,5 @@
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
+using DotRush.Roslyn.Server.Services;
 using Microsoft.CodeAnalysis;
 using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
 
@@ -50,10 +51,4 @@ public static class DiagnosticExtensions {
 
         return context.Diagnostic.Severity == DiagnosticSeverity.Hidden;
     }
-}
-
-public enum DiagnosticsFormat {
-    NoHints,
-    InfosAsHints,
-    AsIs,
 }

@@ -11,14 +11,13 @@ using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostic
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
 using EmmyLua.LanguageServer.Framework.Server;
-using Project = Microsoft.CodeAnalysis.Project;
 
 namespace DotRush.Roslyn.Server.Services;
 
 public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDisposable {
     private readonly ConfigurationService configurationService;
-    private readonly WorkspaceFilesWatcher fileWatcher;
     private readonly LanguageServer? serverFacade;
+    private WorkspaceFilesWatcher? fileWatcher;
 
     protected override ReadOnlyDictionary<string, string> WorkspaceProperties => configurationService.WorkspaceProperties;
     protected override bool LoadMetadataForReferencedProjects => configurationService.LoadMetadataForReferencedProjects;
@@ -31,7 +30,6 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
     public WorkspaceService(ConfigurationService configurationService, LanguageServer? serverFacade) {
         this.configurationService = configurationService;
         this.serverFacade = serverFacade;
-        this.fileWatcher = new WorkspaceFilesWatcher(this);
     }
 
     public async Task LoadAsync(IEnumerable<WorkspaceFolder>? workspaceFolderUris, CancellationToken cancellationToken) {
@@ -43,9 +41,7 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
         }
 
         await LoadAsync(targets, cancellationToken).ConfigureAwait(false);
-
-        if (workspaceFolders != null)
-            fileWatcher.StartObserving(workspaceFolders);
+        StartObserving(workspaceFolders);
     }
 
     public override async Task OnLoadingStartedAsync(CancellationToken cancellationToken) {
@@ -62,7 +58,7 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
         _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectIndexCompositeFormat, projectName));
     }
-    public override void OnProjectLoadCompleted(Project project) {
+    public override void OnProjectLoadCompleted(Microsoft.CodeAnalysis.Project project) {
         var projectModel = MSBuildProjectsLoader.LoadProject(project.FilePath, true);
         _ = serverFacade?.SendNotification(Resources.ProjectLoadedNotification, JsonSerializer.SerializeToDocument(projectModel));
     }
@@ -101,8 +97,12 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
 
         return null;
     }
-    internal void StartObserving(string[] workspaceFolders) {
-        fileWatcher.StartObserving(workspaceFolders);
+    internal void StartObserving(string[]? workspaceFolders) {
+        fileWatcher?.Dispose();
+        if (workspaceFolders != null) {
+            fileWatcher = new WorkspaceFilesWatcher(this);
+            fileWatcher.StartObserving(workspaceFolders);
+        }
     }
 
     void IWorkspaceChangeListener.OnDocumentCreated(string documentPath) {
@@ -120,6 +120,6 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
     }
 
     public void Dispose() {
-        fileWatcher.Dispose();
+        fileWatcher?.Dispose();
     }
 }

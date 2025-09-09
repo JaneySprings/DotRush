@@ -159,6 +159,11 @@ internal sealed class RoslynSection {
     public List<string>? AnalyzerAssemblies { get; set; }
 }
 
+public enum DiagnosticsFormat {
+    NoHints,
+    InfosAsHints,
+    AsIs,
+}
 public enum DispatcherType {
     SingleThread,
     MultiThread,

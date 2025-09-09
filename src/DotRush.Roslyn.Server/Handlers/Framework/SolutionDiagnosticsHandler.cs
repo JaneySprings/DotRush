@@ -3,8 +3,8 @@ using EmmyLua.LanguageServer.Framework;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
 using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
+using EmmyLua.LanguageServer.Framework.Server;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
-using EmmyLuaLanguageServer = EmmyLua.LanguageServer.Framework.Server.LanguageServer;
 
 namespace DotRush.Roslyn.Server.Handlers.Framework;
 
@@ -30,6 +30,6 @@ public class SolutionDiagnosticsHandler : IJsonHandler {
     }
     public void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
     }
-    public void RegisterDynamicCapability(EmmyLuaLanguageServer server, ClientCapabilities clientCapabilities) {
+    public void RegisterDynamicCapability(LanguageServer server, ClientCapabilities clientCapabilities) {
     }
 }
