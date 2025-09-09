@@ -21,12 +21,12 @@ public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
     }
     protected override Task<WorkspaceSymbolResponse> Handle(WorkspaceSymbolParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(new WorkspaceSymbolResponse(new List<WorkspaceSymbol>()), async () => {
-            var workspaceSymbols = new HashSet<WorkspaceSymbol>();
+            var workspaceSymbols = new HashSet<WorkspaceSymbol>(WorkspaceSymbolEqualityComparer.Default);
             if (solutionService.Solution == null || string.IsNullOrEmpty(request.Query))
                 return new WorkspaceSymbolResponse(new List<WorkspaceSymbol>());
 
             foreach (var project in solutionService.Solution.Projects) {
-                var compilation = await project.GetCompilationAsync(token);
+                var compilation = await project.GetCompilationAsync(token).ConfigureAwait(false);
                 if (compilation == null)
                     continue;
 
@@ -41,6 +41,7 @@ public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
                             Kind = symbol.ToSymbolKind(),
                             Name = symbol.Name,
                             Location = lspLocation,
+                            ContainerName = symbol.ContainingType?.Name
                         });
                     }
                 }
@@ -55,5 +56,21 @@ public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
 
     private static bool WorkspaceSymbolFilter(string symbolName, string query) {
         return symbolName.Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    class WorkspaceSymbolEqualityComparer : IEqualityComparer<WorkspaceSymbol> {
+        public static WorkspaceSymbolEqualityComparer Default { get; } = new WorkspaceSymbolEqualityComparer();
+
+        public bool Equals(WorkspaceSymbol? x, WorkspaceSymbol? y) {
+            if (x == null && y == null)
+                return true;
+            if (x == null || y == null)
+                return false;
+
+            return GetHashCode(x) == GetHashCode(y);
+        }
+        public int GetHashCode(WorkspaceSymbol obj) {
+            return HashCode.Combine(obj.Name, obj.Kind, obj.Location);
+        }
     }
 }
