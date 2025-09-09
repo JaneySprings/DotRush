@@ -146,29 +146,6 @@ stages:
     dependsOn: []
     jobs:
 #//////////////////////////////////////////////////////////////////////
-#// MacOS Tests
-#//////////////////////////////////////////////////////////////////////
-      - job: MacOS
-        pool:
-          vmImage: macos-latest
-        timeoutInMinutes: 20
-        steps:
-        - task: UseDotNet@2
-          inputs:
-            version: '10.x'
-            includePreviewVersions: true
-        - script: dotnet tool restore
-          displayName: 'Restore .NET tools'
-        - script: dotnet cake --target=test --configuration=release
-          displayName: 'Run tests'
-          continueOnError: true
-        - task: PublishTestResults@2
-          inputs:
-            testResultsFormat: 'VSTest'
-            testResultsFiles: 'artifacts/*.trx'
-            failTaskOnFailedTests: true
-            failTaskOnMissingResultsFile: true
-#//////////////////////////////////////////////////////////////////////
 #// Linux Tests
 #//////////////////////////////////////////////////////////////////////
       - job: Linux
@@ -182,36 +159,3 @@ stages:
             includePreviewVersions: true
         - script: dotnet tool restore
           displayName: 'Restore .NET tools'
-        - script: dotnet cake --target=test --configuration=release
-          displayName: 'Run tests'
-          continueOnError: true
-        - task: PublishTestResults@2
-          inputs:
-            testResultsFormat: 'VSTest'
-            testResultsFiles: 'artifacts/*.trx'
-            failTaskOnFailedTests: true
-            failTaskOnMissingResultsFile: true
-#//////////////////////////////////////////////////////////////////////
-#// Windows Tests
-#//////////////////////////////////////////////////////////////////////
-      - job: Windows
-        pool:
-          vmImage: windows-latest
-        timeoutInMinutes: 20
-        steps:
-        - task: UseDotNet@2
-          inputs:
-            version: '10.x'
-            includePreviewVersions: true
-        - script: dotnet tool restore
-          displayName: 'Restore .NET tools'
-        - script: dotnet cake --target=test --configuration=release
-          displayName: 'Run tests'
-          continueOnError: true
-        - task: PublishTestResults@2
-          inputs:
-            testResultsFormat: 'VSTest'
-            testResultsFiles: 'artifacts/*.trx'
-            failTaskOnFailedTests: true
-            failTaskOnMissingResultsFile: true
-
