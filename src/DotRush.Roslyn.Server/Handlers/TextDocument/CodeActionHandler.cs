@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
@@ -47,8 +48,12 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
             var result = new List<CommandOrCodeAction>();
             var filePath = request.TextDocument.Uri.FileSystemPath;
-            result.AddRange(await GetQuickFixesAsync(filePath, request.Range, token).ConfigureAwait(false));
-            result.AddRange(await GetRefactoringsAsync(filePath, request.Range, token).ConfigureAwait(false));
+
+            if (codeAnalysisService.CompilerDiagnosticsScope != AnalysisScope.None)
+                result.AddRange(await GetQuickFixesAsync(filePath, request.Range, token).ConfigureAwait(false));
+            if (codeAnalysisService.AnalyzerDiagnosticsScope != AnalysisScope.None)
+                result.AddRange(await GetRefactoringsAsync(filePath, request.Range, token).ConfigureAwait(false));
+
             return new CodeActionResponse(result);
         });
     }
