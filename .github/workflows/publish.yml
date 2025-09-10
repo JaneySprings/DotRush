@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 20
     
     steps:
-      - name: Checkout code with submodules
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -82,7 +82,7 @@ jobs:
     timeout-minutes: 10
     
     steps:
-      - name: Checkout code with submodules
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           submodules: recursive
