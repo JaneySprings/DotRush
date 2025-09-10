@@ -9,7 +9,7 @@ on:
 
 env:
   DOTNET_VERSION: '10.x'
-  NODE_VERSION: '18'
+  NODE_VERSION: '22'
 
 jobs:
   build:
@@ -50,13 +50,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Restore .NET tools
         run: dotnet tool restore
 
       - name: Install Node tools
-        run: npm install -g vsce webpack webpack-cli
+        run: npm install -g vsce webpack-cli
 
       - name: Build VSIX (${{ matrix.arch-x64 }})
         run: dotnet cake --target=vsix --configuration=release --arch=${{ matrix.arch-x64 }}
@@ -87,10 +86,20 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: preview
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: Install vsce
+        run: npm install -g vsce
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -99,29 +108,30 @@ jobs:
           pattern: '*-build'
           merge-multiple: true
 
-      - name: Install vsce
-        run: npm install -g vsce
+      - name: Generate server archives
+        run: dotnet cake --target=repack
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: artifacts/**/DotRush.Bundle.*
-          generate_release_notes: true
-          draft: false
-          prerelease: false
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          gh release create "$TAG_NAME" \
+            --title "$TAG_NAME" \
+            --generate-notes \
+            --latest
+          
+          for file in artifacts/**/DotRush.Bundle.*; do
+            if [ -f "$file" ]; then
+              echo "Uploading $file"
+              gh release upload "$TAG_NAME" "$file"
+            fi
+          done
 
-      - name: Publish to VS Code Marketplace
+      - name: Publish to VSMarketplace
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          shopt -s nullglob
-          vsix_files=(artifacts/**/DotRush.v*.vsix)
-          if [ ${#vsix_files[@]} -eq 0 ]; then
-            echo "No VSIX files found to publish"
-            exit 1
-          fi
-          
-          for vsix_file in "${vsix_files[@]}"; do
-            echo "Publishing $vsix_file"
-            vsce publish --packagePath "$vsix_file" -p "$VSCE_PAT"
+          for filename in $(artifacts/*.vsix); do
+            vsce publish --packagePath "$filename" -p $VSCE_PAT
           done
