@@ -51,9 +51,7 @@ jobs:
 
     - if: matrix.language == 'csharp'
       name: Build solution
-      shell: bash
-      run: |
-        dotnet build src/DotRush.sln --configuration Release
+      run: dotnet build src/DotRush.sln --configuration Release
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3

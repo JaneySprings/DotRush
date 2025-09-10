@@ -31,13 +31,7 @@ Task("server")
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 		Configuration = configuration,
 		Runtime = runtime,
-	}))
-	.Does(() => {
-		var input = _Path.Combine(VSCodeExtensionDirectory, "bin", "LanguageServer");
-		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.Bundle.Server_{runtime}.zip");
-		EnsureFileDeleted(output);
-		ZipFile.CreateFromDirectory(input, output, CompressionLevel.Optimal, false);
-	});
+	}));
 
 Task("debugging")
 	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.NetCore", "DotRush.Debugging.NetCore.csproj"), new DotNetPublishSettings {
@@ -85,6 +79,15 @@ Task("test")
 		EnsureDirectoryDeleted(debuggerDirectory);
 		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestHost", "testhost.dll")} -vsdbg");
 	});
+
+Task("repack").DoesForEach(GetFiles(_Path.Combine(ArtifactsDirectory, "**", "*.vsix")), file => {
+	var tempDirectory = _Path.Combine(ArtifactsDirectory, "repack");
+	var outputFileName = "DotRush.Bundle.Server_" + _Path.GetFileNameWithoutExtension(file.FullPath).Split('_').Last() + ".zip";
+	EnsureDirectoryDeleted(tempDirectory);
+	Unzip(file, tempDirectory);
+	Zip(_Path.Combine(tempDirectory, "extension", "extension", "bin", "LanguageServer"), _Path.Combine(ArtifactsDirectory, outputFileName));
+	EnsureDirectoryDeleted(tempDirectory);
+});
 
 Task("vsix")
 	.IsDependentOn("clean")

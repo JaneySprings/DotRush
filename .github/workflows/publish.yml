@@ -1,0 +1,137 @@
+name: Publish VSIX
+
+on:
+  push:
+    tags:
+      - '*'
+    branches:
+      - main
+
+env:
+  DOTNET_VERSION: '10.x'
+  NODE_VERSION: '22'
+
+jobs:
+  build:
+    if: startsWith(github.ref, 'refs/tags/')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch-x64: linux-x64
+            arch-arm64: linux-arm64
+          - os: macos-latest
+            platform: macos
+            arch-x64: osx-x64
+            arch-arm64: osx-arm64
+          - os: windows-latest
+            platform: windows
+            arch-x64: win-x64
+            arch-arm64: win-arm64
+    
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: preview
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
+      - name: Install Node tools
+        run: npm install -g vsce webpack-cli
+
+      - name: Build VSIX (${{ matrix.arch-x64 }})
+        run: dotnet cake --target=vsix --configuration=release --arch=${{ matrix.arch-x64 }}
+
+      - name: Build VSIX (${{ matrix.arch-arm64 }})
+        run: dotnet cake --target=vsix --configuration=release --arch=${{ matrix.arch-arm64 }}
+
+      # - name: Build VSIX (bundle)
+      #   run: dotnet cake --target=vsix --configuration=release --bundle
+
+      - name: Upload ${{ matrix.platform }} artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-build
+          path: artifacts/
+          retention-days: 3
+
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: preview
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install vsce
+        run: npm install -g vsce
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          pattern: '*-build'
+          merge-multiple: true
+
+      - name: Generate server archives
+        run: dotnet cake --target=repack
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          gh release create "$TAG_NAME" \
+            --title "$TAG_NAME" \
+            --generate-notes \
+            --latest
+          
+          for file in artifacts/**/DotRush.Bundle.*; do
+            if [ -f "$file" ]; then
+              echo "Uploading $file"
+              gh release upload "$TAG_NAME" "$file"
+            fi
+          done
+
+      - name: Publish to VSMarketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          for filename in $(artifacts/*.vsix); do
+            vsce publish --packagePath "$filename" -p $VSCE_PAT
+          done
