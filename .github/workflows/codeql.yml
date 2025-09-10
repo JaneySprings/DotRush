@@ -27,7 +27,9 @@ jobs:
       matrix:
         include:
         - language: csharp
+          build-mode: 'manual'
         - language: javascript-typescript
+          build-mode: 'none'
 
     steps:
     - name: Checkout repository
@@ -48,6 +50,7 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
+        queries: security-extended
 
     - if: matrix.language == 'csharp'
       name: Build solution
