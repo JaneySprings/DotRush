@@ -1,4 +1,6 @@
 name: Publish VSIX
+permissions:
+  contents: write
 
 on:
   push:
