@@ -123,7 +123,7 @@ jobs:
             --generate-notes \
             --latest
           
-          for file in artifacts/**/DotRush.Bundle.*; do
+          for file in artifacts/DotRush.Bundle.*; do
             if [ -f "$file" ]; then
               echo "Uploading $file"
               gh release upload "$TAG_NAME" "$file"
@@ -134,6 +134,6 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          for filename in $(artifacts/*.vsix); do
+          for filename in artifacts/*.vsix; do
             vsce publish --packagePath "$filename" -p $VSCE_PAT
           done
