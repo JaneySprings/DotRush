@@ -119,9 +119,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
+          PREV_TAG=$(git describe --tags --abbrev=0 "${TAG_NAME}^")
+          COMMITS=$(git log --pretty=format:"* %s (%h)" "$PREV_TAG..$TAG_NAME")
+  
           gh release create "$TAG_NAME" \
             --title "$TAG_NAME" \
-            --generate-notes \
+            --notes "$COMMITS" \
             --latest
           
           for file in artifacts/DotRush.Bundle.*; do
