@@ -546,7 +546,7 @@
           },
           "dotrush.roslyn.analyzerAssemblies": {
             "type": "array",
-            "scope": "application",
+            "scope": "machine",
             "items": {
               "type": "string"
             },
