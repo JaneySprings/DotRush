@@ -5,6 +5,8 @@
 
 <br clear="right"/>
 
+[![CodeQL Advanced](https://github.com/JaneySprings/DotRush/actions/workflows/codeql.yml/badge.svg)](https://github.com/JaneySprings/DotRush/actions/workflows/codeql.yml)
+
 ## Overview
 
 - **C# IntelliSense** </br>
