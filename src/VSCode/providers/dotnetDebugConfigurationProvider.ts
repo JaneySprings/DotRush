@@ -42,37 +42,37 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
     }
 
     private static provideVsdbgConfiguration(config: vscode.DebugConfiguration) {
+        let profile: LaunchProfile | undefined = undefined;
         if (config.launchSettingsFilePath === undefined && config.request === 'launch')
             config.launchSettingsFilePath = DebugAdapterController.getLaunchSettingsPath();
-
-        // https://github.com/JaneySprings/DotRush/issues/39
-        if (config.processPath !== undefined && config.request === 'attach')
-            config.processId = Interop.createProcess(config.processPath)
-
-        if (config.justMyCode === undefined)
-            config.justMyCode = Extensions.getSetting(res.configIdDebuggerProjectAssembliesOnly, false);
-        if (config.enableStepFiltering === undefined)
-            config.enableStepFiltering = Extensions.getSetting(res.configIdDebuggerStepOverPropertiesAndOperators, false);
-        if (config.console === undefined)
-            config.console = Extensions.getSetting(res.configIdDebuggerConsole);
-        if (config.symbolOptions === undefined)
-            config.symbolOptions = {
-                searchPaths: Extensions.getSetting(res.configIdDebuggerSymbolSearchPaths),
-                searchMicrosoftSymbolServer: Extensions.getSetting(res.configIdDebuggerSearchMicrosoftSymbolServer, false),
-            };
-        if (config.sourceLinkOptions === undefined)
-            config.sourceLinkOptions = {
-                "*": { enabled: Extensions.getSetting(res.configIdDebuggerAutomaticSourcelinkDownload, true) }
-            }
-    }
-    private static provideNcdbgConfiguration(config: vscode.DebugConfiguration) {
-        if (config.launchSettingsFilePath === undefined && config.request === 'launch')
-            config.launchSettingsFilePath = DebugAdapterController.getLaunchSettingsPath();
-        if (config.launchSettingsFilePath !== undefined) { /* https://github.com/JaneySprings/DotRush/issues/22 */
-            const profile = DebugAdapterController.getLaunchProfile(config.launchSettingsFilePath, config.launchSettingsProfile);
-            DotNetDebugConfigurationProvider.provideNcdbgConfigurationFromProfile(config, profile);
+        if (config.launchSettingsFilePath !== undefined) {
+            profile = DebugAdapterController.getLaunchProfile(config.launchSettingsFilePath, config.launchSettingsProfile);
         }
 
+        DotNetDebugConfigurationProvider.provideCommonConfiguration(config, profile);
+    }
+    private static provideNcdbgConfiguration(config: vscode.DebugConfiguration) {
+        let profile: LaunchProfile | undefined = undefined;
+        if (config.launchSettingsFilePath === undefined && config.request === 'launch')
+            config.launchSettingsFilePath = DebugAdapterController.getLaunchSettingsPath();
+        if (config.launchSettingsFilePath !== undefined) {
+            profile = DebugAdapterController.getLaunchProfile(config.launchSettingsFilePath, config.launchSettingsProfile);
+            /* https://github.com/JaneySprings/DotRush/issues/22 */
+            if (profile?.workingDirectory !== undefined)
+                config.cwd = profile.workingDirectory;
+            if (profile?.executablePath !== undefined)
+                config.program = profile.executablePath;
+            if (profile?.environmentVariables !== undefined)
+                config.env = profile.environmentVariables;
+            if (profile?.commandLineArgs !== undefined)
+                config.args = [profile.commandLineArgs]; //TODO: We need to split the command line args
+            if (profile?.applicationUrl !== undefined)
+                config.env = { ...config.env, ASPNETCORE_URLS: profile.applicationUrl };
+        }
+
+        DotNetDebugConfigurationProvider.provideCommonConfiguration(config, profile);
+    }
+    private static provideCommonConfiguration(config: vscode.DebugConfiguration, profile?: LaunchProfile) {
         // https://github.com/JaneySprings/DotRush/issues/39
         if (config.processPath !== undefined && config.request === 'attach')
             config.processId = Interop.createProcess(config.processPath)
@@ -92,21 +92,13 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
             config.sourceLinkOptions = {
                 "*": { enabled: Extensions.getSetting(res.configIdDebuggerAutomaticSourcelinkDownload, true) }
             }
-    }
-    private static provideNcdbgConfigurationFromProfile(config: vscode.DebugConfiguration, profile: LaunchProfile | undefined) {
-        if (profile === undefined)
-            return config;
 
-        if (profile.workingDirectory !== undefined)
-            config.cwd = profile.workingDirectory;
-        if (profile.executablePath !== undefined)
-            config.program = profile.executablePath;
-        if (profile.environmentVariables !== undefined)
-            config.env = profile.environmentVariables;
-        if (profile.commandLineArgs !== undefined)
-            config.args = [profile.commandLineArgs]; //TODO: We need to split the command line args
-
-        if (profile.applicationUrl !== undefined)
-            config.env = { ...config.env, ASPNETCORE_URLS: profile.applicationUrl };
+        if (profile !== undefined) {
+            if (profile?.launchBrowser) {
+                config.serverReadyAction = { action: "openExternally", pattern: "\\bNow listening on:\\s+(https?://\\S+)" };
+                if (profile.launchUrl !== undefined)
+                    config.serverReadyAction.uriFormat = `%s/${profile.launchUrl}`;
+            }
+        }
     }
 }
