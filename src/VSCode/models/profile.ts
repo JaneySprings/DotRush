@@ -9,4 +9,6 @@ export interface LaunchProfile {
     commandLineArgs?: string;
     executablePath?: string;
     workingDirectory?: string;
+    launchBrowser: boolean;
+    launchUrl?: string;
 }
