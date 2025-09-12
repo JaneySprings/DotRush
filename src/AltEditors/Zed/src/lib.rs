@@ -24,9 +24,9 @@ impl DotRushExtension {
         let asset_name = format!(
             "DotRush.Bundle.Server_{os}-{arch}.zip",
             os = match platform {
-                zed::Os::Mac => "osx",
+                zed::Os::Mac => "darwin",
                 zed::Os::Linux => "linux",
-                zed::Os::Windows => "win",
+                zed::Os::Windows => "win32",
             },
             arch = match arch {
                 zed::Architecture::Aarch64 => "arm64",
