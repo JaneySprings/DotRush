@@ -71,8 +71,8 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image2.jpg)
 
 
-## Running and Debugging NUnit / xUnit Tests
-&emsp;To run and debug your **NUnit** or **xUnit** tests, you can use the integrated Test Explorer in VSCode. Run test by clicking on the run button next to the test or debug it by right-clicking on the run button and selecting the `Debug Test` option in the context menu.
+## Running and Debugging NUnit / xUnit / MSTest Tests
+&emsp;To run and debug your **VSTest** tests, you can use the integrated Test Explorer in VSCode. Run test by clicking on the run button next to the test or debug it by right-clicking on the run button and selecting the `Debug Test` option in the context menu.
 
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image3.jpg)
 

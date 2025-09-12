@@ -39,8 +39,8 @@ export const taskDefinitionId = "dotrush.task";
 export const extendedViewIdModules = "dotrush.modulesView";
 export const testExplorerViewId = "dotrush.testExplorer";
 export const testExplorerViewTitle = "DotRush Test Explorer";
-export const testExplorerProfileRun = "Run NUnit/XUnit Tests";
-export const testExplorerProfileDebug = "Debug NUnit/XUnit Tests";
+export const testExplorerProfileRun = "Run VSTest Host";
+export const testExplorerProfileDebug = "Debug VSTest Host";
 
 export const messageProjectChanged = "Projects have changed. Reload the DotRush to apply changes.";
 export const messageNoProjectFileFound = "No project files found in the current workspace folder.";
