@@ -55,7 +55,18 @@ public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
     }
 
     private static bool WorkspaceSymbolFilter(string symbolName, string query) {
-        return symbolName.Contains(query, StringComparison.OrdinalIgnoreCase);
+        if (symbolName.Contains(query, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var queryParts = query.SplitByCamelCase();
+        bool isMatch = true;
+        foreach (var part in queryParts) {
+            if (!symbolName.Contains(part, StringComparison.OrdinalIgnoreCase)) {
+                isMatch = false;
+                break;
+            }
+        }
+        return isMatch;
     }
 
     class WorkspaceSymbolEqualityComparer : IEqualityComparer<WorkspaceSymbol> {
