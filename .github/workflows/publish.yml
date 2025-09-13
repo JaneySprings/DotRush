@@ -73,7 +73,7 @@ jobs:
         with:
           name: ${{ matrix.platform }}-build
           path: artifacts/
-          retention-days: 3
+          retention-days: 7
 
 
   publish:

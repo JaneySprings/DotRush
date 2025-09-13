@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Reflection;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.CodeAnalysis.Reflection;
@@ -5,6 +6,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Tags;
+using Microsoft.CodeAnalysis.Text;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.Server.Tests;
@@ -127,5 +129,45 @@ public class ReflectionApiTests {
         Assert.That(InternalBlockStructure.spansProperty, Is.Not.Null);
         Assert.That(InternalBlockStructure.bannerTextProperty, Is.Not.Null);
         Assert.That(InternalBlockStructure.textSpanProperty, Is.Not.Null);
+    }
+
+    [Test]
+    public void InlineHintsOptionsTest() {
+        Assert.That(InternalInlineHintsOptions.inlineHintsOptionsType, Is.Not.Null);
+        Assert.That(InternalInlineHintsOptions.Default, Is.Not.Null);
+
+        var instance = InternalInlineHintsOptions.CreateNew();
+        Assert.That(instance, Is.Not.Null);
+    }
+    [Test]
+    public void CSharpInlineHintsServiceTest() {
+        Assert.That(InternalCSharpInlineHintsService.csharpCSharpInlineHintsServiceType, Is.Not.Null);
+        Assert.That(InternalCSharpInlineHintsService.getInlineHintsAsyncMethod, Is.Not.Null);
+
+        var parameters = InternalCSharpInlineHintsService.getInlineHintsAsyncMethod!.GetParameters();
+        Assert.That(parameters, Has.Length.EqualTo(5));
+        Assert.That(parameters[0].ParameterType, Is.EqualTo(typeof(Document)));
+        Assert.That(parameters[1].ParameterType, Is.EqualTo(typeof(TextSpan)));
+        Assert.That(parameters[2].ParameterType.Name, Is.EqualTo("InlineHintsOptions"));
+        Assert.That(parameters[3].ParameterType, Is.EqualTo(typeof(bool)));
+        Assert.That(parameters[4].ParameterType, Is.EqualTo(typeof(CancellationToken)));
+
+        var returnType = InternalCSharpInlineHintsService.getInlineHintsAsyncMethod.ReturnType;
+        Assert.That(returnType.IsGenericType, Is.True);
+        Assert.That(returnType.GetGenericTypeDefinition(), Is.EqualTo(typeof(Task<>)));
+
+        var instance = InternalCSharpInlineHintsService.CreateNew();
+        Assert.That(instance, Is.Not.Null);
+    }
+    [Test]
+    public void InlineHintTest() {
+        Assert.That(InternalInlineHint.inlineHintType, Is.Not.Null);
+        Assert.That(InternalInlineHint.spanField, Is.Not.Null);
+        Assert.That(InternalInlineHint.replacementTextChangeField, Is.Not.Null);
+        Assert.That(InternalInlineHint.displatPartsField, Is.Not.Null);
+
+        Assert.That(InternalInlineHint.spanField!.FieldType, Is.EqualTo(typeof(TextSpan)));
+        Assert.That(InternalInlineHint.replacementTextChangeField!.FieldType, Is.EqualTo(typeof(TextChange?)));
+        Assert.That(InternalInlineHint.displatPartsField!.FieldType, Is.EqualTo(typeof(ImmutableArray<TaggedText>)));
     }
 }

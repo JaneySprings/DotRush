@@ -13,7 +13,7 @@ public class PerformanceCounterDispatcher : IScheduler {
     private readonly Stopwatch stopwatch = new Stopwatch();
 
     public PerformanceCounterDispatcher() {
-        workerThread = new Thread((ThreadStart)delegate {
+        workerThread = new Thread(() => {
             foreach (TaskInfo item in taskInfos.GetConsumingEnumerable()) {
                 stopwatch.Restart();
                 SafeExtensions.Invoke(item.Task);
