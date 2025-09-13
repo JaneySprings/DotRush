@@ -119,7 +119,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
-          PREV_TAG=$(git describe --tags --abbrev=0 "${TAG_NAME}^")
+          PREV_TAG=$(git describe --tags --abbrev=0 --exclude="$TAG_NAME" HEAD)
           COMMITS=$(git log --pretty=format:"* %s (%h)" "$PREV_TAG..$TAG_NAME")
   
           gh release create "$TAG_NAME" \
