@@ -650,6 +650,7 @@
         "*.xaml": "${capture}.xaml.cs",
         "*.axaml": "${capture}.axaml.cs"
       },
+      "editor.inlayHints.enabled": "offUnlessPressed",
       "editor.quickSuggestions": {
         "strings": "on"
       },
