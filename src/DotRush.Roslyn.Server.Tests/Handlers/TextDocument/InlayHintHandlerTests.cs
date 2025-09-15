@@ -197,4 +197,28 @@ public class TestClass {
         Assert.That(result.InlayHints, Has.Count.EqualTo(1));
         Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == ("?")));
     }
+    [Test]
+    public async Task MultitargetInlayHintTest() {
+        var documentPath = CreateDocument(nameof(InlayHintHandlerTests), @"
+namespace Tests;
+public class TestClass {
+    public void TestMethod() {
+#if NET8_0
+    var obj = new MyClass();
+#else
+    var obj = new MyClass2();
+#endif
+    }
+}
+");
+        var result = await handler.Handle(new InlayHintParams {
+            TextDocument = documentPath.CreateDocumentId(),
+            Range = PositionExtensions.CreateRange(4, 0, 8, 0)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.InlayHints, Has.Count.EqualTo(2));
+        Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == ("MyClass?")));
+        Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == ("MyClass2?")));
+    }
 }

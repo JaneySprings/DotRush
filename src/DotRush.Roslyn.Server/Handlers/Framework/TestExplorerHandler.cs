@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using DotRush.Common;
 using DotRush.Common.Extensions;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
@@ -53,11 +54,11 @@ public class TestExplorerHandler : IJsonHandler {
 
     public void RegisterHandler(LSPCommunicationBase lspCommunication) {
         lspCommunication.AddRequestHandler("dotrush/testExplorer/fixtures", async delegate (RequestMessage message, CancellationToken token) {
-            var request = message.Params?.Deserialize<TestFixtureParams>();
+            var request = message.Params?.Deserialize<TestFixtureParams>(JsonSerializerConfig.Options);
             return JsonSerializer.SerializeToDocument(await Handle(request, token).ConfigureAwait(false));
         });
         lspCommunication.AddRequestHandler("dotrush/testExplorer/tests", async delegate (RequestMessage message, CancellationToken token) {
-            var request = message.Params?.Deserialize<TestCaseParams>();
+            var request = message.Params?.Deserialize<TestCaseParams>(JsonSerializerConfig.Options);
             return JsonSerializer.SerializeToDocument(await Handle(request, token).ConfigureAwait(false));
         });
     }

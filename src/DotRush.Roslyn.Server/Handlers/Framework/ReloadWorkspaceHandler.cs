@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using DotRush.Common;
 using DotRush.Roslyn.Server.Services;
 using EmmyLua.LanguageServer.Framework;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
@@ -29,7 +30,7 @@ public class ReloadWorkspaceHandler : IJsonHandler {
 
     public void RegisterHandler(LSPCommunicationBase lspCommunication) {
         lspCommunication.AddNotificationHandler("dotrush/reloadWorkspace", delegate (NotificationMessage message, CancellationToken token) {
-            ReloadWorkspaceParams? request = message.Params?.Deserialize<ReloadWorkspaceParams>();
+            ReloadWorkspaceParams? request = message.Params?.Deserialize<ReloadWorkspaceParams>(JsonSerializerConfig.Options);
             return Handle(request ?? new ReloadWorkspaceParams(), token);
         });
     }
