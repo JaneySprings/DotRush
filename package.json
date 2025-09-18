@@ -47,7 +47,8 @@
     "package": "webpack --mode production",
     "build:dotnet": "dotnet build ./src/DotRush.sln -c Release",
     "build:ext": "npm run package",
-    "package:vsix": "npm run build:dotnet && npm run build:ext && vsce package"
+    "build": "npm run build:dotnet && npm run build:ext",
+    "package:vsix": "npm run build && vsce package"
   },
   "devDependencies": {
     "@types/node": "16.x",

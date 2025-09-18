@@ -21,7 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DotRush.Debugging.NetCore\DotRush.Debugging.NetCore.csproj" />
+    <ProjectReference Include="..\DotRush.Debugging.NetCore\DotRush.Debugging.NetCore.csproj"
+                      Aliases="drhost" />
   </ItemGroup>
+
 
 </Project>

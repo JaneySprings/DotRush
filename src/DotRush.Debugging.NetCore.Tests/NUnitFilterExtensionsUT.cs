@@ -1,5 +1,7 @@
-﻿using DotRush.Debugging.NetCore.Extensions;
+﻿extern alias drhost;
+
 using NUnit.Framework;
+using drhost::DotRush.Debugging.NetCore.Extensions;
 
 namespace DotRush.Debugging.NetCore.Tests;
 

@@ -3,7 +3,11 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <AssemblyName>DotRush.TestHost</AssemblyName>
+    <!-- Use testhost for Release builds (needed by VS Code extension runtime) -->
+    <AssemblyName Condition="'$(Configuration)'=='Release'">testhost</AssemblyName>
+    <!-- Use a unique name for Debug builds to avoid conflict with
+    Microsoft.TestPlatform.TestHost -->
+    <AssemblyName Condition="'$(Configuration)'=='Debug'">DotRush.Debugging.NetCore</AssemblyName>
     <OutputPath>$(AssetsPath)TestHost</OutputPath>
     <PublishDir>$(OutputPath)</PublishDir>
   </PropertyGroup>

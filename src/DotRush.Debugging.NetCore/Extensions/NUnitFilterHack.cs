@@ -1,13 +1,21 @@
 using System.Xml.Linq;
 using DotRush.Common.Extensions;
+using DotRush.Common.Logging;
 
 namespace DotRush.Debugging.NetCore.Extensions;
 
 // https://github.com/nunit/nunit-vs-adapter/issues/71
 public static class NUnitFilterExtensions {
+
+    private static readonly CurrentClassLogger currentClassLogger = new(nameof(NUnitFilterExtensions));
+
     public static string? UpdateRunSettingsWithNUnitFilter(string? runSettings, string[] testAssemblies, string[] typeFilters) {
-        if (!testAssemblies.Any(IsNUnitAssembly))
+        currentClassLogger.Debug($"UpdateRunSettingsWithNUnitFilter: {testAssemblies.Length} assemblies, {typeFilters.Length} filters");
+
+        if (!testAssemblies.Any(IsNUnitAssembly)) {
+            currentClassLogger.Debug("No NUnit assemblies found");
             return runSettings;
+        }
 
         var whereParts = new List<string>();
         if (typeFilters.Length > 0) {
@@ -26,11 +34,13 @@ public static class NUnitFilterExtensions {
 
         // If we have NUnit assemblies but no specific filters, create empty NUnit settings
         if (whereParts.Count == 0) {
+            currentClassLogger.Debug("Creating empty NUnit settings");
             if (string.IsNullOrEmpty(runSettings))
                 return GetNUnitRunSettings("");
             return UpdateNUnitRunSettings(runSettings, "");
         }
 
+        currentClassLogger.Debug($"Creating NUnit settings with filter: '{whereFilter}'");
         if (string.IsNullOrEmpty(runSettings))
             return GetNUnitRunSettings(whereFilter);
 
@@ -68,7 +78,6 @@ public static class NUnitFilterExtensions {
     }
     private static bool IsNUnitAssembly(string assemblyPath) {
         try {
-            // First check if the assembly name itself contains NUnit
             if (Path.GetFileName(assemblyPath).Contains("NUnit", StringComparison.OrdinalIgnoreCase))
                 return true;
 
@@ -90,12 +99,15 @@ public static class NUnitFilterExtensions {
 
         try {
             var xdoc = System.Xml.Linq.XDocument.Parse(runSettings);
-            return xdoc.Root?
+            var filter = xdoc.Root?
                 .Element("RunConfiguration")?
                 .Element("TestCaseFilter")?
                 .Value?
                 .Trim();
-        } catch {
+            currentClassLogger.Debug($"ExtractTestCaseFilterFromRunSettings: '{filter}'");
+            return filter;
+        } catch (Exception ex) {
+            currentClassLogger.Debug($"ExtractTestCaseFilterFromRunSettings failed: {ex.Message}");
             return null;
         }
     }
@@ -104,6 +116,7 @@ public static class NUnitFilterExtensions {
         if (string.IsNullOrWhiteSpace(filter))
             return null;
 
+        currentClassLogger.Debug($"TranslateRunSettingsCategoryFilter input: '{filter}'");
         filter = filter.Replace(" ", string.Empty);
 
         string? Parse(string expr) {
@@ -167,7 +180,9 @@ public static class NUnitFilterExtensions {
             return parts;
         }
 
-        return Parse(filter);
+        var result = Parse(filter);
+        currentClassLogger.Debug($"TranslateRunSettingsCategoryFilter result: '{result}'");
+        return result;
     }
 
 }
