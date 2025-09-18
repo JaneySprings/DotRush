@@ -3,10 +3,16 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <AssemblyName>testhost</AssemblyName>
+    <AssemblyName>DotRush.TestHost</AssemblyName>
     <OutputPath>$(AssetsPath)TestHost</OutputPath>
     <PublishDir>$(OutputPath)</PublishDir>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>DotRush.Debugging.NetCore.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DotRush.Common\DotRush.Common.csproj" />

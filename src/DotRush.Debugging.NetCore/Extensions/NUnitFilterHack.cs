@@ -22,10 +22,14 @@ public static class NUnitFilterExtensions {
                 whereParts.Add(translated);
         }
 
-        if (whereParts.Count == 0)
-            return runSettings;
-
         var whereFilter = string.Join(" and ", whereParts);
+
+        // If we have NUnit assemblies but no specific filters, create empty NUnit settings
+        if (whereParts.Count == 0) {
+            if (string.IsNullOrEmpty(runSettings))
+                return GetNUnitRunSettings("");
+            return UpdateNUnitRunSettings(runSettings, "");
+        }
 
         if (string.IsNullOrEmpty(runSettings))
             return GetNUnitRunSettings(whereFilter);
@@ -63,9 +67,21 @@ public static class NUnitFilterExtensions {
         });
     }
     private static bool IsNUnitAssembly(string assemblyPath) {
-        var assemblyDirectory = Path.GetDirectoryName(assemblyPath)!;
-        var assemblies = Directory.GetFiles(assemblyDirectory, "*.dll", SearchOption.TopDirectoryOnly);
-        return assemblies.Any(a => Path.GetFileName(a).Contains("NUnit", StringComparison.OrdinalIgnoreCase));
+        try {
+            // First check if the assembly name itself contains NUnit
+            if (Path.GetFileName(assemblyPath).Contains("NUnit", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            var assemblyDirectory = Path.GetDirectoryName(assemblyPath);
+            if (string.IsNullOrEmpty(assemblyDirectory) || !Directory.Exists(assemblyDirectory))
+                return false;
+
+            var assemblies = Directory.GetFiles(assemblyDirectory, "*.dll", SearchOption.TopDirectoryOnly);
+            return assemblies.Any(a => Path.GetFileName(a).Contains("NUnit", StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception) {
+            return false;
+        }
     }
 
     private static string? ExtractTestCaseFilterFromRunSettings(string? runSettings) {
@@ -84,7 +100,7 @@ public static class NUnitFilterExtensions {
         }
     }
 
-    private static string? TranslateRunSettingsCategoryFilter(string filter) {
+    public static string? TranslateRunSettingsCategoryFilter(string filter) {
         if (string.IsNullOrWhiteSpace(filter))
             return null;
 
@@ -95,15 +111,21 @@ public static class NUnitFilterExtensions {
                 return null;
 
             if (expr[0] == '(' && expr[^1] == ')' && MatchingParens(expr))
-                return "(" + (Parse(expr.Substring(1, expr.Length - 2)) ?? string.Empty) + ")";
+                return Parse(expr.Substring(1, expr.Length - 2));
 
             var orParts = SplitTop(expr, '|');
-            if (orParts.Count > 1)
-                return string.Join(" or ", orParts.Select(p => Parse(p) ?? string.Empty));
+            if (orParts.Count > 1) {
+                var parsedParts = orParts.Select(p => Parse(p) ?? string.Empty).Where(p => !string.IsNullOrEmpty(p));
+                var result = string.Join(" or ", parsedParts);
+                return "(" + result + ")";
+            }
 
             var andParts = SplitTop(expr, '&');
-            if (andParts.Count > 1)
-                return string.Join(" and ", andParts.Select(p => Parse(p) ?? string.Empty));
+            if (andParts.Count > 1) {
+                var parsedParts = andParts.Select(p => Parse(p) ?? string.Empty).Where(p => !string.IsNullOrEmpty(p));
+                var result = string.Join(" and ", parsedParts);
+                return "(" + result + ")";
+            }
 
             if (expr.StartsWith("Category=", StringComparison.OrdinalIgnoreCase))
                 return "cat==" + expr.Substring("Category=".Length);
