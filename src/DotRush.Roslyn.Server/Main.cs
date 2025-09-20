@@ -2,7 +2,7 @@
 using System.Reflection;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
-using DotRush.Roslyn.Server.Handlers.Framework;
+using DotRush.Roslyn.Server.Handlers.ExternalAccess;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Handlers.Workspace;
 using DotRush.Roslyn.Server.Services;
@@ -18,7 +18,6 @@ public class Program {
     private static CodeAnalysisService codeAnalysisService = null!;
     private static NavigationService navigationService = null!;
     private static TestExplorerService testExplorerService = null!;
-    private static ExternalAccessService externalAccessService = null!;
 
     public static Task Main(string[] args) {
         Console.SetError(TextWriter.Null);
@@ -47,9 +46,10 @@ public class Program {
         // Workspace handlers
               .AddHandler(new DidChangeConfigurationHandler(configurationService))
               .AddHandler(new WorkspaceSymbolHandler(workspaceService))
-        // Framework handlers
+        // ExternalAssess handlers
               .AddHandler(new SolutionDiagnosticsHandler(workspaceService, codeAnalysisService))
               .AddHandler(new ReloadWorkspaceHandler(workspaceService))
+              .AddHandler(new ResolveTypeHandler(workspaceService))
               .AddHandler(new TestExplorerHandler(testExplorerService, workspaceService));
 
         languageServer.OnInitialize(OnInitializeAsync);
@@ -69,7 +69,6 @@ public class Program {
 
         _ = languageServer.SendNotification(Resources.LoadCompletedNotification, null);
         _ = languageServer.Client.RefreshWorkspaceTokens();
-        _ = externalAccessService.StartListeningAsync(parameters.ProcessId, CancellationToken.None);
     }
 
     private static void ConfigureProcessObserver(int? pid) {
@@ -94,6 +93,5 @@ public class Program {
         testExplorerService = new TestExplorerService();
         workspaceService = new WorkspaceService(configurationService, languageServer);
         codeAnalysisService = new CodeAnalysisService(configurationService, languageServer);
-        externalAccessService = new ExternalAccessService(workspaceService);
     }
 }
