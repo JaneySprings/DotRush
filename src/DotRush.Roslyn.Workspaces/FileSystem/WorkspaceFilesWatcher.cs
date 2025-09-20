@@ -53,7 +53,7 @@ public sealed class WorkspaceFilesWatcher : IDisposable {
     }
     private void OnRenamed(object sender, RenamedEventArgs e) {
         listener.OnDocumentDeleted(e.OldFullPath);
-        listener.OnDocumentCreated(e.FullPath);
+        OnCreated(sender, e);
     }
 
     public void Dispose() {
