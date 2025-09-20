@@ -44,7 +44,11 @@
   "scripts": {
     "vscode:prepublish": "npm run package",
     "watch": "tsc -watch -p ./src/VSCode/tsconfig.json",
-    "package": "webpack --mode production"
+    "package": "webpack --mode production",
+    "build:dotnet": "dotnet build ./src/DotRush.sln -c Release",
+    "build:ext": "npm run package",
+    "build": "npm run build:dotnet && npm run build:ext",
+    "package:vsix": "npm run build && vsce package"
   },
   "devDependencies": {
     "@types/node": "16.x",

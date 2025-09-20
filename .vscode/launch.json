@@ -11,7 +11,7 @@
             "outFiles": [
                 "${workspaceFolder}/extension/**/*.js"
             ],
-            "preLaunchTask": "tsc: watch"
+            "preLaunchTask": "build:all"
         },
         {
             "name": ".NET Attach to LSP",

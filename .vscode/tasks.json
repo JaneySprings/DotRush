@@ -5,15 +5,9 @@
             "label": "tsc: watch",
             "type": "shell",
             "command": "tsc",
-            "args": [
-                "-w",
-                "-p",
-                "${workspaceFolder}/src/VSCode"
-            ],
+            "args": ["-w", "-p", "${workspaceFolder}/src/VSCode"],
             "isBackground": true,
-            "problemMatcher": [
-                "$tsc-watch"
-            ]
+            "problemMatcher": ["$tsc-watch"]
         },
         {
             "label": "vsix",
@@ -23,11 +17,24 @@
                 "cwd": "${workspaceFolder}"
             },
             "problemMatcher": [],
-            "args": [
-                "cake",
-                "--target=vsix",
-                "--configuration=release"
-            ]
+            "args": ["cake", "--target=vsix", "--configuration=release"]
+        },
+        {
+            "label": "build:dotnet",
+            "type": "shell",
+            "command": "dotnet build ./src/DotRush.sln -c Release",
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build:ext",
+            "type": "npm",
+            "script": "package",
+            "problemMatcher": []
+        },
+        {
+            "label": "build:all",
+            "dependsOn": ["build:dotnet", "build:ext", "tsc: watch"],
+            "dependsOrder": "sequence"
         }
     ]
 }

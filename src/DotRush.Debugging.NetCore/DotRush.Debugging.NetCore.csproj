@@ -3,10 +3,20 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <AssemblyName>testhost</AssemblyName>
+    <!-- Use testhost for Release builds (needed by VS Code extension runtime) -->
+    <AssemblyName Condition="'$(Configuration)'=='Release'">testhost</AssemblyName>
+    <!-- Use a unique name for Debug builds to avoid conflict with
+    Microsoft.TestPlatform.TestHost -->
+    <AssemblyName Condition="'$(Configuration)'=='Debug'">DotRush.Debugging.NetCore</AssemblyName>
     <OutputPath>$(AssetsPath)TestHost</OutputPath>
     <PublishDir>$(OutputPath)</PublishDir>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>DotRush.Debugging.NetCore.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DotRush.Common\DotRush.Common.csproj" />
