@@ -3,7 +3,10 @@ using DotRush.Common.Interop;
 
 namespace DotRush.Common.MSBuild;
 
-public static class MSBuildLocator {
+public static partial class MSBuildLocator {
+    [GeneratedRegex(@"\[(.*?)\]")]
+    private static partial Regex DotNetSdkPathRegex();
+
     public static string GetRootLocation() {
         var dotnet = Environment.GetEnvironmentVariable("DOTNET_ROOT");
 
@@ -27,7 +30,7 @@ public static class MSBuildLocator {
         if (!result.Success)
             throw new FileNotFoundException("Could not find dotnet tool");
 
-        var matches = Regex.Matches(result.StandardOutput.Last(), @"\[(.*?)\]");
+        var matches = DotNetSdkPathRegex().Matches(result.StandardOutput.Last());
         var sdkLocation = matches.Count != 0 ? matches[0].Groups[1].Value : null;
 
         if (string.IsNullOrEmpty(sdkLocation) || !Directory.Exists(sdkLocation))

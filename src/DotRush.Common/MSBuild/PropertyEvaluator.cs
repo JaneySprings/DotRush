@@ -4,7 +4,16 @@ using DotRush.Common.Extensions;
 
 namespace DotRush.Common.MSBuild;
 
-public static class PropertyEvaluator {
+public static partial class PropertyEvaluator {
+    [GeneratedRegex("<!--.*?-->", RegexOptions.Singleline)]
+    private static partial Regex XmlCommentRegex();
+    [GeneratedRegex(@"<Import\s+Project\s*=\s*""(.*?)""")]
+    private static partial Regex XmlImportRegex();
+    [GeneratedRegex(@"<ProjectReference\s+Include\s*=\s*""(.*?)""\s?.*>")]
+    private static partial Regex XmlProjectRefRegex();
+    [GeneratedRegex(@"\$\((?<inc>.*?)\)")]
+    private static partial Regex XmlPropertyIncludeRegex();
+
     public static string? EvaluateProperty(this MSBuildProject project, string name, string? defaultValue = null) {
         var propertyMatches = project.GetPropertyMatches(project.FilePath, name);
         if (propertyMatches == null)
@@ -25,12 +34,12 @@ public static class PropertyEvaluator {
             return null;
 
         string content = File.ReadAllText(projectPath);
-        content = Regex.Replace(content, "<!--.*?-->", string.Empty, RegexOptions.Singleline);
+        content = XmlCommentRegex().Replace(content, string.Empty);
         /* Find in current project */
         var propertyMatch = new Regex($@"<{propertyName}\s?.*>(.*?)<\/{propertyName}>\s*\n").Matches(content);
         if (propertyMatch.Count > 0)
             return propertyMatch;
-        var importRegex = new Regex(@"<Import\s+Project\s*=\s*""(.*?)""");
+        var importRegex = XmlImportRegex();
         /* Find in imported project */
         foreach (Match importMatch in importRegex.Matches(content)) {
             var importedProjectPath = ResolveImportPath(projectPath, importMatch.Groups[1].Value);
@@ -56,12 +65,12 @@ public static class PropertyEvaluator {
             return false;
 
         string content = File.ReadAllText(projectPath);
-        content = Regex.Replace(content, "<!--.*?-->", string.Empty, RegexOptions.Singleline);
+        content = XmlCommentRegex().Replace(content, string.Empty);
         /* Find in current project */
         var packageMatch = new Regex($@"<PackageReference Include=""{packageName}""\s?.*>").Matches(content);
         if (packageMatch.Count > 0)
             return true;
-        var importRegex = new Regex(@"<Import\s+Project\s*=\s*""(.*?)""");
+        var importRegex = XmlImportRegex();
         /* Find in imported project */
         foreach (Match importMatch in importRegex.Matches(content)) {
             var importedProjectPath = ResolveImportPath(projectPath, importMatch.Groups[1].Value);
@@ -71,7 +80,7 @@ public static class PropertyEvaluator {
             if (project.HasPackageMatches(importedProjectPath, packageName, isEndPoint))
                 return true;
         }
-        var projectRefRegex = new Regex(@"<ProjectReference\s+Include\s*=\s*""(.*?)""\s?.*>");
+        var projectRefRegex = XmlProjectRefRegex();
         /* Find in project references */
         foreach (Match importMatch in projectRefRegex.Matches(content)) {
             var projectReferencePath = ResolveImportPath(projectPath, importMatch.Groups[1].Value);
@@ -93,7 +102,7 @@ public static class PropertyEvaluator {
     }
 
     private static string GetPropertyValue(this MSBuildProject project, string propertyName, MatchCollection matches) {
-        var includeRegex = new Regex(@"\$\((?<inc>.*?)\)");
+        var includeRegex = XmlPropertyIncludeRegex();
         var resultSequence = new StringBuilder();
         /* Process all property entrance */
         foreach (Match match in matches) {
