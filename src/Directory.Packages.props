@@ -6,7 +6,7 @@
   <ItemGroup>
     <PackageVersion Include="NLog" Version="5.4.0" />
     <PackageVersion Include="ICSharpCode.Decompiler" Version="9.1.0.7988" />
-    <PackageVersion Include="StreamJsonRpc" Version="2.19.27" />
+    <PackageVersion Include="StreamJsonRpc" Version="2.22.11" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.4" />
     <PackageVersion Include="Mono.Options" Version="6.12.0.148" />
     <PackageVersion Include="EmmyLua.LanguageServer.Framework" Version="0.8.1" />
@@ -19,6 +19,7 @@
     <PackageVersion Include="Microsoft.TestPlatform.TestHost" Version="17.14.1" />
     <PackageVersion Include="Microsoft.TestPlatform.TranslationLayer" Version="17.14.1" />
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.7.8" />
+    <PackageVersion Include="Microsoft.Build.Tasks.Core" Version="17.14.8" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(CodeAnalysisVersion)" />

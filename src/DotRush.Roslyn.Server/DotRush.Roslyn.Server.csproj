@@ -14,6 +14,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="EmmyLua.LanguageServer.Framework" />
+		<PackageReference Include="Microsoft.Build.Tasks.Core" /> <!-- Not used directly, only for NU1903 -->
 
 		<ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
 		<ProjectReference Include="..\DotRush.Roslyn.CodeAnalysis\DotRush.Roslyn.CodeAnalysis.csproj" />
