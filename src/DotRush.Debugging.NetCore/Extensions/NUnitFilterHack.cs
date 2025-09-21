@@ -20,7 +20,7 @@ public static class NUnitFilterExtensions {
         var whereParts = new List<string>();
         if (typeFilters.Length > 0) {
             var vsFilters = typeFilters.Select(f => $"test==/{f}/").ToArray();
-            whereParts.Add("(" + string.Join(" or ", vsFilters) + ")");
+            whereParts.Add(string.Concat("(", string.Join(" or ", vsFilters), ")"));
         }
 
         var runSettingsFilter = ExtractTestCaseFilterFromRunSettings(runSettings);
@@ -124,27 +124,27 @@ public static class NUnitFilterExtensions {
                 return null;
 
             if (expr[0] == '(' && expr[^1] == ')' && MatchingParens(expr))
-                return Parse(expr.Substring(1, expr.Length - 2));
+                return Parse(expr.AsSpan(1, expr.Length - 2).ToString());
 
             var orParts = SplitTop(expr, '|');
             if (orParts.Count > 1) {
                 var parsedParts = orParts.Select(p => Parse(p) ?? string.Empty).Where(p => !string.IsNullOrEmpty(p));
                 var result = string.Join(" or ", parsedParts);
-                return "(" + result + ")";
+                return string.Concat("(", result, ")");
             }
 
             var andParts = SplitTop(expr, '&');
             if (andParts.Count > 1) {
                 var parsedParts = andParts.Select(p => Parse(p) ?? string.Empty).Where(p => !string.IsNullOrEmpty(p));
                 var result = string.Join(" and ", parsedParts);
-                return "(" + result + ")";
+                return string.Concat("(", result, ")");
             }
 
             if (expr.StartsWith("Category=", StringComparison.OrdinalIgnoreCase))
-                return "cat==" + expr.Substring("Category=".Length);
+                return string.Concat("cat==", expr.AsSpan("Category=".Length));
 
             if (expr.StartsWith("Category!=", StringComparison.OrdinalIgnoreCase))
-                return "cat!=" + expr.Substring("Category!=".Length);
+                return string.Concat("cat!=", expr.AsSpan("Category!=".Length));
 
             // unrecognized leaf (e.g., FullyQualifiedName, traits other than Category) → ignore
             return null;
@@ -171,12 +171,12 @@ public static class NUnitFilterExtensions {
                 if (c == '(') depth++;
                 else if (c == ')') depth--;
                 else if (c == op && depth == 0) {
-                    parts.Add(s.Substring(last, i - last));
+                    parts.Add(s.AsSpan(last, i - last).ToString());
                     last = i + 1;
                 }
             }
             if (last < s.Length)
-                parts.Add(s.Substring(last));
+                parts.Add(s.AsSpan(last).ToString());
             return parts;
         }
 
