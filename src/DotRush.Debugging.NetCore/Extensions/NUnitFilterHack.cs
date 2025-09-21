@@ -20,7 +20,7 @@ public static class NUnitFilterExtensions {
         var whereParts = new List<string>();
         if (typeFilters.Length > 0) {
             var vsFilters = typeFilters.Select(f => $"test==/{f}/").ToArray();
-            whereParts.Add(string.Concat("(", string.Join(" or ", vsFilters), ")"));
+            whereParts.Add("(" + string.Join(" or ", vsFilters) + ")");
         }
 
         var runSettingsFilter = ExtractTestCaseFilterFromRunSettings(runSettings);
@@ -87,8 +87,7 @@ public static class NUnitFilterExtensions {
 
             var assemblies = Directory.GetFiles(assemblyDirectory, "*.dll", SearchOption.TopDirectoryOnly);
             return assemblies.Any(a => Path.GetFileName(a).Contains("NUnit", StringComparison.OrdinalIgnoreCase));
-        }
-        catch (Exception) {
+        } catch (Exception) {
             return false;
         }
     }
@@ -124,20 +123,20 @@ public static class NUnitFilterExtensions {
                 return null;
 
             if (expr[0] == '(' && expr[^1] == ')' && MatchingParens(expr))
-                return Parse(expr.AsSpan(1, expr.Length - 2).ToString());
+                return Parse(expr.Substring(1, expr.Length - 2));
 
             var orParts = SplitTop(expr, '|');
             if (orParts.Count > 1) {
                 var parsedParts = orParts.Select(p => Parse(p) ?? string.Empty).Where(p => !string.IsNullOrEmpty(p));
                 var result = string.Join(" or ", parsedParts);
-                return string.Concat("(", result, ")");
+                return "(" + result + ")";
             }
 
             var andParts = SplitTop(expr, '&');
             if (andParts.Count > 1) {
                 var parsedParts = andParts.Select(p => Parse(p) ?? string.Empty).Where(p => !string.IsNullOrEmpty(p));
                 var result = string.Join(" and ", parsedParts);
-                return string.Concat("(", result, ")");
+                return "(" + result + ")";
             }
 
             if (expr.StartsWith("Category=", StringComparison.OrdinalIgnoreCase))
@@ -171,12 +170,12 @@ public static class NUnitFilterExtensions {
                 if (c == '(') depth++;
                 else if (c == ')') depth--;
                 else if (c == op && depth == 0) {
-                    parts.Add(s.AsSpan(last, i - last).ToString());
+                    parts.Add(s.Substring(last, i - last));
                     last = i + 1;
                 }
             }
             if (last < s.Length)
-                parts.Add(s.AsSpan(last).ToString());
+                parts.Add(s.Substring(last));
             return parts;
         }
 
