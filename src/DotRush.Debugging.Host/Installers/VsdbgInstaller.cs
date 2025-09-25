@@ -1,13 +1,13 @@
 using System.Collections.Immutable;
 using System.IO.Compression;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using DotRush.Common;
 using DotRush.Common.Extensions;
 using DotRush.Common.InteropV2;
 using DotRush.Common.Logging;
-using DotRush.Debugging.NetCore.Models;
 
-namespace DotRush.Debugging.NetCore.Installers;
+namespace DotRush.Debugging.Host.Installers;
 
 public class VsdbgInstaller : IDebuggerInstaller {
     //vsDbgUrl = "https://aka.ms/getvsdbgsh";
@@ -95,5 +95,29 @@ public class VsdbgInstaller : IDebuggerInstaller {
 
         var linkPath = Path.Combine(Path.GetDirectoryName(executablePath)!, "clrdbg" + RuntimeInfo.ExecExtension);
         File.Copy(executablePath, linkPath);
+    }
+
+    private class PackageInfo {
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("version")]
+        public string? Version { get; set; }
+
+        [JsonPropertyName("runtimeDependencies")]
+        public IEnumerable<RuntimeDependencyInfo>? RuntimeDependencies { get; set; }
+    }
+    private class RuntimeDependencyInfo {
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
+
+        [JsonPropertyName("platforms")]
+        public IEnumerable<string> Platforms { get; set; } = Enumerable.Empty<string>();
+
+        [JsonPropertyName("architectures")]
+        public IEnumerable<string> Architectures { get; set; } = Enumerable.Empty<string>();
+
+        [JsonPropertyName("url")]
+        public string? Url { get; set; }
     }
 }

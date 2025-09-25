@@ -2,16 +2,15 @@ import { ProcessArgumentBuilder } from './processArgumentBuilder';
 import { ProcessRunner } from './processRunner';
 import { Project } from '../models/project';
 import { Process } from '../models/process';
+import { Extensions } from '../extensions';
 import { Status } from '../models/status';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as rpc from 'vscode-jsonrpc/node';
-import * as vscode from 'vscode';
-import { Extensions } from '../extensions';
 
 
 export class Interop {
-    private static testHostPath: string;
+    private static devHostPath: string;
 
     public static execExtension: string;
     public static binariesPath: string;
@@ -19,23 +18,23 @@ export class Interop {
     public static initialize(extensionPath: string) {
         Interop.execExtension = process.platform === 'win32' ? '.exe' : '';
         Interop.binariesPath = path.join(extensionPath, "extension", "bin");
-        Interop.testHostPath = path.join(Interop.binariesPath, "TestHost", "testhost.dll");
+        Interop.devHostPath = path.join(Interop.binariesPath, "DevHost", "devhost.dll");
     }
 
     public static async getProject(projectFile: string): Promise<Project | undefined> {
         return await ProcessRunner.runAsync<Project>(new ProcessArgumentBuilder('dotnet')
-            .append(Interop.testHostPath)
+            .append(Interop.devHostPath)
             .append("-p")
             .append(projectFile));
     }
     public static async getProcesses(): Promise<Process[] | undefined> {
         return await ProcessRunner.runAsync<Process[]>(new ProcessArgumentBuilder('dotnet')
-            .append(Interop.testHostPath)
+            .append(Interop.devHostPath)
             .append("-ps"));
     }
     public static async installDebugger(id: string): Promise<Status | undefined> {
         return await ProcessRunner.runAsync<Status>(new ProcessArgumentBuilder('dotnet')
-            .append(Interop.testHostPath)
+            .append(Interop.devHostPath)
             .append(`-${id}`));
     }
     public static getPropertyValue(propertyName: string, projectPath: string, configuration: string | undefined, framework: string | undefined): string | undefined {
@@ -50,7 +49,7 @@ export class Interop {
         return ProcessRunner.createProcess(new ProcessArgumentBuilder(executable));
     }
     public static createTestHostRpc(configurator: (args: ProcessArgumentBuilder) => void): rpc.MessageConnection {
-        const builder = new ProcessArgumentBuilder('dotnet').append(Interop.testHostPath);
+        const builder = new ProcessArgumentBuilder('dotnet').append(Interop.devHostPath);
         configurator(builder);
 
         const childProcess = spawn(builder.getCommand(), builder.getArguments(), { stdio: ['pipe', 'pipe', 'pipe'], cwd: Extensions.getCurrentWorkingDirectory() });

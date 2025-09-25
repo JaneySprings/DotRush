@@ -4,7 +4,7 @@ using DotRush.Common.Extensions;
 using DotRush.Common.InteropV2;
 using DotRush.Common.Logging;
 
-namespace DotRush.Debugging.NetCore.Installers;
+namespace DotRush.Debugging.Host.Installers;
 
 public class NcdbgInstaller : IDebuggerInstaller {
     private const string LatestReleaseVersion = "3.1.2-1054";

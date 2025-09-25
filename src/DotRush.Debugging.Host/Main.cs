@@ -2,12 +2,12 @@
 using System.Diagnostics;
 using System.Text.Json;
 using DotRush.Common.MSBuild;
-using DotRush.Debugging.NetCore.Extensions;
-using DotRush.Debugging.NetCore.Installers;
-using DotRush.Debugging.NetCore.Models;
-using DotRush.Debugging.NetCore.TestPlatform;
+using DotRush.Debugging.Host.Extensions;
+using DotRush.Debugging.Host.Installers;
+using DotRush.Debugging.Host.TemplateEngine;
+using DotRush.Debugging.Host.TestPlatform;
 
-namespace DotRush.Debugging.NetCore;
+namespace DotRush.Debugging.Host;
 
 public class Program {
     public static int Main(string[] args) {
@@ -19,7 +19,8 @@ public class Program {
         var installVsdbgOption = new Option<bool>("--install-vsdbg", "-vsdbg");
         var installNcdbgOption = new Option<bool>("--install-ncdbg", "-ncdbg");
         var evaluateProjectOption = new Option<string>("--project", "-p");
-        var listProcessesOption = new Option<bool>("--processes", "-ps");
+        var processListOption = new Option<bool>("--processes", "-ps");
+        var templateListOption = new Option<bool>("--templates", "-t");
 
         var rootCommand = new RootCommand("DotRush Test Host") {
             Options = {
@@ -30,7 +31,8 @@ public class Program {
                 installVsdbgOption,
                 installNcdbgOption,
                 evaluateProjectOption,
-                listProcessesOption
+                processListOption,
+                templateListOption
             }
         };
         rootCommand.SetAction(result => {
@@ -44,7 +46,7 @@ public class Program {
                 InstallDebugger(new NcdbgInstaller(workingDirectory));
                 return;
             }
-            if (result.GetValue(listProcessesOption)) {
+            if (result.GetValue(processListOption)) {
                 var processes = Process.GetProcesses().Select(it => new ProcessInfo(it));
                 Console.WriteLine(JsonSerializer.Serialize(processes));
                 return;
@@ -52,6 +54,13 @@ public class Program {
             if (result.GetValue(evaluateProjectOption) is string projectPath) {
                 var project = MSBuildProjectsLoader.LoadProject(args[1]);
                 Console.WriteLine(JsonSerializer.Serialize(project));
+                return;
+            }
+            if (result.GetValue(templateListOption)) {
+                var templateHostAdapter = new TemplateHostAdapter();
+                var templates = templateHostAdapter.GetTemplatesAsync(CancellationToken.None).Result;
+                var projectTemplates = templates.Select(t => new ProjectTemplate(t));
+                Console.WriteLine(JsonSerializer.Serialize(projectTemplates));
                 return;
             }
 
