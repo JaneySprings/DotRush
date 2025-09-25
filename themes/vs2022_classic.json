@@ -11,8 +11,6 @@
         "editor.background": "#ffffff",
         "editorIndentGuide.background1": "#e8e8ec",
         "editorIndentGuide.activeBackground1": "#c2c3c9",
-        "editor.inlineValuesBackground": "#0000",
-        "editor.inlineValuesForeground": "#1a1c1e",
         "editorGroupHeader.tabsBackground": "#7081b8",
         "editorGroup.emptyBackground": "#7081b8",
         "tab.activeBackground": "#ffdea7",

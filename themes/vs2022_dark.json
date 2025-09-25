@@ -13,7 +13,7 @@
         "editorIndentGuide.background1": "#35343a", // outlineVariant
         "editorIndentGuide.activeBackground1": "#47464f", // outline
         "editor.inlineValuesBackground": "#0000",
-        "editor.inlineValuesForeground": "#e5e1e6", // onSurface
+        "editor.inlineValuesForeground": "#47464f", // outline
         "editorGroup.emptyBackground": "#141318", // surface
         "editorGroupHeader.tabsBackground": "#141318",  // surface
         "tab.activeBackground": "#313034",  // neutral20
