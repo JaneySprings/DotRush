@@ -6,6 +6,19 @@ export interface TemplateInfo {
     description: string;
     author: string;
     tags: string[];
+    parameters?: ParameterInfo[];
+}
+export interface ParameterInfo {
+    name: string;
+    type: string;
+    defaultValue?: string;
+    description?: string;
+    allowMultipleValues: boolean;
+    choices?: { [key: string]: ChoiceInfo };
+}
+export interface ChoiceInfo {
+    name: string;
+    description?: string;
 }
 
 export class TemplateInfoItem implements QuickPickItem {
