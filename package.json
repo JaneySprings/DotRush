@@ -151,6 +151,12 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "explorer",
+        "contents": "%view.title.createNewProject%"
+      }
+    ],
     "commands": [
       {
         "command": "dotrush.reloadWorkspace",
@@ -176,6 +182,11 @@
         "command": "dotrush.buildWorkspace",
         "category": "%extension.displayName%",
         "title": "%command.title.buildWorkspace%"
+      },
+      {
+        "command": "dotrush.createNewProject",
+        "category": "%extension.displayName%",
+        "title": "%command.title.createNewProject%"
       },
       {
         "command": "dotrush.build",

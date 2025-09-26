@@ -1,5 +1,6 @@
 import { ProcessArgumentBuilder } from './processArgumentBuilder';
 import { ProcessRunner } from './processRunner';
+import { TemplateInfo } from '../models/template';
 import { Project } from '../models/project';
 import { Process } from '../models/process';
 import { Extensions } from '../extensions';
@@ -31,6 +32,11 @@ export class Interop {
         return await ProcessRunner.runAsync<Process[]>(new ProcessArgumentBuilder('dotnet')
             .append(Interop.devHostPath)
             .append("-ps"));
+    }
+    public static async getTemplates(): Promise<TemplateInfo[] | undefined> {
+        return await ProcessRunner.runAsync<TemplateInfo[]>(new ProcessArgumentBuilder('dotnet')
+            .append(Interop.devHostPath)
+            .append("-t"));
     }
     public static async installDebugger(id: string): Promise<Status | undefined> {
         return await ProcessRunner.runAsync<Status>(new ProcessArgumentBuilder('dotnet')

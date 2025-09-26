@@ -11,6 +11,7 @@
 	"command.title.clean": "Clean",
 	"command.title.attachTraceProfiler": "Attach Trace Profiler",
 	"command.title.createHeapDump": "Create Heap Dump",
+	"command.title.createNewProject": "Create New Project",
 
 	"configuration.description.roslyn.workspaceProperties": "Additional MSBuild properties to pass to the workspace (e.g. Configuration=Debug).",
 	"configuration.description.roslyn.skipUnrecognizedProjects": "Determines if unrecognized projects are skipped when projects are opened.",
@@ -42,5 +43,7 @@
 	"configuration.description.msbuild.additionalTestArguments": "Additional arguments to pass to the test command.",
 
 	"configuration.description.testExplorer.preLaunchTask": "Task to run before launching the test run.",
-	"configuration.description.testExplorer.runSettingsPath": "Path to a .runsettings file to use when running tests."
+	"configuration.description.testExplorer.runSettingsPath": "Path to a .runsettings file to use when running tests.",
+
+	"view.title.createNewProject": "[Open a folder](command:vscode.openFolder) that contains a .NET project or create a new project.\n[Create New Project](command:dotrush.createNewProject)"
 }

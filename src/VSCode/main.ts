@@ -3,6 +3,7 @@ import { DebugAdapterController } from './controllers/debugAdapterController';
 import { LanguageServerController } from './controllers/languageServerController';
 import { StateController } from './controllers/stateController';
 import { StatusBarController } from './controllers/statusbarController';
+import { TemplateHostController } from './controllers/templateHostController';
 import { TestExplorerController } from './controllers/testExplorerController';
 import { ExternalTypeResolver } from './features/externalTypeResolver';
 import { ModulesView } from './features/modulesView';
@@ -23,6 +24,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		LanguageServerController.activate(context);
 	}
 
+	TemplateHostController.activate(context);
 	DebugAdapterController.activate(context);
 	ModulesView.feature.activate(context);
 	PerformanceView.feature.activate(context);
