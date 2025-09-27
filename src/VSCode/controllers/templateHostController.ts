@@ -9,6 +9,9 @@ export class TemplateHostController {
     public static activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdCreateNewProject, async () => {
             const items = await TemplateHostExtensions.getTemplateInfoGroups();
+            if (items.length === 0)
+                return;
+
             const templateItem = await vscode.window.showQuickPick(items, { placeHolder: res.messageSelectTemplateTitle, matchOnDescription: true, matchOnDetail: true });
             const template = (templateItem as TemplateInfoItem)?.item;
             if (template === undefined)
