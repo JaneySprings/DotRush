@@ -34,7 +34,7 @@ Task("server")
 	}));
 
 Task("debugging")
-	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.NetCore", "DotRush.Debugging.NetCore.csproj"), new DotNetPublishSettings {
+	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Host", "DotRush.Debugging.Host.csproj"), new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 		Configuration = configuration,
 		Runtime = runtime,
@@ -46,7 +46,7 @@ Task("debugging")
 	}))
 	.Does(() => {
 		if (!bundle) return;
-		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestHost", "testhost.dll")} -ncdbg");
+		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "DevHost", "devhost.dll")} -ncdbg");
 	});
 
 Task("diagnostics")
@@ -74,10 +74,10 @@ Task("test")
 	.Does(() => {
 		var debuggerDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "Debugger");
 		EnsureDirectoryDeleted(debuggerDirectory);
-		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestHost", "testhost.dll")} -ncdbg");
+		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "DevHost", "devhost.dll")} -ncdbg");
 
 		EnsureDirectoryDeleted(debuggerDirectory);
-		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "TestHost", "testhost.dll")} -vsdbg");
+		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "DevHost", "devhost.dll")} -vsdbg");
 	});
 
 Task("repack").DoesForEach(GetFiles(_Path.Combine(ArtifactsDirectory, "**", "*.vsix")), file => {

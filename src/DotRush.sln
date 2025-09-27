@@ -17,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Roslyn.Server", "Do
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Debugging.Mono", "DotRush.Debugging.Mono\DotRush.Debugging.Mono.csproj", "{C8FB5D14-0685-42AD-BC21-743539922ADE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Debugging.NetCore", "DotRush.Debugging.NetCore\DotRush.Debugging.NetCore.csproj", "{0FA0A58D-5ABD-4A8F-855F-3E8DB4FA3AF8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Debugging.Host", "DotRush.Debugging.Host\DotRush.Debugging.Host.csproj", "{0FA0A58D-5ABD-4A8F-855F-3E8DB4FA3AF8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotRush.Roslyn.Server.Tests", "DotRush.Roslyn.Server.Tests\DotRush.Roslyn.Server.Tests.csproj", "{7172931B-2F83-4138-BF74-8CD08EDD7923}"
 EndProject

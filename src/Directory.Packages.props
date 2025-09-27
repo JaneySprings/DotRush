@@ -24,6 +24,7 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(CodeAnalysisVersion)" />
+    <PackageVersion Include="Microsoft.TemplateEngine.IDE" Version="10.0.100-rc.1.25451.107" />
     <PackageVersion Include="System.CommandLine" Version="2.0.0-beta6.25358.103" />
   </ItemGroup>
 </Project>

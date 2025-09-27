@@ -3,8 +3,8 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <AssemblyName>testhost</AssemblyName>
-    <OutputPath>$(AssetsPath)TestHost</OutputPath>
+    <AssemblyName>devhost</AssemblyName>
+    <OutputPath>$(AssetsPath)DevHost</OutputPath>
     <PublishDir>$(OutputPath)</PublishDir>
   </PropertyGroup>
 
@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="Microsoft.TestPlatform.TranslationLayer" />
     <PackageReference Include="Microsoft.TestPlatform.TestHost" />
+    <PackageReference Include="Microsoft.TemplateEngine.IDE" />
     <PackageReference Include="System.CommandLine" />
     <PackageReference Include="StreamJsonRpc" />
   </ItemGroup>

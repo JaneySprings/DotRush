@@ -1,4 +1,4 @@
-namespace DotRush.Debugging.NetCore.Installers;
+namespace DotRush.Debugging.Host.Installers;
 
 public interface IDebuggerInstaller {
     void BeginInstallation();

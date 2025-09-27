@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DotRush.Debugging.NetCore.Models;
+namespace DotRush.Debugging.Host;
 
 public class Status {
     [JsonPropertyName("isSuccess")] public bool IsSuccess { get; set; }

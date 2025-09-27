@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text.Json.Serialization;
 using DotRush.Common.Extensions;
 
-namespace DotRush.Debugging.NetCore.Models;
+namespace DotRush.Debugging.Host;
 
 public class ProcessInfo {
     [JsonPropertyName("id")]

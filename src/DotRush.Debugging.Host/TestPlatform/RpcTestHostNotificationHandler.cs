@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client.Interfaces;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 using StreamJsonRpc;
 
-namespace DotRush.Debugging.NetCore.TestPlatform;
+namespace DotRush.Debugging.Host.TestPlatform;
 
 public class RpcTestHostNotificationHandler : ITestRunEventsHandler, ITestHostLauncher3 {
     private readonly CurrentClassLogger currentClassLogger;

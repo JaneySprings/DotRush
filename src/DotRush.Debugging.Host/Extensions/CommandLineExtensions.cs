@@ -1,7 +1,7 @@
 using System.CommandLine;
 using DotRush.Common.Extensions;
 
-namespace DotRush.Debugging.NetCore.Extensions;
+namespace DotRush.Debugging.Host.Extensions;
 
 internal static class CommandLineExtensions {
     public static string? GetTrimmedValue(this ParseResult result, Option<string> option) {

@@ -2,7 +2,7 @@ using System.Xml.Linq;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 
-namespace DotRush.Debugging.NetCore.Extensions;
+namespace DotRush.Debugging.Host.Extensions;
 
 // https://github.com/nunit/nunit-vs-adapter/issues/71
 public static class NUnitFilterExtensions {

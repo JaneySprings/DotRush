@@ -68,4 +68,18 @@ public static partial class MSBuildLocator {
 
         return vstestConsolePath;
     }
+
+    public static string GetTemplatePackagesLocation() {
+        var templatesPath = Path.Combine(GetRootLocation(), "templates");
+        if (!Directory.Exists(templatesPath))
+            throw new DirectoryNotFoundException("Could not find dotnet templates path");
+
+        var directories = Directory.GetDirectories(templatesPath);
+        if (directories.Length == 0)
+            throw new DirectoryNotFoundException("Could not find dotnet templates directories");
+
+        return directories
+            .OrderByDescending(d => Path.GetFileName(d))
+            .FirstOrDefault() ?? string.Empty;
+    }
 }
