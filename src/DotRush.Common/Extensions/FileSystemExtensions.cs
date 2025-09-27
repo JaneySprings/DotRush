@@ -46,6 +46,17 @@ public static class FileSystemExtensions {
             return false;
         }
     }
+    public static bool TryCopyFile(string sourceFilePath, string destinationFilePath, bool overwrite = true) {
+        if (!File.Exists(sourceFilePath))
+            return false;
+
+        try {
+            File.Copy(sourceFilePath, destinationFilePath, overwrite);
+            return true;
+        } catch {
+            return false;
+        }
+    }
     public static void MakeFileReadOnly(string filePath) {
         if (!File.Exists(filePath))
             return;

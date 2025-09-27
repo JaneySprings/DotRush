@@ -9,9 +9,7 @@ public static class RuntimeInfo {
     public static bool IsAarch64 => RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
 
     public static string ExecExtension => IsWindows ? ".exe" : "";
-    public static string HomeDirectory => IsWindows
-        ? Environment.GetEnvironmentVariable("USERPROFILE")!
-        : Environment.GetEnvironmentVariable("HOME")!;
+    public static string HomeDirectory => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     public static string ProgramX86Directory => IsWindows
         ? Environment.GetEnvironmentVariable("ProgramFiles(x86)")!
         : throw new PlatformNotSupportedException();
