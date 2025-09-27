@@ -1,10 +1,10 @@
 using DotRush.Common.Logging;
 using DotRush.Common.MSBuild;
-using DotRush.Debugging.NetCore.Extensions;
+using DotRush.Debugging.Host.Extensions;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 
-namespace DotRush.Debugging.NetCore.TestPlatform;
+namespace DotRush.Debugging.Host.TestPlatform;
 
 public class TestHostAdapter {
     private readonly VsTestConsoleWrapper vsTestConsoleWrapper;

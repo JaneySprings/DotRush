@@ -8,7 +8,6 @@ enum DotNetTarget {
     Build = 'build',
     Clean = 'clean',
     Restore = 'restore',
-    Test = 'test'
 }
 
 export class DotNetTaskProvider implements vscode.TaskProvider {
@@ -57,9 +56,6 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
             builder.conditional('--no-restore', () => Extensions.getSetting<boolean>(res.configIdMSBuildNoRestore, false));
             builder.conditional('--no-dependencies', () => Extensions.getSetting<boolean>(res.configIdMSBuildNoDependencies, false));
             Extensions.getSetting<string[]>(res.configIdMSBuildAdditionalBuildArguments)?.forEach(arg => builder.append(arg));
-        }
-        if (definition.target === DotNetTarget.Test) {
-            Extensions.getSetting<string[]>(res.configIdMSBuildAdditionalTestArguments)?.forEach(arg => builder.append(arg));
         }
 
         definition.args?.forEach((arg: string) => builder.override(arg));
