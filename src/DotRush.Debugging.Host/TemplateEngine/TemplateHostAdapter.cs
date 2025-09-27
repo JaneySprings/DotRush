@@ -72,6 +72,12 @@ public class TemplateHostAdapter {
             return;
 
         await templateEngineBootstrapper.InstallTemplatePackagesAsync(templatePackages.Select(t => new InstallRequest(t)), InstallationScope.Global, cancellationToken);
+        // templateDirectory = Path.Combine(MSBuildLocator.GetRootLocation(), "template-packs");
+        // if (Directory.Exists(templateDirectory)) {
+        //     templatePackages = Directory.GetFiles(templateDirectory, "*.nupkg", SearchOption.TopDirectoryOnly);
+        //     if (templatePackages.Length > 0)
+        //         await templateEngineBootstrapper.InstallTemplatePackagesAsync(templatePackages.Select(t => new InstallRequest(t)), InstallationScope.Global, cancellationToken);
+        // }
         isInitialized = true;
     }
     private static bool IsProjectTemplate(ITemplateInfo template) {
