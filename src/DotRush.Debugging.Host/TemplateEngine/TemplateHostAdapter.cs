@@ -1,4 +1,6 @@
 using System.Reflection;
+using DotRush.Common;
+using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Common.MSBuild;
 using Microsoft.TemplateEngine.Abstractions;
@@ -12,31 +14,31 @@ namespace DotRush.Debugging.Host.TemplateEngine;
 
 public class TemplateHostAdapter {
     private static readonly string HostVersion;
-    private static readonly Dictionary<string, string> Preferences;
     private readonly Bootstrapper templateEngineBootstrapper;
     private readonly CurrentClassLogger currentClassLogger;
+    private readonly string templatesTempPath;
     private bool isInitialized;
 
     static TemplateHostAdapter() {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
         HostVersion = version != null ? $"{version.Major}.{version.Minor}.{version.Build}" : "1.0.0";
-        Preferences = new Dictionary<string, string> {
-            { "prefs:language", "C#" }
-        };
     }
     public TemplateHostAdapter() {
-        var host = TemplateHostAdapter.CreateHost("dotnetcli");
+        var host = TemplateHostAdapter.CreateHost("dotrush_templateengine_host");
         currentClassLogger = new CurrentClassLogger(nameof(TemplateHostAdapter));
-        templateEngineBootstrapper = new Bootstrapper(host, virtualizeConfiguration: false, loadDefaultComponents: true);
+        templatesTempPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".templateengine-packages");
+        templateEngineBootstrapper = new Bootstrapper(host, virtualizeConfiguration: true, loadDefaultComponents: true);
     }
 
     public async Task<IEnumerable<ITemplateInfo>> GetTemplatesAsync(CancellationToken cancellationToken) {
         try {
-            if (!isInitialized)
-                await LoadEmbededTemplatePackages(cancellationToken);
-
+            if (!isInitialized) {
+                await LoadUserTemplatePackagesAsync(cancellationToken);
+                await LoadEmbededTemplatePackagesAsync(cancellationToken);
+                isInitialized = true;
+            }
             var templates = await templateEngineBootstrapper.GetTemplatesAsync(cancellationToken);
-            return templates.Where(IsProjectTemplate);
+            return templates.Where(IsProjectTemplate).ToHashSet(TemplateInfoEqualityComparer.Default);
         } catch (Exception ex) {
             currentClassLogger.Error(ex);
             return Array.Empty<ITemplateInfo>();
@@ -62,23 +64,38 @@ public class TemplateHostAdapter {
         }
     }
 
-    private async Task LoadEmbededTemplatePackages(CancellationToken cancellationToken) {
+    private async Task LoadEmbededTemplatePackagesAsync(CancellationToken cancellationToken) {
         var templateDirectory = MSBuildLocator.GetTemplatePackagesLocation();
-        if (string.IsNullOrEmpty(templateDirectory) || !Directory.Exists(templateDirectory))
+        await LoadTemplatePackagesAsync(templateDirectory, cancellationToken);
+
+        templateDirectory = Path.Combine(MSBuildLocator.GetRootLocation(), "template-packs");
+        await LoadTemplatePackagesAsync(templateDirectory, cancellationToken);
+    }
+    private async Task LoadUserTemplatePackagesAsync(CancellationToken cancellationToken) {
+        FileSystemExtensions.TryDeleteDirectory(templatesTempPath);
+        Directory.CreateDirectory(templatesTempPath);
+
+        // Shadow copy .nuget packages because templateEngine can't install it from cache directly
+        var templateDirectory = Path.Combine(RuntimeInfo.HomeDirectory, ".templateengine", "packages");
+        foreach (var path in Directory.EnumerateFiles(templateDirectory, "*.nupkg", SearchOption.TopDirectoryOnly)) {
+            var shadowCopyPath = Path.Combine(templatesTempPath, Path.GetFileName(path));
+            FileSystemExtensions.TryCopyFile(path, shadowCopyPath, true);
+        }
+
+        await LoadTemplatePackagesAsync(templatesTempPath, cancellationToken);
+        FileSystemExtensions.TryDeleteDirectory(templatesTempPath);
+    }
+    private async Task LoadTemplatePackagesAsync(string packagesDirectory, CancellationToken cancellationToken) {
+        if (string.IsNullOrEmpty(packagesDirectory) || !Directory.Exists(packagesDirectory))
             return;
 
-        var templatePackages = Directory.GetFiles(templateDirectory, "*.nupkg", SearchOption.TopDirectoryOnly);
+        var templatePackages = Directory.GetFiles(packagesDirectory, "*.nupkg", SearchOption.TopDirectoryOnly);
         if (templatePackages.Length == 0)
             return;
 
-        await templateEngineBootstrapper.InstallTemplatePackagesAsync(templatePackages.Select(t => new InstallRequest(t)), InstallationScope.Global, cancellationToken);
-        // templateDirectory = Path.Combine(MSBuildLocator.GetRootLocation(), "template-packs");
-        // if (Directory.Exists(templateDirectory)) {
-        //     templatePackages = Directory.GetFiles(templateDirectory, "*.nupkg", SearchOption.TopDirectoryOnly);
-        //     if (templatePackages.Length > 0)
-        //         await templateEngineBootstrapper.InstallTemplatePackagesAsync(templatePackages.Select(t => new InstallRequest(t)), InstallationScope.Global, cancellationToken);
-        // }
-        isInitialized = true;
+        var results = await templateEngineBootstrapper.InstallTemplatePackagesAsync(templatePackages.Select(t => new InstallRequest(t, force: true)), InstallationScope.Global, cancellationToken);
+        foreach (var result in results)
+            currentClassLogger.Debug($"[{result?.InstallRequest?.DisplayName}]: {result?.Error} - {result?.ErrorMessage}");
     }
     private static bool IsProjectTemplate(ITemplateInfo template) {
         if (!template.TagsCollection.ContainsKey("type"))
@@ -92,6 +109,6 @@ public class TemplateHostAdapter {
 
     private static DefaultTemplateEngineHost CreateHost(string hostIdentifier) {
         ArgumentException.ThrowIfNullOrEmpty(hostIdentifier);
-        return new DefaultTemplateEngineHost(hostIdentifier, HostVersion, Preferences);
+        return new DefaultTemplateEngineHost(hostIdentifier, HostVersion);
     }
 }

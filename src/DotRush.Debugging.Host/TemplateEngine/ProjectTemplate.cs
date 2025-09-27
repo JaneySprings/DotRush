@@ -21,6 +21,8 @@ public class ProjectTemplate {
     }
 
     private static bool IsUselessParameter(ITemplateParameter parameter) {
+        if (string.IsNullOrEmpty(parameter.DataType))
+            return true;
         if (parameter.DataType.Equals("choice", StringComparison.OrdinalIgnoreCase) && (parameter.Choices == null || parameter.Choices.Count <= 1))
             return true;
         if (parameter.Name.Equals("name", StringComparison.OrdinalIgnoreCase))
