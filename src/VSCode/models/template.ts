@@ -2,7 +2,7 @@ import { QuickPickItem } from "vscode";
 
 export interface TemplateInfo {
     name: string;
-    shortName: string;
+    identity: string;
     description: string;
     author: string;
     tags: string[];

@@ -1,57 +1,88 @@
 import { ChoiceInfo, TemplateInfo, TemplateInfoItem } from '../models/template';
 import { Interop } from '../interop/interop';
 import { Icons } from '../resources/icons';
-import * as vscode from 'vscode';
 import * as res from '../resources/constants';
+import * as vscode from 'vscode';
+import * as path from 'path';
 
 export class TemplateHostController {
     public static activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdCreateNewProject, async () => {
             const items = await TemplateHostExtensions.getTemplateInfoGroups();
-            const template = await vscode.window.showQuickPick(items, { placeHolder: res.messageSelectTemplateTitle, matchOnDescription: true, matchOnDetail: true });
+            const templateItem = await vscode.window.showQuickPick(items, { placeHolder: res.messageSelectTemplateTitle, matchOnDescription: true, matchOnDetail: true });
+            const template = (templateItem as TemplateInfoItem)?.item;
             if (template === undefined)
                 return;
 
-            const parameters = await TemplateHostController.collectTemplateParameters((template as TemplateInfoItem).item);
-            if (parameters === undefined)
+            const templateContext = await TemplateHostController.collectTemplateParameters(template);
+            if (templateContext === undefined)
                 return;
+
+            const creationResult = await TemplateHostController.createProject(template, templateContext);
+            if (creationResult)
+                await TemplateHostController.processCreatedProject(templateContext.getProjectPath());
         }));
     }
 
-    private static async collectTemplateParameters(template: TemplateInfo): Promise<TemplateParameters | undefined> {
-        const result = new TemplateParameters();
-        result.name = await TemplateHostExtensions.createStringCustomizer("Project Name");
-        if (result.name === undefined)
-            return undefined;
-        result.directory = await TemplateHostExtensions.createDirectoryCustomizer();
-        if (result.directory === undefined)
+    private static async collectTemplateParameters(template: TemplateInfo): Promise<TemplateContext | undefined> {
+        const name = await TemplateHostExtensions.createStringCustomizer(res.messageNewProjectName);
+        if (!name)
             return undefined;
 
+        const result = new TemplateContext(name);
         for (const param of template.parameters ?? []) {
             if (param.type === 'string' || param.type === 'text') {
                 const stringValue = await TemplateHostExtensions.createStringCustomizer(param.description ?? param.name);
-                if (stringValue !== undefined)
-                    result.cliArguments.push(`--${param.name}`, stringValue);
+                if (stringValue)
+                    result.cliArguments[param.name] = stringValue;
             }
             else if (param.type === 'bool') {
                 const boolValue = await TemplateHostExtensions.createBooleanCustomizer(param.description ?? param.name);
                 if (boolValue !== undefined)
-                    result.cliArguments.push(`--${param.name}`, boolValue ? "true" : "false");
+                    result.cliArguments[param.name] = boolValue ? "true" : "false";
             }
             else if (param.type === 'choice' && param.allowMultipleValues === true) {
                 const choiceValues = await TemplateHostExtensions.createChoiceCustomizer(param.description ?? param.name, param.choices ?? {});
                 if (choiceValues !== undefined && choiceValues.length > 0)
-                    result.cliArguments.push(`--${param.name}`, choiceValues.join(";"));
-
+                    result.cliArguments[param.name] = choiceValues.join(";");
             }
             else if (param.type === 'choice' && param.allowMultipleValues === false) {
                 const choiceValue = await TemplateHostExtensions.createSingleChoiceCustomizer(param.description ?? param.name, param.choices ?? {});
-                if (choiceValue !== undefined)
-                    result.cliArguments.push(`--${param.name}`, choiceValue);
+                if (choiceValue)
+                    result.cliArguments[param.name] = choiceValue;
             }
         }
 
+        result.directory = await TemplateHostExtensions.createDirectoryCustomizer();
+        if (!result.directory)
+            return undefined;
+
         return result;
+    }
+    private static async createProject(template: TemplateInfo, context: TemplateContext): Promise<boolean> {
+        return vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: `Creating '${context.name}' ...`,
+        }, async () => {
+            const result = await Interop.createTemplate(template.identity, context.getProjectPath(), context.cliArguments);
+            if (result === undefined || !result.isSuccess) {
+                vscode.window.showErrorMessage(result?.message ?? "Project creation failed.");
+                return false;
+            }
+            return true;
+        });
+    }
+    private static async processCreatedProject(path: string): Promise<void> {
+        if (vscode.workspace.workspaceFolders === undefined)
+            return await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(path));
+
+        const result = await vscode.window.showInformationMessage(res.messageNewProjectOpenAction, { modal: true }, res.messageAddToWorkspace, res.messageOpen);
+        if (result === res.messageAddToWorkspace) {
+            vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders.length, undefined, { uri: vscode.Uri.file(path) });
+            return;
+        }
+
+        await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(path));
     }
 }
 
@@ -103,10 +134,9 @@ export class TemplateHostExtensions {
         return selected?.map(s => s.value);
     }
     public static async createBooleanCustomizer(placeHolder: string): Promise<boolean | undefined> {
-        const choice = await vscode.window.showQuickPick([`${Icons.yes} Yes`, `${Icons.no} No`], { placeHolder: placeHolder, canPickMany: false, ignoreFocusOut: true });
-        if (choice === undefined)
-            return undefined;
-        return choice === "Yes";
+        const items = [{ label: `${Icons.yes} Yes`, value: true }, { label: `${Icons.no} No`, value: false }];
+        const choice = await vscode.window.showQuickPick(items, { placeHolder: placeHolder, canPickMany: false, ignoreFocusOut: true });
+        return choice?.value;
     }
     public static async createDirectoryCustomizer(): Promise<string | undefined> {
         const fileUri = await vscode.window.showOpenDialog({ canSelectMany: false, canSelectFolders: true, canSelectFiles: false });
@@ -117,8 +147,18 @@ export class TemplateHostExtensions {
     }
 }
 
-class TemplateParameters {
-    name?: string;
+class TemplateContext {
+    name: string;
     directory?: string;
-    cliArguments: string[] = [];
+    cliArguments: { [key: string]: string } = {};
+
+    constructor(name: string) {
+        this.name = name;
+    }
+
+    public getProjectPath(): string {
+        if (this.directory === undefined)
+            return '';
+        return path.join(this.directory, this.name);
+    }
 }

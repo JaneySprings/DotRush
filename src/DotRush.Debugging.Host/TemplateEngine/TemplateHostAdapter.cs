@@ -5,6 +5,7 @@ using Microsoft.TemplateEngine.Abstractions;
 using Microsoft.TemplateEngine.Abstractions.Installer;
 using Microsoft.TemplateEngine.Edge;
 using Microsoft.TemplateEngine.Edge.Settings;
+using Microsoft.TemplateEngine.Edge.Template;
 using Microsoft.TemplateEngine.IDE;
 
 namespace DotRush.Debugging.Host.TemplateEngine;
@@ -13,6 +14,7 @@ public class TemplateHostAdapter {
     private static readonly string HostVersion;
     private static readonly Dictionary<string, string> Preferences;
     private readonly Bootstrapper templateEngineBootstrapper;
+    private readonly CurrentClassLogger currentClassLogger;
     private bool isInitialized;
 
     static TemplateHostAdapter() {
@@ -24,6 +26,7 @@ public class TemplateHostAdapter {
     }
     public TemplateHostAdapter() {
         var host = TemplateHostAdapter.CreateHost("dotnetcli");
+        currentClassLogger = new CurrentClassLogger(nameof(TemplateHostAdapter));
         templateEngineBootstrapper = new Bootstrapper(host, virtualizeConfiguration: false, loadDefaultComponents: true);
     }
 
@@ -35,8 +38,27 @@ public class TemplateHostAdapter {
             var templates = await templateEngineBootstrapper.GetTemplatesAsync(cancellationToken);
             return templates.Where(IsProjectTemplate);
         } catch (Exception ex) {
-            CurrentSessionLogger.Error(ex);
+            currentClassLogger.Error(ex);
             return Array.Empty<ITemplateInfo>();
+        }
+    }
+    public async Task<Status> CreateTemplateAsync(string identity, string outputPath, Dictionary<string, string?>? parameters, CancellationToken cancellationToken) {
+        try {
+            var templates = await GetTemplatesAsync(cancellationToken);
+            var template = templates.FirstOrDefault(t => t.Identity == identity);
+            if (template == null)
+                return Status.Fail("Template not found");
+
+            parameters ??= new Dictionary<string, string?>();
+            var result = await templateEngineBootstrapper.CreateAsync(template, Path.GetFileName(outputPath), outputPath, parameters, cancellationToken: cancellationToken);
+            if (result == null || result.Status != CreationResultStatus.Success)
+                return Status.Fail(result?.ErrorMessage ?? "Unknown error");
+
+            currentClassLogger.Debug($"'{identity}' created at '{outputPath}' | '{result.OutputBaseDirectory}");
+            return Status.Success();
+        } catch (Exception ex) {
+            currentClassLogger.Error(ex);
+            return Status.Fail(ex.Message);
         }
     }
 
@@ -61,7 +83,6 @@ public class TemplateHostAdapter {
 
         return template.TagsCollection["type"] == "project" || template.TagsCollection["type"] == "solution";
     }
-
 
     private static DefaultTemplateEngineHost CreateHost(string hostIdentifier) {
         ArgumentException.ThrowIfNullOrEmpty(hostIdentifier);

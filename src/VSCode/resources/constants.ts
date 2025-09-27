@@ -53,6 +53,10 @@ export const messageSelectTemplateTitle = "Select a project template";
 export const messageReload = "Reload";
 export const messageInstallingComponentTitle = "Installing component: ";
 export const messageInstallingComponentFailed = "Component installation failed";
+export const messageNewProjectName = "Enter the new project name";
+export const messageNewProjectOpenAction = "Do you want to add the new project to the workspace or open it?";
+export const messageOpen = "Open";
+export const messageAddToWorkspace = "Add to Workspace";
 
 export const configIdRoslynProjectOrSolutionFiles = "roslyn.projectOrSolutionFiles";
 export const configIdDebuggerProjectAssembliesOnly = "debugger.projectAssembliesOnly";
@@ -64,6 +68,5 @@ export const configIdDebuggerAutomaticSourcelinkDownload = "debugger.automaticSo
 export const configIdMSBuildNoRestore = "msbuild.noRestore";
 export const configIdMSBuildNoDependencies = "msbuild.noDependencies";
 export const configIdMSBuildAdditionalBuildArguments = "msbuild.additionalBuildArguments";
-export const configIdMSBuildAdditionalTestArguments = "msbuild.additionalTestArguments";
 export const configIdTestExplorerPreLaunchTask = "testExplorer.preLaunchTask";
 export const configIdTestExplorerRunSettings = "testExplorer.runSettingsPath";

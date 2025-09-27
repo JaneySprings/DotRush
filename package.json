@@ -628,13 +628,6 @@
             "items": {
               "type": "string"
             }
-          },
-          "dotrush.msbuild.additionalTestArguments": {
-            "type": "array",
-            "description": "%configuration.description.msbuild.additionalTestArguments%",
-            "items": {
-              "type": "string"
-            }
           }
         }
       },

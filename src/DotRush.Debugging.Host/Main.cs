@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using System.Diagnostics;
 using System.Text.Json;
+using DotRush.Common.Extensions;
 using DotRush.Common.MSBuild;
 using DotRush.Debugging.Host.Extensions;
 using DotRush.Debugging.Host.Installers;
@@ -11,28 +12,20 @@ namespace DotRush.Debugging.Host;
 
 public class Program {
     public static int Main(string[] args) {
-        var attachDebuggerOption = new Option<bool>("--debug", "-d");
-        var testAssembliesOption = new Option<string[]>("--assemblies", "-a");
-        var testCaseFilterOption = new Option<string[]>("--filter", "-f");
-        var runSettingsOption = new Option<string>("--settings", "-s");
-        // Helpers
         var installVsdbgOption = new Option<bool>("--install-vsdbg", "-vsdbg");
         var installNcdbgOption = new Option<bool>("--install-ncdbg", "-ncdbg");
         var evaluateProjectOption = new Option<string>("--project", "-p");
         var processListOption = new Option<bool>("--processes", "-ps");
-        var templateListOption = new Option<bool>("--templates", "-t");
-
         var rootCommand = new RootCommand("DotRush Test Host") {
             Options = {
-                attachDebuggerOption,
-                testAssembliesOption,
-                testCaseFilterOption,
-                runSettingsOption,
                 installVsdbgOption,
                 installNcdbgOption,
                 evaluateProjectOption,
-                processListOption,
-                templateListOption
+                processListOption
+            },
+            Subcommands = {
+                CreateTestCommand(),
+                CreateNewCommand()
             }
         };
         rootCommand.SetAction(result => {
@@ -56,14 +49,25 @@ public class Program {
                 Console.WriteLine(JsonSerializer.Serialize(project));
                 return;
             }
-            if (result.GetValue(templateListOption)) {
-                var templateHostAdapter = new TemplateHostAdapter();
-                var templates = templateHostAdapter.GetTemplatesAsync(CancellationToken.None).Result;
-                var projectTemplates = templates.Select(t => new ProjectTemplate(t));
-                Console.WriteLine(JsonSerializer.Serialize(projectTemplates));
-                return;
-            }
+        });
 
+        return rootCommand.Parse(args).Invoke();
+    }
+
+    private static Command CreateTestCommand() {
+        var attachDebuggerOption = new Option<bool>("--debug", "-d");
+        var testAssembliesOption = new Option<string[]>("--assemblies", "-a");
+        var testCaseFilterOption = new Option<string[]>("--filter", "-f");
+        var runSettingsOption = new Option<string>("--settings", "-s");
+        var testCommand = new Command("test") {
+            Options = {
+                attachDebuggerOption,
+                testAssembliesOption,
+                testCaseFilterOption,
+                runSettingsOption
+            }
+        };
+        testCommand.SetAction(result => {
             var testHostAdapter = new TestHostAdapter(result.GetValue(attachDebuggerOption));
             testHostAdapter.StartSession(
                 result.GetTrimmedValue(testAssembliesOption),
@@ -71,8 +75,49 @@ public class Program {
                 result.GetTrimmedValue(runSettingsOption)
             );
         });
+        return testCommand;
+    }
+    private static Command CreateNewCommand() {
+        var templateListOption = new Option<bool>("--list", "-l");
+        var templateIdentityOption = new Option<string>("--identity", "-i");
+        var templateOutputOption = new Option<string>("--output", "-o");
+        var templateParametersOption = new Option<string>("--parameters", "-p");
+        var newCommand = new Command("new") {
+            Options = {
+                templateListOption,
+                templateIdentityOption,
+                templateOutputOption,
+                templateParametersOption
+            }
+        };
+        newCommand.SetAction(result => {
+            var templateHostAdapter = new TemplateHostAdapter();
+            if (result.GetValue(templateListOption)) {
+                var templates = templateHostAdapter.GetTemplatesAsync(CancellationToken.None).Result;
+                var projectTemplates = templates.Select(t => new ProjectTemplate(t));
+                Console.WriteLine(JsonSerializer.Serialize(projectTemplates));
+                return;
+            }
 
-        return rootCommand.Parse(args).Invoke();
+            var identity = result.GetTrimmedValue(templateIdentityOption);
+            var output = result.GetTrimmedValue(templateOutputOption);
+            if (string.IsNullOrEmpty(identity) || string.IsNullOrEmpty(output)) {
+                Console.WriteLine(JsonSerializer.Serialize(Status.Fail("Template identity and output path are required")));
+                return;
+            }
+
+            var parameters = new Dictionary<string, string?>();
+            var parameterString = result.GetTrimmedValue(templateParametersOption);
+            if (!string.IsNullOrEmpty(parameterString))
+                parameters = SafeExtensions.Invoke(() => JsonSerializer.Deserialize<Dictionary<string, string?>>(parameterString));
+
+            var status = templateHostAdapter.CreateTemplateAsync(identity, output, parameters, CancellationToken.None).Result;
+            if (status == null)
+                Console.WriteLine(JsonSerializer.Serialize(Status.Fail("Operation cancelled")));
+            else
+                Console.WriteLine(JsonSerializer.Serialize(status));
+        });
+        return newCommand;
     }
 
     private static void InstallDebugger(IDebuggerInstaller installer) {
