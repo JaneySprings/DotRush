@@ -75,9 +75,12 @@ public class TemplateHostAdapter {
         FileSystemExtensions.TryDeleteDirectory(templatesTempPath);
         Directory.CreateDirectory(templatesTempPath);
 
+        var templatesDirectory = Path.Combine(RuntimeInfo.HomeDirectory, ".templateengine", "packages");
+        if (!Directory.Exists(templatesDirectory))
+            return;
+
         // Shadow copy .nuget packages because templateEngine can't install it from cache directly
-        var templateDirectory = Path.Combine(RuntimeInfo.HomeDirectory, ".templateengine", "packages");
-        foreach (var path in Directory.EnumerateFiles(templateDirectory, "*.nupkg", SearchOption.TopDirectoryOnly)) {
+        foreach (var path in Directory.EnumerateFiles(templatesDirectory, "*.nupkg", SearchOption.TopDirectoryOnly)) {
             var shadowCopyPath = Path.Combine(templatesTempPath, Path.GetFileName(path));
             FileSystemExtensions.TryCopyFile(path, shadowCopyPath, true);
         }
