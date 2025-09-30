@@ -19,6 +19,9 @@ public static class PositionExtensions {
         var linePosition = sourceText.Lines.GetLinePosition(offset);
         return new ProtocolModels.Position(linePosition.Line, linePosition.Character);
     }
+    public static ProtocolModels.Position ToPosition(this LinePosition linePosition) {
+        return new ProtocolModels.Position(linePosition.Line, linePosition.Character);
+    }
 
     public static ProtocolModels.DocumentRange ToRange(this LinePositionSpan span) {
         return new ProtocolModels.DocumentRange(

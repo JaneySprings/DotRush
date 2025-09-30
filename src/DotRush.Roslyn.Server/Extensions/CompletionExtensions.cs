@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using DotRush.Roslyn.CodeAnalysis.Reflection;
 using DotRush.Roslyn.Server.Services;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
@@ -9,7 +10,11 @@ using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.Complet
 
 namespace DotRush.Roslyn.Server.Extensions;
 
-public static class CompletionExtensions {
+public static partial class CompletionExtensions {
+    [GeneratedRegex(@"([\\\$}])")]
+    private static partial Regex CreateEscapeRegex();
+    private static Regex EscapeRegex = CreateEscapeRegex();
+
     public static ProtocolModels.CompletionItemKind ToCompletionItemKind(this CompletionItem item) {
         if (item.Tags.Length == 0)
             return ProtocolModels.CompletionItemKind.Text;
@@ -76,6 +81,12 @@ public static class CompletionExtensions {
             NewText = change.NewText ?? string.Empty,
             Range = change.Span.ToRange(sourceText)
         };
+    }
+
+    public static string Escape(string snippet) {
+        if (snippet == null)
+            return string.Empty;
+        return EscapeRegex.Replace(snippet, @"\$1");
     }
 }
 
