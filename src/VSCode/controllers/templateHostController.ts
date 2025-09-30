@@ -90,7 +90,12 @@ export class TemplateHostController {
 }
 
 export class TemplateHostExtensions {
+    private static templateItemsCache: vscode.QuickPickItem[];
+
     public static async getTemplateInfoGroups(): Promise<vscode.QuickPickItem[]> {
+        if (TemplateHostExtensions.templateItemsCache !== undefined)
+            return TemplateHostExtensions.templateItemsCache;
+
         const templates = await Interop.getTemplates();
         if (templates === undefined || templates.length === 0)
             return [];
@@ -108,6 +113,8 @@ export class TemplateHostExtensions {
             items.push({ label: author, kind: vscode.QuickPickItemKind.Separator });
             items.push(...infos);
         }
+
+        TemplateHostExtensions.templateItemsCache = items;
         return items;
     }
 
