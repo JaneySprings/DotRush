@@ -69,6 +69,17 @@ public static partial class CompletionExtensions {
 
         return false;
     }
+    public static bool ShouldResolveImmediately(this CompletionItem item) {
+        if (!item.IsComplexTextEdit)
+            return false;
+
+        if (item.HasPriority() || item.Tags.Contains(WellKnownTags.Snippet))
+            return true; // .for case
+        if (item.Tags.Contains(WellKnownTags.Method))
+            return true; // override case
+
+        return false;
+    }
 
     public static TextEdit ToTextEdit(this TextChange change, SourceText sourceText) {
         return new TextEdit() {

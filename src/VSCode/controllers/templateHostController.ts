@@ -34,23 +34,24 @@ export class TemplateHostController {
 
         const result = new TemplateContext(name);
         for (const param of template.parameters ?? []) {
+            const description = param.description ? param.description : param.name;
             if (param.type === 'string' || param.type === 'text') {
-                const stringValue = await TemplateHostExtensions.createStringCustomizer(param.description ?? param.name);
+                const stringValue = await TemplateHostExtensions.createStringCustomizer(description);
                 if (stringValue)
                     result.cliArguments[param.name] = stringValue;
             }
             else if (param.type === 'bool') {
-                const boolValue = await TemplateHostExtensions.createBooleanCustomizer(param.description ?? param.name);
+                const boolValue = await TemplateHostExtensions.createBooleanCustomizer(description);
                 if (boolValue !== undefined)
                     result.cliArguments[param.name] = boolValue ? "true" : "false";
             }
             else if (param.type === 'choice' && param.allowMultipleValues === true) {
-                const choiceValues = await TemplateHostExtensions.createChoiceCustomizer(param.description ?? param.name, param.choices ?? {});
+                const choiceValues = await TemplateHostExtensions.createChoiceCustomizer(description, param.choices ?? {});
                 if (choiceValues !== undefined && choiceValues.length > 0)
                     result.cliArguments[param.name] = choiceValues.join(";");
             }
             else if (param.type === 'choice' && param.allowMultipleValues === false) {
-                const choiceValue = await TemplateHostExtensions.createSingleChoiceCustomizer(param.description ?? param.name, param.choices ?? {});
+                const choiceValue = await TemplateHostExtensions.createSingleChoiceCustomizer(description, param.choices ?? {});
                 if (choiceValue)
                     result.cliArguments[param.name] = choiceValue;
             }
@@ -80,12 +81,10 @@ export class TemplateHostController {
             return await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(path));
 
         const result = await vscode.window.showInformationMessage(res.messageNewProjectOpenAction, { modal: true }, res.messageAddToWorkspace, res.messageOpen);
-        if (result === res.messageAddToWorkspace) {
+        if (result === res.messageAddToWorkspace)
             vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders.length, undefined, { uri: vscode.Uri.file(path) });
-            return;
-        }
-
-        await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(path));
+        else if (result === res.messageOpen)
+            await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(path));
     }
 }
 

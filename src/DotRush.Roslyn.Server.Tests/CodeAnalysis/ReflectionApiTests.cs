@@ -170,4 +170,11 @@ public class ReflectionApiTests {
         Assert.That(InternalInlineHint.replacementTextChangeField!.FieldType, Is.EqualTo(typeof(TextChange?)));
         Assert.That(InternalInlineHint.displatPartsField!.FieldType, Is.EqualTo(typeof(ImmutableArray<TaggedText>)));
     }
+
+    [Test]
+    public void CompletionItemProviderNameTest() {
+        var item = CompletionItem.Create("testItem");
+        var providerName = InternalCompletionItem.GetProviderName(item);
+        Assert.That(providerName, Is.Null);
+    }
 }
