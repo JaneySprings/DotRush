@@ -540,7 +540,7 @@
           },
           "dotrush.roslyn.dispatcherType": {
             "type": "string",
-            "default": "SingleThread",
+            "default": "MultiThread",
             "description": "%configuration.description.roslyn.dispatcherType%",
             "enum": [
               "SingleThread",
