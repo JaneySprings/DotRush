@@ -56,8 +56,9 @@ public class TemplateHostAdapter {
             if (result == null || result.Status != CreationResultStatus.Success)
                 return Status.Fail(result?.ErrorMessage ?? "Unknown error");
 
+            // var outputFiles = result.CreationResult?.PrimaryOutputs?.Select(x => x.Path)?.ToArray();
             currentClassLogger.Debug($"'{identity}' created at '{outputPath}' | '{result.OutputBaseDirectory}");
-            return Status.Success();
+            return Status.Success(/*payload: outputFiles*/);
         } catch (Exception ex) {
             currentClassLogger.Error(ex);
             return Status.Fail(ex.Message);

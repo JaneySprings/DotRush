@@ -50,9 +50,11 @@ export class LanguageServerController {
             if (value === res.messageReload)
                 LanguageServerController.reload();
         }));
+        context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(e => {
+            if (e.added.length > 0) // Used by TemplateHostController when adding new project to workspace
+                LanguageServerController.showQuickPickTargets();
+        }));
         context.subscriptions.push(vscode.tasks.onDidStartTask(e => {
-            if (!Extensions.getSetting<boolean>('dotrush.msbuild.collectDiagnosticsOnBuild', true)) // TODO: publish or remove this
-                return;
             if (e.execution.task.definition.type === res.taskDefinitionId && e.execution.task.name.includes('Build'))
                 LanguageServerController.client.sendNotification('dotrush/solutionDiagnostics', {});
         }));
@@ -99,8 +101,7 @@ export class LanguageServerController {
             return;
 
         await Extensions.putSetting(res.configIdRoslynProjectOrSolutionFiles, result, vscode.ConfigurationTarget.Workspace);
-        if (LanguageServerController.running)
-            LanguageServerController.reload();
+        LanguageServerController.reload();
     }
     private static async shouldQuickPickTargets(): Promise<boolean> {
         const projectOrSolutionFiles = Extensions.getSetting<string[]>(res.configIdRoslynProjectOrSolutionFiles);
