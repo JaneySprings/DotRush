@@ -546,9 +546,6 @@
               "SingleThread",
               "MultiThread",
               "PerformanceCounter"
-            ],
-            "tags": [
-              "experimental"
             ]
           },
           "dotrush.roslyn.dotnetSdkDirectory": {
