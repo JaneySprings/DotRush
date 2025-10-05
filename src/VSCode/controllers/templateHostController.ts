@@ -1,6 +1,7 @@
 import { ChoiceInfo, TemplateInfo, TemplateInfoItem } from '../models/template';
 import { Interop } from '../interop/interop';
 import { Icons } from '../resources/icons';
+import { Extensions } from '../extensions';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -81,8 +82,11 @@ export class TemplateHostController {
             return await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(path));
 
         const result = await vscode.window.showInformationMessage(res.messageNewProjectOpenAction, { modal: true }, res.messageAddToWorkspace, res.messageOpen);
-        if (result === res.messageAddToWorkspace)
+        if (result === res.messageAddToWorkspace) {
             vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders.length, undefined, { uri: vscode.Uri.file(path) });
+            await Extensions.waitForWorkspaceFoldersChange(); //TODO: may hang if something goes wrong
+            vscode.commands.executeCommand(res.commandIdPickTargets);
+        }
         else if (result === res.messageOpen)
             await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(path));
     }

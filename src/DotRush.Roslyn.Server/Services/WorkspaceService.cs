@@ -35,10 +35,8 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
     public async Task LoadAsync(IEnumerable<WorkspaceFolder>? workspaceFolderUris, CancellationToken cancellationToken) {
         var workspaceFolders = workspaceFolderUris?.Select(it => it.Uri.FileSystemPath).ToArray();
         var targets = GetProjectOrSolutionFiles(workspaceFolders);
-        if (targets == null) {
-            serverFacade?.ShowError(Resources.ProjectOrSolutionFileSpecificationRequired);
-            return;
-        }
+        if (targets == null)
+            return; //serverFacade?.ShowError(Resources.ProjectOrSolutionFileSpecificationRequired);
 
         await LoadAsync(targets, cancellationToken).ConfigureAwait(false);
         StartObserving(workspaceFolders);

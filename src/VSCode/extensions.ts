@@ -4,8 +4,9 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 export class Extensions {
-    public static readonly projectExtPattern: string = '.csproj';
-    public static readonly solutionExtPattern: string = '.{sln,slnf,slnx}';
+    public static readonly projectPattern: RegExp = new RegExp('.*\\.(csproj|fsproj|vbproj)$');
+    public static readonly csProjectPattern: RegExp = new RegExp('.*\\.(csproj)$');
+    public static readonly solutionPattern: RegExp = new RegExp('.*\\.(sln|slnf|slnx)$');
 
     public static getSetting<TValue>(id: string, fallback?: TValue): TValue | undefined {
         return vscode.workspace.getConfiguration(res.extensionId).get<TValue>(id) ?? fallback;
@@ -17,20 +18,33 @@ export class Extensions {
         return vscode.env.appName.includes(res.vscodeAppName) ? official : fork;
     }
 
-    public static async getProjectFiles(): Promise<string[]> {
-        return (await Extensions.findFiles(undefined, Extensions.projectExtPattern)).map(x => x.fsPath);
+    public static async getProjectFiles(csharpOnly: boolean = false): Promise<string[]> {
+        const extPattern = csharpOnly ? Extensions.csProjectPattern : Extensions.projectPattern;
+        return (await Extensions.findFiles(undefined, extPattern)).map(x => x.fsPath);
     }
     public static async getSolutionFiles(): Promise<string[]> {
-        return (await Extensions.findFiles(undefined, Extensions.solutionExtPattern)).map(x => x.fsPath);
+        return (await Extensions.findFiles(undefined, Extensions.solutionPattern)).map(x => x.fsPath);
     }
-    public static async selectProjectOrSolutionFile(baseUri?: vscode.Uri): Promise<string | undefined> {
-        if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath).startsWith('.sln'))
+    public static isProjectFile(filePath?: string, csharpOnly: boolean = false): boolean {
+        if (filePath === undefined)
+            return false;
+        const extPattern = csharpOnly ? Extensions.csProjectPattern : Extensions.projectPattern;
+        return path.extname(filePath).match(extPattern) !== null;
+    }
+    public static isSolutionFile(filePath?: string): boolean {
+        if (filePath === undefined)
+            return false;
+        return path.extname(filePath).match(Extensions.solutionPattern) !== null;
+    }
+
+    public static async selectProjectOrSolutionFile(baseUri?: vscode.Uri, csharpOnly: boolean = false): Promise<string | undefined> {
+        if (baseUri?.fsPath !== undefined && Extensions.isSolutionFile(baseUri?.fsPath))
             return baseUri.fsPath;
-        if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath) === '.csproj')
+        if (baseUri?.fsPath !== undefined && Extensions.isProjectFile(baseUri?.fsPath, csharpOnly))
             return baseUri.fsPath;
 
-        const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionExtPattern);
-        const projectFiles = await Extensions.findFiles(baseUri, Extensions.projectExtPattern);
+        const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionPattern);
+        const projectFiles = await Extensions.findFiles(baseUri, csharpOnly ? Extensions.csProjectPattern : Extensions.projectPattern);
         if (projectFiles.length === 0 && solutionFiles.length === 0) {
             vscode.window.showErrorMessage(res.messageNoProjectFileFound);
             return undefined;
@@ -52,9 +66,9 @@ export class Extensions {
         const selectedItem = await vscode.window.showQuickPick<any>(items, { placeHolder: res.messageSelectProjectTitle });
         return selectedItem?.item;
     }
-    public static async selectProjectOrSolutionFiles(baseUri?: vscode.Uri): Promise<string[] | undefined> {
-        const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionExtPattern);
-        const projectFiles = await Extensions.findFiles(baseUri, Extensions.projectExtPattern);
+    public static async selectProjectOrSolutionFiles(baseUri?: vscode.Uri, csharpOnly: boolean = false): Promise<string[] | undefined> {
+        const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionPattern);
+        const projectFiles = await Extensions.findFiles(baseUri, csharpOnly ? Extensions.csProjectPattern : Extensions.projectPattern);
         if (projectFiles.length === 0 && solutionFiles.length === 0) {
             vscode.window.showErrorMessage(res.messageNoProjectFileFound);
             return undefined;
@@ -72,11 +86,11 @@ export class Extensions {
         const selectedItems = await vscode.window.showQuickPick(items, { canPickMany: true, placeHolder: res.messageSelectTargetTitle });
         return selectedItems?.map((it: any) => it.item);
     }
-    public static async selectProjecFile(baseUri?: vscode.Uri): Promise<string | undefined> {
-        if (baseUri?.fsPath !== undefined && path.extname(baseUri?.fsPath) === '.csproj')
+    public static async selectProjecFile(baseUri?: vscode.Uri, csharpOnly: boolean = false): Promise<string | undefined> {
+        if (baseUri?.fsPath !== undefined && Extensions.isProjectFile(baseUri?.fsPath, csharpOnly))
             return baseUri.fsPath;
 
-        const projectFiles = await Extensions.findFiles(baseUri, Extensions.projectExtPattern);
+        const projectFiles = await Extensions.findFiles(baseUri, csharpOnly ? Extensions.csProjectPattern : Extensions.projectPattern);
         if (projectFiles.length === 0) {
             vscode.window.showErrorMessage(res.messageNoProjectFileFound);
             return undefined;
@@ -100,6 +114,14 @@ export class Extensions {
             });
         });
         return executionExitCode === 0;
+    }
+    public static async waitForWorkspaceFoldersChange(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            const disposable = vscode.workspace.onDidChangeWorkspaceFolders(e => {
+                resolve();
+                disposable.dispose();
+            });
+        });
     }
     public static async getTask(taskName?: string): Promise<vscode.Task | undefined> {
         if (taskName === undefined)
@@ -142,14 +164,16 @@ export class Extensions {
         return { uri: document?.uri?.toString() };
     }
 
-    private static async findFiles(baseUri: vscode.Uri | undefined, extension: string): Promise<vscode.Uri[]> {
-        if (baseUri?.fsPath !== undefined && path.extname(baseUri.fsPath) === extension)
+    private static async findFiles(baseUri: vscode.Uri | undefined, filter: RegExp): Promise<vscode.Uri[]> {
+        if (baseUri?.fsPath !== undefined && baseUri.fsPath.match(filter) !== null)
             return [baseUri];
 
         const result = baseUri?.fsPath === undefined
-            ? await vscode.workspace.findFiles(`**/*${extension}`, null)
-            : await vscode.workspace.findFiles(new vscode.RelativePattern(baseUri, `**/*${extension}`), null);
+            ? await vscode.workspace.findFiles('**/*.*', null)
+            : await vscode.workspace.findFiles(new vscode.RelativePattern(baseUri, '**/*.*'), null);
 
-        return result.sort((a, b) => path.basename(a.fsPath).localeCompare(path.basename(b.fsPath)));
+        return result
+            .filter(it => it.fsPath.match(filter) !== null)
+            .sort((a, b) => path.basename(a.fsPath).localeCompare(path.basename(b.fsPath)));
     }
 }
