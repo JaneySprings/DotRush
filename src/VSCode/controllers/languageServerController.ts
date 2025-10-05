@@ -43,16 +43,12 @@ export class LanguageServerController {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickTargets, () => LanguageServerController.showQuickPickTargets()))
         context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async e => {
             const extName = path.extname(e.fileName);
-            if (extName !== '.csproj' && extName !== '.props')
+            if (!Extensions.isProjectFile(e.fileName, true) && extName !== '.props')
                 return;
 
             const value = await vscode.window.showWarningMessage(res.messageProjectChanged, res.messageReload)
             if (value === res.messageReload)
                 LanguageServerController.reload();
-        }));
-        context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(e => {
-            if (e.added.length > 0) // Used by TemplateHostController when adding new project to workspace
-                LanguageServerController.showQuickPickTargets();
         }));
         context.subscriptions.push(vscode.tasks.onDidStartTask(e => {
             if (e.execution.task.definition.type === res.taskDefinitionId && e.execution.task.name.includes('Build'))
@@ -96,7 +92,7 @@ export class LanguageServerController {
     }
 
     private static async showQuickPickTargets(): Promise<void> {
-        const result = await Extensions.selectProjectOrSolutionFiles();
+        const result = await Extensions.selectProjectOrSolutionFiles(undefined, true);
         if (result === undefined)
             return;
 
@@ -109,7 +105,7 @@ export class LanguageServerController {
             return false;
 
         const solutions = await Extensions.getSolutionFiles();
-        const projects = await Extensions.getProjectFiles();
+        const projects = await Extensions.getProjectFiles(true);
         if (solutions.length === 1 || projects.length === 1)
             return false;
 

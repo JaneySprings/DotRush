@@ -66,7 +66,6 @@ Task("test")
 	.Does(() => DotNetTest(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server.Tests", "DotRush.Roslyn.Server.Tests.csproj"),
 		new DotNetTestSettings {  
 			Configuration = configuration,
-			Verbosity = DotNetVerbosity.Quiet,
 			ResultsDirectory = ArtifactsDirectory,
 			Loggers = new[] { "trx" }
 		}

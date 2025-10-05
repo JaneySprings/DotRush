@@ -29,7 +29,7 @@ export class StatusBarController {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveConfiguration, () => StatusBarController.activeConfiguration));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveTargetFramework, () => StatusBarController.activeFramework));
         context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async e => {
-            if (path.extname(e.fileName) === '.csproj' && StatusBarController.activeProject !== undefined)
+            if (Extensions.isProjectFile(e.fileName) && StatusBarController.activeProject !== undefined)
                 StatusBarController.updateStatusBarState(StatusBarController.activeProject.path);
         }));
 
