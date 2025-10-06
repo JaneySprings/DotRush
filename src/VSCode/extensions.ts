@@ -83,7 +83,7 @@ export class Extensions {
             items.push(ProjectOrSolutionItem.projectSeparator);
             items.push(...projectFiles.map(it => new ProjectOrSolutionItem(it.fsPath)));
         }
-        const selectedItems = await vscode.window.showQuickPick(items, { canPickMany: true, placeHolder: res.messageSelectTargetTitle });
+        const selectedItems = await vscode.window.showQuickPick(items, { canPickMany: true, placeHolder: res.messageSelectTargetTitle, ignoreFocusOut: true });
         return selectedItems?.map((it: any) => it.item);
     }
     public static async selectProjecFile(baseUri?: vscode.Uri, csharpOnly: boolean = false): Promise<string | undefined> {

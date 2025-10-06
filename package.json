@@ -38,7 +38,7 @@
   "activationEvents": [
     "onLanguage:csharp",
     "onDebug",
-    "workspaceContains:**/*.{csproj,sln,cs,xaml}"
+    "workspaceContains:**/*.{*proj,sln,cs,xaml}"
   ],
   "main": "extension/main.js",
   "scripts": {
@@ -96,22 +96,22 @@
         {
           "command": "dotrush.setStartupProject",
           "group": "dotnet_0@1",
-          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname == .csproj)"
+          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname =~ /.*proj/)"
         },
         {
           "command": "dotrush.build",
           "group": "dotnet_1@1",
-          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname == .csproj || resourceExtname =~ /.sln*/)"
+          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname =~ /.*proj/ || resourceExtname =~ /.sln*/)"
         },
         {
           "command": "dotrush.restore",
           "group": "dotnet_1@2",
-          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname == .csproj || resourceExtname =~ /.sln*/)"
+          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname =~ /.*proj/ || resourceExtname =~ /.sln*/)"
         },
         {
           "command": "dotrush.clean",
           "group": "dotnet_1@3",
-          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname == .csproj || resourceExtname =~ /.sln*/)"
+          "when": "dotrush.statusBarEnabled && (explorerResourceIsFolder || resourceExtname =~ /.*proj/ || resourceExtname =~ /.sln*/)"
         }
       ],
       "commandPalette": [
@@ -230,6 +230,7 @@
         "languages": [
           "csharp",
           "fsharp",
+          "vb",
           "razor",
           "aspnetcorerazor",
           "xml"
@@ -366,7 +367,8 @@
         "label": "Unity Debugger",
         "languages": [
           "csharp",
-          "fsharp"
+          "fsharp",
+          "vb"
         ],
         "initialConfigurations": [
           {
@@ -424,6 +426,9 @@
       },
       {
         "language": "fsharp"
+      },
+      {
+        "language": "vb"
       },
       {
         "language": "razor"
