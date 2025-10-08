@@ -13,7 +13,7 @@ var runtime = Argument("arch", RuntimeInformation.RuntimeIdentifier);
 var bundle = HasArgument("bundle");
 
 Setup(context => {
-	var date = DateTime.Now;
+	var date = DateTime.Now.AddDays(1);
 	version = $"{DateTime.Now.ToString("yy")}.{date.ToString("%M")}.{date.DayOfYear}";
 	EnsureDirectoryExists(ArtifactsDirectory);
 });

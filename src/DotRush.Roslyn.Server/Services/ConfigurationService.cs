@@ -65,13 +65,13 @@ public class ConfigurationService {
         ChangeConfiguration(sections);
     }
     private void ChangeConfiguration(ConfigurationSection? section) {
-        initializeTaskSource.TrySetResult();
         if (section?.DotRush?.Roslyn == null) {
             currentClassLogger.Error("Configuration section is not a valid document.");
             return;
         }
 
         configuration = section.DotRush.Roslyn;
+        initializeTaskSource.TrySetResult();
         UpdateServerDispatcher(configuration.DispatcherType);
         currentClassLogger.Debug("configuration updated");
     }
