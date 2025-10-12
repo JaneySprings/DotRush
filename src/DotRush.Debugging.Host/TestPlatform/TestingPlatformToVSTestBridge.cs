@@ -20,7 +20,7 @@ public class TestingPlatformToVSTestBridge : IDisposable {
 
         var formatter = new SystemTextJsonFormatter { JsonSerializerOptions = JsonSerializerConfig.Options };
         mtpRpc = new JsonRpc(new HeaderDelimitedMessageHandler(stream, stream, formatter), this);
-        mtpRpc.TraceSource.Switch.Level = SourceLevels.All;
+        mtpRpc.TraceSource.Switch.Level = SourceLevels.Off;
         mtpRpc.StartListening();
     }
     public static TestingPlatformToVSTestBridge Attach(TcpListener listener, int mtpPid, bool attachDebugger) {
@@ -56,11 +56,6 @@ public class TestingPlatformToVSTestBridge : IDisposable {
         CompleteTestRun(isCanceled: true);
     }
 
-    // [JsonRpcMethod("client/attachDebugger", UseSingleObjectParameterDeserialization = true)]
-    // public Task AttachDebuggerAsync(AttachDebuggerInfo attachDebuggerInfo) {
-    //     notificationHandler.AttachDebuggerToProcess(AttachDebuggerInfo);
-    //     return Task.CompletedTask;
-    // }
     [JsonRpcMethod("testing/testUpdates/tests")]
     public Task TestsUpdateAsync(Guid runId, TestNodeUpdate[]? changes) {
         if (changes == null)
@@ -79,6 +74,11 @@ public class TestingPlatformToVSTestBridge : IDisposable {
         notificationHandler.HandleRawMessage(message.Replace("\n", "\r\n"));
         return Task.CompletedTask;
     }
+    // [JsonRpcMethod("client/attachDebugger", UseSingleObjectParameterDeserialization = true)]
+    // public Task AttachDebuggerAsync(AttachDebuggerInfo attachDebuggerInfo) {
+    //     notificationHandler.AttachDebuggerToProcess(AttachDebuggerInfo);
+    //     return Task.CompletedTask;
+    // }
 
     private void CompleteTestRun(bool isCanceled = false) {
         notificationHandler.HandleTestRunComplete(new TestRunCompleteEventArgs(null, isCanceled, isCanceled, null, null, default), null, null, null);
