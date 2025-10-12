@@ -9,7 +9,8 @@ public static class JsonSerializerConfig {
     static JsonSerializerConfig() {
         Options = new JsonSerializerOptions {
             PropertyNameCaseInsensitive = true,
-            Converters = { new JsonStringEnumConverter() }
+            Converters = { new JsonStringEnumConverter() },
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
     }
 }

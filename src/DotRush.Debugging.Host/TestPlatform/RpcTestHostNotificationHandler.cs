@@ -36,17 +36,17 @@ public class RpcTestHostNotificationHandler : ITestRunEventsHandler, ITestHostLa
     #region ITestRunEventsHandler
     public void HandleLogMessage(TestMessageLevel level, string? message) {
         currentClassLogger.Debug($"{level}: {message}");
-        _ = rpcServer?.NotifyAsync("handleMessage", message);
+        rpcServer?.NotifyAsync("handleMessage", message).Wait();
     }
     public void HandleRawMessage(string rawMessage) {
         currentClassLogger.Debug(rawMessage);
-        _ = rpcServer?.NotifyAsync("handleMessage", rawMessage);
+        rpcServer?.NotifyAsync("handleMessage", rawMessage).Wait();
     }
     public void HandleTestRunComplete(TestRunCompleteEventArgs testRunCompleteArgs, TestRunChangedEventArgs? lastChunkArgs, ICollection<AttachmentSet>? runContextAttachments, ICollection<string>? executorUris) {
-        _ = rpcServer?.NotifyAsync("handleTestRunComplete", testRunCompleteArgs);
+        rpcServer?.NotifyAsync("handleTestRunComplete", testRunCompleteArgs).Wait();
     }
     public void HandleTestRunStatsChange(TestRunChangedEventArgs? testRunChangedArgs) {
-        _ = rpcServer?.NotifyAsync("handleTestRunStatsChange", testRunChangedArgs);
+        rpcServer?.NotifyAsync("handleTestRunStatsChange", testRunChangedArgs).Wait();
     }
     public int LaunchProcessWithDebuggerAttached(TestProcessStartInfo testProcessStartInfo) {
         HandleRawMessage($"[Error]: Requested to launch process with debugger attached: {testProcessStartInfo.FileName}");
@@ -59,7 +59,7 @@ public class RpcTestHostNotificationHandler : ITestRunEventsHandler, ITestHostLa
         currentClassLogger.Debug($"Attaching debugger3 to process: {attachDebuggerInfo.ProcessId}");
         return RequestDebuggerAttach(attachDebuggerInfo.ProcessId);
     }
-    bool ITestHostLauncher2.AttachDebuggerToProcess(int pid) {
+    public bool AttachDebuggerToProcess(int pid) {
         currentClassLogger.Debug($"Attaching debugger2 to process: {pid}");
         return RequestDebuggerAttach(pid);
     }

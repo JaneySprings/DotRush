@@ -68,8 +68,8 @@ public class Program {
             }
         };
         testCommand.SetAction(result => {
-            var testHostAdapter = new TestHostAdapter(result.GetValue(attachDebuggerOption));
-            testHostAdapter.StartSession(
+            var testHostAdapter = new TestingPlatformHostAdapter(result.GetValue(attachDebuggerOption));
+            return testHostAdapter.StartSession(
                 result.GetTrimmedValue(testAssembliesOption),
                 result.GetTrimmedValue(testCaseFilterOption),
                 result.GetTrimmedValue(runSettingsOption)

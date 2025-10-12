@@ -6,22 +6,22 @@ using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 
 namespace DotRush.Debugging.Host.TestPlatform;
 
-public class TestHostAdapter {
+public class VSTestHostAdapter : ITestHostAdapter {
     private readonly VsTestConsoleWrapper vsTestConsoleWrapper;
     private readonly RpcTestHostNotificationHandler notificationHandler;
     private readonly CurrentClassLogger currentClassLogger;
 
-    public TestHostAdapter(bool attachDebugger = false) {
+    public VSTestHostAdapter(bool attachDebugger = false) {
         var consoleTestHostPath = MSBuildLocator.GetConsoleTestHostLocation();
         vsTestConsoleWrapper = new VsTestConsoleWrapper(consoleTestHostPath);
         notificationHandler = new RpcTestHostNotificationHandler(attachDebugger, vsTestConsoleWrapper.CancelTestRun);
-        currentClassLogger = new CurrentClassLogger(nameof(TestHostAdapter));
+        currentClassLogger = new CurrentClassLogger(nameof(VSTestHostAdapter));
     }
 
-    public void StartSession(string[] testAssemblies, string[] typeFilters) {
-        StartSession(testAssemblies, typeFilters, null);
+    public Task StartSession(string[] testAssemblies, string[] typeFilters) {
+        return StartSession(testAssemblies, typeFilters, null);
     }
-    public void StartSession(string[] testAssemblies, string[] typeFilters, string? runSettingsFilePath) {
+    public Task StartSession(string[] testAssemblies, string[] typeFilters, string? runSettingsFilePath) {
         currentClassLogger.Debug("Starting test session:");
         currentClassLogger.Debug($"\tAssemblies: {string.Join(", ", testAssemblies)}");
 
@@ -39,5 +39,6 @@ public class TestHostAdapter {
         vsTestConsoleWrapper.StartSession();
         vsTestConsoleWrapper.RunTestsWithCustomTestHost(testAssemblies, runSettings, testOptions, notificationHandler, notificationHandler);
         vsTestConsoleWrapper.EndSession();
+        return Task.CompletedTask;
     }
 }
