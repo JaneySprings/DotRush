@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net.Sockets;
 using DotRush.Common;
+using DotRush.Common.Extensions;
 using DotRush.Debugging.Host.TestPlatform.Protocol;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 using StreamJsonRpc;
@@ -12,7 +13,8 @@ public class TestingPlatformToVSTestBridge : IDisposable {
     private readonly JsonRpc mtpRpc;
     private readonly int mtpProcessId;
 
-    private TaskCompletionSource? currentRunCompletionSource;
+    private TaskCompletionSource? runCompletionSource;
+    private TaskCompletionSource<TestNode[]>? discoverCompletionSource;
 
     private TestingPlatformToVSTestBridge(Stream stream, int mtpPid, bool attachDebugger) {
         mtpProcessId = mtpPid;
@@ -33,22 +35,35 @@ public class TestingPlatformToVSTestBridge : IDisposable {
         notificationHandler.HandleRawMessage($"{nameof(TestingPlatformToVSTestBridge)}: {request.ClientInfo?.Version}");
         return mtpRpc.InvokeWithParameterObjectAsync("initialize", request);
     }
-    // public Task<TestNodeUpdate[]> DiscoverTestsAsync(string[] typeFilters) {
+    public async Task<TestNode[]> DiscoverTestsAsync() {
+        if (discoverCompletionSource != null)
+            throw new InvalidOperationException("A test discovery is already in progress.");
 
-    // }
+        discoverCompletionSource = new TaskCompletionSource<TestNode[]>();
+        await mtpRpc.InvokeWithParameterObjectAsync("testing/discoverTests", new DiscoverRequest(Guid.NewGuid()));
+        var result = await discoverCompletionSource.Task;
+        discoverCompletionSource = null;
+
+        return result.WhereNotNull().ToArray();
+    }
     public async Task RunTestsAsync(string[] typeFilters) {
-        if (currentRunCompletionSource != null) {
-            currentRunCompletionSource.TrySetResult();
-            currentRunCompletionSource = null;
+        if (runCompletionSource != null)
+            throw new InvalidOperationException("A test run is already in progress.");
+
+        var request = new RunRequest(Guid.NewGuid());
+        if (typeFilters.Length > 0) {
+            var testNodes = await DiscoverTestsAsync();
+            request.TestCases = testNodes.Where(it => typeFilters.Contains(it.GetFullyQualifiedName())).ToArray();
         }
 
-        currentRunCompletionSource = new TaskCompletionSource();
         if (notificationHandler.IsDebug)
             notificationHandler.AttachDebuggerToProcess(mtpProcessId);
 
-        var request = new RunRequest();
+        runCompletionSource = new TaskCompletionSource();
         await mtpRpc.InvokeWithParameterObjectAsync("testing/runTests", request);
-        await currentRunCompletionSource.Task;
+        await runCompletionSource.Task;
+        runCompletionSource = null;
+
         CompleteTestRun();
     }
     public async Task ExitAsync() {
@@ -57,24 +72,30 @@ public class TestingPlatformToVSTestBridge : IDisposable {
     }
 
     [JsonRpcMethod("testing/testUpdates/tests")]
-    public Task TestsUpdateAsync(Guid runId, TestNodeUpdate[]? changes) {
-        if (changes == null)
-            return Task.CompletedTask;
-
-        var relevantChanges = changes.Where(it => it.Node != null && !it.Node.InProgress);
-        var vsTestItems = relevantChanges.Select(it => TestNode.ToTestResult(it.Node!)).ToArray();
-        notificationHandler.HandleTestRunStatsChange(new TestRunChangedEventArgs(null, vsTestItems, null));
-        if (currentRunCompletionSource != null) {
-            currentRunCompletionSource.TrySetResult();
+    public void HandleTestsUpdates(Guid runId, TestNodeUpdate[]? changes) {
+        if (changes == null) { // It returns null when operation is completed
+            if (runCompletionSource != null)
+                runCompletionSource.SetResult();
+            return;
         }
-        return Task.CompletedTask;
+
+        if (discoverCompletionSource != null) {
+            discoverCompletionSource.SetResult(changes.Select(it => it.Node).WhereNotNull().ToArray());
+            return;
+        }
+        if (runCompletionSource != null) {
+            var relevantChanges = changes.Where(it => it.Node != null && !it.Node.InProgress);
+            var vsTestItems = relevantChanges.Select(it => it.Node).WhereNotNull().Select(it => TestNode.ToTestResult(it)).ToArray();
+            notificationHandler.HandleTestRunStatsChange(new TestRunChangedEventArgs(null, vsTestItems, null));
+            return;
+        }
     }
     [JsonRpcMethod("client/log")]
     public Task LogAsync(object level, string message) {
         notificationHandler.HandleRawMessage(message.Replace("\n", "\r\n"));
         return Task.CompletedTask;
     }
-    // [JsonRpcMethod("client/attachDebugger", UseSingleObjectParameterDeserialization = true)]
+    // [JsonRpcMethod("client/attachDebugger")]
     // public Task AttachDebuggerAsync(AttachDebuggerInfo attachDebuggerInfo) {
     //     notificationHandler.AttachDebuggerToProcess(AttachDebuggerInfo);
     //     return Task.CompletedTask;
@@ -84,9 +105,13 @@ public class TestingPlatformToVSTestBridge : IDisposable {
         notificationHandler.HandleTestRunComplete(new TestRunCompleteEventArgs(null, isCanceled, isCanceled, null, null, default), null, null, null);
     }
     public void Dispose() {
-        if (currentRunCompletionSource != null) {
-            currentRunCompletionSource.TrySetResult();
-            currentRunCompletionSource = null;
+        if (runCompletionSource != null) {
+            runCompletionSource.TrySetCanceled();
+            runCompletionSource = null;
+        }
+        if (discoverCompletionSource != null) {
+            discoverCompletionSource.TrySetCanceled();
+            discoverCompletionSource = null;
         }
         mtpRpc.Dispose();
     }

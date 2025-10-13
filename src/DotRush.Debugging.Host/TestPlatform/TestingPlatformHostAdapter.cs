@@ -24,7 +24,7 @@ public class TestingPlatformHostAdapter : ITestHostAdapter {
         var listenerPort = ((IPEndPoint)notificationListener.LocalEndpoint).Port;
 
         foreach (var testAssembly in testAssemblies) {
-            var mtpProcess = CreateTestingPlatformProcess(testAssembly, listenerPort);
+            var mtpProcess = CreateTestingPlatformProcess(testAssembly, listenerPort, runSettingsFilePath);
             if (mtpProcess == null || mtpProcess.HasExited) {
                 currentClassLogger.Error($"Failed to start MTP process for assembly '{testAssembly}'");
                 continue;
@@ -43,13 +43,14 @@ public class TestingPlatformHostAdapter : ITestHostAdapter {
         currentClassLogger.Debug("Testing session completed");
     }
 
-    private Process? CreateTestingPlatformProcess(string testAssembly, int port) {
+    private Process? CreateTestingPlatformProcess(string testAssembly, int port, string? runSettingsFilePath) {
         var requiresDotNetRuntime = testAssembly.EndsWith(".dll", StringComparison.OrdinalIgnoreCase);
         var executable = requiresDotNetRuntime ? "dotnet" : testAssembly;
         currentClassLogger.Debug($"Starting process '{testAssembly}' with port '{port}'");
         return new ProcessRunner(executable, new ProcessArgumentBuilder()
             .Conditional(testAssembly, () => requiresDotNetRuntime)
-            .Append("--server", "--client-host", "localhost", $"--client-port {port}"))
+            .Append("--server", "--client-host", "localhost", $"--client-port {port}")
+            .Conditional($"--config-file \"{runSettingsFilePath}\"", () => !string.IsNullOrEmpty(runSettingsFilePath)))
             .Start();
     }
     private TcpListener CreateNotificationListener() {

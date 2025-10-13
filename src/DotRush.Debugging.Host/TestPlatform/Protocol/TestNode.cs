@@ -27,13 +27,17 @@ public class TestNode {
     [JsonPropertyName("assert.expected")] public string? AssertExpected { get; set; }
 
     public bool InProgress => ExecutionState == ExecutionStates.InProgress || ExecutionState == ExecutionStates.Discovered;
+    public string GetFullyQualifiedName() {
+        if (string.IsNullOrEmpty(LocationType) || string.IsNullOrEmpty(LocationMethod))
+            return "<unknown>";
+
+        var typeName = RemoveBrackets(LocationType);
+        var methodName = RemoveBrackets(LocationMethod);
+        return $"{typeName}.{methodName}";
+    }
 
     public static TestResult ToTestResult(TestNode node) {
-        // get text before (
-        var bracketIndex = node.LocationType!.IndexOf('(');
-        var locationType = bracketIndex > 0 ? node.LocationType.Substring(0, bracketIndex) : node.LocationType;
-        var fullName = $"{locationType}.{node.LocationMethod}";
-
+        var fullName = node.GetFullyQualifiedName();
         var testResult = new TestResult(new TestCase(fullName, new Uri("executor://dotrush"), node.LocationFile ?? "source"));
         testResult.DisplayName = node.DisplayName ?? fullName;
         testResult.ErrorStackTrace = node.ErrorStackTrace;
@@ -54,6 +58,12 @@ public class TestNode {
             case ExecutionStates.Discovered: return TestOutcome.None;
             default: return TestOutcome.None;
         }
+    }
+    private static string RemoveBrackets(string input) {
+        var bracketIndex = input.IndexOf('(');
+        if (bracketIndex > 0)
+            return input.Substring(0, bracketIndex);
+        return input;
     }
 }
 
