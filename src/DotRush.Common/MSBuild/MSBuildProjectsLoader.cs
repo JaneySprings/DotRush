@@ -41,7 +41,8 @@ public static class MSBuildProjectsLoader {
             || project.HasPackage("NUnit")
             || project.HasPackage("NUnitLite")
             || project.HasPackage("xunit")
-            || project.HasPackage("MSTest");
+            || project.HasPackage("MSTest")
+            || project.HasPackage("TUnit");
     }
 
     private static List<string> GetTargetFrameworks(MSBuildProject project) {
