@@ -75,7 +75,7 @@ public static partial class CompletionExtensions {
 
         if (item.HasPriority() || item.Tags.Contains(WellKnownTags.Snippet))
             return true; // .for case
-        if (item.Tags.Contains(WellKnownTags.Method))
+        if (item.Properties.TryGetValue("Modifiers", out var modifier) && modifier.Contains("Override"))
             return true; // override case
 
         return false;
