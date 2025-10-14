@@ -13,8 +13,7 @@ public class TestingPlatformToVSTestBridge : IDisposable {
     private readonly JsonRpc mtpRpc;
     private readonly int mtpProcessId;
 
-    private TaskCompletionSource? runCompletionSource;
-    private TaskCompletionSource<TestNode[]>? discoverCompletionSource;
+    private TestingPlatformDataCollector? dataCollector;
 
     private TestingPlatformToVSTestBridge(Stream stream, int mtpPid, bool attachDebugger) {
         mtpProcessId = mtpPid;
@@ -36,20 +35,13 @@ public class TestingPlatformToVSTestBridge : IDisposable {
         return mtpRpc.InvokeWithParameterObjectAsync("initialize", request);
     }
     public async Task<TestNode[]> DiscoverTestsAsync() {
-        if (discoverCompletionSource != null)
-            throw new InvalidOperationException("A test discovery is already in progress.");
+        dataCollector = new TestingPlatformDataCollector(Guid.NewGuid());
+        await mtpRpc.InvokeWithParameterObjectAsync("testing/discoverTests", new DiscoverRequest(dataCollector.EventId));
+        await dataCollector.Completion;
 
-        discoverCompletionSource = new TaskCompletionSource<TestNode[]>();
-        await mtpRpc.InvokeWithParameterObjectAsync("testing/discoverTests", new DiscoverRequest(Guid.NewGuid()));
-        var result = await discoverCompletionSource.Task;
-        discoverCompletionSource = null;
-
-        return result.WhereNotNull().ToArray();
+        return dataCollector.Results;
     }
     public async Task RunTestsAsync(string[] typeFilters) {
-        if (runCompletionSource != null)
-            throw new InvalidOperationException("A test run is already in progress.");
-
         var request = new RunRequest(Guid.NewGuid());
         if (typeFilters.Length > 0) {
             var testNodes = await DiscoverTestsAsync();
@@ -59,10 +51,14 @@ public class TestingPlatformToVSTestBridge : IDisposable {
         if (notificationHandler.IsDebug)
             notificationHandler.AttachDebuggerToProcess(mtpProcessId);
 
-        runCompletionSource = new TaskCompletionSource();
+        dataCollector = new TestingPlatformDataCollector(request.RunId, changes => {
+            var relevantChanges = changes.Where(it => !it.InProgress);
+            var vsTestItems = relevantChanges.Select(it => TestNode.ToTestResult(it)).ToArray();
+            notificationHandler.HandleTestRunStatsChange(new TestRunChangedEventArgs(null, vsTestItems, null));
+        });
+
         await mtpRpc.InvokeWithParameterObjectAsync("testing/runTests", request);
-        await runCompletionSource.Task;
-        runCompletionSource = null;
+        await dataCollector.Completion;
 
         CompleteTestRun();
     }
@@ -73,22 +69,10 @@ public class TestingPlatformToVSTestBridge : IDisposable {
 
     [JsonRpcMethod("testing/testUpdates/tests")]
     public void HandleTestsUpdates(Guid runId, TestNodeUpdate[]? changes) {
-        if (changes == null) { // It returns null when operation is completed
-            if (runCompletionSource != null)
-                runCompletionSource.SetResult();
+        if (dataCollector == null)
             return;
-        }
 
-        if (discoverCompletionSource != null) {
-            discoverCompletionSource.SetResult(changes.Select(it => it.Node).WhereNotNull().ToArray());
-            return;
-        }
-        if (runCompletionSource != null) {
-            var relevantChanges = changes.Where(it => it.Node != null && !it.Node.InProgress);
-            var vsTestItems = relevantChanges.Select(it => it.Node).WhereNotNull().Select(it => TestNode.ToTestResult(it)).ToArray();
-            notificationHandler.HandleTestRunStatsChange(new TestRunChangedEventArgs(null, vsTestItems, null));
-            return;
-        }
+        dataCollector.HandleTestNodeUpdates(runId, changes);
     }
     [JsonRpcMethod("client/log")]
     public Task LogAsync(object level, string message) {
@@ -105,14 +89,45 @@ public class TestingPlatformToVSTestBridge : IDisposable {
         notificationHandler.HandleTestRunComplete(new TestRunCompleteEventArgs(null, isCanceled, isCanceled, null, null, default), null, null, null);
     }
     public void Dispose() {
-        if (runCompletionSource != null) {
-            runCompletionSource.TrySetCanceled();
-            runCompletionSource = null;
-        }
-        if (discoverCompletionSource != null) {
-            discoverCompletionSource.TrySetCanceled();
-            discoverCompletionSource = null;
-        }
+        if (dataCollector != null)
+            dataCollector.Dispose();
         mtpRpc.Dispose();
+    }
+
+
+    private class TestingPlatformDataCollector : IDisposable {
+        private readonly List<TestNode> collectedNodes;
+        private readonly Action<TestNode[]>? collectHandler;
+        private readonly TaskCompletionSource completionSource;
+
+        public Guid EventId { get; }
+        public Task Completion => completionSource.Task;
+        public TestNode[] Results => collectedNodes.ToArray();
+
+        public TestingPlatformDataCollector(Guid eventId, Action<TestNode[]>? collectHandler = null) {
+            this.collectedNodes = new List<TestNode>();
+            this.completionSource = new TaskCompletionSource();
+            this.collectHandler = collectHandler;
+            EventId = eventId;
+        }
+
+        public void HandleTestNodeUpdates(Guid eventId, TestNodeUpdate[]? changes) {
+            if (EventId != eventId)
+                return;
+
+            if (changes == null) { // It returns null when operation is completed
+                completionSource.TrySetResult();
+                return;
+            }
+
+            var relevantChanges = changes.Select(it => it.Node).WhereNotNull().ToArray();
+            collectedNodes.AddRange(relevantChanges);
+            collectHandler?.Invoke(relevantChanges);
+        }
+
+        public void Dispose() {
+            completionSource.TrySetResult();
+            collectedNodes.Clear();
+        }
     }
 }
