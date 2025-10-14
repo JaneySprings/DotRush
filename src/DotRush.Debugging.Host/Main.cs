@@ -59,7 +59,6 @@ public class Program {
         var testAssembliesOption = new Option<string[]>("--assemblies", "-a");
         var testCaseFilterOption = new Option<string[]>("--filter", "-f");
         var runSettingsOption = new Option<string>("--settings", "-s");
-        var useTestingPlatformOption = new Option<bool>("--mtp", "-m");
         var testCommand = new Command("test") {
             Options = {
                 attachDebuggerOption,
@@ -70,10 +69,7 @@ public class Program {
         };
         testCommand.SetAction(result => {
             var attachDebugger = result.GetValue(attachDebuggerOption);
-            ITestHostAdapter testHostAdapter = result.GetValue(useTestingPlatformOption)
-                ? new TestingPlatformHostAdapter(attachDebugger)
-                : new VSTestHostAdapter(attachDebugger);
-
+            var testHostAdapter = new DotRushTestHostAdapter(attachDebugger);
             return testHostAdapter.StartSession(
                 result.GetTrimmedValue(testAssembliesOption),
                 result.GetTrimmedValue(testCaseFilterOption),

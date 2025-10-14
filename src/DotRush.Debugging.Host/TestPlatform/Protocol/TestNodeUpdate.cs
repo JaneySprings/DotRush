@@ -6,7 +6,6 @@ namespace DotRush.Debugging.Host.TestPlatform.Protocol;
 public class TestNodeUpdate {
     [JsonPropertyName("parent")] public string? Parent { get; set; }
     [JsonPropertyName("node")] public TestNode? Node { get; set; }
-
 }
 
 public class TestNode {
@@ -37,9 +36,13 @@ public class TestNode {
     }
 
     public static TestResult ToTestResult(TestNode node) {
-        var fullName = node.GetFullyQualifiedName();
-        var testResult = new TestResult(new TestCase(fullName, new Uri("executor://dotrush"), node.LocationFile ?? "source"));
-        testResult.DisplayName = node.DisplayName ?? fullName;
+        var testResult = new TestResult(new TestCase(
+            node.GetFullyQualifiedName(),
+            new Uri($"executor://{nameof(TestingPlatformToVSTestBridge)}"),
+            node.LocationFile ?? "source"
+        ));
+
+        testResult.DisplayName = node.DisplayName;
         testResult.ErrorStackTrace = node.ErrorStackTrace;
         testResult.ErrorMessage = node.ErrorMessage;
         testResult.Duration = TimeSpan.FromMilliseconds(node.TimeDurationMs);
