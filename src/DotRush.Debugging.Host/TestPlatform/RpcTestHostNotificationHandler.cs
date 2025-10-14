@@ -14,6 +14,7 @@ public class RpcTestHostNotificationHandler : ITestRunEventsHandler, ITestHostLa
     private readonly CurrentClassLogger currentClassLogger;
     private readonly JsonRpc? rpcServer;
 
+    public static bool SuspendCompletion { get; set; } // Continue execution if has pending test runs
     public bool IsDebug { get; init; }
 
     public RpcTestHostNotificationHandler(bool attachDebugger, Action? endSessionCallback = null) {
@@ -43,6 +44,9 @@ public class RpcTestHostNotificationHandler : ITestRunEventsHandler, ITestHostLa
         rpcServer?.NotifyAsync("handleMessage", rawMessage).Wait();
     }
     public void HandleTestRunComplete(TestRunCompleteEventArgs testRunCompleteArgs, TestRunChangedEventArgs? lastChunkArgs, ICollection<AttachmentSet>? runContextAttachments, ICollection<string>? executorUris) {
+        if (SuspendCompletion && testRunCompleteArgs != null && !testRunCompleteArgs.IsCanceled && !testRunCompleteArgs.IsAborted)
+            return;
+
         rpcServer?.NotifyAsync("handleTestRunComplete", testRunCompleteArgs).Wait();
     }
     public void HandleTestRunStatsChange(TestRunChangedEventArgs? testRunChangedArgs) {
