@@ -39,7 +39,7 @@ public class TestNode {
         var testResult = new TestResult(new TestCase(
             node.GetFullyQualifiedName(),
             new Uri($"executor://{nameof(TestingPlatformToVSTestBridge)}"),
-            node.LocationFile ?? "source"
+            node.LocationFile ?? "unknown"
         ));
 
         testResult.DisplayName = node.DisplayName;

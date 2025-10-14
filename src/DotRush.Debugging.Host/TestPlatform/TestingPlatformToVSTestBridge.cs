@@ -52,8 +52,7 @@ public class TestingPlatformToVSTestBridge : IDisposable {
             notificationHandler.AttachDebuggerToProcess(mtpProcessId);
 
         dataCollector = new TestingPlatformDataCollector(request.RunId, changes => {
-            var relevantChanges = changes.Where(it => !it.InProgress);
-            var vsTestItems = relevantChanges.Select(it => TestNode.ToTestResult(it)).ToArray();
+            var vsTestItems = changes.Where(it => !it.InProgress).Select(it => TestNode.ToTestResult(it)).ToArray();
             notificationHandler.HandleTestRunStatsChange(new TestRunChangedEventArgs(null, vsTestItems, null));
         });
 
