@@ -68,8 +68,9 @@ public class Program {
             }
         };
         testCommand.SetAction(result => {
-            var testHostAdapter = new TestHostAdapter(result.GetValue(attachDebuggerOption));
-            testHostAdapter.StartSession(
+            var attachDebugger = result.GetValue(attachDebuggerOption);
+            var testHostAdapter = new DotRushTestHostAdapter(attachDebugger);
+            return testHostAdapter.StartSession(
                 result.GetTrimmedValue(testAssembliesOption),
                 result.GetTrimmedValue(testCaseFilterOption),
                 result.GetTrimmedValue(runSettingsOption)
