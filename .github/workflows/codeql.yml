@@ -27,7 +27,8 @@ jobs:
       matrix:
         include:
         - language: csharp
-          build-mode: 'manual'
+          # build-mode: 'manual' #TODO: wait for dotnet release
+          build-mode: 'none'
         - language: javascript-typescript
           build-mode: 'none'
 
@@ -52,9 +53,10 @@ jobs:
         build-mode: ${{ matrix.build-mode }}
         queries: security-extended
 
-    - if: matrix.language == 'csharp'
-      name: Build solution
-      run: dotnet build src/DotRush.sln --configuration Release
+    # TODO: Wait for dotnet release
+    # - if: matrix.language == 'csharp'
+    #   name: Build solution
+    #   run: dotnet build src/DotRush.sln --configuration Release
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
