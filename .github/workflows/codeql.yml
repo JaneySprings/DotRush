@@ -50,7 +50,6 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
-        queries: security-extended
 
     - if: matrix.language == 'csharp'
       name: Build solution
