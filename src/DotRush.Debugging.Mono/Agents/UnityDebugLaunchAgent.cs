@@ -41,20 +41,20 @@ public class UnityDebugLaunchAgent : BaseLaunchAgent {
         if (Configuration.UserAssemblies != null && Configuration.UserAssemblies.Count > 0)
             return Configuration.UserAssemblies;
 
-        var projectAssemblyPath = Path.Combine(Configuration.CurrentDirectory, "Library", "ScriptAssemblies", "Assembly-CSharp.dll");
-        if (File.Exists(projectAssemblyPath))
-            return new[] { projectAssemblyPath };
+        var projectAssemblies = Directory.GetFiles(Path.Combine(Configuration.CurrentDirectory, "Library", "ScriptAssemblies"), "Assembly-CSharp*.dll", SearchOption.TopDirectoryOnly);
+        if (projectAssemblies.Length > 0)
+            return projectAssemblies;
 
         var projectFilePaths = Directory.GetFiles(Configuration.CurrentDirectory, "*.csproj", SearchOption.TopDirectoryOnly);
         if (projectFilePaths.Length == 1) {
             var project = MSBuildProjectsLoader.LoadProject(projectFilePaths[0]);
             var assemblyName = project?.GetAssemblyName();
-            projectAssemblyPath = Path.Combine(Configuration.CurrentDirectory, "Library", "ScriptAssemblies", $"{assemblyName}.dll");
-            if (File.Exists(projectAssemblyPath))
-                return new[] { projectAssemblyPath };
+            projectAssemblies = Directory.GetFiles(Path.Combine(Configuration.CurrentDirectory, "Library", "ScriptAssemblies"), $"{assemblyName}*.dll", SearchOption.TopDirectoryOnly);
+            if (projectAssemblies.Length > 0)
+                return projectAssemblies;
         }
 
-        logger?.OnErrorDataReceived($"Could not find user assembly '{projectAssemblyPath}'. Specify 'userAssemblies' property in the launch configuration to override this behavior.");
+        logger?.OnErrorDataReceived($"Could not find user assemblies. Specify 'userAssemblies' property in the launch configuration to override this behavior.");
         return Enumerable.Empty<string>();
     }
 
