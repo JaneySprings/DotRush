@@ -38,12 +38,13 @@ jobs:
       with:
         submodules: recursive
 
-    - if: matrix.language == 'csharp'
-      name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-        dotnet-quality: preview
+    # TODO: Wait for dotnet release
+    # - if: matrix.language == 'csharp'
+    #   name: Setup .NET
+    #   uses: actions/setup-dotnet@v5
+    #   with:
+    #     dotnet-version: ${{ env.DOTNET_VERSION }}
+    #     dotnet-quality: preview
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
