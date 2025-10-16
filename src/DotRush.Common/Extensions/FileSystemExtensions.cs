@@ -75,13 +75,15 @@ public static class FileSystemExtensions {
         File.Move(sourceFilePath, newFilePath);
         return newFilePath;
     }
-    public static string[] GetFiles(string path, string[] extensions, SearchOption searchOption) {
-        if (!Directory.Exists(path))
-            return Array.Empty<string>();
 
-        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var extension in extensions)
-            result.UnionWith(Directory.EnumerateFiles(path, $"*.{extension}", searchOption));
+    public static string[] GetFirstFiles(string path, string[] extensions) {
+        var files = Directory.EnumerateFiles(path).Where(f => extensions.Contains(Path.GetExtension(f).ToLowerInvariant())).ToArray();
+        if (files.Length > 0)
+            return files;
+
+        var result = new List<string>();
+        foreach (var directory in Directory.GetDirectories(path).Where(d => !Path.GetFileName(d).StartsWith('.')))
+            result.AddRange(GetFirstFiles(directory, extensions));
 
         return result.ToArray();
     }
