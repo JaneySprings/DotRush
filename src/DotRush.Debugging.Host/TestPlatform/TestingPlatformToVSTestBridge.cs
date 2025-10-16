@@ -46,6 +46,7 @@ public class TestingPlatformToVSTestBridge : IDisposable {
         if (typeFilters.Length > 0) {
             var testNodes = await DiscoverTestsAsync();
             request.TestCases = testNodes.Where(it => typeFilters.Contains(it.GetFullyQualifiedName())).ToArray();
+            notificationHandler.HandleRawMessage($"{nameof(TestingPlatformHostAdapter)} discovered {request.TestCases?.Length} of {testNodes?.Length} test cases");
         }
 
         if (notificationHandler.IsDebug)

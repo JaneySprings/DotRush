@@ -86,10 +86,10 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
         if (workspaceFolders == null)
             workspaceFolders = new[] { Environment.CurrentDirectory };
 
-        var solutionFiles = workspaceFolders.SelectMany(it => FileSystemExtensions.GetFiles(it, ["sln", "slnf", "slnx"], SearchOption.AllDirectories));
+        var solutionFiles = workspaceFolders.SelectMany(it => FileSystemExtensions.GetFirstFiles(it, [".sln", ".slnf", ".slnx"]));
         if (solutionFiles.Count() == 1)
             return solutionFiles;
-        var projectFiles = workspaceFolders.SelectMany(it => FileSystemExtensions.GetFiles(it, ["csproj"], SearchOption.AllDirectories));
+        var projectFiles = workspaceFolders.SelectMany(it => FileSystemExtensions.GetFirstFiles(it, [".csproj"]));
         if (projectFiles.Count() == 1)
             return projectFiles;
 
