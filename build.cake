@@ -84,7 +84,14 @@ Task("repack").DoesForEach(GetFiles(_Path.Combine(ArtifactsDirectory, "**", "*.v
 	var outputFileName = "DotRush.Bundle.Server_" + _Path.GetFileNameWithoutExtension(file.FullPath).Split('_').Last() + ".zip";
 	EnsureDirectoryDeleted(tempDirectory);
 	Unzip(file, tempDirectory);
-	Zip(_Path.Combine(tempDirectory, "extension", "extension", "bin", "LanguageServer"), _Path.Combine(ArtifactsDirectory, outputFileName));
+	System.IO.File.WriteAllText(_Path.Combine(tempDirectory, "extension", "extension", "bin", "LanguageServer", "dotrush.config.json"), """
+{
+    "dotrush": {
+        "roslyn": { }
+    }
+}
+""");
+	ZipFile.CreateFromDirectory(_Path.Combine(tempDirectory, "extension", "extension", "bin", "LanguageServer"), _Path.Combine(ArtifactsDirectory, outputFileName), CompressionLevel.Fastest, false);
 	EnsureDirectoryDeleted(tempDirectory);
 });
 
