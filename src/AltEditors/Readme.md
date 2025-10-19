@@ -60,9 +60,9 @@ chmod +x "/home/You/.local/share/zed/extensions/work/dotrush/LanguageServer/dotr
 ```
 
 ## Configuration
-DotRush can be configured by creating a `dotrush.config.json` file in your project root directory.
+DotRush can be configured by creating a `dotrush.config.json` file in your project root directory or next to the server executable (by default, this file has **already been created** in the archive with the server for a quick start. You can delete it or edit it).
 
-You only need to provide the `projectOrSolutionFiles` option at minimum, but can customize the behavior further with additional settings as needed.
+You only need to provide the `projectOrSolutionFiles` option, is the server can't detect a project to load automaticaly, but you can customize the behavior with additional settings as needed.
 ```json
 {
     "dotrush": {

@@ -3,10 +3,24 @@ import * as res from './resources/constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
 
+interface IFilter {
+    regex: RegExp;
+    pattern: string
+}
+
 export class Extensions {
-    public static readonly projectPattern: RegExp = new RegExp('.*\\.(csproj|fsproj|vbproj)$');
-    public static readonly csProjectPattern: RegExp = new RegExp('.*\\.(csproj)$');
-    public static readonly solutionPattern: RegExp = new RegExp('.*\\.(sln|slnf|slnx)$');
+    public static readonly projectFilter: IFilter = {
+        regex: new RegExp('.*\\.(csproj|fsproj|vbproj)$'),
+        pattern: '*.{csproj,fsproj,vbproj}'
+    }
+    public static readonly csProjectFilter: IFilter = {
+        regex: new RegExp('.*\\.(csproj)$'),
+        pattern: '*.csproj'
+    }
+    public static readonly solutionFilter: IFilter = {
+        regex: new RegExp('.*\\.(sln|slnf|slnx)$'),
+        pattern: '*.{sln,slnf,slnx}'
+    }
 
     public static getSetting<TValue>(id: string, fallback?: TValue): TValue | undefined {
         return vscode.workspace.getConfiguration(res.extensionId).get<TValue>(id) ?? fallback;
@@ -19,22 +33,22 @@ export class Extensions {
     }
 
     public static async getProjectFiles(csharpOnly: boolean = false): Promise<string[]> {
-        const extPattern = csharpOnly ? Extensions.csProjectPattern : Extensions.projectPattern;
-        return (await Extensions.findFiles(undefined, extPattern)).map(x => x.fsPath);
+        const filter = csharpOnly ? Extensions.csProjectFilter : Extensions.projectFilter;
+        return (await Extensions.findFiles(undefined, filter)).map(x => x.fsPath);
     }
     public static async getSolutionFiles(): Promise<string[]> {
-        return (await Extensions.findFiles(undefined, Extensions.solutionPattern)).map(x => x.fsPath);
+        return (await Extensions.findFiles(undefined, Extensions.solutionFilter)).map(x => x.fsPath);
     }
     public static isProjectFile(filePath?: string, csharpOnly: boolean = false): boolean {
         if (filePath === undefined)
             return false;
-        const extPattern = csharpOnly ? Extensions.csProjectPattern : Extensions.projectPattern;
+        const extPattern = csharpOnly ? Extensions.csProjectFilter.regex : Extensions.projectFilter.regex;
         return path.extname(filePath).match(extPattern) !== null;
     }
     public static isSolutionFile(filePath?: string): boolean {
         if (filePath === undefined)
             return false;
-        return path.extname(filePath).match(Extensions.solutionPattern) !== null;
+        return path.extname(filePath).match(Extensions.solutionFilter.regex) !== null;
     }
 
     public static async selectProjectOrSolutionFile(baseUri?: vscode.Uri, csharpOnly: boolean = false): Promise<string | undefined> {
@@ -43,8 +57,8 @@ export class Extensions {
         if (baseUri?.fsPath !== undefined && Extensions.isProjectFile(baseUri?.fsPath, csharpOnly))
             return baseUri.fsPath;
 
-        const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionPattern);
-        const projectFiles = await Extensions.findFiles(baseUri, csharpOnly ? Extensions.csProjectPattern : Extensions.projectPattern);
+        const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionFilter);
+        const projectFiles = await Extensions.findFiles(baseUri, csharpOnly ? Extensions.csProjectFilter : Extensions.projectFilter);
         if (projectFiles.length === 0 && solutionFiles.length === 0) {
             vscode.window.showErrorMessage(res.messageNoProjectFileFound);
             return undefined;
@@ -67,8 +81,8 @@ export class Extensions {
         return selectedItem?.item;
     }
     public static async selectProjectOrSolutionFiles(baseUri?: vscode.Uri, csharpOnly: boolean = false): Promise<string[] | undefined> {
-        const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionPattern);
-        const projectFiles = await Extensions.findFiles(baseUri, csharpOnly ? Extensions.csProjectPattern : Extensions.projectPattern);
+        const solutionFiles = await Extensions.findFiles(baseUri, Extensions.solutionFilter);
+        const projectFiles = await Extensions.findFiles(baseUri, csharpOnly ? Extensions.csProjectFilter : Extensions.projectFilter);
         if (projectFiles.length === 0 && solutionFiles.length === 0) {
             vscode.window.showErrorMessage(res.messageNoProjectFileFound);
             return undefined;
@@ -90,7 +104,7 @@ export class Extensions {
         if (baseUri?.fsPath !== undefined && Extensions.isProjectFile(baseUri?.fsPath, csharpOnly))
             return baseUri.fsPath;
 
-        const projectFiles = await Extensions.findFiles(baseUri, csharpOnly ? Extensions.csProjectPattern : Extensions.projectPattern);
+        const projectFiles = await Extensions.findFiles(baseUri, csharpOnly ? Extensions.csProjectFilter : Extensions.projectFilter);
         if (projectFiles.length === 0) {
             vscode.window.showErrorMessage(res.messageNoProjectFileFound);
             return undefined;
@@ -164,16 +178,14 @@ export class Extensions {
         return { uri: document?.uri?.toString() };
     }
 
-    private static async findFiles(baseUri: vscode.Uri | undefined, filter: RegExp): Promise<vscode.Uri[]> {
-        if (baseUri?.fsPath !== undefined && baseUri.fsPath.match(filter) !== null)
+    private static async findFiles(baseUri: vscode.Uri | undefined, filter: IFilter): Promise<vscode.Uri[]> {
+        if (baseUri?.fsPath !== undefined && baseUri.fsPath.match(filter.regex) !== null)
             return [baseUri];
 
         const result = baseUri?.fsPath === undefined
-            ? await vscode.workspace.findFiles('**/*.*', null)
-            : await vscode.workspace.findFiles(new vscode.RelativePattern(baseUri, '**/*.*'), null);
+            ? await vscode.workspace.findFiles(`**/${filter.pattern}`, null)
+            : await vscode.workspace.findFiles(new vscode.RelativePattern(baseUri, `**/${filter.pattern}`), null);
 
-        return result
-            .filter(it => it.fsPath.match(filter) !== null)
-            .sort((a, b) => path.basename(a.fsPath).localeCompare(path.basename(b.fsPath)));
+        return result.sort((a, b) => path.basename(a.fsPath).localeCompare(path.basename(b.fsPath)));
     }
 }
