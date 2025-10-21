@@ -84,7 +84,7 @@ Task("repack").DoesForEach(GetFiles(_Path.Combine(ArtifactsDirectory, "**", "*.v
 	var outputFileName = "DotRush.Bundle.Server_" + _Path.GetFileNameWithoutExtension(file.FullPath).Split('_').Last() + ".zip";
 	EnsureDirectoryDeleted(tempDirectory);
 	Unzip(file, tempDirectory);
-	System.IO.File.WriteAllText(_Path.Combine(tempDirectory, "extension", "extension", "bin", "LanguageServer", "dotrush.config.json"), """
+	System.IO.File.WriteAllText(_Path.Combine(tempDirectory, "extension", "extension", "bin", "LanguageServer", "_dotrush.config.json"), """
 {
     "dotrush": {
         "roslyn": { }

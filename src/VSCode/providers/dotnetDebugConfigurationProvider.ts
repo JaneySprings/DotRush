@@ -93,12 +93,10 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
                 "*": { enabled: Extensions.getSetting(res.configIdDebuggerAutomaticSourcelinkDownload, true) }
             }
 
-        if (profile !== undefined) {
-            if (profile?.launchBrowser) {
-                config.serverReadyAction = { action: "openExternally", pattern: "\\bNow listening on:\\s+(https?://\\S+)" };
-                if (profile.launchUrl !== undefined)
-                    config.serverReadyAction.uriFormat = `%s/${profile.launchUrl}`;
-            }
+        if (profile?.launchBrowser || config.launchWebBrowser) { // launchBrowser already used by vsdbg (same logic as in vscode)
+            config.serverReadyAction = { action: "openExternally", pattern: "\\bNow listening on:\\s+(https?://\\S+)" };
+            if (profile?.launchUrl !== undefined)
+                config.serverReadyAction.uriFormat = `%s/${profile.launchUrl}`;
         }
     }
 }

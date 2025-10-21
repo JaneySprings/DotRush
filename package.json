@@ -325,6 +325,9 @@
               },
               "launchSettingsProfile": {
                 "type": "string"
+              },
+              "launchWebBrowser": {
+                "type": "boolean"
               }
             }
           },
