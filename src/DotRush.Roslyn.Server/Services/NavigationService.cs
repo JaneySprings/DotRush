@@ -9,7 +9,7 @@ public class NavigationService {
     public Solution? Solution => navigationHost.Solution;
 
     public NavigationService() {
-        navigationHost = new NavigationHost();   
+        navigationHost = new NavigationHost();
     }
 
     public Task<string?> EmitDecompiledFileAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
@@ -23,6 +23,9 @@ public class NavigationService {
         });
     }
     public void UpdateSolution(Solution? solution) {
-        navigationHost.Solution = solution;
+        navigationHost.UpdateSolution(solution);
+    }
+    public void CloseDocument(string documentPath) {
+        navigationHost.CloseDocument(documentPath);
     }
 }

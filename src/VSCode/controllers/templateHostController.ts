@@ -22,7 +22,7 @@ export class TemplateHostController {
             if (templateContext === undefined)
                 return;
 
-            const creationResult = await TemplateHostController.createProject(template, templateContext);
+            const creationResult = await TemplateHostController.createProject(templateContext);
             if (creationResult)
                 await TemplateHostController.processCreatedProject(templateContext.getProjectPath());
         }));
@@ -33,7 +33,7 @@ export class TemplateHostController {
         if (!name)
             return undefined;
 
-        const result = new TemplateContext(name);
+        const result = new TemplateContext(name, template.identity);
         for (const param of template.parameters ?? []) {
             const description = param.description ? param.description : param.name;
             if (param.type === 'string' || param.type === 'text') {
@@ -64,12 +64,12 @@ export class TemplateHostController {
 
         return result;
     }
-    private static async createProject(template: TemplateInfo, context: TemplateContext): Promise<boolean> {
+    private static async createProject(context: TemplateContext): Promise<boolean> {
         return vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: `Creating '${context.name}' ...`,
         }, async () => {
-            const result = await Interop.createTemplate(template.identity, context.getProjectPath(), context.cliArguments);
+            const result = await Interop.createTemplate(context.identity, context.getProjectPath(), context.cliArguments);
             if (result === undefined || !result.isSuccess) {
                 vscode.window.showErrorMessage(result?.message ?? "Project creation failed.");
                 return false;
@@ -162,11 +162,13 @@ export class TemplateHostExtensions {
 
 class TemplateContext {
     name: string;
+    identity: string;
     directory?: string;
     cliArguments: { [key: string]: string } = {};
 
-    constructor(name: string) {
+    constructor(name: string, identity: string) {
         this.name = name;
+        this.identity = identity;
     }
 
     public getProjectPath(): string {
