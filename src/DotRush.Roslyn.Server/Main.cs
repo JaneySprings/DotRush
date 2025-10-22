@@ -28,7 +28,7 @@ public class Program {
         languageServer = LanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
         ConfigureServices();
 
-        languageServer.AddHandler(new TextDocumentHandler(workspaceService, codeAnalysisService))
+        languageServer.AddHandler(new TextDocumentHandler(workspaceService, navigationService, codeAnalysisService))
               .AddHandler(new DocumentFormattingHandler(workspaceService))
               .AddHandler(new RenameHandler(workspaceService))
               .AddHandler(new SignatureHelpHandler(workspaceService))
