@@ -16,7 +16,7 @@ using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnosti
 
 namespace DotRush.Roslyn.Server.Services;
 
-public class CodeAnalysisService : IAdditionalComponentsProvider {
+public class CodeAnalysisService : IAdditionalComponentsProvider, IClearable {
     private readonly ConfigurationService configurationService;
     private readonly LanguageServer? serverFacade;
     private readonly CodeActionHost codeActionHost;
@@ -81,6 +81,10 @@ public class CodeAnalysisService : IAdditionalComponentsProvider {
     }
     public IEnumerable<CodeRefactoringProvider>? GetCodeRefactoringProvidersForProject(Project project) {
         return codeActionHost.GetCodeRefactoringProvidersForProject(project);
+    }
+    public void ClearCache() {
+        compilationHost.ClearCache();
+        codeActionHost.ClearCache();
     }
 
     internal Task AnalyzeAsync(IEnumerable<Document> documents, AnalysisScope compilerScope, AnalysisScope analyzerScope, CancellationToken cancellationToken) {

@@ -77,4 +77,8 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
             new GenerateDescriptionRefactoringProvider(),
         };
     }
+
+    public void ClearCache() {
+        ComponentsCache.Clear();
+    }
 }

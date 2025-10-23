@@ -14,16 +14,21 @@ namespace DotRush.Roslyn.Server.Handlers.Framework;
 
 public class ReloadWorkspaceHandler : IJsonHandler {
     private readonly WorkspaceService workspaceService;
+    private readonly NavigationService navigationService;
+    private readonly CodeAnalysisService codeAnalysisService;
 
-    public ReloadWorkspaceHandler(WorkspaceService workspaceService) {
-        //TODO: Clear cache from ComponentsLoader
+    public ReloadWorkspaceHandler(WorkspaceService workspaceService, NavigationService navigationService, CodeAnalysisService codeAnalysisService) {
         this.workspaceService = workspaceService;
+        this.navigationService = navigationService;
+        this.codeAnalysisService = codeAnalysisService;
     }
 
     protected Task Handle(ReloadWorkspaceParams request, CancellationToken token) {
         if (!workspaceService.InitializeWorkspace())
             return Task.CompletedTask;
 
+        navigationService.ClearCache();
+        codeAnalysisService.ClearCache();
         _ = workspaceService.LoadAsync(request.WorkspaceFolders, CancellationToken.None);
         return Task.CompletedTask;
     }

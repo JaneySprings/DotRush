@@ -75,4 +75,8 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
     public List<DiagnosticAnalyzer> LoadFromDotRush() {
         return new List<DiagnosticAnalyzer>();
     }
+
+    public void ClearCache() {
+        ComponentsCache.Clear();
+    }
 }

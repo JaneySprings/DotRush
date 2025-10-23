@@ -73,4 +73,8 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
     public List<CodeFixProvider> LoadFromDotRush() {
         return new List<CodeFixProvider>();
     }
+
+    public void ClearCache() {
+        ComponentsCache.Clear();
+    }
 }

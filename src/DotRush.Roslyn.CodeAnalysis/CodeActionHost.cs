@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CodeRefactorings;
 
 namespace DotRush.Roslyn.CodeAnalysis;
 
-public class CodeActionHost {
+public class CodeActionHost : IClearable {
     private readonly CodeFixProvidersLoader codeFixProvidersLoader;
     private readonly CodeRefactoringProvidersLoader codeRefactoringsProviderProvider;
 
@@ -22,6 +22,10 @@ public class CodeActionHost {
     }
     public IEnumerable<CodeRefactoringProvider>? GetCodeRefactoringProvidersForProject(Project project) {
         return codeRefactoringsProviderProvider.GetComponents(project);
+    }
+    public void ClearCache() {
+        codeFixProvidersLoader.ClearCache();
+        codeRefactoringsProviderProvider.ClearCache();
     }
 
     private static bool CanFixDiagnostic(ImmutableArray<string> array, string item) {

@@ -25,7 +25,8 @@ public class NavigationService {
     public void UpdateSolution(Solution? solution) {
         navigationHost.UpdateSolution(solution);
     }
-    public void CloseDocument(string documentPath) {
-        navigationHost.CloseDocument(documentPath);
+    public void ClearCache() {
+        // We can't use CloseDocument(string) because vscode can close and reopen decompiled file
+        navigationHost.ClearCache();
     }
 }
