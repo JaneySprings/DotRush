@@ -65,6 +65,7 @@ export const configIdDebuggerConsole = "debugger.console";
 export const configIdDebuggerSymbolSearchPaths = "debugger.symbolSearchPaths";
 export const configIdDebuggerSearchMicrosoftSymbolServer = "debugger.searchMicrosoftSymbolServer";
 export const configIdDebuggerAutomaticSourcelinkDownload = "debugger.automaticSourcelinkDownload";
+export const configIdDebuggerLaunchBrowser = "debugger.launchBrowser";
 export const configIdMSBuildNoRestore = "msbuild.noRestore";
 export const configIdMSBuildNoDependencies = "msbuild.noDependencies";
 export const configIdMSBuildAdditionalBuildArguments = "msbuild.additionalBuildArguments";

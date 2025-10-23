@@ -36,6 +36,7 @@
 	"configuration.description.debugger.automaticSourcelinkDownload": "Automatically download source files from SourceLink.",
 	"configuration.description.debugger.symbolSearchPaths": "Additional symbol search paths.",
 	"configuration.description.debugger.console": "Console to use for debugging console applications.",
+	"configuration.description.debugger.launchBrowser": "Automatically open a browser when debugging ASP.NET applications.",
 
 	"configuration.description.msbuild.noRestore": "Determines if the project will be restored before building.",
 	"configuration.description.msbuild.noDependencies": "Determines if the project dependencies will be built.",
