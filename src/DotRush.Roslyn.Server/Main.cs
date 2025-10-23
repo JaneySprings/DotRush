@@ -28,7 +28,7 @@ public class Program {
         languageServer = LanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
         ConfigureServices();
 
-        languageServer.AddHandler(new TextDocumentHandler(workspaceService, navigationService, codeAnalysisService))
+        languageServer.AddHandler(new TextDocumentHandler(workspaceService, codeAnalysisService))
               .AddHandler(new DocumentFormattingHandler(workspaceService))
               .AddHandler(new RenameHandler(workspaceService))
               .AddHandler(new SignatureHelpHandler(workspaceService))
@@ -49,7 +49,7 @@ public class Program {
               .AddHandler(new WorkspaceSymbolHandler(workspaceService))
         // Framework handlers
               .AddHandler(new SolutionDiagnosticsHandler(workspaceService, codeAnalysisService))
-              .AddHandler(new ReloadWorkspaceHandler(workspaceService))
+              .AddHandler(new ReloadWorkspaceHandler(workspaceService, navigationService, codeAnalysisService))
               .AddHandler(new TestExplorerHandler(testExplorerService, workspaceService));
 
         languageServer.OnInitialize(OnInitializeAsync);

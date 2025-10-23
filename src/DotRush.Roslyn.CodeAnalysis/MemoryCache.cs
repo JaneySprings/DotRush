@@ -31,6 +31,7 @@ public class MemoryCache<TValue> where TValue : class {
     }
     public void Clear() {
         cache.Clear();
+        componentTable.Clear();
     }
     public bool Clear(string key) {
         return cache.Remove(key);

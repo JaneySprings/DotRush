@@ -10,12 +10,10 @@ namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
 public class TextDocumentHandler : TextDocumentHandlerBase {
     private readonly WorkspaceService workspaceService;
-    private readonly NavigationService navigationService;
     private readonly CodeAnalysisService codeAnalysisService;
 
-    public TextDocumentHandler(WorkspaceService workspaceService, NavigationService navigationService, CodeAnalysisService codeAnalysisService) {
+    public TextDocumentHandler(WorkspaceService workspaceService, CodeAnalysisService codeAnalysisService) {
         this.workspaceService = workspaceService;
-        this.navigationService = navigationService;
         this.codeAnalysisService = codeAnalysisService;
     }
 
@@ -40,8 +38,6 @@ public class TextDocumentHandler : TextDocumentHandlerBase {
         return Task.CompletedTask;
     }
     protected override Task Handle(DidCloseTextDocumentParams request, CancellationToken token) {
-        var filePath = request.TextDocument.Uri.FileSystemPath;
-        navigationService.CloseDocument(filePath);
         return Task.CompletedTask;
     }
     protected override Task Handle(WillSaveTextDocumentParams request, CancellationToken token) {

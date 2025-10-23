@@ -1,5 +1,6 @@
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.Navigation.Decompilation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
@@ -7,7 +8,7 @@ using FileSystemExtensions = DotRush.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Navigation;
 
-public class NavigationHost {
+public class NavigationHost : IClearable {
     public string DecompiledCodeDirectory { get; }
     public string GeneratedCodeDirectory { get; }
     public Solution? Solution { get; private set; }
@@ -74,6 +75,9 @@ public class NavigationHost {
     public void CloseDocument(string documentPath) {
         if (decompilerDocuments.Remove(documentPath))
             currentClassLogger.Debug($"Document {documentPath} has been removed form {nameof(NavigationHost)} cache");
+    }
+    public void ClearCache() {
+        decompilerDocuments.Clear();
     }
 
     private void CreateDocument(string documentPath, ProjectId projectId) {

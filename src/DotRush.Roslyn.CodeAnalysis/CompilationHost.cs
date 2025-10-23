@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.CodeAnalysis;
 
-public class CompilationHost {
+public class CompilationHost : IClearable {
     private readonly DiagnosticAnalyzersLoader diagnosticAnalyzersLoader;
     private readonly DiagnosticCollection workspaceDiagnostics;
     private readonly CurrentClassLogger currentClassLogger;
@@ -24,6 +24,9 @@ public class CompilationHost {
     }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
         return workspaceDiagnostics.GetDiagnosticsByDocumentSpan(document, span);
+    }
+    public void ClearCache() {
+        diagnosticAnalyzersLoader.ClearCache();
     }
 
     public async Task AnalyzeAsync(IEnumerable<Document> documents, AnalysisScope compilerScope, AnalysisScope analyzerScope, CancellationToken cancellationToken) {
