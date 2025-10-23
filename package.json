@@ -610,6 +610,11 @@
               "integratedTerminal",
               "externalTerminal"
             ]
+          },
+          "dotrush.debugger.launchBrowser": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.description.debugger.launchBrowser%"
           }
         }
       },

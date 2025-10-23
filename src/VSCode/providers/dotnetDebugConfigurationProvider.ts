@@ -92,6 +92,8 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
             config.sourceLinkOptions = {
                 "*": { enabled: Extensions.getSetting(res.configIdDebuggerAutomaticSourcelinkDownload, true) }
             }
+        if (config.launchWebBrowser === undefined)
+            config.launchWebBrowser = Extensions.getSetting(res.configIdDebuggerLaunchBrowser, true);
 
         if (profile?.launchBrowser || config.launchWebBrowser) { // launchBrowser already used by vsdbg (same logic as in vscode)
             config.serverReadyAction = { action: "openExternally", pattern: "\\bNow listening on:\\s+(https?://\\S+)" };
