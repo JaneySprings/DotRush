@@ -40,8 +40,7 @@ public sealed class DotRushTestHostAdapter : ITestHostAdapter {
         if (assemblyDirectory == null)
             return false;
 
-        var vsTestHostAssembly = Path.Combine(assemblyDirectory, "testhost.dll");
-        var vsTestHostBinary = Path.Combine(assemblyDirectory, "testhost.exe");
-        return !File.Exists(vsTestHostAssembly) && !File.Exists(vsTestHostBinary);
+        var vsTestAssemblies = Directory.GetFiles(assemblyDirectory, "Microsoft.VisualStudio.TestPlatform*.dll", SearchOption.TopDirectoryOnly);
+        return vsTestAssemblies.Length == 0;
     }
 }

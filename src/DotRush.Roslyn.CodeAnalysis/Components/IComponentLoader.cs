@@ -11,7 +11,3 @@ public interface IComponentLoader<T> : IClearable where T : class {
     List<T> LoadFromDotRush();
     ImmutableArray<T> GetComponents(Project project);
 }
-
-public interface IClearable {
-    void ClearCache();
-}
