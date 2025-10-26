@@ -163,7 +163,7 @@ public enum DiagnosticsFormat {
     AsIs,
 }
 public enum DispatcherType {
-    SingleThread,
     MultiThread,
+    SingleThread,
     PerformanceCounter
 }
