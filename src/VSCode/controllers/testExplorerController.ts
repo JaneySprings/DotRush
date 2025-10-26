@@ -126,7 +126,7 @@ export class TestExplorerController {
             });
             testHostRpc.onNotification('handleMessage', (data: string) => testRun.appendOutput(`${data.trimEnd()}\r\n`));
             testHostRpc.onNotification('handleTestRunStatsChange', (data: any) => data?.NewTestResults?.forEach((result: any) => {
-                testRun.appendOutput(`[${TestExplorerExtensions.toTestStatus(result.Outcome)}]: ${result.DisplayName}\r\n`);
+                testRun.appendOutput(`[${TestExplorerExtensions.toTestStatus(result.Outcome)}]: ${result.DisplayName ?? result.TestCase.DisplayName}\r\n`);
 
                 function findTestItem(id: string): vscode.TestItem | undefined {
                     if (id.includes('('))
@@ -259,9 +259,9 @@ class TestExplorerExtensions {
         if (outcome === Outcome.Passed)
             return `\x1b[32m${Outcome[outcome]}\x1b[0m`;
         if (outcome === Outcome.Failed)
-            return `\x1b[31m${Outcome[outcome]}\x1b[0m`; // Red
+            return `\x1b[31m${Outcome[outcome]}\x1b[0m`;
         if (outcome === Outcome.NotFound)
-            return `\x1b[33m${Outcome[outcome]}\x1b[0m`; // Yellow
+            return `\x1b[33m${Outcome[outcome]}\x1b[0m`;
 
         return Outcome[outcome];
     }
