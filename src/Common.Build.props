@@ -15,6 +15,7 @@
         <NoWarn>$(NoWarn);NUnit2045</NoWarn>
         <AssetsPath>$(MSBuildThisFileDirectory)..\extension\bin\</AssetsPath>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <WarningsAsErrors>$(WarningsAsErrors);NU1903;NU1904</WarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
