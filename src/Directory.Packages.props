@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
-    <CodeAnalysisVersion>4.14.0</CodeAnalysisVersion>
+    <CodeAnalysisVersion>5.0.0-2.final</CodeAnalysisVersion>
     <TestPlatformVersion>18.0.0</TestPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -20,7 +20,6 @@
     <PackageVersion Include="Microsoft.TestPlatform.TestHost" Version="$(TestPlatformVersion)" />
     <PackageVersion Include="Microsoft.TestPlatform.TranslationLayer" Version="$(TestPlatformVersion)" />
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.7.8" />
-    <PackageVersion Include="Microsoft.Build.Tasks.Core" Version="17.14.28" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(CodeAnalysisVersion)" />
