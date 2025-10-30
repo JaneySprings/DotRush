@@ -58,7 +58,7 @@ public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
         if (symbolName.Contains(query, StringComparison.OrdinalIgnoreCase))
             return true;
 
-        var queryParts = query.SplitByCamelCase();
+        var queryParts = query.SplitByCase();
         bool isMatch = true;
         foreach (var part in queryParts) {
             if (!symbolName.Contains(part, StringComparison.OrdinalIgnoreCase)) {
