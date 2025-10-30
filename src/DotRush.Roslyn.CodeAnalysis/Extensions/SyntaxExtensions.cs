@@ -15,7 +15,9 @@ public static class SyntaxExtensions {
         if (token.IsKind(SyntaxKind.UsingKeyword) && token.Parent is UsingDirectiveSyntax)
             return false;
 
-        return kind >= SyntaxKind.IfKeyword && kind <= SyntaxKind.ThrowKeyword || kind == SyntaxKind.UsingKeyword;
+        return kind >= SyntaxKind.IfKeyword && kind <= SyntaxKind.ThrowKeyword
+            || kind == SyntaxKind.UsingKeyword
+            || kind == SyntaxKind.YieldKeyword;
     }
     public static bool IsRegularKeyword(this SyntaxToken token) {
         if (token.IsControlKeyword())

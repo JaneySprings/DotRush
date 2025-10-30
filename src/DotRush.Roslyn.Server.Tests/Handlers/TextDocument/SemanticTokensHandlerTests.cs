@@ -111,6 +111,49 @@ namespace Tests {
         AssertToken(result, 40, 1, 12, SemanticTokenType.EnumMember, 6); // Value2
     }
 
+    [Test]
+    public async Task SpecialCasesTests() {
+        var documentPath = CreateDocument(nameof(SemanticTokensHandlerTests), @"
+using var a = new object();
+
+yield return a;
+yield break;
+
+switch(a) {
+    case 1: break;
+    default: break;
+}
+");
+        navigationService.UpdateSolution(Workspace.Solution);
+        var result = await handler.Handle(new SemanticTokensParams() {
+            TextDocument = documentPath.CreateDocumentId()
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result?.Data, Is.Not.Null.Or.Empty);
+        Assert.That(result.Data.Count % 5, Is.EqualTo(0));
+        Assert.That(result.Data.Count / 5, Is.EqualTo(17));
+
+        AssertToken(result, 0, 1, 0, SemanticTokenType.ControlKeyword, 5); // \nusing
+        AssertToken(result, 1, 0, 6, SemanticTokenType.Keyword, 3); // var
+        AssertToken(result, 2, 0, 4, SemanticTokenType.Variable, 1); // a
+        AssertToken(result, 3, 0, 4, SemanticTokenType.Keyword, 3); // new
+        AssertToken(result, 4, 0, 4, SemanticTokenType.Keyword, 6); // Class
+
+        AssertToken(result, 5, 2, 0, SemanticTokenType.ControlKeyword, 5); // yield
+        AssertToken(result, 6, 0, 6, SemanticTokenType.ControlKeyword, 6); // return
+        AssertToken(result, 7, 0, 7, SemanticTokenType.Variable, 1); // a
+        AssertToken(result, 8, 1, 0, SemanticTokenType.ControlKeyword, 5); // yield
+        AssertToken(result, 9, 0, 6, SemanticTokenType.ControlKeyword, 5); // break
+
+        AssertToken(result, 10, 2, 0, SemanticTokenType.ControlKeyword, 6); // switch
+        AssertToken(result, 11, 0, 7, SemanticTokenType.Variable, 1); // a
+        AssertToken(result, 12, 1, 4, SemanticTokenType.ControlKeyword, 4); // case
+        AssertToken(result, 13, 0, 5, SemanticTokenType.Number, 1); // 1
+        AssertToken(result, 14, 0, 3, SemanticTokenType.ControlKeyword, 5); // break
+        AssertToken(result, 15, 1, 4, SemanticTokenType.ControlKeyword, 7); // default
+        AssertToken(result, 16, 0, 9, SemanticTokenType.ControlKeyword, 5); // break
+    }
+
     private void AssertToken(SemanticTokens tokens, int index, uint deltaLine, uint deltaColumn, SemanticTokenType type, uint length) {
         Assert.That(tokens.Data[index * 5], Is.EqualTo(deltaLine));
         Assert.That(tokens.Data[index * 5 + 1], Is.EqualTo(deltaColumn));
