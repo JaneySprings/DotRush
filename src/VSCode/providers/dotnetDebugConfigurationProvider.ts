@@ -95,7 +95,7 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
         if (config.launchWebBrowser === undefined)
             config.launchWebBrowser = Extensions.getSetting(res.configIdDebuggerLaunchBrowser, true);
 
-        if (profile?.launchBrowser || config.launchWebBrowser) { // launchBrowser already used by vsdbg (same logic as in vscode)
+        if (profile?.launchBrowser !== false && config.launchWebBrowser) { // launchBrowser already used by vsdbg (same logic as in vscode)
             config.serverReadyAction = { action: "openExternally", pattern: "\\bNow listening on:\\s+(https?://\\S+)" };
             if (profile?.launchUrl !== undefined)
                 config.serverReadyAction.uriFormat = `%s/${profile.launchUrl}`;

@@ -2,7 +2,7 @@ using Microsoft.CodeAnalysis;
 
 namespace DotRush.Roslyn.Server.Tests;
 
-public class MultitargetProjectFixture : BaseProjectTestFixture {
+public abstract class MultitargetProjectFixture : BaseProjectTestFixture {
     protected const string TargetFrameworks = "net8.0;net10.0";
 
     public MultitargetProjectFixture() : base(nameof(MultitargetProjectFixture)) { }
