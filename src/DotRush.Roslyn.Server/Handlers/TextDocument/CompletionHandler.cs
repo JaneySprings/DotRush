@@ -87,36 +87,36 @@ public class CompletionHandler : CompletionHandlerBase {
             return new CompletionResponse(completionItems);
         });
     }
-    protected override async Task<CompletionItem> Resolve(CompletionItem item, CancellationToken token) {
-        if (documentId == null || item.Data?.Value == null || completionItemsCache == null)
-            return item;
-        if (!completionItemsCache.TryGetValue((int)item.Data.Value, out var roslynCompletionItem)) {
-            currentClassLogger.Debug($"Completion item with data:[{item.Data.Value}] not found in cache.");
-            return item;
-        }
+    protected override Task<CompletionItem> Resolve(CompletionItem item, CancellationToken token) {
+        return SafeExtensions.InvokeAsync<CompletionItem>(item, async () => {
+            if (documentId == null || item.Data?.Value == null || completionItemsCache == null)
+                return item;
+            if (!completionItemsCache.TryGetValue((int)item.Data.Value, out var roslynCompletionItem))
+                return item;
 
-        var document = workspaceService.Solution?.GetDocument(documentId);
-        if (completionService == null || document == null) {
-            currentClassLogger.Debug($"Roslyn completion service not found for document:[{document}].");
-            return item;
-        }
-
-        if (item.Documentation == null) {
-            var description = await completionService.GetDescriptionAsync(document, roslynCompletionItem, token).ConfigureAwait(false);
-            if (description != null) {
-                item.Documentation = new MarkupContent() {
-                    Kind = MarkupKind.Markdown,
-                    Value = MarkdownConverter.TaggedTextToMarkdown(description.TaggedParts)
-                };
+            var document = workspaceService.Solution?.GetDocument(documentId);
+            if (completionService == null || document == null) {
+                currentClassLogger.Debug($"Roslyn completion service not found for document:[{document}].");
+                return item;
             }
-        }
 
-        if (item.TextEdit == null && roslynCompletionItem.IsComplexTextEdit) {
-            var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
-            await ResolveComplexItemAsync(completionService, roslynCompletionItem, item, offset, document, sourceText, token).ConfigureAwait(false);
-        }
+            if (item.Documentation == null) {
+                var description = await completionService.GetDescriptionAsync(document, roslynCompletionItem, token).ConfigureAwait(false);
+                if (description != null) {
+                    item.Documentation = new MarkupContent() {
+                        Kind = MarkupKind.Markdown,
+                        Value = MarkdownConverter.TaggedTextToMarkdown(description.TaggedParts)
+                    };
+                }
+            }
 
-        return item;
+            if (item.TextEdit == null && roslynCompletionItem.IsComplexTextEdit) {
+                var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
+                await ResolveComplexItemAsync(completionService, roslynCompletionItem, item, offset, document, sourceText, token).ConfigureAwait(false);
+            }
+
+            return item;
+        });
     }
 
     //https://github.com/OmniSharp/omnisharp-roslyn/blob/c38e89b04a97ec8bc488926ef2f501d7401c4b33/src/OmniSharp.Roslyn.CSharp/Services/Completion/CompletionListBuilder_Sync.cs#L135
