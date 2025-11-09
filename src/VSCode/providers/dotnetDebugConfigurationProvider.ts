@@ -33,7 +33,7 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
 
         Extensions.onVSCode(true, false)
             ? DotNetDebugConfigurationProvider.provideVsdbgConfiguration(config)
-            : DotNetDebugConfigurationProvider.provideNcdbgConfiguration(config);
+            : await DotNetDebugConfigurationProvider.provideNcdbgConfiguration(config);
 
         if (config.request === 'launch' && !config.program)
             config.program = await vscode.commands.executeCommand(res.commandIdActiveTargetPath);
@@ -125,14 +125,12 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
         const args = Array.isArray(config.args) ? config.args : (config.args ? [config.args] : []);
         const cwd = config.cwd ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? ".";
         const env = { ...process.env, ...(config.env ?? {}) };
-        const terminalName =
-            consoleOption === "integratedTerminal" ? "DotRush (Integrated)" : "DotRush (External)";
 
         let pid: number | undefined;
 
         if (consoleOption === "integratedTerminal") {
             const terminal = vscode.window.createTerminal({
-                name: terminalName,
+                name: "DotRush (Integrated)",
                 cwd,
                 shellPath: "dotnet",
                 shellArgs: [program, ...args],
@@ -144,10 +142,12 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
             for (let i = 0; i < 10; i++) {
                 pid = await terminal.processId;
                 if (pid) break;
-                await new Promise((r) => setTimeout(r, 200));
+                await new Promise(r => setTimeout(r, 200));
             }
         } else {
-            // 🟦 External terminal
+            const { spawn, execSync } = await import("child_process");
+            const { platform } = await import("os");
+
             const childProc = spawn("dotnet", [program, ...args], {
                 cwd,
                 env,
@@ -155,57 +155,46 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
                 stdio: "ignore",
                 shell: true
             });
+
             childProc.unref();
 
-            const platform = os.platform();
-            const startTime = Date.now();
-            const timeoutMs = 5000;
-            const pollIntervalMs = 200;
+            // Wait for the app to start before PID lookup
+            await new Promise(r => setTimeout(r, 1500));
 
-            // Poll for up to 5 seconds until dotnet process appears
-            while (!pid && Date.now() - startTime < timeoutMs) {
-                try {
-                    let output = "";
-                    if (platform === "win32") {
-                        output = execSync(
-                            "wmic process where \"name='dotnet.exe'\" get ProcessId,CommandLine /format:list",
-                            { encoding: "utf8" }
-                        );
-                        const lines = output.split(/\r?\n/).map((l) => l.trim());
-                        for (let i = 0; i < lines.length; i++) {
-                            const line = lines[i];
-                            if (
-                                line.startsWith("CommandLine=") &&
-                                line.toLowerCase().includes(program.toLowerCase())
-                            ) {
-                                const pidLine = lines[i + 1];
-                                const pidMatch = pidLine?.match(/ProcessId=(\d+)/);
-                                if (pidMatch) {
-                                    pid = parseInt(pidMatch[1], 10);
-                                    break;
-                                }
-                            }
-                        }
-                    } else {
-                        output = execSync("ps -eo pid,command", { encoding: "utf8" });
-                        const lines = output.split(/\r?\n/);
-                        for (const line of lines) {
-                            if (line.includes("dotnet") && line.includes(program)) {
-                                const pidMatch = line.trim().match(/^(\d+)/);
-                                if (pidMatch) {
-                                    pid = parseInt(pidMatch[1], 10);
-                                    break;
-                                }
+            try {
+                if (platform() === "win32") {
+                    const output = execSync(
+                        "wmic process where \"name='dotnet.exe'\" get ProcessId,CommandLine /format:list",
+                        { encoding: "utf8" }
+                    );
+                    const lines = output.split(/\r?\n/).map(l => l.trim());
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i];
+                        if (line.startsWith("CommandLine=") &&
+                            line.toLowerCase().includes(program.toLowerCase())) {
+                            const pidLine = lines[i + 1];
+                            const pidMatch = pidLine?.match(/ProcessId=(\d+)/);
+                            if (pidMatch) {
+                                pid = parseInt(pidMatch[1], 10);
+                                break;
                             }
                         }
                     }
-                } catch {
-                    // ignore transient errors
+                } else {
+                    const output = execSync("ps -eo pid,command", { encoding: "utf8" });
+                    const lines = output.split(/\r?\n/);
+                    for (const line of lines) {
+                        if (line.includes("dotnet") && line.includes(program)) {
+                            const pidMatch = line.trim().match(/^(\d+)/);
+                            if (pidMatch) {
+                                pid = parseInt(pidMatch[1], 10);
+                                break;
+                            }
+                        }
+                    }
                 }
-
-                if (!pid) {
-                    await new Promise((r) => setTimeout(r, pollIntervalMs));
-                }
+            } catch {
+                // ignore lookup errors
             }
         }
 
@@ -214,23 +203,21 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
             return;
         }
 
-        // Wait for managed runtime to initialize before attaching
+        // Ensure process is alive before attaching
         for (let i = 0; i < 10; i++) {
             try {
                 process.kill(pid, 0);
-                await new Promise((r) => setTimeout(r, 500));
+                await new Promise(r => setTimeout(r, 500));
             } catch {
-                vscode.window.showErrorMessage(
-                    `DotRush: process ${pid} exited before debugger attached.`
-                );
+                vscode.window.showErrorMessage(`DotRush: process ${pid} exited before debugger attached.`);
                 return;
             }
         }
 
+        // Convert to attach configuration
         config.request = "attach";
         config.processId = pid;
         delete config.program;
         delete config.args;
     }
-
 }
