@@ -204,10 +204,10 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
         }
 
         // Ensure process is alive before attaching
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 30; i++) {
             try {
                 process.kill(pid, 0);
-                await new Promise(r => setTimeout(r, 500));
+                await new Promise(r => setTimeout(r, 200));
             } catch {
                 vscode.window.showErrorMessage(`DotRush: process ${pid} exited before debugger attached.`);
                 return;
