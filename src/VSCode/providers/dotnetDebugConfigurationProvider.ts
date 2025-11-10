@@ -7,7 +7,6 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import { spawn, execSync } from "child_process";
-import { log } from '../logging/logger';
 
 export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     public async resolveDebugConfiguration(
@@ -115,154 +114,132 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
      */
     private static async handleConsolePreference(config: vscode.DebugConfiguration): Promise<void> {
         const consoleOption = config.console ?? "internalConsole";
-        log(`handleConsolePreference: Starting with console option: ${consoleOption}, request: ${config.request}`);
-
-        if (config.request !== "launch" || consoleOption === "internalConsole") {
-            log(`handleConsolePreference: Skipping (request=${config.request}, console=${consoleOption})`);
-            return;
-        }
+        if (config.request !== "launch" || consoleOption === "internalConsole") return;
 
         const program = config.program ?? "";
         const args = Array.isArray(config.args) ? config.args : (config.args ? [config.args] : []);
         const cwd = config.cwd ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? ".";
         const env = { ...process.env, ...(config.env ?? {}) };
 
-        log(`handleConsolePreference: program="${program}", args=${JSON.stringify(args)}, cwd="${cwd}"`);
-
-        let pid: number | undefined;
-
-        if (consoleOption === "integratedTerminal") {
-            log(`handleConsolePreference: Launching in integrated terminal`);
-            // ✅ Integrated terminal: handled by VSCode
-            const terminal = vscode.window.createTerminal({
-                name: "DotRush (Integrated)",
-                cwd,
-                shellPath: "dotnet",
-                shellArgs: [program, ...args],
-                location: vscode.TerminalLocation.Panel,
-                env
-            });
-            terminal.show();
-
-            for (let i = 0; i < 10; i++) {
-                pid = await terminal.processId;
-                if (pid) break;
-                await new Promise(r => setTimeout(r, 200));
-            }
-            log(`handleConsolePreference: Integrated terminal PID: ${pid}`);
-        } else {
-            log(`handleConsolePreference: Launching in external terminal (platform: ${os.platform()})`);
-
-
-            const terminalConfig = vscode.workspace.getConfiguration("terminal.external");
-            const execPath = terminalConfig.get<string>(`${os.platform()}Exec`);
-            log(`handleConsolePreference: External terminal execPath: ${execPath}`);
-
-            if (!execPath) {
-                log(`handleConsolePreference: ERROR - No external terminal configured for platform ${os.platform()}`);
-                vscode.window.showErrorMessage(`DotRush: No external terminal configured for platform ${os.platform()}.`);
-                return;
-            }
-
-            // Build terminal launch command
-            let terminalArgs: string[] = [];
-            if (os.platform() === "win32") {
-                terminalArgs = ["/c", "start", "cmd.exe", "/k", `dotnet "${program}" ${args.join(" ")}`];
-            } else if (os.platform() === "darwin") {
-                terminalArgs = ["-a", "Terminal.app", "--args", "dotnet", program, ...args];
-            } else {
-                // Linux → use -- to pass the command to the terminal
-                terminalArgs = ["--", "dotnet", program, ...args];
-            }
-
-            log(`handleConsolePreference: Spawning external terminal with args: ${JSON.stringify(terminalArgs)}`);
-
-            const childProc = spawn(execPath, terminalArgs, {
-                cwd,
-                env,
-                detached: true,
-                stdio: "ignore"
-            });
-            childProc.unref();
-
-            // Wait for the app to start
-            await new Promise(r => setTimeout(r, 1500));
-            log(`handleConsolePreference: Process spawned, waiting for app to start. Now looking up PID...`);
-
-            // Lookup PID of dotnet process (for attach)
-            try {
-                if (os.platform() === "win32") {
-                    log(`handleConsolePreference: Looking up PID on Windows using wmic`);
-
-                    const output = execSync(
-                        "wmic process where \"name='dotnet.exe'\" get ProcessId,CommandLine /format:list",
-                        { encoding: "utf8" }
-                    );
-                    const lines = output.split(/\r?\n/).map(l => l.trim());
-                    for (let i = 0; i < lines.length; i++) {
-                        const line = lines[i];
-                        if (line.startsWith("CommandLine=") && line.toLowerCase().includes(program.toLowerCase())) {
-                            const pidLine = lines[i + 1];
-                            const pidMatch = pidLine?.match(/ProcessId=(\d+)/);
-                            if (pidMatch) {
-                                pid = parseInt(pidMatch[1], 10);
-                                log(`handleConsolePreference: Found PID on Windows: ${pid}`);
-                                break;
-                            }
-                        }
-                    }
-                } else {
-                    log(`handleConsolePreference: Looking up PID on Unix/Linux using ps`);
-
-                    const output = execSync("ps -eo pid,command", { encoding: "utf8" });
-                    const lines = output.split(/\r?\n/);
-                    for (const line of lines) {
-                        if (line.includes("dotnet") && line.includes(program)) {
-                            const pidMatch = line.trim().match(/^(\d+)/);
-                            if (pidMatch) {
-                                pid = parseInt(pidMatch[1], 10);
-                                log(`handleConsolePreference: Found PID on Unix/Linux: ${pid}`);
-                                break;
-                            }
-                        }
-                    }
-                }
-            } catch (err) {
-                log(`handleConsolePreference: ERROR - Failed to determine PID: ${(err as Error).message}`);
-                vscode.window.showErrorMessage(`DotRush: could not determine PID of launched process: ${(err as Error).message}`);
-            }
-        }
+        const pid = consoleOption === "integratedTerminal"
+            ? await this.launchInIntegratedTerminal(program, args, cwd, env)
+            : await this.launchInExternalTerminal(program, args, cwd, env);
 
         if (!pid) {
-            log(`handleConsolePreference: ERROR - No PID found after lookup`);
-            vscode.window.showErrorMessage("DotRush: could not determine PID of launched process. (No PID found)");
+            vscode.window.showErrorMessage("DotRush: could not determine PID of launched process.");
             return;
         }
 
-        log(`handleConsolePreference: PID determined: ${pid}. Verifying process is alive...`);
-
-
-        // Ensure process is alive before attach
-        for (let i = 0; i < 30; i++) {
-            try {
-                process.kill(pid, 0);
-                await new Promise(r => setTimeout(r, 200));
-            } catch {
-                log(`handleConsolePreference: ERROR - Process ${pid} exited before debugger could attach`);
-                vscode.window.showErrorMessage(`DotRush: process ${pid} exited before debugger attached.`);
-                return;
-            }
+        const alive = await this.waitForProcessAlive(pid, 30, 200);
+        if (!alive) {
+            vscode.window.showErrorMessage(`DotRush: process ${pid} exited before debugger attached.`);
+            return;
         }
 
-        log(`handleConsolePreference: Process ${pid} is alive and ready. Converting to attach configuration.`);
-
-        // Convert to attach configuration
         config.request = "attach";
         config.processId = pid;
         delete config.program;
         delete config.args;
+    }
 
-        log(`handleConsolePreference: Configuration converted to attach mode with PID ${pid}`);
+    /* ---------- Private helpers ---------- */
 
+    private static async launchInIntegratedTerminal(
+        program: string, args: string[], cwd: string, env: NodeJS.ProcessEnv
+    ): Promise<number | undefined> {
+        const terminal = vscode.window.createTerminal({
+            name: "DotRush (Integrated)",
+            cwd,
+            shellPath: "dotnet",
+            shellArgs: [program, ...args],
+            location: vscode.TerminalLocation.Panel,
+            env
+        });
+        terminal.show();
+
+        for (let i = 0; i < 10; i++) {
+            const pid = await terminal.processId;
+            if (pid) return pid;
+            await new Promise(r => setTimeout(r, 200));
+        }
+        return undefined;
+    }
+    private static async launchInExternalTerminal(
+        program: string, args: string[], cwd: string, env: NodeJS.ProcessEnv
+    ): Promise<number | undefined> {
+        const platformName = os.platform();
+
+        // Read external terminal path from settings.json
+        let execPath =
+            vscode.workspace.getConfiguration("terminal.external").get<string>(`${platformName}Exec`) ??
+            vscode.workspace.getConfiguration("terminal.external", null).get<string>(`${platformName}Exec`);
+
+        // Fallbacks
+        if (!execPath) {
+            if (platformName === "win32") execPath = "cmd.exe";
+            else if (platformName === "linux") execPath = "/usr/bin/x-terminal-emulator";
+            else if (platformName === "darwin") execPath = "open";
+        }
+
+        if (!execPath) {
+            vscode.window.showErrorMessage(`DotRush: No external terminal configured for platform ${platformName}.`);
+            return;
+        }
+
+        const terminalArgs = this.getExternalTerminalArgs(platformName, program, args);
+        const childProc = spawn(execPath, terminalArgs, { cwd, env, detached: true, stdio: "ignore" });
+        childProc.unref();
+
+        // Wait for process to start
+        await new Promise(r => setTimeout(r, 1500));
+        return this.lookupDotnetPid(program, platformName);
+    }
+    private static getExternalTerminalArgs(platformName: string, program: string, args: string[]): string[] {
+        if (platformName === "win32")
+            return ["/c", "start", "powershell.exe", "-NoExit", "dotnet", `"${program}"`, ...args];
+        if (platformName === "darwin")
+            return ["-a", "Terminal.app", "--args", "dotnet", program, ...args];
+        return ["--", "dotnet", program, ...args]; // Linux
+    }
+    private static lookupDotnetPid(program: string, platformName: string): number | undefined {
+        try {
+            if (platformName === "win32") {
+                const output = execSync(
+                    "wmic process where \"name='dotnet.exe'\" get ProcessId,CommandLine /format:list",
+                    { encoding: "utf8" }
+                );
+                const lines = output.split(/\r?\n/).map(l => l.trim());
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    if (line.startsWith("CommandLine=") && line.toLowerCase().includes(program.toLowerCase())) {
+                        const pidLine = lines[i + 1];
+                        const pidMatch = pidLine?.match(/ProcessId=(\d+)/);
+                        if (pidMatch) return parseInt(pidMatch[1], 10);
+                    }
+                }
+            } else {
+                const output = execSync("ps -eo pid,command", { encoding: "utf8" });
+                for (const line of output.split(/\r?\n/)) {
+                    if (line.includes("dotnet") && line.includes(program)) {
+                        const pidMatch = line.trim().match(/^(\d+)/);
+                        if (pidMatch) return parseInt(pidMatch[1], 10);
+                    }
+                }
+            }
+        } catch (err) {
+            vscode.window.showErrorMessage(`DotRush: PID lookup failed: ${(err as Error).message}`);
+        }
+        return undefined;
+    }
+    private static async waitForProcessAlive(pid: number, checks: number, delayMs: number): Promise<boolean> {
+        for (let i = 0; i < checks; i++) {
+            try {
+                process.kill(pid, 0);
+                await new Promise(r => setTimeout(r, delayMs));
+            } catch {
+                return false;
+            }
+        }
+        return true;
     }
 }
