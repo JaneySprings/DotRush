@@ -5,11 +5,9 @@ import { Interop } from '../interop/interop';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
-
+import * as os from 'os';
 import { spawn, execSync } from "child_process";
-import * as os from "os";
-import * as psList from "ps-list";
-import * as psTree from "ps-tree";
+import { log } from '../logging/logger';
 
 export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     public async resolveDebugConfiguration(
@@ -117,7 +115,10 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
      */
     private static async handleConsolePreference(config: vscode.DebugConfiguration): Promise<void> {
         const consoleOption = config.console ?? "internalConsole";
+        log(`handleConsolePreference: Starting with console option: ${consoleOption}, request: ${config.request}`);
+
         if (config.request !== "launch" || consoleOption === "internalConsole") {
+            log(`handleConsolePreference: Skipping (request=${config.request}, console=${consoleOption})`);
             return;
         }
 
@@ -126,9 +127,13 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
         const cwd = config.cwd ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? ".";
         const env = { ...process.env, ...(config.env ?? {}) };
 
+        log(`handleConsolePreference: program="${program}", args=${JSON.stringify(args)}, cwd="${cwd}"`);
+
         let pid: number | undefined;
 
         if (consoleOption === "integratedTerminal") {
+            log(`handleConsolePreference: Launching in integrated terminal`);
+            // ✅ Integrated terminal: handled by VSCode
             const terminal = vscode.window.createTerminal({
                 name: "DotRush (Integrated)",
                 cwd,
@@ -144,25 +149,51 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
                 if (pid) break;
                 await new Promise(r => setTimeout(r, 200));
             }
+            log(`handleConsolePreference: Integrated terminal PID: ${pid}`);
         } else {
-            const { spawn, execSync } = await import("child_process");
-            const { platform } = await import("os");
+            log(`handleConsolePreference: Launching in external terminal (platform: ${os.platform()})`);
 
-            const childProc = spawn("dotnet", [program, ...args], {
+
+            const terminalConfig = vscode.workspace.getConfiguration("terminal.external");
+            const execPath = terminalConfig.get<string>(`${os.platform()}Exec`);
+            log(`handleConsolePreference: External terminal execPath: ${execPath}`);
+
+            if (!execPath) {
+                log(`handleConsolePreference: ERROR - No external terminal configured for platform ${os.platform()}`);
+                vscode.window.showErrorMessage(`DotRush: No external terminal configured for platform ${os.platform()}.`);
+                return;
+            }
+
+            // Build terminal launch command
+            let terminalArgs: string[] = [];
+            if (os.platform() === "win32") {
+                terminalArgs = ["/c", "start", "cmd.exe", "/k", `dotnet "${program}" ${args.join(" ")}`];
+            } else if (os.platform() === "darwin") {
+                terminalArgs = ["-a", "Terminal.app", "--args", "dotnet", program, ...args];
+            } else {
+                // Linux → use -- to pass the command to the terminal
+                terminalArgs = ["--", "dotnet", program, ...args];
+            }
+
+            log(`handleConsolePreference: Spawning external terminal with args: ${JSON.stringify(terminalArgs)}`);
+
+            const childProc = spawn(execPath, terminalArgs, {
                 cwd,
                 env,
                 detached: true,
-                stdio: "ignore",
-                shell: true
+                stdio: "ignore"
             });
-
             childProc.unref();
 
-            // Wait for the app to start before PID lookup
+            // Wait for the app to start
             await new Promise(r => setTimeout(r, 1500));
+            log(`handleConsolePreference: Process spawned, waiting for app to start. Now looking up PID...`);
 
+            // Lookup PID of dotnet process (for attach)
             try {
-                if (platform() === "win32") {
+                if (os.platform() === "win32") {
+                    log(`handleConsolePreference: Looking up PID on Windows using wmic`);
+
                     const output = execSync(
                         "wmic process where \"name='dotnet.exe'\" get ProcessId,CommandLine /format:list",
                         { encoding: "utf8" }
@@ -170,17 +201,19 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
                     const lines = output.split(/\r?\n/).map(l => l.trim());
                     for (let i = 0; i < lines.length; i++) {
                         const line = lines[i];
-                        if (line.startsWith("CommandLine=") &&
-                            line.toLowerCase().includes(program.toLowerCase())) {
+                        if (line.startsWith("CommandLine=") && line.toLowerCase().includes(program.toLowerCase())) {
                             const pidLine = lines[i + 1];
                             const pidMatch = pidLine?.match(/ProcessId=(\d+)/);
                             if (pidMatch) {
                                 pid = parseInt(pidMatch[1], 10);
+                                log(`handleConsolePreference: Found PID on Windows: ${pid}`);
                                 break;
                             }
                         }
                     }
                 } else {
+                    log(`handleConsolePreference: Looking up PID on Unix/Linux using ps`);
+
                     const output = execSync("ps -eo pid,command", { encoding: "utf8" });
                     const lines = output.split(/\r?\n/);
                     for (const line of lines) {
@@ -188,36 +221,48 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
                             const pidMatch = line.trim().match(/^(\d+)/);
                             if (pidMatch) {
                                 pid = parseInt(pidMatch[1], 10);
+                                log(`handleConsolePreference: Found PID on Unix/Linux: ${pid}`);
                                 break;
                             }
                         }
                     }
                 }
-            } catch {
-                // ignore lookup errors
+            } catch (err) {
+                log(`handleConsolePreference: ERROR - Failed to determine PID: ${(err as Error).message}`);
+                vscode.window.showErrorMessage(`DotRush: could not determine PID of launched process: ${(err as Error).message}`);
             }
         }
 
         if (!pid) {
-            vscode.window.showErrorMessage("DotRush: could not determine PID of launched process.");
+            log(`handleConsolePreference: ERROR - No PID found after lookup`);
+            vscode.window.showErrorMessage("DotRush: could not determine PID of launched process. (No PID found)");
             return;
         }
 
-        // Ensure process is alive before attaching
+        log(`handleConsolePreference: PID determined: ${pid}. Verifying process is alive...`);
+
+
+        // Ensure process is alive before attach
         for (let i = 0; i < 30; i++) {
             try {
                 process.kill(pid, 0);
                 await new Promise(r => setTimeout(r, 200));
             } catch {
+                log(`handleConsolePreference: ERROR - Process ${pid} exited before debugger could attach`);
                 vscode.window.showErrorMessage(`DotRush: process ${pid} exited before debugger attached.`);
                 return;
             }
         }
+
+        log(`handleConsolePreference: Process ${pid} is alive and ready. Converting to attach configuration.`);
 
         // Convert to attach configuration
         config.request = "attach";
         config.processId = pid;
         delete config.program;
         delete config.args;
+
+        log(`handleConsolePreference: Configuration converted to attach mode with PID ${pid}`);
+
     }
 }
