@@ -12,7 +12,6 @@ public static class WorkspaceExtensions {
     private static readonly string[] compilerGeneratedExtensions = { ".g.cs", ".sg.cs" };
     private static readonly string[] projectFileExtensions = { ".csproj", /* fsproj vbproj */};
     private static readonly string[] solutionFileExtensions = { ".sln", ".slnf", ".slnx" };
-    private static readonly string[] supportedSolutionExtensions = { ".sln", ".slnf" }; //slnx is not supported by Roslyn for now
     private static readonly string[] relevantExtensions = sourceCodeExtensions.Concat(additionalDocumentExtensions).ToArray();
 
     public static bool IsSourceCodeDocument(string filePath) {
@@ -29,9 +28,6 @@ public static class WorkspaceExtensions {
     }
     public static bool IsSolutionFile(string filePath) {
         return solutionFileExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
-    }
-    public static bool IsSupportedSolutionFile(string filePath) {
-        return supportedSolutionExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
     }
     public static bool IsCompilerGeneratedDocument(string filePath) {
         return compilerGeneratedExtensions.Any(it => filePath.EndsWith(it, StringComparison.OrdinalIgnoreCase));

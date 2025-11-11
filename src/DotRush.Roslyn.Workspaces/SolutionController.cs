@@ -226,7 +226,7 @@ public abstract class SolutionController : ProjectsController {
         var secondarySolutions = new List<string>();
 
         foreach (var solutionFilePath in solutionFilePaths) {
-            if (WorkspaceExtensions.IsSupportedSolutionFile(solutionFilePath) && primarySolution == null) {
+            if (WorkspaceExtensions.IsSolutionFile(solutionFilePath) && primarySolution == null) {
                 primarySolution = solutionFilePath;
                 continue;
             }
