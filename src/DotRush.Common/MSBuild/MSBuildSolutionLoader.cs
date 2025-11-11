@@ -78,10 +78,8 @@ public static class MSBuildSolutionLoader {
         var solutionXDirectory = Path.GetDirectoryName(solutionPath)!;
         var solutionX = XDocument.Load(solutionPath);
 
+        var projectElements = solutionX.Descendants("Project");
         var projects = new List<string>();
-        var projectElements = solutionX.Root?.Elements("Project");
-        if (projectElements == null)
-            return Array.Empty<string>();
 
         foreach (var projectElement in projectElements) {
             var projectPath = projectElement.Attribute("Path")?.Value;
