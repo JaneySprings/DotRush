@@ -20,7 +20,7 @@ public static class InternalCompletionService {
             return Task.FromResult(CompletionList.Empty);
 
         var passThroughOptions = document.Project.Solution.Options;
-        var completionTrigger = CompletionTrigger.Invoke;
+        var completionTrigger = default(CompletionTrigger);
 
         var result = getCompletionsAsyncMethod.Invoke(completionService, new object?[] {
             document, /// <param name="document">The document that completion is occurring within.</param>
