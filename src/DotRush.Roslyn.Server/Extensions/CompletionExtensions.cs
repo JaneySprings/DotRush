@@ -107,7 +107,8 @@ public static class CompletionServiceExtensions {
         if (completionOptions != null) {
             InternalCompletionOptions.AssignValues(completionOptions,
                                                    configurationService.ShowItemsFromUnimportedNamespaces,
-                                                   configurationService.TargetTypedCompletionFilter);
+                                                   configurationService.TargetTypedCompletionFilter,
+                                                   forceExpandedCompletionIndexCreation: true);
         }
 
         if (!InternalCompletionService.IsInitialized || completionOptions == null)

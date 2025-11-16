@@ -61,14 +61,18 @@ public class ReflectionApiTests {
         Assert.That(InternalCompletionOptions.completionOptionsType, Is.Not.Null);
 
         Assert.That(InternalCompletionOptions.showItemsFromUnimportedNamespacesProperty, Is.Not.Null);
-        Assert.That(InternalCompletionOptions.showItemsFromUnimportedNamespacesProperty!.PropertyType, Is.EqualTo(typeof(bool?)));
+        Assert.That(InternalCompletionOptions.showItemsFromUnimportedNamespacesProperty.PropertyType, Is.EqualTo(typeof(bool?)));
 
         Assert.That(InternalCompletionOptions.targetTypedCompletionFilterProperty, Is.Not.Null);
-        Assert.That(InternalCompletionOptions.targetTypedCompletionFilterProperty!.PropertyType, Is.EqualTo(typeof(bool)));
+        Assert.That(InternalCompletionOptions.targetTypedCompletionFilterProperty.PropertyType, Is.EqualTo(typeof(bool)));
+
+        Assert.That(InternalCompletionOptions.forceExpandedCompletionIndexCreationProperty, Is.Not.Null);
+        Assert.That(InternalCompletionOptions.forceExpandedCompletionIndexCreationProperty.PropertyType, Is.EqualTo(typeof(bool)));
+
 
         var instance = InternalCompletionOptions.CreateNew();
         Assert.That(instance, Is.Not.Null);
-        Assert.DoesNotThrow(() => InternalCompletionOptions.AssignValues(instance!, true, false));
+        Assert.DoesNotThrow(() => InternalCompletionOptions.AssignValues(instance!, true, false, true));
     }
     [Test]
     public void GetCompletionsInternalMethodTest() {
