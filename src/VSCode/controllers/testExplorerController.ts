@@ -164,8 +164,9 @@ export class TestExplorerController {
 
 class TestExplorerExtensions {
     public static createProjectItem(controller: vscode.TestController, project: Project): vscode.TestItem {
-        const item = controller.createTestItem(project.name, `${Icons.library} ${project.name}`, vscode.Uri.file(project.path));
+        const item = controller.createTestItem(project.name, project.name, vscode.Uri.file(project.path));
         item.canResolveChildren = true;
+        item.description = project.frameworks.join(' ');
         item.tags = project.frameworks?.map(tfm => new vscode.TestTag(tfm));
         return item;
     }
