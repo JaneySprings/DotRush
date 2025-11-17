@@ -101,7 +101,7 @@ public class RpcTestHostNotificationHandler : ITestRunEventsHandler, ITestHostLa
             arguments: startInfo.Arguments ?? string.Empty,
             workingDirectory: startInfo.WorkingDirectory,
             environmentVariables: startInfo.EnvironmentVariables?.ToNotNullDictionary(),
-            captureOutput: false,
+            captureOutput: true,
             displayWindow: false
         ).Id;
     }
