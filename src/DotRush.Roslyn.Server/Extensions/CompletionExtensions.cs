@@ -99,21 +99,34 @@ public static partial class CompletionExtensions {
             return string.Empty;
         return EscapeRegex.Replace(snippet, @"\$1");
     }
-}
 
-public static class CompletionServiceExtensions {
     public static Task<CompletionList> GetCompletionsAsync(this CompletionService completionService, Document document, int position, ConfigurationService configurationService, CancellationToken cancellationToken) {
         var completionOptions = InternalCompletionOptions.CreateNew();
-        if (completionOptions != null) {
+        if (completionOptions != null)
             InternalCompletionOptions.AssignValues(completionOptions,
-                                                   configurationService.ShowItemsFromUnimportedNamespaces,
-                                                   configurationService.TargetTypedCompletionFilter,
-                                                   forceExpandedCompletionIndexCreation: true);
-        }
+                configurationService.ShowItemsFromUnimportedNamespaces,
+                configurationService.TargetTypedCompletionFilter,
+                forceExpandedCompletionIndexCreation: true);
 
         if (!InternalCompletionService.IsInitialized || completionOptions == null)
             return completionService.GetCompletionsAsync(document, position, cancellationToken: cancellationToken);
 
         return InternalCompletionService.GetCompletionsAsync(completionService, document, position, completionOptions, cancellationToken);
+    }
+}
+
+class TextEditEqualityComparer : IEqualityComparer<TextEdit> {
+    public static TextEditEqualityComparer Default { get; } = new TextEditEqualityComparer();
+
+    public bool Equals(TextEdit? x, TextEdit? y) {
+        if (x == null && y == null)
+            return true;
+        if (x == null || y == null)
+            return false;
+
+        return GetHashCode(x) == GetHashCode(y);
+    }
+    public int GetHashCode(TextEdit obj) {
+        return HashCode.Combine(obj.NewText, obj.Range);
     }
 }

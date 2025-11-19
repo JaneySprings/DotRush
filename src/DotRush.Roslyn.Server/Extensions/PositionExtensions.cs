@@ -11,9 +11,6 @@ public static class PositionExtensions {
 
         return sourceText.Lines.GetPosition(new LinePosition(position.Line, position.Character));
     }
-    public static ProtocolModels.DocumentRange ToRange(this ProtocolModels.Position position) {
-        return new ProtocolModels.DocumentRange(position, position);
-    }
 
     public static ProtocolModels.Position ToPosition(this int offset, SourceText sourceText) {
         var linePosition = sourceText.Lines.GetLinePosition(offset);
@@ -29,16 +26,17 @@ public static class PositionExtensions {
             new ProtocolModels.Position(span.End.Line, span.End.Character)
         );
     }
-
     public static ProtocolModels.DocumentRange ToRange(this TextSpan span, SourceText sourceText) {
         return new ProtocolModels.DocumentRange(
             span.Start.ToPosition(sourceText),
             span.End.ToPosition(sourceText)
         );
     }
-
     public static ProtocolModels.DocumentRange ToRange(this Location location) {
         return location.GetLineSpan().Span.ToRange();
+    }
+    public static ProtocolModels.DocumentRange ToRange(this ProtocolModels.Position position) {
+        return new ProtocolModels.DocumentRange(position, position);
     }
 
     public static ProtocolModels.Location? ToLocation(this Location location, string? filePath = null) {
@@ -64,10 +62,19 @@ public static class PositionExtensions {
 
         return new ProtocolModels.Location() {
             Uri = filePath,
-            Range = EmptyRange
+            Range = default(ProtocolModels.DocumentRange)
         };
     }
 
-    public static ProtocolModels.DocumentRange EmptyRange => new ProtocolModels.DocumentRange(EmptyPosition, EmptyPosition);
-    public static ProtocolModels.Position EmptyPosition => new ProtocolModels.Position(0, 0);
+    public static bool CheckCollision(ProtocolModels.DocumentRange range1, ProtocolModels.DocumentRange range2) {
+        static int Compare(ProtocolModels.Position position1, ProtocolModels.Position position2) {
+            int lineCompare = position1.Line.CompareTo(position2.Line);
+            if (lineCompare != 0)
+                return lineCompare;
+
+            return position1.Character.CompareTo(position2.Character);
+        }
+
+        return Compare(range1.Start, range2.End) <= 0 && Compare(range2.Start, range1.End) <= 0;
+    }
 }

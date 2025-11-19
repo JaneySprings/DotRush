@@ -23,28 +23,50 @@ public class DocumentFormattingHandler : DocumentFormattingHandlerBase {
         serverCapabilities.DocumentRangeFormattingProvider = true;
     }
     protected override async Task<DocumentFormattingResponse?> Handle(DocumentFormattingParams request, CancellationToken token) {
-        var edits = new List<TextEdit>();
-        var documentId = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath).FirstOrDefault();
-        var document = solutionService.Solution?.GetDocument(documentId);
-        if (document == null)
+        var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
+        if (documentIds == null)
             return null;
 
-        var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
-        var formattedDocument = await Formatter.FormatAsync(document, cancellationToken: token).ConfigureAwait(false);
-        var textChanges = await formattedDocument.GetTextChangesAsync(document, token).ConfigureAwait(false);
-        return new DocumentFormattingResponse(textChanges.Select(x => x.ToTextEdit(sourceText)).ToList());
+        var edits = new HashSet<TextEdit>(TextEditEqualityComparer.Default);
+        foreach (var documentId in documentIds) {
+            var document = solutionService.Solution?.GetDocument(documentId);
+            if (document == null)
+                return null;
+
+            var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
+            var formattedDocument = await Formatter.FormatAsync(document, cancellationToken: token).ConfigureAwait(false);
+            formattedDocument = await Formatter.OrganizeImportsAsync(formattedDocument, token).ConfigureAwait(false);
+
+            var textChanges = await formattedDocument.GetTextChangesAsync(document, token).ConfigureAwait(false);
+            foreach (var textEdit in textChanges.Select(x => x.ToTextEdit(sourceText))) {
+                if (!edits.Any(x => PositionExtensions.CheckCollision(x.Range, textEdit.Range)))
+                    edits.Add(textEdit);
+            }
+        }
+
+        return new DocumentFormattingResponse(edits.ToList());
     }
     protected override async Task<DocumentFormattingResponse?> Handle(DocumentRangeFormattingParams request, CancellationToken token) {
-        var edits = new List<TextEdit>();
-        var documentId = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath).FirstOrDefault();
-        var document = solutionService.Solution?.GetDocument(documentId);
-        if (document == null)
+        var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
+        if (documentIds == null)
             return null;
 
-        var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
-        var formattedDoc = await Formatter.FormatAsync(document, request.Range.ToTextSpan(sourceText), cancellationToken: token).ConfigureAwait(false);
-        var textChanges = await formattedDoc.GetTextChangesAsync(document, token).ConfigureAwait(false);
-        return new DocumentFormattingResponse(textChanges.Select(x => x.ToTextEdit(sourceText)).ToList());
+        var edits = new HashSet<TextEdit>(TextEditEqualityComparer.Default);
+        foreach (var documentId in documentIds) {
+            var document = solutionService.Solution?.GetDocument(documentId);
+            if (document == null)
+                return null;
+
+            var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
+            var formattedDocument = await Formatter.FormatAsync(document, request.Range.ToTextSpan(sourceText), cancellationToken: token).ConfigureAwait(false);
+            var textChanges = await formattedDocument.GetTextChangesAsync(document, token).ConfigureAwait(false);
+            foreach (var textEdit in textChanges.Select(x => x.ToTextEdit(sourceText))) {
+                if (!edits.Any(x => PositionExtensions.CheckCollision(x.Range, textEdit.Range)))
+                    edits.Add(textEdit);
+            }
+        }
+
+        return new DocumentFormattingResponse(edits.ToList());
     }
     protected override Task<DocumentFormattingResponse?> Handle(DocumentRangesFormattingParams request, CancellationToken token) {
         return Task.FromResult<DocumentFormattingResponse?>(null);
