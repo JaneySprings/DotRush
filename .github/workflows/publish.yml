@@ -46,7 +46,7 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          dotnet-quality: preview
+          # dotnet-quality: preview
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -94,7 +94,7 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          dotnet-quality: preview
+          # dotnet-quality: preview
       - name: Restore .NET tools
         run: dotnet tool restore
 
