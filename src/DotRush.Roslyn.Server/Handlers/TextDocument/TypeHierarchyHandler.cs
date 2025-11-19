@@ -96,7 +96,7 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
         return CreateTypeHierarchyItem(symbol, fallbackParams.TextDocument.Uri.FileSystemPath, fallbackParams.Position.ToRange());
     }
     private TypeHierarchyItem CreateTypeHierarchyItem(ISymbol symbol, TypeHierarchyItem fallbackItem) {
-        return CreateTypeHierarchyItem(symbol, fallbackItem.Uri.FileSystemPath, PositionExtensions.EmptyRange);
+        return CreateTypeHierarchyItem(symbol, fallbackItem.Uri.FileSystemPath, default(DocumentRange));
     }
     private TypeHierarchyItem CreateTypeHierarchyItem(ISymbol symbol, string fallbackUri, DocumentRange fallbackRange) {
         var key = symbol.ToDisplayString().GetHashCode();
