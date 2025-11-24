@@ -46,7 +46,7 @@ public class DocumentFormattingHandler : DocumentFormattingHandlerBase {
 
         return new DocumentFormattingResponse(edits.ToList());
     }
-    protected override async Task<DocumentFormattingResponse?> Handle(DocumentRangeFormattingParams request, CancellationToken token) {
+    protected override async Task<DocumentFormattingResponse?> Handle(DocumentRangesFormattingParams request, CancellationToken token) {
         var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
         if (documentIds == null)
             return null;
@@ -58,7 +58,8 @@ public class DocumentFormattingHandler : DocumentFormattingHandlerBase {
                 return null;
 
             var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
-            var formattedDocument = await Formatter.FormatAsync(document, request.Range.ToTextSpan(sourceText), cancellationToken: token).ConfigureAwait(false);
+            var spans = request.Ranges.Select(range => range.ToTextSpan(sourceText)).ToArray();
+            var formattedDocument = await Formatter.FormatAsync(document, spans, cancellationToken: token).ConfigureAwait(false);
             var textChanges = await formattedDocument.GetTextChangesAsync(document, token).ConfigureAwait(false);
             foreach (var textEdit in textChanges.Select(x => x.ToTextEdit(sourceText))) {
                 if (!edits.Any(x => PositionExtensions.CheckCollision(x.Range, textEdit.Range)))
@@ -68,10 +69,9 @@ public class DocumentFormattingHandler : DocumentFormattingHandlerBase {
 
         return new DocumentFormattingResponse(edits.ToList());
     }
-    protected override Task<DocumentFormattingResponse?> Handle(DocumentRangesFormattingParams request, CancellationToken token) {
-        return Task.FromResult<DocumentFormattingResponse?>(null);
+    protected override Task<DocumentFormattingResponse?> Handle(DocumentRangeFormattingParams request, CancellationToken token) {
+        return Handle(request.ToRangesParameters(), token);
     }
-
     protected override Task<DocumentFormattingResponse?> Handle(DocumentOnTypeFormattingParams request, CancellationToken token) {
         return Task.FromResult<DocumentFormattingResponse?>(null);
     }
