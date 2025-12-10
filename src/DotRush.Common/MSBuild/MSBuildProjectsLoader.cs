@@ -45,23 +45,19 @@ public static class MSBuildProjectsLoader {
             || project.HasPackage("TUnit");
     }
 
-    private static List<string> GetTargetFrameworks(MSBuildProject project) {
-        var frameworks = new List<string>();
-
-        var singleFramework = project.EvaluateProperty("TargetFramework");
-        if (!string.IsNullOrEmpty(singleFramework)) {
-            frameworks.Add(singleFramework);
-            return frameworks;
+    private static IEnumerable<string> GetTargetFrameworks(MSBuildProject project) {
+        var frameworkProperty = project.EvaluateProperty("TargetFramework");
+        if (string.IsNullOrEmpty(frameworkProperty)) {
+            frameworkProperty = project.EvaluateProperty("TargetFrameworks");
+            if (string.IsNullOrEmpty(frameworkProperty))
+                return Enumerable.Empty<string>();
         }
 
-        var multipleFrameworks = project.EvaluateProperty("TargetFrameworks");
-        if (!string.IsNullOrEmpty(multipleFrameworks)) {
-            foreach (var framework in multipleFrameworks.Split(';')) {
-                if (frameworks.Contains(framework) || string.IsNullOrEmpty(framework))
-                    continue;
-                frameworks.Add(framework);
-            }
-            return frameworks;
+        var frameworks = new List<string>();
+        foreach (var framework in frameworkProperty.Split(';')) {
+            if (frameworks.Contains(framework) || string.IsNullOrEmpty(framework))
+                continue;
+            frameworks.Add(framework);
         }
 
         return frameworks;
