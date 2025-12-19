@@ -13,7 +13,9 @@ public class TestExplorerService {
         "NUnit.Framework.TestCaseAttribute",
         "NUnit.Framework.TestCaseSourceAttribute",
         "Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute",
-        "TUnit.Core.TestAttribute"
+        "TUnit.Core.TestAttribute",
+        "GdUnit4.TestSuiteAttribute",
+        "GdUnit4.TestCaseAttribute"
     };
 
     public TestExplorerService() {
