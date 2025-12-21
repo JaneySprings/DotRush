@@ -42,7 +42,8 @@ public static class MSBuildProjectsLoader {
             || project.HasPackage("NUnitLite")
             || project.HasPackage("xunit")
             || project.HasPackage("MSTest")
-            || project.HasPackage("TUnit");
+            || project.HasPackage("TUnit")
+            || project.HasPackage("gdUnit4.api");
     }
 
     private static IEnumerable<string> GetTargetFrameworks(MSBuildProject project) {
