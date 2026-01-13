@@ -6,8 +6,13 @@ use zed_extension_api::settings::LspSettings;
 struct DotRushExtension {}
 impl DotRushExtension {
     fn language_server_binary(&mut self, language_server_id: &LanguageServerId) -> Result<String> {
+        let (platform, arch) = zed::current_platform();
+
         let binary_dir = "./LanguageServer".to_string();
-        let binary_path = "./LanguageServer/DotRush".to_string();
+        let binary_path = match platform {
+            zed::Os::Windows => "./LanguageServer/DotRush.exe",
+            _ => "./LanguageServer/DotRush"
+        }.to_string();
         if fs::metadata(&binary_path).map_or(false, |stat| stat.is_file()) {
             return Ok(binary_path);
         }
@@ -20,7 +25,6 @@ impl DotRushExtension {
             },
         )?;
 
-        let (platform, arch) = zed::current_platform();
         let asset_name = format!(
             "DotRush.Bundle.Server_{os}-{arch}.zip",
             os = match platform {
