@@ -1,6 +1,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.CodeAnalysis.Extensions;
 
@@ -44,5 +45,13 @@ public static class SyntaxExtensions {
         return node is MemberDeclarationSyntax ||
                node is ParameterSyntax ||
                node is VariableDeclaratorSyntax;
+    }
+
+    public static SyntaxNode? TryFindNode(this SyntaxNode node, TextSpan span) {
+        try {
+            return node.FindNode(span);
+        } catch {
+            return null;
+        }
     }
 }

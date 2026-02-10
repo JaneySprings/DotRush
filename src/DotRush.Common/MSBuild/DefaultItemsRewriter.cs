@@ -6,6 +6,9 @@ public static class DefaultItemsRewriter {
     private static char pathSeparator = '\\';
 
     public static void AddCompilerItem(string itemPath) {
+        if (IsBlacklisted(itemPath))
+            return;
+
         foreach (var xmlPath in GetProjectFiles(itemPath)) {
             var document = LoadXmlDocument(xmlPath);
             if (document?.Root == null)
@@ -18,7 +21,7 @@ public static class DefaultItemsRewriter {
                 continue;
 
             InsertCompileItemAlphabetically(itemGroup, relativePath);
-            document.Save(xmlPath);
+            SaveWithCRLF(document, xmlPath);
         }
     }
     public static void RemoveCompilerItem(string itemPath) {
@@ -43,7 +46,15 @@ public static class DefaultItemsRewriter {
             }
 
             if (documentModified)
-                document.Save(xmlPath);
+                SaveWithCRLF(document, xmlPath);
+        }
+    }
+
+    private static XDocument? LoadXmlDocument(string xmlPath) {
+        try {
+            return XDocument.Load(xmlPath);
+        } catch {
+            return null;
         }
     }
 
@@ -55,7 +66,6 @@ public static class DefaultItemsRewriter {
         var relativePath = itemPath.Substring(xmlDirectory.Length + 1);
         return relativePath.Replace('/', pathSeparator).Replace('\\', pathSeparator);
     }
-
     private static string[] GetProjectFiles(string itemPath) {
         var itemDirectory = Path.GetDirectoryName(itemPath);
         while (itemDirectory != null) {
@@ -67,23 +77,12 @@ public static class DefaultItemsRewriter {
         }
         return Array.Empty<string>();
     }
-
-    private static XDocument? LoadXmlDocument(string xmlPath) {
-        try {
-            return XDocument.Load(xmlPath);
-        } catch {
-            return null;
-        }
-    }
-
     private static IEnumerable<XElement> GetItemGroups(XDocument document) {
         return document.Root?.Elements().Where(e => e.Name.LocalName == "ItemGroup") ?? Enumerable.Empty<XElement>();
     }
-
     private static IEnumerable<XElement> GetCompileItems(XElement itemGroup) {
         return itemGroup.Elements().Where(e => e.Name.LocalName == "Compile");
     }
-
     private static XElement FindOrCreateCompileItemGroup(XDocument document) {
         var itemGroups = GetItemGroups(document);
         var existingGroup = itemGroups.FirstOrDefault(g => GetCompileItems(g).Any());
@@ -100,7 +99,6 @@ public static class DefaultItemsRewriter {
     private static bool CompileItemExists(XElement itemGroup, string relativePath) {
         return GetCompileItems(itemGroup).Any(c => c.Attribute("Include")?.Value == relativePath);
     }
-
     private static void InsertCompileItemAlphabetically(XElement itemGroup, string relativePath) {
         var newCompileItem = new XElement(itemGroup.GetDefaultNamespace() + "Compile",
             new XAttribute("Include", relativePath));
@@ -117,5 +115,19 @@ public static class DefaultItemsRewriter {
         else {
             itemGroup.Add(newCompileItem);
         }
+    }
+    private static bool IsBlacklisted(string itemPath) {
+        var folders = itemPath.Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries);
+        if (folders.Any(it => it.Equals("obj", StringComparison.OrdinalIgnoreCase) || it.StartsWith("obj.", StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        return folders.Any(it => it.Equals("GeneratedFiles", StringComparison.OrdinalIgnoreCase));
+    }
+    private static void SaveWithCRLF(XDocument document, string xmlPath) {
+        document.Save(xmlPath);
+        var content = File.ReadAllText(xmlPath);
+        content = content.Replace("\r\n", "\n").Replace("\r", "\n");
+        content = content.Replace("\n", "\r\n");
+        File.WriteAllText(xmlPath, content);
     }
 }

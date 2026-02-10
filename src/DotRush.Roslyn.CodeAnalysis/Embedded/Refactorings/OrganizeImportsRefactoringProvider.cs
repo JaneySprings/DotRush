@@ -2,6 +2,7 @@
 // https://github.com/dotnet/roslyn/blob/main/src/Workspaces/SharedUtilitiesAndExtensions/Compiler/Core/OrganizeImports/OrganizeImportsOptions.cs#L18
 
 using System.Composition;
+using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.CodeAnalysis.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
@@ -16,7 +17,9 @@ public class OrganizeImportsRefactoringProvider : CodeRefactoringProvider {
 
     public sealed override async Task ComputeRefactoringsAsync(CodeRefactoringContext context) {
         var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
-        var node = root?.FindNode(context.Span);
+        var node = root?.TryFindNode(context.Span);
+        if (node == null)
+            return;
 
         if (node is not CompilationUnitSyntax) {
             var usingDerictive = node?.FirstAncestorOrSelf<UsingDirectiveSyntax>();
