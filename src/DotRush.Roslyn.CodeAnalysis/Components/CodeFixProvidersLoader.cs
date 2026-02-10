@@ -12,6 +12,7 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
     private readonly IAdditionalComponentsProvider additionalComponentsProvider;
 
     public MemoryCache<CodeFixProvider> ComponentsCache { get; }
+    public string[] SkippedComponentNames => Array.Empty<string>();
 
     public CodeFixProvidersLoader(IAdditionalComponentsProvider additionalComponentsProvider) {
         this.additionalComponentsProvider = additionalComponentsProvider;
@@ -46,6 +47,10 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
         var providersInfo = assemblyTypes.Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(CodeFixProvider)));
         foreach (var providerInfo in providersInfo) {
             try {
+                if (SkippedComponentNames.Contains(providerInfo.FullName)) {
+                    currentClassLogger.Debug($"Skipping '{providerInfo.FullName}' due to configuration");
+                    continue;
+                }
                 var attribute = providerInfo.GetCustomAttribute<ExportCodeFixProviderAttribute>();
                 if (attribute == null) {
                     currentClassLogger.Debug($"Skipping code fix provider '{providerInfo.Name}' because it is missing the '${nameof(ExportCodeFixProviderAttribute)}'");

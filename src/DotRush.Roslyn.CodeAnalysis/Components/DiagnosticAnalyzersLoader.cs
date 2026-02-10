@@ -11,6 +11,7 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
     private readonly IAdditionalComponentsProvider additionalComponentsProvider;
 
     public MemoryCache<DiagnosticAnalyzer> ComponentsCache { get; }
+    public string[] SkippedComponentNames => Array.Empty<string>();
 
     public DiagnosticAnalyzersLoader(IAdditionalComponentsProvider additionalComponentsProvider) {
         this.additionalComponentsProvider = additionalComponentsProvider;
@@ -59,6 +60,10 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
         var analyzersInfo = assemblyTypes.Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(DiagnosticAnalyzer)));
         foreach (var analyzerInfo in analyzersInfo) {
             try {
+                if (SkippedComponentNames.Contains(analyzerInfo.FullName)) {
+                    currentClassLogger.Debug($"Skipping '{analyzerInfo.FullName}' due to configuration");
+                    continue;
+                }
                 if (Activator.CreateInstance(analyzerInfo.AsType()) is not DiagnosticAnalyzer instance) {
                     currentClassLogger.Error($"Instance of analyzer '{analyzerInfo.Name}' is null");
                     continue;

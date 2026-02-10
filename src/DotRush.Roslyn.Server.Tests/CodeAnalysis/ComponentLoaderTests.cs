@@ -9,7 +9,7 @@ namespace DotRush.Roslyn.Server.Tests;
 public class CodeRefactoringProvidersLoaderTests : ComponentsLoaderTests<CodeRefactoringProvider> {
     private CodeRefactoringProvidersLoader loader = null!;
     protected override IComponentLoader<CodeRefactoringProvider> ComponentsLoader => loader;
-    protected override int ComponentsCount => 82;
+    protected override int ComponentsCount => 82 - ComponentsLoader.SkippedComponentNames.Length;
 
     [SetUp]
     public void SetUp() {
