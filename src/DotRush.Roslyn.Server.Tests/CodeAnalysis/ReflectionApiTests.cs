@@ -181,4 +181,11 @@ public class ReflectionApiTests {
         var providerName = InternalCompletionItem.GetProviderName(item);
         Assert.That(providerName, Is.Null);
     }
+
+    [Test]
+    public void ReferenceLocationTest() {
+        Assert.That(InternalReferenceLocation.referenceLocationType, Is.Not.Null);
+        Assert.That(InternalReferenceLocation.isWrittenToProperty, Is.Not.Null);
+        Assert.That(InternalReferenceLocation.isWrittenToProperty!.PropertyType, Is.EqualTo(typeof(bool)));
+    }
 }
