@@ -1,4 +1,5 @@
 using DotRush.Common.Extensions;
+using DotRush.Roslyn.CodeAnalysis.Reflection;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
@@ -35,13 +36,20 @@ public class ReferenceHandler : ReferenceHandlerBase {
 
                 var sourceText = await document.GetTextAsync(cancellationToken);
                 var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
-                if (symbol == null || symbol.Locations == null)
+                if (symbol == null)
                     continue;
 
                 var referenceSymbols = await SymbolFinder.FindReferencesAsync(symbol, navigationService.Solution, cancellationToken);
                 var referenceLocations = referenceSymbols
                     .SelectMany(r => r.Locations)
                     .Where(l => File.Exists(l.Document.FilePath));
+
+                if (symbol is Microsoft.CodeAnalysis.IMethodSymbol methodSymbol) {
+                    if (methodSymbol.MethodKind == Microsoft.CodeAnalysis.MethodKind.PropertyGet)
+                        referenceLocations = referenceLocations.Where(l => !InternalReferenceLocation.IsWrittenTo(l));
+                    if (methodSymbol.MethodKind == Microsoft.CodeAnalysis.MethodKind.PropertySet)
+                        referenceLocations = referenceLocations.Where(l => InternalReferenceLocation.IsWrittenTo(l));
+                }
 
                 foreach (var location in referenceLocations) {
                     var referenceLocation = location.Location.ToLocation();
