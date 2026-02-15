@@ -28,7 +28,7 @@ public class ReferenceHandler : ReferenceHandlerBase {
             if (documentIds == null || navigationService.Solution == null)
                 return null;
 
-            var result = new List<Location>();
+            var result = new HashSet<Location>();
             foreach (var documentId in documentIds) {
                 var document = navigationService.Solution.GetDocument(documentId);
                 if (document == null)
@@ -58,7 +58,7 @@ public class ReferenceHandler : ReferenceHandlerBase {
                 }
             }
 
-            return new ReferenceResponse(result);
+            return new ReferenceResponse(result.ToList());
         });
     }
 }
