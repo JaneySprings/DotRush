@@ -336,6 +336,9 @@
               "processId": {
                 "type": "string"
               },
+              "processName": {
+                "type": "string"
+              },
               "processPath": {
                 "type": "string"
               },

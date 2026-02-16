@@ -14,6 +14,7 @@ export const debuggerNcdbgDisplayName = "Samsung Debugger (NetCoreDbg)"
 
 export const commandIdReloadWorkspace = "dotrush.reloadWorkspace";
 export const commandIdPickProcess = "dotrush.pickProcess";
+export const commandIdPickProcessByName = "dotrush.pickProcessByName";
 export const commandIdPickTargets = "dotrush.pickProjectOrSolutionFiles";
 export const commandIdCreateNewProject = "dotrush.createNewProject";
 export const commandIdBuildProject = "dotrush.build";

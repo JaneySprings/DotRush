@@ -14,6 +14,7 @@ import * as fs from 'fs';
 export class DebugAdapterController {
     public static async activate(context: vscode.ExtensionContext): Promise<void> {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickProcess, async () => await DebugAdapterController.showQuickPickProcess()));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickProcessByName, async (processName: string) => await DebugAdapterController.showQuickPickProcessByName(processName)));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveTargetPath, async () => await DebugAdapterController.getProjectTargetPath(
             StatusBarController.activeProject?.path,
             StatusBarController.activeConfiguration,
@@ -113,6 +114,17 @@ export class DebugAdapterController {
         const processes = await Interop.getProcesses();
         if (processes === undefined || processes.length === 0)
             return undefined;
+
+        const selectedItem = await vscode.window.showQuickPick(processes.map(p => new ProcessItem(p)), { placeHolder: res.messageSelectProcessTitle });
+        return selectedItem?.item.id.toString();
+    }
+    private static async showQuickPickProcessByName(processName: string): Promise<string | undefined> {
+        const processes = await Interop.getProcessesByName(processName);
+        if (processes === undefined || processes.length === 0)
+            return undefined;
+
+        if (processes.length === 1)
+            return processes[0].id.toString();
 
         const selectedItem = await vscode.window.showQuickPick(processes.map(p => new ProcessItem(p)), { placeHolder: res.messageSelectProcessTitle });
         return selectedItem?.item.id.toString();

@@ -16,12 +16,14 @@ public class Program {
         var installNcdbgOption = new Option<bool>("--install-ncdbg", "-ncdbg");
         var evaluateProjectOption = new Option<string>("--project", "-p");
         var processListOption = new Option<bool>("--processes", "-ps");
+        var processNameOption = new Option<string>("--process-name", "-pn");
         var rootCommand = new RootCommand("DotRush Test Host") {
             Options = {
                 installVsdbgOption,
                 installNcdbgOption,
                 evaluateProjectOption,
-                processListOption
+                processListOption,
+                processNameOption
             },
             Subcommands = {
                 CreateTestCommand(),
@@ -41,6 +43,12 @@ public class Program {
             }
             if (result.GetValue(processListOption)) {
                 var processes = Process.GetProcesses().Select(it => new ProcessInfo(it));
+                Console.WriteLine(JsonSerializer.Serialize(processes));
+                return;
+            }
+            var processName = result.GetValue(processNameOption);
+            if (!string.IsNullOrWhiteSpace(processName)) {
+                var processes = Process.GetProcessesByName(processName).Select(it => new ProcessInfo(it));
                 Console.WriteLine(JsonSerializer.Serialize(processes));
                 return;
             }

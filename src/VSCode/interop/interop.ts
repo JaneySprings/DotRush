@@ -33,6 +33,12 @@ export class Interop {
             .append(Interop.devHostPath)
             .append("-ps"));
     }
+    public static getProcessesByName(processName: string): Promise<Process[] | undefined> {
+        return ProcessRunner.runAsync<Process[]>(new ProcessArgumentBuilder('dotnet')
+            .append(Interop.devHostPath)
+            .append("-pn")
+            .append(processName));
+    }
     public static getTemplates(): Promise<TemplateInfo[] | undefined> {
         return ProcessRunner.runAsync<TemplateInfo[]>(new ProcessArgumentBuilder('dotnet')
             .append(Interop.devHostPath)

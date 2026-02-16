@@ -34,6 +34,8 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
             config.program = await vscode.commands.executeCommand(res.commandIdActiveTargetPath);
         if (config.request === 'attach' && !config.processId && !config.processName && !config.processPath)
             config.processId = await vscode.commands.executeCommand(res.commandIdPickProcess);
+        if (config.request === 'attach' && !config.processId && config.processName && !config.processPath)
+            config.processId = await vscode.commands.executeCommand(res.commandIdPickProcessByName, config.processName);
 
         if (!config.cwd && config.program)
             config.cwd = path.dirname(config.program);
