@@ -254,13 +254,24 @@ class TestExplorerExtensions {
         if (request.include === undefined)
             return handler([], []);
 
-        function collectTestCases(item: vscode.TestItem, ids: Set<string>): void {
+        function collectRunnableIds(item: vscode.TestItem, ids: Set<string>): void {
             if (TestExplorerExtensions.isTestCaseItem(item)) {
                 ids.add(item.id);
                 return;
             }
 
-            item.children.forEach(child => collectTestCases(child, ids));
+            if (TestExplorerExtensions.isFixtureItem(item)) {
+                if (item.children.size === 0) {
+                    // Fixture node might be collapsed/unresolved: use fixture id to run all its tests.
+                    ids.add(item.id);
+                    return;
+                }
+
+                item.children.forEach(child => collectRunnableIds(child, ids));
+                return;
+            }
+
+            item.children.forEach(child => collectRunnableIds(child, ids));
         }
         function getRootNode(item: vscode.TestItem): vscode.TestItem {
             if (item.parent === undefined)
@@ -277,7 +288,7 @@ class TestExplorerExtensions {
             else if (TestExplorerExtensions.isTestCaseItem(item))
                 filter.add(item.id);
             else
-                collectTestCases(item, filter);
+                collectRunnableIds(item, filter);
 
             if (!projectItems.includes(rootNode))
                 projectItems.push(rootNode);
