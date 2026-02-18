@@ -78,6 +78,7 @@ public class TestCaseParams {
 public class TestItem {
     [JsonPropertyName("id")] public string Id { get; set; }
     [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("namespace")] public string? Namespace { get; set; }
     [JsonPropertyName("filePath")] public string? FilePath { get; set; }
     [JsonPropertyName("range")] public DocumentRange Range { get; set; }
     [JsonPropertyName("locations")] public string[]? Locations { get; set; }
@@ -85,6 +86,9 @@ public class TestItem {
     public TestItem(ISymbol symbol) {
         Id = symbol.GetFullName();
         Name = symbol.Name;
+        Namespace = symbol.ContainingNamespace.IsGlobalNamespace
+            ? null
+            : symbol.ContainingNamespace.ToDisplayString();
 
         if (symbol.Locations.Length > 0) {
             var reference = symbol.DeclaringSyntaxReferences.FirstOrDefault();
