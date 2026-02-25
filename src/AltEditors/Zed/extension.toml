@@ -13,3 +13,6 @@ languages = ["CSharp"]
 [grammars.c_sharp]
 repository = "https://github.com/tree-sitter/tree-sitter-c-sharp"
 commit = "dd5e59721a5f8dae34604060833902b882023aaf"
+
+[debug_adapters.monodbg]
+schema_path = "debug_adapter_schemas/monodbg.json"

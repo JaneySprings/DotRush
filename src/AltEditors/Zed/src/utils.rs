@@ -41,3 +41,8 @@ pub(crate) fn scan_dir_contents<P: AsRef<Path>>(path: P) -> std::io::Result<Hash
 
     Ok(paths)
 }
+
+pub(crate) fn get_absolute_path<P: AsRef<Path>>(rel_path: P) -> std::io::Result<PathBuf> {
+    let root = std::env::current_dir()?;
+    Ok(root.join(rel_path))
+}
