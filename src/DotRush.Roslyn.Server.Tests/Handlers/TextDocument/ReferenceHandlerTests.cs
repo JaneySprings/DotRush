@@ -4,6 +4,7 @@ using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Server.Tests.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Reference;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using Microsoft.CodeAnalysis.Text;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.Server.Tests;
@@ -244,5 +245,46 @@ class Usage {
         Assert.That(result.Result, Has.Count.EqualTo(2));
         Assert.That(result.Result, Has.One.Matches<Location>(it => it.Range == PositionExtensions.CreateRange(10, 16, 10, 22)));
         Assert.That(result.Result, Has.One.Matches<Location>(it => it.Range == PositionExtensions.CreateRange(12, 16, 12, 22)));
+    }
+
+    [Test]
+    public async Task CodeGenerationReferenceTest() {
+        var documentPath = CreateDocument(nameof(ReferenceHandlerTests), @"
+namespace Tests;
+
+public partial class MyClass {
+    public static void MyMethod() {}
+}
+");
+
+        var generatedContent = @"
+namespace Tests;
+
+public partial class MyClass {
+    public static void GeneratedMethod() {
+        MyMethod();
+    }
+}
+";
+        var solution = Workspace.Solution!;
+        foreach (var projectId in solution.ProjectIds) {
+            var project = solution.GetProject(projectId)!;
+            var generatedDoc = project.AddDocument(
+                "MyClass.g.cs",
+                SourceText.From(generatedContent),
+                filePath: Path.Combine("__generated__", "MyClass.g.cs"));
+            solution = generatedDoc.Project.Solution;
+        }
+
+        navigationService.UpdateSolution(solution);
+
+        var result = await handler.Handle(new ReferenceParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(4, 24)
+        }, CancellationToken.None);
+
+        Assert.That(result?.Result, Is.Not.Null);
+        Assert.That(result.Result, Is.Not.Empty);
+        Assert.That(result.Result, Has.Some.Matches<Location>(it => !PathExtensions.Equals(it.Uri.FileSystemPath, documentPath)));
     }
 }
