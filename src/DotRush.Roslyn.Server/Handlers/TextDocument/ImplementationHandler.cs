@@ -27,8 +27,9 @@ public class ImplementationHandler : ImplementationHandlerBase {
         if (documentIds == null)
             return null;
 
-        var result = new NullableValueCollection<ProtocolModels.Location>();
+        var result = new HashSet<ProtocolModels.Location>();
         foreach (var documentId in documentIds) {
+            var implementationLocations = new NullableCollection<Location>();
             var document = navigationService.Solution?.GetDocument(documentId);
             if (document == null)
                 continue;
@@ -40,38 +41,33 @@ public class ImplementationHandler : ImplementationHandlerBase {
 
             var symbols = await SymbolFinder.FindImplementationsAsync(symbol, navigationService.Solution, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (symbols != null)
-                foreach (var location in symbols.SelectMany(it => it.Locations))
-                    await AddResolvedLocationAsync(result, location, document.Project, cancellationToken).ConfigureAwait(false);
+                implementationLocations.AddRange(symbols.SelectMany(it => it.Locations));
 
             symbols = await SymbolFinder.FindOverridesAsync(symbol, navigationService.Solution, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (symbols != null)
-                foreach (var location in symbols.SelectMany(it => it.Locations))
-                    await AddResolvedLocationAsync(result, location, document.Project, cancellationToken).ConfigureAwait(false);
+                implementationLocations.AddRange(symbols.SelectMany(it => it.Locations));
 
             if (symbol is INamedTypeSymbol namedTypeSymbol) {
                 symbols = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
                 if (symbols != null)
-                    foreach (var location in symbols.SelectMany(it => it.Locations))
-                        await AddResolvedLocationAsync(result, location, document.Project, cancellationToken).ConfigureAwait(false);
+                    implementationLocations.AddRange(symbols.SelectMany(it => it.Locations));
 
                 symbols = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
                 if (symbols != null)
-                    foreach (var location in symbols.SelectMany(it => it.Locations))
-                        await AddResolvedLocationAsync(result, location, document.Project, cancellationToken).ConfigureAwait(false);
+                    implementationLocations.AddRange(symbols.SelectMany(it => it.Locations));
+            }
+            foreach (Location? location in implementationLocations) {
+                if (location == null)
+                    continue;
+                var filePath = location.SourceTree?.FilePath ?? string.Empty;
+                if (!File.Exists(filePath))
+                    filePath = await navigationService.EmitCompilerGeneratedFileAsync(location, document.Project, cancellationToken).ConfigureAwait(false);
+
+                var serverLocation = location.ToLocation(filePath);
+                if (serverLocation != null)
+                    result.Add(serverLocation.Value);
             }
         }
-
-        return new ImplementationResponse(result.ToNonNullableList());
-    }
-
-    async Task AddResolvedLocationAsync(NullableValueCollection<ProtocolModels.Location> result, Location location, Project project, CancellationToken cancellationToken) {
-        if (!location.IsInSource || location.SourceTree == null)
-            return;
-
-        var filePath = location.SourceTree?.FilePath ?? string.Empty;
-        if (!File.Exists(filePath))
-            filePath = await navigationService.EmitCompilerGeneratedFileAsync(location, project, cancellationToken).ConfigureAwait(false);
-
-        result.Add(location.ToLocation(filePath));
+        return new ImplementationResponse(result.ToList());
     }
 }

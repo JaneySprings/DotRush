@@ -47,8 +47,8 @@ class MyServiceImpl : IMyService {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result?.Result2, Is.Not.Null);
-        Assert.That(result.Result2, Has.Count.EqualTo(2));
-        Assert.That(result.Result2, Has.Exactly(2).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(7, 16, 7, 23)));
+        Assert.That(result.Result2, Has.Count.EqualTo(1));
+        Assert.That(result.Result2, Has.Exactly(1).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(7, 16, 7, 23)));
     }
 
     [Test]
@@ -74,9 +74,9 @@ class Cat : IAnimal {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result?.Result2, Is.Not.Null);
-        Assert.That(result.Result2, Has.Count.EqualTo(4));
-        Assert.That(result.Result2, Has.Exactly(2).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(6, 6, 6, 9)));
-        Assert.That(result.Result2, Has.Exactly(2).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(9, 6, 9, 9)));
+        Assert.That(result.Result2, Has.Count.EqualTo(2));
+        Assert.That(result.Result2, Has.Exactly(1).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(6, 6, 6, 9)));
+        Assert.That(result.Result2, Has.Exactly(1).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(9, 6, 9, 9)));
     }
 
     [Test]
@@ -99,8 +99,8 @@ class DerivedClass : BaseClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result?.Result2, Is.Not.Null);
-        Assert.That(result.Result2, Has.Count.EqualTo(2));
-        Assert.That(result.Result2, Has.Exactly(2).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(7, 25, 7, 31)));
+        Assert.That(result.Result2, Has.Count.EqualTo(1));
+        Assert.That(result.Result2, Has.Exactly(1).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(7, 25, 7, 31)));
     }
 
     [Test]
@@ -123,8 +123,8 @@ class Child : Parent {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result?.Result2, Is.Not.Null);
-        Assert.That(result.Result2, Has.Count.EqualTo(2));
-        Assert.That(result.Result2, Has.Exactly(2).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(7, 25, 7, 28)));
+        Assert.That(result.Result2, Has.Count.EqualTo(1));
+        Assert.That(result.Result2, Has.Exactly(1).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(7, 25, 7, 28)));
     }
 
     [Test]
@@ -144,9 +144,9 @@ class Cat : Animal { }
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result?.Result2, Is.Not.Null);
-        Assert.That(result.Result2, Has.Count.EqualTo(4));
-        Assert.That(result.Result2, Has.Exactly(2).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(4, 6, 4, 9)));
-        Assert.That(result.Result2, Has.Exactly(2).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(5, 6, 5, 9)));
+        Assert.That(result.Result2, Has.Count.EqualTo(2));
+        Assert.That(result.Result2, Has.Exactly(1).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(4, 6, 4, 9)));
+        Assert.That(result.Result2, Has.Exactly(1).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(5, 6, 5, 9)));
     }
 
     [Test]
@@ -165,8 +165,8 @@ interface IDerived : IBase { }
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result?.Result2, Is.Not.Null);
-        Assert.That(result.Result2, Has.Count.EqualTo(2));
-        Assert.That(result.Result2, Has.Exactly(2).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(4, 10, 4, 18)));
+        Assert.That(result.Result2, Has.Count.EqualTo(1));
+        Assert.That(result.Result2, Has.Exactly(1).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(4, 10, 4, 18)));
     }
 
     [Test]
@@ -212,9 +212,9 @@ class ProcessorB : IProcessor {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result?.Result2, Is.Not.Null);
-        Assert.That(result.Result2, Has.Count.EqualTo(4));
-        Assert.That(result.Result2, Has.Exactly(2).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(7, 16, 7, 23)));
-        Assert.That(result.Result2, Has.Exactly(2).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(10, 16, 10, 23)));
+        Assert.That(result.Result2, Has.Count.EqualTo(2));
+        Assert.That(result.Result2, Has.Exactly(1).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(7, 16, 7, 23)));
+        Assert.That(result.Result2, Has.Exactly(1).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(10, 16, 10, 23)));
     }
 
     [Test]
@@ -237,8 +237,8 @@ class Circle : Shape {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result?.Result2, Is.Not.Null);
-        Assert.That(result.Result2, Has.Count.EqualTo(2));
-        Assert.That(result.Result2, Has.Exactly(2).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(7, 27, 7, 31)));
+        Assert.That(result.Result2, Has.Count.EqualTo(1));
+        Assert.That(result.Result2, Has.Exactly(1).Matches<Location>(it => it.Range == PositionExtensions.CreateRange(7, 27, 7, 31)));
     }
 
     [Test]
