@@ -72,7 +72,7 @@ namespace Tests {
 
         AssertToken(result, 9, 1, 8, SemanticTokenType.Keyword, 7); // private
         AssertToken(result, 10, 0, 8, SemanticTokenType.Keyword, 3); // int
-        AssertToken(result, 11, 0, 4, SemanticTokenType.Variable, 6); // field1
+        AssertToken(result, 11, 0, 4, SemanticTokenType.Field, 6); // field1
         AssertToken(result, 12, 0, 9, SemanticTokenType.Number, 2); // 42
 
         AssertToken(result, 13, 1, 8, SemanticTokenType.Keyword, 6); // public
@@ -92,7 +92,7 @@ namespace Tests {
         AssertToken(result, 25, 0, 4, SemanticTokenType.Variable, 13); // localVariable
         AssertToken(result, 26, 0, 16, SemanticTokenType.String, 2); // $"
         AssertToken(result, 27, 0, 2, SemanticTokenType.String, 6); // world_
-        AssertToken(result, 28, 0, 7, SemanticTokenType.Variable, 6); // field1
+        AssertToken(result, 28, 0, 7, SemanticTokenType.Field, 6); // field1
         AssertToken(result, 29, 0, 7, SemanticTokenType.String, 1); // "
 
         AssertToken(result, 30, 1, 12, SemanticTokenType.ControlKeyword, 2); // if
