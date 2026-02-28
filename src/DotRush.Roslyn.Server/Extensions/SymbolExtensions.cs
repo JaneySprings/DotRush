@@ -85,7 +85,7 @@ public static class SymbolExtensions {
             case ProtocolModels.SymbolKind.Constant:
                 return SemanticTokenType.Variable;
             case ProtocolModels.SymbolKind.Field:
-                return SemanticTokenType.Variable;
+                return SemanticTokenType.Field;
             case ProtocolModels.SymbolKind.Variable:
                 if (symbol is IParameterSymbol)
                     return SemanticTokenType.Parameter;
@@ -120,6 +120,7 @@ public enum SemanticTokenType {
     Parameter,
     Variable,
     Property,
+    Field,
     Method,
     EnumMember,
     Event,
