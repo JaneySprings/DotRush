@@ -278,8 +278,7 @@ public class GeneratedService : IService {
 }
 ";
         var solution = Workspace.Solution!;
-        foreach (var projectId in solution.ProjectIds) {
-            var project = solution.GetProject(projectId)!;
+        foreach (var project in solution.Projects) {
             var generatedDoc = project.AddDocument(
                 "GeneratedService.g.cs",
                 SourceText.From(generatedContent),

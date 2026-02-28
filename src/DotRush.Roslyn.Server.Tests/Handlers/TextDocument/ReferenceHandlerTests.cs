@@ -267,8 +267,7 @@ public partial class MyClass {
 }
 ";
         var solution = Workspace.Solution!;
-        foreach (var projectId in solution.ProjectIds) {
-            var project = solution.GetProject(projectId)!;
+        foreach (var project in solution.Projects) {
             var generatedDoc = project.AddDocument(
                 "MyClass.g.cs",
                 SourceText.From(generatedContent),
