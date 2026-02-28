@@ -41,8 +41,7 @@ public class ReferenceHandler : ReferenceHandlerBase {
 
                 var referenceSymbols = await SymbolFinder.FindReferencesAsync(symbol, navigationService.Solution, cancellationToken);
                 var referenceLocations = referenceSymbols
-                    .SelectMany(r => r.Locations)
-                    .Where(l => File.Exists(l.Document.FilePath));
+                    .SelectMany(r => r.Locations);
 
                 if (symbol is Microsoft.CodeAnalysis.IMethodSymbol methodSymbol) {
                     if (methodSymbol.MethodKind == Microsoft.CodeAnalysis.MethodKind.PropertyGet)
@@ -51,10 +50,15 @@ public class ReferenceHandler : ReferenceHandlerBase {
                         referenceLocations = referenceLocations.Where(l => InternalReferenceLocation.IsWrittenTo(l));
                 }
 
-                foreach (var location in referenceLocations) {
-                    var referenceLocation = location.Location.ToLocation();
-                    if (referenceLocation != null)
-                        result.Add(referenceLocation.Value);
+                foreach (var referenceLocation in referenceLocations) {
+                    var location = referenceLocation.Location;
+                    var filePath = location.SourceTree?.FilePath ?? string.Empty;
+                    if (!File.Exists(filePath))
+                        filePath = await navigationService.EmitCompilerGeneratedFileAsync(location, document.Project, cancellationToken).ConfigureAwait(false);
+
+                    var serverLocation = location.ToLocation(filePath);
+                    if (serverLocation != null)
+                        result.Add(serverLocation.Value);
                 }
             }
 
