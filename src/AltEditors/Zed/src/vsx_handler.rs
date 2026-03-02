@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs};
 use zed_extension_api::{self as zed, http_client::*, serde_json};
 
-use crate::utils;
+use crate::{utils, ROOT_DIR};
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -38,7 +38,7 @@ pub fn download_vsx(vsx_info: VsxInfo, arch: &str) -> Result<String, String> {
     zed::download_file(download_url, "./temp", zed::DownloadedFileType::Zip)?;
 
     // move extracted files to bin directory
-    fs::rename("./temp/extension/extension/bin", "./bin")
+    fs::rename("./temp/extension/extension/bin", ROOT_DIR)
         .map_err(|e| format!("Failed to move binary directory: {}", e))?;
 
     utils::remove_dir("./temp").map_err(|e| format!("Failed to remove temp vsx folder: {}", e))?;

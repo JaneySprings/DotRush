@@ -16,3 +16,6 @@ commit = "dd5e59721a5f8dae34604060833902b882023aaf"
 
 [debug_adapters.monodbg]
 schema_path = "debug_adapter_schemas/monodbg.json"
+
+[debug_adapters.ncdbg]
+schema_path = "debug_adapter_schemas/ncdbg.json"

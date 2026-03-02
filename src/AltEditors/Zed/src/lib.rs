@@ -10,6 +10,8 @@ use zed_extension_api::{
     Worktree,
 };
 
+pub(crate) const ROOT_DIR: &str = "./bin";
+
 struct DotRushExtension {}
 impl DotRushExtension {
     fn language_server_binary(&mut self, language_server_id: &LanguageServerId) -> Result<String> {
@@ -94,6 +96,9 @@ impl zed::Extension for DotRushExtension {
             "monodbg" => {
                 debugger::mono::get_dap_binary(config, user_provided_debug_adapter_path, worktree)
             }
+            "ncdbg" => {
+                debugger::ncdbg::get_dap_binary(config, user_provided_debug_adapter_path, worktree)
+            }
             _ => todo!(),
         }
     }
@@ -105,6 +110,7 @@ impl zed::Extension for DotRushExtension {
     ) -> zed::Result<zed::StartDebuggingRequestArgumentsRequest, String> {
         match adapter_name.as_str() {
             "monodbg" => debugger::mono::dap_request_kind(config),
+            "ncdbg" => debugger::ncdbg::dap_request_kind(config),
             _ => todo!(),
         }
     }
@@ -115,6 +121,7 @@ impl zed::Extension for DotRushExtension {
     ) -> zed_extension_api::Result<zed_extension_api::DebugScenario, String> {
         match config.adapter.as_str() {
             "monodbg" => debugger::mono::dap_config_to_scenario(config),
+            "ncdbg" => debugger::ncdbg::dap_config_to_scenario(config),
             _ => todo!(),
         }
     }

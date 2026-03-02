@@ -9,7 +9,7 @@ use zed_extension_api::{
     DebugScenario, DebugTaskDefinition, StartDebuggingRequestArguments, Worktree,
 };
 
-use crate::utils;
+use crate::{debugger::get_binary_abs_common};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -24,19 +24,11 @@ struct MonoDebugConfig {
     #[serde(default)]
     pub env: HashMap<String, String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub process_id: Option<ProcessId>,
+    pub process_id: Option<super::ProcessId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub debugger_options: Option<DebuggerOptions>,
     #[serde(default, rename = "type", skip_serializing_if = "Option::is_none")]
     pub ttype: Option<String>,
-}
-
-/// Represents a process id that can be either an integer or a string (containing a number)
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum ProcessId {
-    Int(i32),
-    String(String),
 }
 
 impl MonoDebugConfig {
@@ -76,13 +68,7 @@ pub fn get_dap_binary(
     _user_provided_debug_adapter_path: Option<String>,
     worktree: &Worktree,
 ) -> zed::Result<DebugAdapterBinary, String> {
-    let (platform, _) = zed::current_platform();
-
-    let binary_path = utils::get_absolute_path(match platform {
-        zed::Os::Windows => "./bin/DebuggerMono/monodbg.exe",
-        _ => "./bin/DebuggerMono/monodbg",
-    })
-    .map_err(|e| format!("Cannot get monodbg binary path: {}", e))?;
+    let binary_path = get_binary_abs_common("DebuggerMono/monodbg")?;
 
     if !(fs::metadata(&binary_path).map_or(false, |stat| stat.is_file())) {
         return Err("Cannot find monodbg binary".to_string());
@@ -103,11 +89,8 @@ pub fn get_dap_binary(
         }
     };
 
-    let mut path = binary_path.to_string_lossy().to_string();
-    // remove the weird directory slash at beginning of path
-    path.remove(0);
     Ok(zed::DebugAdapterBinary {
-        command: Some(path),
+        command: Some(binary_path),
         arguments: vec![],
         envs: dbg_config.env.into_iter().collect(),
         cwd: Some(dbg_config.cwd.unwrap_or_else(|| worktree.root_path())),
