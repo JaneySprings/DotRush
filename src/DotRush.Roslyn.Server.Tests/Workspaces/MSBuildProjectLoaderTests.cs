@@ -15,6 +15,7 @@ public class MSBuildProjectLoaderTests : SimpleWorkspaceFixture {
         Assert.That(project.Name, Is.EqualTo("TestProject1"));
         Assert.That(project.FilePath, Is.EqualTo(projectPath));
         Assert.That(project.DirectoryPath, Is.EqualTo(Path.GetDirectoryName(projectPath)));
+        Assert.That(project.UseMSBuildPropertyEvaluator, Is.False);
         Assert.That(project.GetAssemblyName(), Is.EqualTo("TestProject1"));
 
         Assert.That(project.IsLegacyFormat, Is.False);
