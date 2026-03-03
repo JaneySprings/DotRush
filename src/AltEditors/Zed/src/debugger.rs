@@ -23,9 +23,5 @@ pub(super) fn get_binary_abs_common(path: &str) -> Result<String, String> {
     })
     .map_err(|e| format!("Cannot get {}: {}", path, e))?;
 
-    let mut path = binary_path.to_string_lossy().to_string();
-    // remove the weird directory slash at beginning of path
-    path.remove(0);
-
-    Ok(path)
+    Ok(binary_path.to_string_lossy().to_string())
 }
