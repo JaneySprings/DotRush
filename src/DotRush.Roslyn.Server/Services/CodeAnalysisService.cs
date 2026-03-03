@@ -76,6 +76,12 @@ public class CodeAnalysisService : IAdditionalComponentsProvider, IClearable {
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
         return compilationHost.GetDiagnosticsByDocumentSpan(document, span);
     }
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocument(Document document) {
+        return compilationHost.GetDiagnosticsByDocument(document);
+    }
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByProject(Project project) {
+        return compilationHost.GetDiagnosticsByProject(project);
+    }
     public IEnumerable<CodeFixProvider>? GetCodeFixProvidersForDiagnosticId(string? diagnosticId, Project project) {
         return codeActionHost.GetCodeFixProvidersForDiagnosticId(diagnosticId, project);
     }

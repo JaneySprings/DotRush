@@ -19,7 +19,9 @@ public abstract class SimpleWorkspaceFixture {
     protected virtual void OnSetup() { }
     protected virtual void OnTearDown() { }
     protected virtual WorkspaceService CreateInitializedWorkspace() {
-        var workspace = new WorkspaceService(new ConfigurationService(null), null);
+        var configurationService = new ConfigurationService(null);
+        var codeAnalysisService = new CodeAnalysisService(configurationService, null);
+        var workspace = new WorkspaceService(configurationService, codeAnalysisService, null);
         if (!workspace.InitializeWorkspace())
             throw new InvalidOperationException("Failed to initialize workspace.");
 

@@ -16,6 +16,7 @@ namespace DotRush.Roslyn.Server.Services;
 
 public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDisposable {
     private readonly ConfigurationService configurationService;
+    private readonly CodeAnalysisService codeAnalysisService;
     private readonly LanguageServer? serverFacade;
     private WorkspaceFilesWatcher? fileWatcher;
 
@@ -27,8 +28,9 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
     protected override bool ApplyWorkspaceChanges => configurationService.ApplyWorkspaceChanges;
     protected override string DotNetSdkDirectory => configurationService.DotNetSdkDirectory;
 
-    public WorkspaceService(ConfigurationService configurationService, LanguageServer? serverFacade) {
+    public WorkspaceService(ConfigurationService configurationService, CodeAnalysisService codeAnalysisService, LanguageServer? serverFacade) {
         this.configurationService = configurationService;
+        this.codeAnalysisService = codeAnalysisService;
         this.serverFacade = serverFacade;
     }
 

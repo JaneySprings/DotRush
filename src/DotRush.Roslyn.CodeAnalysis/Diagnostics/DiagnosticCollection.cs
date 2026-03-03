@@ -56,6 +56,21 @@ public class DiagnosticCollection {
     public ReadOnlyDictionary<string, List<DiagnosticContext>> GetDiagnostics() {
         return new ReadOnlyDictionary<string, List<DiagnosticContext>>(workspaceDiagnostics);
     }
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocument(Document document) {
+        if (string.IsNullOrEmpty(document.FilePath))
+            return ReadOnlyCollection<DiagnosticContext>.Empty;
+        if (workspaceDiagnostics.TryGetValue(document.FilePath, out List<DiagnosticContext>? diagnostics))
+            return diagnostics.AsReadOnly();
+
+        return ReadOnlyCollection<DiagnosticContext>.Empty;
+    }
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByProject(Project project) {
+        var result = new List<DiagnosticContext>();
+        foreach (var diagnostics in workspaceDiagnostics.Values) {
+            result.AddRange(diagnostics.Where(d => d.Document?.Project.Id == project.Id));
+        }
+        return result.AsReadOnly();
+    }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
         if (string.IsNullOrEmpty(document.FilePath))
             return ReadOnlyCollection<DiagnosticContext>.Empty;
