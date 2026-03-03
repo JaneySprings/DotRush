@@ -39,6 +39,16 @@ public static partial class MSBuildLocator {
         return Directory.GetParent(sdkLocation)?.FullName ?? string.Empty;
     }
 
+    public static FileInfo DotNetTool() {
+        string root = MSBuildLocator.GetRootLocation();
+        string path = Path.Combine(root, "dotnet" + RuntimeInfo.ExecExtension);
+
+        if (!File.Exists(path))
+            throw new FileNotFoundException("Could not find 'dotnet' tool");
+
+        return new FileInfo(path);
+    }
+
     public static string GetLatestSdkLocation() {
         var dotnetRootPath = GetRootLocation();
         if (string.IsNullOrEmpty(dotnetRootPath))

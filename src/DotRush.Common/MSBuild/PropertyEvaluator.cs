@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using DotRush.Common.Extensions;
+using DotRush.Common.Interop;
 
 namespace DotRush.Common.MSBuild;
 
@@ -15,6 +16,24 @@ public static partial class PropertyEvaluator {
     private static partial Regex XmlPropertyIncludeRegex();
 
     public static string? EvaluateProperty(this MSBuildProject project, string name, string? defaultValue = null) {
+        if (project.UseMSBuildPropertyEvaluator)
+            return project.EvaluatePropertyV2(name, defaultValue);
+
+        return project.EvaluatePropertyV1(name, defaultValue);
+    }
+    internal static string? EvaluatePropertyV2(this MSBuildProject project, string name, string? defaultValue = null) {
+        var dotnetTool = MSBuildLocator.DotNetTool();
+        var result = new ProcessRunner(dotnetTool, new ProcessArgumentBuilder()
+            .Append("msbuild").AppendQuoted(project.FilePath)
+            .Append($"-getProperty:{name}"))
+            .WaitForExit();
+
+        if (!result.Success)
+            return defaultValue;
+
+        return string.Concat(result.StandardOutput).Trim();
+    }
+    internal static string? EvaluatePropertyV1(this MSBuildProject project, string name, string? defaultValue = null) {
         var propertyMatches = project.GetPropertyMatches(project.FilePath, name);
         if (propertyMatches == null)
             return defaultValue;

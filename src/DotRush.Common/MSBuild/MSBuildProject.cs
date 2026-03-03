@@ -10,6 +10,8 @@ public class MSBuildProject {
     [JsonPropertyName("configurations")] public IEnumerable<string> Configurations { get; set; }
     [JsonPropertyName("isLegacyFormat")] public bool IsLegacyFormat { get; set; }
     [JsonPropertyName("isTestProject")] public bool IsTestProject { get; set; }
+    [JsonIgnore] public bool UseMSBuildPropertyEvaluator { get; set; }
+
 
     internal MSBuildProject(string path) {
         Name = Path.GetFileNameWithoutExtension(path);

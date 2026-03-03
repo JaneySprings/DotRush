@@ -8,6 +8,7 @@ public static class MSBuildProjectsLoader {
             return null;
 
         var project = new MSBuildProject(projectFile);
+        project.UseMSBuildPropertyEvaluator = GetPropertyEvaluator(project);
         project.Configurations = GetConfigurations(project);
         project.Frameworks = GetTargetFrameworks(project);
 
@@ -74,5 +75,10 @@ public static class MSBuildProjectsLoader {
         }
 
         return configurations.OrderBy(x => x).ToList();
+    }
+
+    private static bool GetPropertyEvaluator(MSBuildProject project) {
+        var useMSBuild = project.EvaluateProperty("DotRushUseMSBuildPropertyEvaluator");
+        return useMSBuild != null && useMSBuild.Contains("true", StringComparison.OrdinalIgnoreCase);
     }
 }
