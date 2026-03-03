@@ -71,7 +71,7 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
             Uri = documentPath,
             Diagnostics = [new Diagnostic() {
                 Message = string.Format(null, Resources.ProjectRestoreFailedCompositeFormat, projectName, message),
-                Range = PositionExtensions.EmptyRange,
+                Range = default(DocumentRange),
                 Severity = DiagnosticSeverity.Error,
                 Source = projectName,
                 Code = "NU0000",

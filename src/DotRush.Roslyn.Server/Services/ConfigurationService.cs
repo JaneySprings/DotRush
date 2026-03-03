@@ -64,7 +64,7 @@ public class ConfigurationService {
         var sections = SafeExtensions.Invoke(() => JsonSerializer.Deserialize<ConfigurationSection>(jsonDocument, JsonSerializerConfig.Options));
         ChangeConfiguration(sections);
     }
-    private void ChangeConfiguration(ConfigurationSection? section) {
+    internal void ChangeConfiguration(ConfigurationSection? section) {
         if (section?.DotRush?.Roslyn == null) {
             currentClassLogger.Error("Configuration section is not a valid document.");
             return;

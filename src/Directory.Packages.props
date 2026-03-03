@@ -2,7 +2,7 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
     <CodeAnalysisVersion>5.0.0-2.final</CodeAnalysisVersion>
-    <TestPlatformVersion>18.0.0</TestPlatformVersion>
+    <TestPlatformVersion>18.0.1</TestPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="NLog" Version="5.4.0" />

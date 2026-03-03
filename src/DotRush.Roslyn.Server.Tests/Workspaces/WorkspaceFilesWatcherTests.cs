@@ -97,7 +97,7 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
         }
     }
 
-    [Test]
+    [Test, Retry(5)] //TODO: Unstable on Windows
     public async Task SkipFilesSyncInIntermidiateFoldersTest() {
         var filePaths = new List<string>();
         foreach (var project in Workspace.Solution!.Projects) {

@@ -44,7 +44,7 @@ public class CompletionHandler : CompletionHandlerBase {
     }
     protected override Task<CompletionResponse?> Handle(CompletionParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(async () => {
-            if (request.Context.TriggerKind == CompletionTriggerKind.TriggerCharacter && !configurationService.TriggerCompletionOnSpace) {
+            if (request.Context?.TriggerKind == CompletionTriggerKind.TriggerCharacter && !configurationService.TriggerCompletionOnSpace) {
                 if (request.Context.TriggerCharacter == " ")
                     return null;
             }

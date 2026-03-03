@@ -36,7 +36,7 @@ public class Program {
               .AddHandler(new HoverHandler(navigationService))
               .AddHandler(new FoldingRangeHandler(navigationService))
               .AddHandler(new SemanticTokensHandler(navigationService))
-              .AddHandler(new ImplementationHandler(workspaceService))
+              .AddHandler(new ImplementationHandler(navigationService))
               .AddHandler(new InlayHintHandler(workspaceService))
               .AddHandler(new ReferenceHandler(navigationService))
               .AddHandler(new DefinitionHandler(navigationService))

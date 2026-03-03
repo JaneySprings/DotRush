@@ -87,6 +87,9 @@
           ],
           "delegate": [
             "entity.name.type.delegate.cs"
+          ],
+          "field": [
+            "entity.name.variable.field.cs"
           ]
         }
       }

@@ -58,10 +58,10 @@ public class DiagnosticCollection {
     }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
         if (string.IsNullOrEmpty(document.FilePath))
-            return new List<DiagnosticContext>().AsReadOnly();
+            return ReadOnlyCollection<DiagnosticContext>.Empty;
         if (workspaceDiagnostics.TryGetValue(document.FilePath, out List<DiagnosticContext>? diagnostics))
             return diagnostics.Where(d => d.Span.IntersectsWith(span)).ToList().AsReadOnly();
 
-        return new List<DiagnosticContext>().AsReadOnly();
+        return ReadOnlyCollection<DiagnosticContext>.Empty;
     }
 }

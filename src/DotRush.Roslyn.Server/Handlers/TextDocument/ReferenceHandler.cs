@@ -1,3 +1,5 @@
+using DotRush.Common.Extensions;
+using DotRush.Roslyn.CodeAnalysis.Reflection;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
@@ -20,34 +22,47 @@ public class ReferenceHandler : ReferenceHandlerBase {
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
         serverCapabilities.ReferencesProvider = true;
     }
-    protected override async Task<ReferenceResponse?> Handle(ReferenceParams request, CancellationToken cancellationToken) {
-        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
-        if (documentIds == null || navigationService.Solution == null)
-            return null;
+    protected override Task<ReferenceResponse?> Handle(ReferenceParams request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<ReferenceResponse?>(async () => {
+            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
+            if (documentIds == null || navigationService.Solution == null)
+                return null;
 
-        var result = new List<Location>();
-        foreach (var documentId in documentIds) {
-            var document = navigationService.Solution.GetDocument(documentId);
-            if (document == null)
-                continue;
+            var result = new HashSet<Location>();
+            foreach (var documentId in documentIds) {
+                var document = navigationService.Solution.GetDocument(documentId);
+                if (document == null)
+                    continue;
 
-            var sourceText = await document.GetTextAsync(cancellationToken);
-            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
-            if (symbol == null || symbol.Locations == null)
-                continue;
+                var sourceText = await document.GetTextAsync(cancellationToken);
+                var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
+                if (symbol == null)
+                    continue;
 
-            var referenceSymbols = await SymbolFinder.FindReferencesAsync(symbol, navigationService.Solution, cancellationToken);
-            var referenceLocations = referenceSymbols
-                .SelectMany(r => r.Locations)
-                .Where(l => File.Exists(l.Document.FilePath));
+                var referenceSymbols = await SymbolFinder.FindReferencesAsync(symbol, navigationService.Solution, cancellationToken);
+                var referenceLocations = referenceSymbols
+                    .SelectMany(r => r.Locations);
 
-            foreach (var location in referenceLocations) {
-                var referenceLocation = location.Location.ToLocation();
-                if (referenceLocation != null)
-                    result.Add(referenceLocation.Value);
+                if (symbol is Microsoft.CodeAnalysis.IMethodSymbol methodSymbol) {
+                    if (methodSymbol.MethodKind == Microsoft.CodeAnalysis.MethodKind.PropertyGet)
+                        referenceLocations = referenceLocations.Where(l => !InternalReferenceLocation.IsWrittenTo(l));
+                    if (methodSymbol.MethodKind == Microsoft.CodeAnalysis.MethodKind.PropertySet)
+                        referenceLocations = referenceLocations.Where(l => InternalReferenceLocation.IsWrittenTo(l));
+                }
+
+                foreach (var referenceLocation in referenceLocations) {
+                    var location = referenceLocation.Location;
+                    var filePath = location.SourceTree?.FilePath ?? string.Empty;
+                    if (!File.Exists(filePath))
+                        filePath = await navigationService.EmitCompilerGeneratedFileAsync(location, document.Project, cancellationToken).ConfigureAwait(false);
+
+                    var serverLocation = location.ToLocation(filePath);
+                    if (serverLocation != null)
+                        result.Add(serverLocation.Value);
+                }
             }
-        }
 
-        return new ReferenceResponse(result);
+            return new ReferenceResponse(result.ToList());
+        });
     }
 }

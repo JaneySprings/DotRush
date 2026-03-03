@@ -3,6 +3,7 @@ using System.Text.Json;
 using DotRush.Common.Logging;
 using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.ShowMessage;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentFormatting;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Progress;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.WorkDoneProgress;
 using EmmyLua.LanguageServer.Framework.Server;
@@ -73,5 +74,13 @@ public static class ServerExtensions {
         }
 
         return new ReadOnlyDictionary<string, string>(result);
+    }
+    public static DocumentRangesFormattingParams ToRangesParameters(this DocumentRangeFormattingParams formattingParams) {
+        return new DocumentRangesFormattingParams() {
+            TextDocument = formattingParams.TextDocument,
+            Ranges = [formattingParams.Range],
+            Options = formattingParams.Options,
+            WorkDoneToken = formattingParams.WorkDoneToken
+        };
     }
 }

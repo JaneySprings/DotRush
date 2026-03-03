@@ -31,6 +31,25 @@ public class MSBuildSolutionLoaderTests : SimpleWorkspaceFixture {
         Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project2)));
     }
     [Test]
+    public void GetProjectsFromSolutionXWithFoldersTest() {
+        var project1 = CreateProject("Project1");
+        var project2 = CreateProject("Project2");
+        var solutionPath = Path.Combine(SandboxDirectory, "slnxWithFolders.slnx");
+        File.WriteAllText(solutionPath, @$"<Solution>
+    <Folder Name=""/src/"">
+        <Project Path=""{project1}"" />
+        <Project Path=""{project2}"" />
+  </Folder>
+</Solution>");
+
+        var projects = MSBuildSolutionLoader.GetProjectFiles(solutionPath);
+
+        Assert.That(projects, Is.Not.Null);
+        Assert.That(projects, Has.Length.EqualTo(2));
+        Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project1)));
+        Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project2)));
+    }
+    [Test]
     public void GetProjectsFromSolutionFilterTest() {
         var project1 = CreateProject("Project1");
         var project2 = CreateProject("Project2");

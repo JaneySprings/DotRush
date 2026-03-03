@@ -13,6 +13,10 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
     private readonly IAdditionalComponentsProvider additionalComponentsProvider;
 
     public MemoryCache<CodeRefactoringProvider> ComponentsCache { get; }
+    public string[] SkippedComponentNames { get; } = [
+        // Can hang in .Dispose() method context
+        "Microsoft.CodeAnalysis.CSharp.IntroduceParameter.CSharpIntroduceParameterCodeRefactoringProvider"
+    ];
 
     public CodeRefactoringProvidersLoader(IAdditionalComponentsProvider additionalComponentsProvider) {
         this.additionalComponentsProvider = additionalComponentsProvider;
@@ -47,6 +51,10 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
         var providersInfo = assemblyTypes.Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(CodeRefactoringProvider)));
         foreach (var providerInfo in providersInfo) {
             try {
+                if (SkippedComponentNames.Contains(providerInfo.FullName)) {
+                    currentClassLogger.Debug($"Skipping '{providerInfo.FullName}' due to configuration");
+                    continue;
+                }
                 var attribute = providerInfo.GetCustomAttribute<ExportCodeRefactoringProviderAttribute>();
                 if (attribute == null) {
                     currentClassLogger.Debug($"Skipping code refactoring provider '{providerInfo.Name}' because it is missing the '${nameof(ExportCodeRefactoringProviderAttribute)}'");
