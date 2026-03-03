@@ -22,6 +22,12 @@ public class CompilationHost : IClearable {
     public ReadOnlyDictionary<string, List<DiagnosticContext>> GetDiagnostics() {
         return workspaceDiagnostics.GetDiagnostics();
     }
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocument(Document document) {
+        return workspaceDiagnostics.GetDiagnosticsByDocument(document);
+    }
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByProject(Project project) {
+        return workspaceDiagnostics.GetDiagnosticsByProject(project);
+    }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
         return workspaceDiagnostics.GetDiagnosticsByDocumentSpan(document, span);
     }
