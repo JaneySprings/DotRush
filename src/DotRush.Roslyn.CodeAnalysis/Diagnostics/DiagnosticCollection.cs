@@ -66,8 +66,10 @@ public class DiagnosticCollection {
     }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByProject(Project project) {
         var result = new List<DiagnosticContext>();
-        foreach (var diagnostics in workspaceDiagnostics.Values) {
-            result.AddRange(diagnostics.Where(d => d.Document?.Project.Id == project.Id));
+        foreach (var document in project.Documents) {
+            if (!string.IsNullOrEmpty(document.FilePath) && workspaceDiagnostics.TryGetValue(document.FilePath, out var diagnostics)) {
+                result.AddRange(diagnostics.Where(d => d.Document?.Project.Id == project.Id));
+            }
         }
         return result.AsReadOnly();
     }
