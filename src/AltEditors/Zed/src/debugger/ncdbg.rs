@@ -89,37 +89,49 @@ pub fn dap_request_kind(
 pub fn dap_config_to_scenario(
     config: DebugConfig,
 ) -> zed_extension_api::Result<zed_extension_api::DebugScenario, String> {
-    match config.request {
-        DebugRequest::Launch(launch) => {
-            let dap_config = NetCoreDebugConfig {
-                request: "launch".to_string(),
-                program: Some(launch.program),
-                args: if launch.args.is_empty() {
-                    None
-                } else {
-                    Some(launch.args)
-                },
-                cwd: launch.cwd,
-                env: launch.envs.into_iter().collect(),
-                stop_at_entry: None,
+    let dap_config = match config.request {
+        DebugRequest::Launch(launch) => NetCoreDebugConfig {
+            request: "launch".to_string(),
+            program: Some(launch.program),
+            args: if launch.args.is_empty() {
+                None
+            } else {
+                Some(launch.args)
+            },
+            cwd: launch.cwd,
+            env: launch.envs.into_iter().collect(),
+            stop_at_entry: None,
+            just_my_code: None,
+            enable_step_filtering: None,
+            process_id: None,
+        },
+        DebugRequest::Attach(attach) => {
+            let pid = attach.process_id.ok_or("process_id not provided")?;
+
+            NetCoreDebugConfig {
+                request: "attach".to_string(),
+                program: None,
+                args: None,
+                cwd: None,
+                env: HashMap::new(),
+                stop_at_entry: config.stop_on_entry,
                 just_my_code: None,
                 enable_step_filtering: None,
-                process_id: None,
-            };
-
-            let json = serde_json::to_string(&dap_config)
-                .map_err(|e| format!("Failed to serialize NetCoreDebugConfig: {}", e))?;
-
-            Ok(DebugScenario {
-                label: config.label,
-                adapter: config.adapter,
-                build: None,
-                config: json,
-                tcp_connection: None,
-            })
+                process_id: Some(crate::debugger::ProcessId::Int(pid as i32)),
+            }
         }
-        DebugRequest::Attach(_attach) => Err("Launch not implemented".to_string()),
-    }
+    };
+
+    let json = serde_json::to_string(&dap_config)
+        .map_err(|e| format!("Failed to serialize NetCoreDebugConfig: {}", e))?;
+
+    Ok(DebugScenario {
+        label: config.label,
+        adapter: config.adapter,
+        build: None,
+        config: json,
+        tcp_connection: None,
+    })
 }
 
 fn download_netcoredbg() -> Result<String, String> {
