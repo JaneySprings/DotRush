@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Zed Mono Debug Adapter Protocol Configuration",
+  "description": "JSON schema for monodbg debug adapter protocol launch and attach configurations",
+  "type": "object",
+  "properties": {
+    "request": {
+      "type": "string",
+      "enum": ["launch", "attach"],
+      "description": "The request type - either 'launch' to start a new process or 'attach' to connect to an existing process"
+    }
+  },
+  "required": ["request"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "request": {
+            "const": "launch"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "request": true,
+          "program": {
+            "type": "string",
+            "pattern": "\\.(dll|exe)$",
+            "description": "Path to the executable assembly (.dll or .exe) to launch. This is the main entry point of your .NET application. NetCoreDbg will use 'dotnet' as the runtime and pass this as the first argument."
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Command line arguments to pass to the program. These arguments are appended after the program path when launching with 'dotnet'."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory for the launched process. This is crucial for .NET applications as it determines where configuration files (like appsettings.json), relative file paths, and other resources are resolved from. For ASP.NET Core apps, this affects content root discovery and static file serving. If not specified, defaults to the workspace root directory.",
+            "default": "${ZED_WORKTREE_ROOT}"
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "description": "Environment variables to set for the launched process. These are key-value pairs that will be available to your application at runtime."
+          },
+          "stopAtEntry": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to stop at the entry point (main method) of the program. When true, the debugger will break at the first line of user code, allowing you to step through from the very beginning."
+          },
+          "justMyCode": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable Just My Code debugging. When true, the debugger will only step through and break in user-written code, skipping framework and library code. This matches the default behavior of Microsoft's vsdbg."
+          },
+          "enableStepFiltering": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable step filtering to automatically step over properties, operators, and other code constructs that are typically not interesting during debugging. This matches the default behavior of Microsoft's vsdbg."
+          }
+        },
+        "required": ["program"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "request": {
+            "const": "attach"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "request": true,
+          "processId": {
+            "oneOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Numeric process ID to attach to"
+              },
+              {
+                "type": "string",
+                "pattern": "^[0-9]+$",
+                "description": "String representation of process ID to attach to"
+              }
+            ],
+            "description": "The process ID of the running .NET application to attach to. Can be specified as a number or string representation of a number. The target process must be a .NET Core application with debugging enabled."
+          }
+        },
+        "required": ["processId"]
+      }
+    }
+  ]
+}

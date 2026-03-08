@@ -1,4 +1,4 @@
-﻿using DotRush.Common.Extensions;
+﻿﻿using DotRush.Common.Extensions;
 using DotRush.Debugging.Mono.Extensions;
 using Mono.Debugging.Client;
 using Newtonsoft.Json.Linq;
