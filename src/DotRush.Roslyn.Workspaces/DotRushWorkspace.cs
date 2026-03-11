@@ -28,14 +28,6 @@ public abstract class DotRushWorkspace : SolutionController {
         return registrationResult;
     }
 
-    // public void ApplyChanges() {
-    //     ArgumentNullException.ThrowIfNull(workspace);
-    //     if (Solution != null && ApplyWorkspaceChanges) {
-    //         workspace.TryApplyChanges(Solution);
-    //         OnWorkspaceStateChanged(workspace.CurrentSolution);
-    //     }
-    // }
-
     public Task LoadSolutionAsync(string[] solutionFiles, CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(workspace);
         return LoadSolutionAsync(workspace, solutionFiles, cancellationToken);

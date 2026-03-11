@@ -4,3 +4,6 @@
 [submodule "src/DotRush.Debugging.MonoLib"]
 	path = src/DotRush.Debugging.MonoLib
 	url = https://github.com/JaneySprings/Mono.Debugger
+[submodule "src/DotRush.LanguageServer.Framework"]
+	path = src/DotRush.LanguageServer.Framework
+	url = https://github.com/JaneySprings/LanguageServer.Framework.git
