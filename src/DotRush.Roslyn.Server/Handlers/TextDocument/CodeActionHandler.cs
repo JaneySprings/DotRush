@@ -57,10 +57,10 @@ public class CodeActionHandler : CodeActionHandlerBase {
             return new CodeActionResponse(result);
         });
     }
-    protected override Task<CodeAction> Resolve(CodeAction request, CancellationToken token) {
+    protected override Task<CodeAction?> Resolve(CodeAction? request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(request, async () => {
-            if (request.Data?.Value == null || workspaceService.Solution == null) {
-                currentClassLogger.Error($"CodeAction '{request.Title}' data is null or solution is null");
+            if (request?.Data?.Value == null || workspaceService.Solution == null) {
+                currentClassLogger.Error($"CodeAction '{request?.Title}' data is null or solution is null");
                 return request;
             }
 

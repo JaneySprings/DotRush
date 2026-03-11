@@ -101,11 +101,10 @@ public static partial class MarkdownExtensions {
             else if (node is XElement childElement) {
                 switch (childElement.Name.LocalName.ToLower()) {
                     case "see":
-                        var cref = childElement.Attribute("cref")?.Value;
-                        if (!string.IsNullOrEmpty(cref))
-                            sb.Append($"`{TrimMemberName(cref)}`");
-                        else
-                            sb.Append(childElement.Value);
+                        var value = childElement.Attribute("cref")?.Value;
+                        if (string.IsNullOrEmpty(value))
+                            value = childElement.Attribute("langword")?.Value ?? childElement.Value;
+                        sb.Append($"`{TrimMemberName(value)}`");
                         break;
 
                     case "paramref":

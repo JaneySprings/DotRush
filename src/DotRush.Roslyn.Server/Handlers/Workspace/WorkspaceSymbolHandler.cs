@@ -10,10 +10,10 @@ using Microsoft.CodeAnalysis;
 namespace DotRush.Roslyn.Server.Handlers.Workspace;
 
 public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
-    private readonly WorkspaceService solutionService;
+    private readonly WorkspaceService workspaceService;
 
-    public WorkspaceSymbolHandler(WorkspaceService solutionService) {
-        this.solutionService = solutionService;
+    public WorkspaceSymbolHandler(WorkspaceService workspaceService) {
+        this.workspaceService = workspaceService;
     }
 
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
@@ -22,10 +22,10 @@ public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
     protected override Task<WorkspaceSymbolResponse> Handle(WorkspaceSymbolParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(new WorkspaceSymbolResponse(new List<WorkspaceSymbol>()), async () => {
             var workspaceSymbols = new HashSet<WorkspaceSymbol>(WorkspaceSymbolEqualityComparer.Default);
-            if (solutionService.Solution == null || string.IsNullOrEmpty(request.Query))
+            if (workspaceService.Solution == null || string.IsNullOrEmpty(request.Query))
                 return new WorkspaceSymbolResponse(new List<WorkspaceSymbol>());
 
-            foreach (var project in solutionService.Solution.Projects) {
+            foreach (var project in workspaceService.Solution.Projects) {
                 var compilation = await project.GetCompilationAsync(token).ConfigureAwait(false);
                 if (compilation == null)
                     continue;

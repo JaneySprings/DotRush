@@ -528,4 +528,26 @@ public class TestClass {
         Assert.That(result.Contents.Value, Does.Contain("System.String  (net8.0)"));
         Assert.That(result.Contents.Value, Does.Contain("System.Int32  (net10.0)"));
     }
+
+    [Test]
+    public async Task HoverWithSystemTypesTest() {
+        var documentPath = CreateDocument(nameof(HoverHandlerTests), @"
+namespace Tests;
+class TestClass {
+    void Test() {
+        System.Diagnostics.Process.Start();
+    }
+}
+");
+        navigationService.UpdateSolution(Workspace.Solution);
+        var result = await handler.Handle(new HoverParams {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(4, 37)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+
+        var returnSection = result.Contents.Value.Split("**Returns:**")[1];
+        Assert.That(returnSection, Does.Contain("`true`if a process resource is started;`false`if no new process resource is started"));
+    }
 }

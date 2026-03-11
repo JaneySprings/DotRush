@@ -89,6 +89,19 @@ public abstract class SolutionController : ProjectsController {
         Solution?.GetAdditionalDocumentsWithDirectoryPath(path)?.ForEach(x => DeleteDocument(x.FilePath ?? string.Empty));
     }
 
+    public void UnloadProject(string projectPath) {
+        var projects = Solution?.Projects.Where(p => FileSystemExtensions.Equals(p.FilePath, projectPath)).ToArray();
+        if (projects == null || projects.Length == 0)
+            return;
+
+        Solution? updatedSolution = null;
+        foreach (var project in projects)
+            updatedSolution = Solution?.RemoveProject(project.Id);
+
+        if (updatedSolution != null)
+            OnWorkspaceStateChanged(updatedSolution);
+    }
+
     private void CreateSourceCodeDocument(string file) {
         if (Solution != null && Solution.GetDocumentIdsWithFilePathV2(file).Any())
             return;
