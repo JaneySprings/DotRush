@@ -125,8 +125,37 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
                         var singleCodeActions = action.ToFlattenCodeActions().Where(x => !x.IsBlacklisted());
                         foreach (var singleCodeAction in singleCodeActions) {
-                            if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
+                            if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction)) {
                                 result.Add(new CommandOrCodeAction(singleCodeAction.ToCodeAction(CodeActionKind.QuickFix)));
+
+                                var fixAllProvider = codeFixProvider.GetFixAllProvider();
+                                if (fixAllProvider != null) {
+                                    var supportedScopes = fixAllProvider.GetSupportedFixAllScopes();
+                                    var fixAllDiagnosticProvider = new ServerFixAllDiagnosticProvider(codeAnalysisService);
+                                    var diagnosticIds = new[] { byIdGroup.Key };
+
+                                    if (supportedScopes.Contains(FixAllScope.Document)) {
+                                        var fixAllContext = new FixAllContext(document, codeFixProvider, FixAllScope.Document, singleCodeAction.EquivalenceKey, diagnosticIds, fixAllDiagnosticProvider, cancellationToken);
+                                        var fixAllAction = new FixAllCodeAction(fixAllProvider, fixAllContext, $"Fix all '{singleCodeAction.Title}' in Document");
+                                        if (codeActionsCache.TryAdd(fixAllAction.GetUniqueId(), fixAllAction))
+                                            result.Add(new CommandOrCodeAction(fixAllAction.ToCodeAction(CodeActionKind.QuickFix)));
+                                    }
+
+                                    if (supportedScopes.Contains(FixAllScope.Project)) {
+                                        var fixAllContext = new FixAllContext(document, codeFixProvider, FixAllScope.Project, singleCodeAction.EquivalenceKey, diagnosticIds, fixAllDiagnosticProvider, cancellationToken);
+                                        var fixAllAction = new FixAllCodeAction(fixAllProvider, fixAllContext, $"Fix all '{singleCodeAction.Title}' in Project");
+                                        if (codeActionsCache.TryAdd(fixAllAction.GetUniqueId(), fixAllAction))
+                                            result.Add(new CommandOrCodeAction(fixAllAction.ToCodeAction(CodeActionKind.QuickFix)));
+                                    }
+
+                                    if (supportedScopes.Contains(FixAllScope.Solution)) {
+                                        var fixAllContext = new FixAllContext(document, codeFixProvider, FixAllScope.Solution, singleCodeAction.EquivalenceKey, diagnosticIds, fixAllDiagnosticProvider, cancellationToken);
+                                        var fixAllAction = new FixAllCodeAction(fixAllProvider, fixAllContext, $"Fix all '{singleCodeAction.Title}' in Solution");
+                                        if (codeActionsCache.TryAdd(fixAllAction.GetUniqueId(), fixAllAction))
+                                            result.Add(new CommandOrCodeAction(fixAllAction.ToCodeAction(CodeActionKind.QuickFix)));
+                                    }
+                                }
+                            }
                         }
                     }, cancellationToken)).ConfigureAwait(false);
                 }
