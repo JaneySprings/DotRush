@@ -1,6 +1,5 @@
 using DotRush.Common.Extensions;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
