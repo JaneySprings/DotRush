@@ -8,9 +8,11 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Formatting;
 
 namespace DotRush.Roslyn.CodeAnalysis.Embedded.Refactorings;
 
+[Obsolete($"Use {nameof(Formatter)} instead.")]
 [ExportCodeRefactoringProvider(LanguageNames.CSharp, Name = nameof(OrganizeImportsRefactoringProvider)), Shared]
 public class OrganizeImportsRefactoringProvider : CodeRefactoringProvider {
     private static object? organizeImportsService = InternalCSharpOrganizeImportsService.CreateNew();

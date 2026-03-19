@@ -30,6 +30,10 @@ public static class CollectionExtensions {
         }
         return result;
     }
+
+    public static bool Contains<T>(this IEnumerable<T> collection, params T[] values) {
+        return values.Any(collection.Contains);
+    }
 }
 
 public class NullableCollection<T> : List<T?> where T : class {
