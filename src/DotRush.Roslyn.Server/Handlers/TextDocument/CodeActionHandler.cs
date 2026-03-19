@@ -54,6 +54,9 @@ public class CodeActionHandler : CodeActionHandlerBase {
             if (codeAnalysisService.AnalyzerDiagnosticsScope != AnalysisScope.None)
                 result.AddRange(await GetRefactoringsAsync(filePath, request.Range, token).ConfigureAwait(false));
 
+            if (request.Context?.Only != null && request.Context.Only.Count > 0)
+                return new CodeActionResponse(result.Where(it => it.CodeAction?.Kind != null && request.Context.Only.Contains(it.CodeAction.Kind.Value)).ToList());
+
             return new CodeActionResponse(result);
         });
     }
@@ -116,18 +119,19 @@ public class CodeActionHandler : CodeActionHandlerBase {
             }
 
             foreach (var codeFixProvider in codeFixProviders) {
+                var actionKind = codeFixProvider.GetActionKind();
                 var diagnosticByRangeGroups = byIdGroup.GroupBy(it => it.Diagnostic.Location.SourceSpan).ToList();
+
                 foreach (var byRangeGroup in diagnosticByRangeGroups) {
                     var diagnostics = byRangeGroup.Select(it => it!.Diagnostic).ToImmutableArray();
                     await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, byRangeGroup.Key, diagnostics, (action, _) => {
                         if (cancellationToken.IsCancellationRequested)
                             return;
 
-                        var singleCodeActions = action.ToFlattenCodeActions().Where(x => !x.IsBlacklisted());
-                        foreach (var singleCodeAction in singleCodeActions) {
-                            if (codeActionsCache.TryAdd(singleCodeAction.GetUniqueId(), singleCodeAction))
-                                result.Add(new CommandOrCodeAction(singleCodeAction.ToCodeAction(CodeActionKind.QuickFix)));
-                        }
+                        action.ToFlattenCodeActions((codeAction, title) => {
+                            if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
+                                result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(actionKind, title)));
+                        });
                     }, cancellationToken)).ConfigureAwait(false);
                 }
             }
@@ -158,13 +162,10 @@ public class CodeActionHandler : CodeActionHandlerBase {
                     if (cancellationToken.IsCancellationRequested)
                         return;
 
-                    var codeActionPairs = action.ToFlattenCodeActions(CodeActionKind.Refactor);
-                    foreach (var pair in codeActionPairs) {
-                        if (pair.Item1.IsBlacklisted())
-                            continue;
-                        if (codeActionsCache.TryAdd(pair.Item1.GetUniqueId(), pair.Item1))
-                            result.Add(new CommandOrCodeAction(pair.Item2));
-                    }
+                    action.ToFlattenCodeActions((codeAction, title) => {
+                        if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
+                            result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(CodeActionKind.Refactor, title)));
+                    });
                 }, cancellationToken)).ConfigureAwait(false);
             }
 

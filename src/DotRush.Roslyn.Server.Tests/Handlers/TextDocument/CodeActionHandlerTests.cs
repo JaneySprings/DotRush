@@ -14,7 +14,7 @@ public class CodeActionHandlerMock : CodeActionHandler {
     public new Task<CodeActionResponse> Handle(CodeActionParams request, CancellationToken token) {
         return base.Handle(request, token);
     }
-    public new Task<CodeAction> Resolve(CodeAction request, CancellationToken token) {
+    public new Task<CodeAction?> Resolve(CodeAction request, CancellationToken token) {
         return base.Resolve(request, token);
     }
 }
@@ -74,6 +74,50 @@ class CodeActionTest {
         Assert.That(textDocumentEdit.Value, Has.Count.EqualTo(1));
         Assert.That(textDocumentEdit.Value[0].NewText, Does.StartWith("using System.Text.Json;"));
     }
+    [Test]
+    public async Task GeneralHandlerWithEmptyFilterTest() {
+        var documents = CreateAndGetDocuments(nameof(CodeActionHandlerTests), @"
+namespace Tests;
+class CodeActionTest {
+    private void Method() {
+        _ = JsonSerializer.Serialize(1);
+    }
+}
+");
+        await codeAnalysisService.AnalyzeAsync(documents, AnalysisScope.Document, AnalysisScope.None, CancellationToken.None).ConfigureAwait(false);
+        var result = await handler.Handle(new CodeActionParams() {
+            TextDocument = documents.First().CreateDocumentId(),
+            Range = PositionExtensions.CreateRange(4, 5),
+            Context = new CodeActionContext { Only = new List<CodeActionKind>() }
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(13));
+        result.CommandOrCodeActions.ForEach(ca => Assert.That(ca.CodeAction, Is.Not.Null));
+    }
+    [TestCase("quickfix", 10)]
+    [TestCase("refactor", 3)]
+    [TestCase("source", 0)]
+    public async Task GeneralHandlerWithFilterTest(string kind, int expectedCount) {
+        var documents = CreateAndGetDocuments(nameof(CodeActionHandlerTests), @"
+namespace Tests;
+class CodeActionTest {
+    private void Method() {
+        _ = JsonSerializer.Serialize(1);
+    }
+}
+");
+        await codeAnalysisService.AnalyzeAsync(documents, AnalysisScope.Document, AnalysisScope.None, CancellationToken.None).ConfigureAwait(false);
+        var result = await handler.Handle(new CodeActionParams() {
+            TextDocument = documents.First().CreateDocumentId(),
+            Range = PositionExtensions.CreateRange(4, 5),
+            Context = new CodeActionContext { Only = new List<CodeActionKind>() { new CodeActionKind(kind) } }
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(expectedCount));
+        result.CommandOrCodeActions.ForEach(ca => Assert.That(ca.CodeAction, Is.Not.Null));
+    }
 
     [TestCase(5, 6)]
     [TestCase(7, 8)]
@@ -107,6 +151,43 @@ sealed class CodeActionTest {
         Assert.That(resolvedResult?.Edit, Is.Not.Null);
         Assert.That(resolvedResult.Edit.Changes, Has.Count.EqualTo(1));
         var textDocumentEdit = resolvedResult.Edit.Changes.First();
+        Assert.That(textDocumentEdit.Value, Has.Count.EqualTo(1));
+        Assert.That(textDocumentEdit.Value[0].NewText, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetCodeActionForUnnecessaryUsingsTest() {
+        const string codeActionKind = "quickfix.RemoveUnnecessaryUsings";
+        var documents = CreateAndGetDocuments(nameof(CodeActionHandlerTests), @"
+using System;
+using System.Text.Json;
+
+namespace Tests;
+class CodeActionTest {
+    private void Method() {
+        _ = JsonSerializer.Serialize(1);
+    }
+}
+");
+        await codeAnalysisService.AnalyzeAsync(documents, AnalysisScope.Document, AnalysisScope.None, CancellationToken.None).ConfigureAwait(false);
+        var result = await handler.Handle(new CodeActionParams() {
+            TextDocument = documents.First().CreateDocumentId(),
+            Range = PositionExtensions.CreateRange(1, 3),
+            Context = new CodeActionContext { Only = new List<CodeActionKind>() { new CodeActionKind(codeActionKind) } }
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(1));
+
+        var codeAction = result.CommandOrCodeActions[0].CodeAction;
+        Assert.That(codeAction?.Kind, Is.Not.Null);
+        Assert.That(codeAction.Kind.Value.Value, Is.EqualTo(codeActionKind));
+
+        var resolvedAction = await handler.Resolve(codeAction, CancellationToken.None).ConfigureAwait(false);
+        Assert.That(resolvedAction?.Edit, Is.Not.Null);
+        Assert.That(resolvedAction.Edit.Changes, Has.Count.EqualTo(1));
+        var textDocumentEdit = resolvedAction.Edit.Changes.First();
+        Assert.That(PathExtensions.Equals(textDocumentEdit.Key.FileSystemPath, documents.First().FilePath), Is.True);
         Assert.That(textDocumentEdit.Value, Has.Count.EqualTo(1));
         Assert.That(textDocumentEdit.Value[0].NewText, Is.Empty);
     }
