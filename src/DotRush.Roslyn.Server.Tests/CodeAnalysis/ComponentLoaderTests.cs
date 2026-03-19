@@ -9,7 +9,7 @@ namespace DotRush.Roslyn.Server.Tests;
 public class CodeRefactoringProvidersLoaderTests : ComponentsLoaderTests<CodeRefactoringProvider> {
     private CodeRefactoringProvidersLoader loader = null!;
     protected override IComponentLoader<CodeRefactoringProvider> ComponentsLoader => loader;
-    protected override int ComponentsCount => 81 - ComponentsLoader.SkippedComponentNames.Length;
+    protected override int ComponentsCount => 82 - ComponentsLoader.SkippedComponentNames.Length;
 
     [SetUp]
     public void SetUp() {
@@ -19,7 +19,7 @@ public class CodeRefactoringProvidersLoaderTests : ComponentsLoaderTests<CodeRef
 public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider> {
     private CodeFixProvidersLoader loader = null!;
     protected override IComponentLoader<CodeFixProvider> ComponentsLoader => loader;
-    protected override int ComponentsCount => 298;
+    protected override int ComponentsCount => 300;
 
     [SetUp]
     public void SetUp() {
@@ -29,7 +29,7 @@ public class CodeFixProvidersLoaderTests : ComponentsLoaderTests<CodeFixProvider
 public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAnalyzer> {
     private DiagnosticAnalyzersLoader loader = null!;
     protected override IComponentLoader<DiagnosticAnalyzer> ComponentsLoader => loader;
-    protected override int ComponentsCount => 393;
+    protected override int ComponentsCount => 396;
     protected int SuppressorsCount => 1;
 
     [SetUp]

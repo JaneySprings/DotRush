@@ -1,13 +1,13 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
-    <CodeAnalysisVersion>5.0.0-2.final</CodeAnalysisVersion>
-    <TestPlatformVersion>18.0.1</TestPlatformVersion>
+    <CodeAnalysisVersion>5.3.0</CodeAnalysisVersion>
+    <TestPlatformVersion>18.3.0</TestPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="NLog" Version="5.4.0" />
-    <PackageVersion Include="ICSharpCode.Decompiler" Version="10.0.0.8079-preview1" />
-    <PackageVersion Include="StreamJsonRpc" Version="2.22.23" />
+    <PackageVersion Include="NLog" Version="6.1.1" />
+    <PackageVersion Include="ICSharpCode.Decompiler" Version="10.0.0.8282-preview2" />
+    <PackageVersion Include="StreamJsonRpc" Version="2.24.84" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.4" />
     <PackageVersion Include="Mono.Options" Version="6.12.0.148" />
     <PackageVersion Include="EmmyLua.LanguageServer.Framework" Version="0.8.1" />

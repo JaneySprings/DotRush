@@ -174,9 +174,9 @@ public class TestClass {
             Range = PositionExtensions.CreateRange(4, 0, 5, 0)
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.InlayHints, Has.Count.EqualTo(1));
-        Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == ("UnknownType?")));
+        Assert.That(result?.InlayHints, Is.Null.Or.Empty);
+        // Old Roslyn versions:
+        // Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == ("UnknownType?")));
     }
     [Test]
     public async Task InlayHintOnInvalidSyntaxTest() {
@@ -193,9 +193,7 @@ public class TestClass {
             Range = PositionExtensions.CreateRange(4, 0, 5, 0)
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.InlayHints, Has.Count.EqualTo(1));
-        Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == ("?")));
+        Assert.That(result?.InlayHints, Is.Null.Or.Empty);
     }
     [Test]
     public async Task MultitargetInlayHintTest() {
@@ -210,6 +208,8 @@ public class TestClass {
 #endif
     }
 }
+class MyClass {}
+class MyClass2 {}
 ");
         var result = await handler.Handle(new InlayHintParams {
             TextDocument = documentPath.CreateDocumentId(),
