@@ -38,9 +38,10 @@ public abstract class ProjectsController {
 
                 OnProjectLoadStarted(path);
                 var project = await workspace.OpenProjectAsync(path, null, cancellationToken);
+                project = project.WithShadowCopiedAnalyzerReferences();
                 OnProjectLoadCompleted(project);
 
-                OnWorkspaceStateChanged(workspace.CurrentSolution);
+                OnWorkspaceStateChanged(project.Solution);
 
                 if (CompileProjectsAfterLoading) {
                     OnProjectCompilationStarted(path);

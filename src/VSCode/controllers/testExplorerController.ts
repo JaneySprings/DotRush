@@ -151,7 +151,7 @@ export class TestExplorerController {
                 else if (result.Outcome === Outcome.Skipped)
                     testRun.skipped(testItem);
             }));
-            testHostRpc.onNotification('handleTestRunComplete', (_) => {
+            testHostRpc.onNotification('handleTestRunComplete', () => {
                 testRun.end();
                 testHostRpc.dispose();
             });
