@@ -7,7 +7,6 @@ using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabi
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
-using Microsoft.CodeAnalysis;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
