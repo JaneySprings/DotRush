@@ -16,6 +16,7 @@ public class VSTestHostAdapter : ITestHostAdapter {
         vsTestConsoleWrapper = new VsTestConsoleWrapper(consoleTestHostPath);
         notificationHandler = new RpcTestHostNotificationHandler(attachDebugger, vsTestConsoleWrapper.CancelTestRun);
         currentClassLogger = new CurrentClassLogger(nameof(VSTestHostAdapter));
+        notificationHandler.HandleRawMessage($"Using vstest.console at {consoleTestHostPath}");
     }
 
     public Task StartSession(string[] testAssemblies, string[] typeFilters) {

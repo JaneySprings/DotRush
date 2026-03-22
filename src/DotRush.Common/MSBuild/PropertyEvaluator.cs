@@ -22,7 +22,7 @@ public static partial class PropertyEvaluator {
         return project.EvaluatePropertyV1(name, defaultValue);
     }
     internal static string? EvaluatePropertyV2(this MSBuildProject project, string name, string? defaultValue = null) {
-        var dotnetTool = MSBuildLocator.DotNetTool();
+        var dotnetTool = MSBuildLocator.DotNetTool;
         var result = new ProcessRunner(dotnetTool, new ProcessArgumentBuilder()
             .Append("msbuild").AppendQuoted(project.FilePath)
             .Append($"-getProperty:{name}"))
