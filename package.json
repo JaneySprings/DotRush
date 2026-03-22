@@ -55,6 +55,7 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
+    "vscode-jsonrpc": "^8.2.1",
     "vscode-languageclient": "^8.1.0"
   },
   "contributes": {

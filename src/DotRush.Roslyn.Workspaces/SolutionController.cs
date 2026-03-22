@@ -45,9 +45,10 @@ public abstract class SolutionController : ProjectsController {
 
             OnProjectLoadStarted(solutionFilePath);
             var solution = await workspace.OpenSolutionAsync(solutionFilePath, null, cancellationToken);
+            solution = solution.WithShadowCopiedAnalyzerReferences();
             solution.Projects.Distinct(ProjectByPathComparer.Instance).ForEach(project => OnProjectLoadCompleted(project));
 
-            OnWorkspaceStateChanged(workspace.CurrentSolution);
+            OnWorkspaceStateChanged(solution);
 
             if (CompileProjectsAfterLoading) {
                 foreach (var project in solution.Projects) {
