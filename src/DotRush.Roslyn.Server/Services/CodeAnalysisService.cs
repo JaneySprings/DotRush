@@ -20,12 +20,13 @@ public class CodeAnalysisService : IAdditionalComponentsProvider, IClearable {
     private readonly ConfigurationService configurationService;
     private readonly LanguageServer? serverFacade;
     private readonly CodeActionHost codeActionHost;
-    private readonly CompilationHost compilationHost;
+    public readonly CompilationHost compilationHost;
     private readonly Thread workerThread;
     private readonly BlockingCollection<Func<Task>> workerTasks;
 
     internal AnalysisScope CompilerDiagnosticsScope => configurationService.CompilerDiagnosticsScope;
     internal AnalysisScope AnalyzerDiagnosticsScope => configurationService.AnalyzerDiagnosticsScope;
+    internal FixAllContext.DiagnosticProvider FixAllProvider => compilationHost;
 
     public CodeAnalysisService(ConfigurationService configurationService, LanguageServer? serverFacade) {
         this.configurationService = configurationService;

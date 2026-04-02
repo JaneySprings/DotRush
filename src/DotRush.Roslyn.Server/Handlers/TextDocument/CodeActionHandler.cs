@@ -121,7 +121,6 @@ public class CodeActionHandler : CodeActionHandlerBase {
             foreach (var codeFixProvider in codeFixProviders) {
                 var actionKind = codeFixProvider.GetActionKind();
                 var diagnosticByRangeGroups = byIdGroup.GroupBy(it => it.Diagnostic.Location.SourceSpan).ToList();
-
                 foreach (var byRangeGroup in diagnosticByRangeGroups) {
                     var diagnostics = byRangeGroup.Select(it => it!.Diagnostic).ToImmutableArray();
                     await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, byRangeGroup.Key, diagnostics, (action, _) => {
@@ -133,6 +132,16 @@ public class CodeActionHandler : CodeActionHandlerBase {
                                 result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(actionKind, title)));
                         });
                     }, cancellationToken)).ConfigureAwait(false);
+
+                    await codeFixProvider.RegisterFixAllCodeFixesAsync(document, byIdGroup.Key, codeAnalysisService.FixAllProvider, action => {
+                        if (cancellationToken.IsCancellationRequested)
+                            return;
+
+                        action.ToFlattenCodeActions((codeAction, title) => {
+                            if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
+                                result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(CodeActionKind.QuickFix, title)));
+                        });
+                    }, cancellationToken).ConfigureAwait(false);
                 }
             }
         }

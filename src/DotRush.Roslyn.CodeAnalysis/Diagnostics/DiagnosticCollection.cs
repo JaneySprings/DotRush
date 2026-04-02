@@ -1,10 +1,11 @@
 using System.Collections.ObjectModel;
+using DotRush.Roslyn.CodeAnalysis.Components;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.CodeAnalysis.Diagnostics;
 
-public class DiagnosticCollection {
+public class DiagnosticCollection : IClearable {
     private Dictionary<string, List<DiagnosticContext>> workspaceDiagnostics;
     private Dictionary<string, List<DiagnosticContext>>? tempWorkspaceDiagnostics;
     private readonly object lockObject;
@@ -56,6 +57,23 @@ public class DiagnosticCollection {
     public ReadOnlyDictionary<string, List<DiagnosticContext>> GetDiagnostics() {
         return new ReadOnlyDictionary<string, List<DiagnosticContext>>(workspaceDiagnostics);
     }
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocument(Document document) {
+        if (string.IsNullOrEmpty(document.FilePath))
+            return ReadOnlyCollection<DiagnosticContext>.Empty;
+        if (workspaceDiagnostics.TryGetValue(document.FilePath, out List<DiagnosticContext>? diagnostics))
+            return diagnostics.AsReadOnly();
+
+        return ReadOnlyCollection<DiagnosticContext>.Empty;
+    }
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByProject(Project project) {
+        var result = new List<DiagnosticContext>();
+        foreach (var document in project.Documents) {
+            if (!string.IsNullOrEmpty(document.FilePath) && workspaceDiagnostics.TryGetValue(document.FilePath, out var diagnostics)) {
+                result.AddRange(diagnostics.Where(d => d.Document?.Project.Id == project.Id));
+            }
+        }
+        return result.AsReadOnly();
+    }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
         if (string.IsNullOrEmpty(document.FilePath))
             return ReadOnlyCollection<DiagnosticContext>.Empty;
@@ -63,5 +81,14 @@ public class DiagnosticCollection {
             return diagnostics.Where(d => d.Span.IntersectsWith(span)).ToList().AsReadOnly();
 
         return ReadOnlyCollection<DiagnosticContext>.Empty;
+    }
+
+    public void ClearCache(string key) {
+        workspaceDiagnostics.Remove(key);
+    }
+    public void ClearCache() {
+        lock (lockObject) {
+            workspaceDiagnostics.Clear();
+        }
     }
 }

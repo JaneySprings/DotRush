@@ -34,6 +34,7 @@ public class TextDocumentHandler : TextDocumentHandlerBase {
         var text = request.ContentChanges.First().Text;
 
         workspaceService.UpdateDocument(filePath, text);
+        codeAnalysisService.compilationHost.ClearCache(filePath);
         codeAnalysisService.RequestDiagnosticsPublishing(filePath, workspaceService);
         return Task.CompletedTask;
     }

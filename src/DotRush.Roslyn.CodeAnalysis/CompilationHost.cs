@@ -3,12 +3,13 @@ using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.CodeAnalysis;
 
-public class CompilationHost : IClearable {
+public class CompilationHost : FixAllContext.DiagnosticProvider, IClearable {
     private readonly DiagnosticAnalyzersLoader diagnosticAnalyzersLoader;
     private readonly DiagnosticCollection workspaceDiagnostics;
     private readonly CurrentClassLogger currentClassLogger;
@@ -22,11 +23,20 @@ public class CompilationHost : IClearable {
     public ReadOnlyDictionary<string, List<DiagnosticContext>> GetDiagnostics() {
         return workspaceDiagnostics.GetDiagnostics();
     }
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocument(Document document) {
+        return workspaceDiagnostics.GetDiagnosticsByDocument(document);
+    }
+    public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByProject(Project project) {
+        return workspaceDiagnostics.GetDiagnosticsByProject(project);
+    }
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
         return workspaceDiagnostics.GetDiagnosticsByDocumentSpan(document, span);
     }
     public void ClearCache() {
         diagnosticAnalyzersLoader.ClearCache();
+    }
+    public void ClearCache(string key) {
+        workspaceDiagnostics.ClearCache(key);
     }
 
     public async Task AnalyzeAsync(IEnumerable<Document> documents, AnalysisScope compilerScope, AnalysisScope analyzerScope, CancellationToken cancellationToken) {
@@ -186,6 +196,18 @@ public class CompilationHost : IClearable {
 
         foreach (var project in solution.Projects)
             await AnalyzerDiagnoseAsync(project, cancellationToken).ConfigureAwait(false);
+    }
+    #endregion
+
+    #region FixAllContext
+    public override Task<IEnumerable<Diagnostic>> GetDocumentDiagnosticsAsync(Document document, CancellationToken cancellationToken) {
+        return Task.FromResult(GetDiagnosticsByDocument(document).Select(d => d.Diagnostic));
+    }
+    public override Task<IEnumerable<Diagnostic>> GetProjectDiagnosticsAsync(Project project, CancellationToken cancellationToken) {
+        return Task.FromResult(Enumerable.Empty<Diagnostic>());
+    }
+    public override Task<IEnumerable<Diagnostic>> GetAllDiagnosticsAsync(Project project, CancellationToken cancellationToken) {
+        return Task.FromResult(GetDiagnosticsByProject(project).Select(d => d.Diagnostic));
     }
     #endregion
 }
