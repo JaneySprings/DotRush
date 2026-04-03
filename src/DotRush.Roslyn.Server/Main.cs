@@ -92,8 +92,8 @@ public class Program {
         configurationService = new ConfigurationService(languageServer);
         navigationService = new NavigationService();
         testExplorerService = new TestExplorerService();
-        workspaceService = new WorkspaceService(configurationService, languageServer);
         codeAnalysisService = new CodeAnalysisService(configurationService, languageServer);
+        workspaceService = new WorkspaceService(configurationService, languageServer);
         externalAccessService = new ExternalAccessService(workspaceService);
     }
 }

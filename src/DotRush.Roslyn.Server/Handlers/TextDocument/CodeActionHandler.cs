@@ -121,6 +121,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
             foreach (var codeFixProvider in codeFixProviders) {
                 var actionKind = codeFixProvider.GetActionKind();
                 var diagnosticByRangeGroups = byIdGroup.GroupBy(it => it.Diagnostic.Location.SourceSpan).ToList();
+                var getCurrentDocument = CreateDocumentResolver(document);
 
                 foreach (var byRangeGroup in diagnosticByRangeGroups) {
                     var diagnostics = byRangeGroup.Select(it => it!.Diagnostic).ToImmutableArray();
@@ -131,6 +132,15 @@ public class CodeActionHandler : CodeActionHandlerBase {
                         action.ToFlattenCodeActions((codeAction, title) => {
                             if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
                                 result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(actionKind, title)));
+
+                            var fixAllProvider = codeFixProvider.GetFixAllProvider();
+                            if (fixAllProvider == null)
+                                return;
+
+                            codeFixProvider.RegisterFixAllCodeFixesAsync(document, byIdGroup.Key, title, codeAction.EquivalenceKey, getCurrentDocument, codeAnalysisService.DiagnosticProvider, fixAllAction => {
+                                if (codeActionsCache.TryAdd(fixAllAction.GetUniqueId(), fixAllAction))
+                                    result.Add(new CommandOrCodeAction(fixAllAction.ToCodeAction(CodeActionKind.QuickFix)));
+                            }, cancellationToken);
                         });
                     }, cancellationToken)).ConfigureAwait(false);
                 }
@@ -203,8 +213,12 @@ public class CodeActionHandler : CodeActionHandlerBase {
                         Range = x.Span.ToRange(sourceText),
                     }));
 
-                    if (textEdits.Count != 0)
-                        documentEdits.TryAdd(newDocument.FilePath, textEdits);
+                    if (textEdits.Count == 0)
+                        continue;
+                    if (!documentEdits.TryGetValue(newDocument.FilePath, out var currentEdits))
+                        documentEdits[newDocument.FilePath] = textEdits;
+                    else
+                        currentEdits.AddRange(textEdits.Where(edit => currentEdits.All(current => current.Range != edit.Range || current.NewText != edit.NewText)));
                 }
                 foreach (var documentId in projectChanges.GetAddedDocuments()) {
                     var newDocument = projectChanges.NewProject.GetDocument(documentId)!;
@@ -219,6 +233,23 @@ public class CodeActionHandler : CodeActionHandlerBase {
         }
 
         return documentEdits;
+    }
+    private Func<Document?> CreateDocumentResolver(Document document) {
+        var documentId = document.Id;
+        var documentFilePath = document.FilePath;
+
+        return () => {
+            var currentDocument = workspaceService.Solution?.GetDocument(documentId);
+            if (currentDocument != null)
+                return currentDocument;
+            if (!string.IsNullOrEmpty(documentFilePath)) {
+                var fallbackId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(documentFilePath).FirstOrDefault();
+                if (fallbackId != null)
+                    return workspaceService.Solution?.GetDocument(fallbackId);
+            }
+
+            return null;
+        };
     }
 
     private void ProcessDocumentCreate(Document document, SourceText sourceText) {

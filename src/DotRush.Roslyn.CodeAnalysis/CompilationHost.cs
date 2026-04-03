@@ -3,12 +3,13 @@ using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.CodeAnalysis;
 
-public class CompilationHost : IClearable {
+public class CompilationHost : FixAllContext.DiagnosticProvider, IClearable {
     private readonly DiagnosticAnalyzersLoader diagnosticAnalyzersLoader;
     private readonly DiagnosticCollection workspaceDiagnostics;
     private readonly CurrentClassLogger currentClassLogger;
@@ -91,6 +92,18 @@ public class CompilationHost : IClearable {
     private void EndAnalysis() {
         workspaceDiagnostics.EndUpdate();
     }
+
+    #region FixAllContext
+    public override Task<IEnumerable<Diagnostic>> GetDocumentDiagnosticsAsync(Document document, CancellationToken cancellationToken) {
+        return Task.FromResult(workspaceDiagnostics.GetDiagnosticsByDocument(document).Select(d => d.Diagnostic));
+    }
+    public override Task<IEnumerable<Diagnostic>> GetProjectDiagnosticsAsync(Project project, CancellationToken cancellationToken) {
+        return Task.FromResult(workspaceDiagnostics.GetDiagnosticsByProject(project).Where(d => !d.Diagnostic.Location.IsInSource).Select(d => d.Diagnostic));
+    }
+    public override Task<IEnumerable<Diagnostic>> GetAllDiagnosticsAsync(Project project, CancellationToken cancellationToken) {
+        return Task.FromResult(workspaceDiagnostics.GetDiagnosticsByProject(project).Select(d => d.Diagnostic));
+    }
+    #endregion
 
     #region Analysis
     private async Task DiagnoseAsync(Document document, CancellationToken cancellationToken) {

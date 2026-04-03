@@ -9,6 +9,7 @@ namespace DotRush.Roslyn.CodeAnalysis.Diagnostics;
 public class DiagnosticContext {
     public Diagnostic Diagnostic { get; }
     public Document? Document { get; } //TODO: Potential memory leak
+    public ProjectId ProjectId { get; }
     public string SourceName { get; }
 
     public string? FilePath => Diagnostic.Location.SourceTree?.FilePath;
@@ -16,11 +17,13 @@ public class DiagnosticContext {
 
     public DiagnosticContext(Diagnostic diagnostic, Document document) {
         Diagnostic = diagnostic;
+        ProjectId = document.Project.Id;
         SourceName = document.Project.Name;
         Document = document;
     }
     public DiagnosticContext(Diagnostic diagnostic, Project project) {
         Diagnostic = diagnostic;
+        ProjectId = project.Id;
         SourceName = project.Name;
         Document = project.GetDocumentsWithFilePath(FilePath).FirstOrDefault();
     }
