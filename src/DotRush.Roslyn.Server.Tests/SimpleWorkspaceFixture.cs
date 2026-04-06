@@ -8,13 +8,11 @@ namespace DotRush.Roslyn.Server.Tests;
 
 [TestFixture]
 public abstract class SimpleWorkspaceFixture {
-    protected string SandboxDirectory { get; }
+    protected string SandboxDirectory { get; private set; } = null!;
 
     protected WorkspaceService Workspace { get; private set; } = null!;
 
-    protected SimpleWorkspaceFixture() {
-        SandboxDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sandbox");
-    }
+    protected SimpleWorkspaceFixture() { }
 
     protected virtual void OnSetup() { }
     protected virtual void OnTearDown() { }
@@ -30,6 +28,7 @@ public abstract class SimpleWorkspaceFixture {
     [SetUp]
     public void Setup() {
         SafeExtensions.ThrowOnExceptions = true;
+        SandboxDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sandbox", $"{GetType().Name}-{Guid.NewGuid():N}");
         FileSystemExtensions.TryDeleteDirectory(SandboxDirectory);
         Directory.CreateDirectory(SandboxDirectory);
 

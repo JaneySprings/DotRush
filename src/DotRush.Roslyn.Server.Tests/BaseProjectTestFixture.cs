@@ -16,7 +16,7 @@ public abstract class BaseProjectTestFixture {
 
     protected BaseProjectTestFixture(string name) {
         projectName = name;
-        sandboxDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sandbox");
+        sandboxDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sandbox", $"{name}-{Guid.NewGuid():N}");
     }
 
     protected abstract string CreateProjectFileContent();
