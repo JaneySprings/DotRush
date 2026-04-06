@@ -19,7 +19,9 @@ public static class FileSystemExtensions {
             return fallback;
 
         try {
-            return File.ReadAllText(filePath);
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
         } catch {
             return fallback;
         }

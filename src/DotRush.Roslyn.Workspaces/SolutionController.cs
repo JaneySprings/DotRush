@@ -128,9 +128,12 @@ public abstract class SolutionController : ProjectsController {
         DeleteSourceCodeDocument(documentIds);
     }
     private void UpdateSourceCodeDocument(string file, string? text = null) {
-        var documentIds = Solution?.GetDocumentIdsWithFilePathV2(file);
+        var documentIds = Solution?.GetDocumentIdsWithFilePathV2(file).ToArray();
+        if (documentIds == null || documentIds.Length == 0)
+            return;
+
         text ??= FileSystemExtensions.TryReadText(file);
-        if (documentIds == null || text == null)
+        if (text == null)
             return;
 
         var sourceText = SourceText.From(text);
@@ -169,9 +172,12 @@ public abstract class SolutionController : ProjectsController {
         DeleteAdditionalDocument(documentIds);
     }
     private void UpdateAdditionalDocument(string file, string? text = null) {
-        var documentIds = Solution?.GetAdditionalDocumentIdsWithFilePathV2(file);
+        var documentIds = Solution?.GetAdditionalDocumentIdsWithFilePathV2(file).ToArray();
+        if (documentIds == null || documentIds.Length == 0)
+            return;
+
         text ??= FileSystemExtensions.TryReadText(file);
-        if (documentIds == null || text == null)
+        if (text == null)
             return;
 
         var sourceText = SourceText.From(text);

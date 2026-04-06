@@ -101,8 +101,9 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
     public async Task SkipFilesSyncInIntermidiateFoldersTest() {
         var filePaths = new List<string>();
         foreach (var project in Workspace.Solution!.Projects) {
-            var path1 = Path.Combine(project.GetIntermediateOutputPath(), $"{nameof(WorkspaceFilesWatcherTests)}.cs");
-            var path2 = Path.Combine(project.GetOutputPath(), $"{nameof(WorkspaceFilesWatcherTests)}.cs");
+            var fileName = $"{nameof(WorkspaceFilesWatcherTests)}.{project.GetTargetFramework()}.cs";
+            var path1 = Path.Combine(project.GetIntermediateOutputPath(), fileName);
+            var path2 = Path.Combine(project.GetOutputPath(), fileName);
             File.WriteAllText(path1, "public class TestFile1 {}");
             File.WriteAllText(path2, "public class TestFile2 {}");
             filePaths.Add(path1);
