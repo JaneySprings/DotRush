@@ -4,11 +4,11 @@ import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
 import { Outcome, TestItem } from '../models/test';
 import { Extensions } from '../extensions';
 import { Project } from '../models/project';
-import { Icons } from '../resources/icons';
 import { Interop } from '../interop/interop';
 import * as res from '../resources/constants'
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 
 export class TestExplorerController {
     private static controller: vscode.TestController;
@@ -245,13 +245,17 @@ class TestExplorerExtensions {
         const lines = stackTrace.split('\n');
         for (const line of lines) {
             const match = line.match(/in (.+):line (\d+)/);
-            if (match) {
-                const filePath = match[1].trim();
-                const lineNumber = parseInt(match[2], 10);
-                const message = new vscode.TestMessage(`${error}\n\n${stackTrace}`);
-                message.location = new vscode.Location(vscode.Uri.file(filePath), new vscode.Position(lineNumber - 1, 0));
-                return message;
-            }
+            if (!match)
+                continue;
+
+            const filePath = match[1].trim();
+            if (!fs.existsSync(filePath))
+                continue;
+
+            const lineNumber = parseInt(match[2], 10);
+            const message = new vscode.TestMessage(`${error}\n\n${stackTrace}`);
+            message.location = new vscode.Location(vscode.Uri.file(filePath), new vscode.Position(lineNumber - 1, 0));
+            return message;
         }
 
         return new vscode.TestMessage(`${error}\n\n${stackTrace}`);
