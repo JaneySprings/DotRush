@@ -119,20 +119,30 @@ public class CodeActionHandler : CodeActionHandlerBase {
             }
 
             foreach (var codeFixProvider in codeFixProviders) {
-                var actionKind = codeFixProvider.GetActionKind();
                 var diagnosticByRangeGroups = byIdGroup.GroupBy(it => it.Diagnostic.Location.SourceSpan).ToList();
 
                 foreach (var byRangeGroup in diagnosticByRangeGroups) {
                     var diagnostics = byRangeGroup.Select(it => it!.Diagnostic).ToImmutableArray();
+                    // Regular QuickFix
                     await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, byRangeGroup.Key, diagnostics, (action, _) => {
                         if (cancellationToken.IsCancellationRequested)
                             return;
 
                         action.ToFlattenCodeActions((codeAction, title) => {
                             if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
-                                result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(actionKind, title)));
+                                result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(CodeActionKind.QuickFix, title)));
                         });
                     }, cancellationToken)).ConfigureAwait(false);
+                    // FixAll QuickFix
+                    await codeFixProvider.RegisterFixAllCodeFixesAsync(document, byIdGroup.FirstOrDefault(), codeAnalysisService.DiagnosticProvider, action => {
+                        if (cancellationToken.IsCancellationRequested)
+                            return;
+
+                        action.ToFlattenCodeActions((codeAction, title) => {
+                            if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
+                                result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(CodeActionKind.QuickFix, title)));
+                        });
+                    }, cancellationToken).ConfigureAwait(false);
                 }
             }
         }

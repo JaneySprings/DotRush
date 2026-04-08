@@ -3,12 +3,13 @@ using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.CodeAnalysis;
 
-public class CompilationHost : IClearable {
+public class CompilationHost : FixAllContext.DiagnosticProvider, IClearable {
     private readonly DiagnosticAnalyzersLoader diagnosticAnalyzersLoader;
     private readonly DiagnosticCollection workspaceDiagnostics;
     private readonly CurrentClassLogger currentClassLogger;
@@ -56,7 +57,7 @@ public class CompilationHost : IClearable {
                     await DiagnoseAsync(document, cancellationToken).ConfigureAwait(false);
                     break;
                 case AnalysisScope.Project:
-                    await DiagnoseWithSuppressorsAsync(document.Project, cancellationToken).ConfigureAwait(false);
+                    await DiagnoseWithSuppressorsAsync(document.Project, AnalysisScope.Project, cancellationToken).ConfigureAwait(false);
                     break;
                 case AnalysisScope.Solution:
                     await DiagnoseWithSuppressorsAsync(document.Project.Solution, cancellationToken).ConfigureAwait(false);
@@ -78,7 +79,7 @@ public class CompilationHost : IClearable {
                     await AnalyzerDiagnoseAsync(document, cancellationToken).ConfigureAwait(false);
                     break;
                 case AnalysisScope.Project:
-                    await AnalyzerDiagnoseAsync(document.Project, cancellationToken).ConfigureAwait(false);
+                    await AnalyzerDiagnoseAsync(document.Project, AnalysisScope.Project, cancellationToken).ConfigureAwait(false);
                     break;
                 case AnalysisScope.Solution:
                     await AnalyzerDiagnoseAsync(document.Project.Solution, cancellationToken).ConfigureAwait(false);
@@ -102,9 +103,9 @@ public class CompilationHost : IClearable {
             return;
 
         var diagnostics = semanticModel.GetDiagnostics(null, cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(document.Project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document)));
+        workspaceDiagnostics.AddDiagnostics(document.Project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document, AnalysisScope.Document)));
     }
-    private async Task DiagnoseAsync(Project project, CancellationToken cancellationToken) {
+    private async Task DiagnoseAsync(Project project, AnalysisScope scope, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
             return;
 
@@ -113,15 +114,15 @@ public class CompilationHost : IClearable {
             return;
 
         var diagnostics = compilation.GetDiagnostics(cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, scope)));
     }
-    private async Task DiagnoseWithSuppressorsAsync(Project project, CancellationToken cancellationToken) {
+    private async Task DiagnoseWithSuppressorsAsync(Project project, AnalysisScope scope, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
             return;
 
         var diagnosticSuppressors = diagnosticAnalyzersLoader.GetSuppressors(project);
         if (diagnosticSuppressors == null || diagnosticSuppressors.Length == 0) {
-            await DiagnoseAsync(project, cancellationToken);
+            await DiagnoseAsync(project, scope, cancellationToken);
             return;
         }
 
@@ -131,14 +132,14 @@ public class CompilationHost : IClearable {
             return;
 
         var diagnostics = await compilationWithSuppressors.GetAllDiagnosticsAsync(cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, scope)));
     }
     private async Task DiagnoseWithSuppressorsAsync(Solution solution, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
             return;
 
         foreach (var project in solution.Projects)
-            await DiagnoseWithSuppressorsAsync(project, cancellationToken).ConfigureAwait(false);
+            await DiagnoseWithSuppressorsAsync(project, AnalysisScope.Solution, cancellationToken).ConfigureAwait(false);
     }
     private async Task AnalyzerDiagnoseAsync(Document document, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
@@ -159,12 +160,12 @@ public class CompilationHost : IClearable {
             return;
 
         var syntaxDiagnostics = await compilationWithAnalyzers.GetAnalyzerSyntaxDiagnosticsAsync(syntaxTree, cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, syntaxDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, syntaxDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document, AnalysisScope.Document)));
 
         var semanticDiagnostics = await compilationWithAnalyzers.GetAnalyzerSemanticDiagnosticsAsync(semanticModel, null, cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, semanticDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, semanticDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document, AnalysisScope.Document)));
     }
-    private async Task AnalyzerDiagnoseAsync(Project project, CancellationToken cancellationToken) {
+    private async Task AnalyzerDiagnoseAsync(Project project, AnalysisScope scope, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
             return;
 
@@ -178,14 +179,26 @@ public class CompilationHost : IClearable {
             return;
 
         var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, scope)));
     }
     private async Task AnalyzerDiagnoseAsync(Solution solution, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
             return;
 
         foreach (var project in solution.Projects)
-            await AnalyzerDiagnoseAsync(project, cancellationToken).ConfigureAwait(false);
+            await AnalyzerDiagnoseAsync(project, AnalysisScope.Solution, cancellationToken).ConfigureAwait(false);
+    }
+    #endregion
+
+    #region FixAllContext
+    public override Task<IEnumerable<Diagnostic>> GetAllDiagnosticsAsync(Project project, CancellationToken cancellationToken) {
+        return Task.FromResult(workspaceDiagnostics.GetDiagnosticsByProject(project).Select(d => d.Diagnostic));
+    }
+    public override Task<IEnumerable<Diagnostic>> GetDocumentDiagnosticsAsync(Document document, CancellationToken cancellationToken) {
+        return Task.FromResult(workspaceDiagnostics.GetDiagnosticsByDocument(document).Select(d => d.Diagnostic));
+    }
+    public override Task<IEnumerable<Diagnostic>> GetProjectDiagnosticsAsync(Project project, CancellationToken cancellationToken) {
+        return Task.FromResult(Enumerable.Empty<Diagnostic>());
     }
     #endregion
 }
