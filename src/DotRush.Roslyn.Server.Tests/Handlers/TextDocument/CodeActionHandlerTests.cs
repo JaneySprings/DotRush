@@ -156,39 +156,87 @@ sealed class CodeActionTest {
     }
 
     [Test]
-    public async Task GetCodeActionForUnnecessaryUsingsTest() {
-        const string codeActionKind = "quickfix.RemoveUnnecessaryUsings";
+    public async Task ApplyFixAllProviderInNoneScopeTest() {
         var documents = CreateAndGetDocuments(nameof(CodeActionHandlerTests), @"
-using System;
-using System.Text.Json;
-
 namespace Tests;
-class CodeActionTest {
-    private void Method() {
-        _ = JsonSerializer.Serialize(1);
+sealed class CodeActionTest {
+    private static void Method() {
+        var test = 1;
+    }
+}
+");
+        await codeAnalysisService.AnalyzeAsync(documents, AnalysisScope.None, AnalysisScope.None, CancellationToken.None).ConfigureAwait(false);
+        var result = await handler.Handle(new CodeActionParams() {
+            TextDocument = documents.First().CreateDocumentId(),
+            Range = PositionExtensions.CreateRange(4, 5)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Has.None.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title.StartsWith("Fix all")));
+    }
+    [Test]
+    public async Task ApplyFixAllProviderInDocumentScopeTest() {
+        var documents = CreateAndGetDocuments(nameof(CodeActionHandlerTests), @"
+namespace Tests;
+sealed class CodeActionTest {
+    private static void Method() {
+        var test = 1;
     }
 }
 ");
         await codeAnalysisService.AnalyzeAsync(documents, AnalysisScope.Document, AnalysisScope.None, CancellationToken.None).ConfigureAwait(false);
         var result = await handler.Handle(new CodeActionParams() {
             TextDocument = documents.First().CreateDocumentId(),
-            Range = PositionExtensions.CreateRange(1, 3),
-            Context = new CodeActionContext { Only = new List<CodeActionKind>() { new CodeActionKind(codeActionKind) } }
+            Range = PositionExtensions.CreateRange(4, 5)
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
-        Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(1));
+        Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title.StartsWith("Fix all 'CS0219'")));
 
-        var codeAction = result.CommandOrCodeActions[0].CodeAction;
-        Assert.That(codeAction?.Kind, Is.Not.Null);
-        Assert.That(codeAction.Kind.Value.Value, Is.EqualTo(codeActionKind));
+        var removeCodeAction = result.CommandOrCodeActions.Single(it => it.CodeAction!.Title == $"Fix all 'CS0219' in '{nameof(CodeActionHandlerTests)}.cs'");
+        var resolvedResult = await handler.Resolve(removeCodeAction.CodeAction!, CancellationToken.None).ConfigureAwait(false);
 
-        var resolvedAction = await handler.Resolve(codeAction, CancellationToken.None).ConfigureAwait(false);
-        Assert.That(resolvedAction?.Edit, Is.Not.Null);
-        Assert.That(resolvedAction.Edit.Changes, Has.Count.EqualTo(1));
-        var textDocumentEdit = resolvedAction.Edit.Changes.First();
-        Assert.That(PathExtensions.Equals(textDocumentEdit.Key.FileSystemPath, documents.First().FilePath), Is.True);
+        Assert.That(resolvedResult?.Edit, Is.Not.Null);
+        Assert.That(resolvedResult.Edit.Changes, Has.Count.EqualTo(1));
+        var textDocumentEdit = resolvedResult.Edit.Changes.First();
         Assert.That(textDocumentEdit.Value, Has.Count.EqualTo(1));
         Assert.That(textDocumentEdit.Value[0].NewText, Is.Empty);
+    }
+    [Test]
+    public async Task ApplyFixAllProviderInProjectScopeTest() {
+        var documents = CreateAndGetDocuments(nameof(CodeActionHandlerTests), @"
+namespace Tests;
+sealed class CodeActionTest {
+    private static void Method() {
+        var test = 1;
+    }
+}
+");
+        var documents2 = CreateAndGetDocuments(nameof(CodeActionHandlerTests) + "2", @"
+namespace Tests;
+sealed class CodeActioSecondTest {
+    private static void DoSome() {
+        var test2 = 1;
+    }
+}
+");
+        await codeAnalysisService.AnalyzeAsync(documents2, AnalysisScope.Project, AnalysisScope.None, CancellationToken.None).ConfigureAwait(false);
+        var result = await handler.Handle(new CodeActionParams() {
+            TextDocument = documents.First().CreateDocumentId(),
+            Range = PositionExtensions.CreateRange(4, 5)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions.Where(ca => ca.CodeAction!.Title.StartsWith("Fix all 'CS0219'")).ToArray(), Has.Length.EqualTo(2));
+
+        var removeCodeAction = result.CommandOrCodeActions.Single(it => it.CodeAction!.Title.StartsWith($"Fix all 'CS0219' in '{ProjectName}"));
+        var resolvedResult = await handler.Resolve(removeCodeAction.CodeAction!, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(resolvedResult?.Edit, Is.Not.Null);
+        Assert.That(resolvedResult.Edit.Changes, Has.Count.EqualTo(2));
+        foreach (var textDocumentEdit in resolvedResult.Edit.Changes) {
+            Assert.That(textDocumentEdit.Value, Has.Count.EqualTo(1));
+            Assert.That(textDocumentEdit.Value[0].NewText, Is.Empty);
+        }
     }
 }

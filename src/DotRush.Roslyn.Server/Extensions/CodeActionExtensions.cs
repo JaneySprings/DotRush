@@ -1,7 +1,6 @@
 using DotRush.Common.Extensions;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis.CodeActions;
-using Microsoft.CodeAnalysis.CodeFixes;
 using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
 
 namespace DotRush.Roslyn.Server.Extensions;
@@ -25,15 +24,6 @@ public static class CodeActionExtensions {
             || codeActionName == "GenerateOverridesWithDialogCodeAction"
             || codeActionName == "GenerateConstructorWithDialogCodeAction"
             || codeActionName == "PullMemberUpWithDialogCodeAction";
-    }
-
-    // Map specific code fix providers to specific code action kinds for codeActionOnSave
-    public static ProtocolModels.CodeActionKind GetActionKind(this CodeFixProvider provider) {
-        var basicAction = ProtocolModels.CodeActionKind.QuickFix.Value;
-        if (provider.FixableDiagnosticIds.Contains("RemoveUnnecessaryImportsFixable", "CS8019"))
-            return new ProtocolModels.CodeActionKind($"{basicAction}.RemoveUnnecessaryUsings");
-
-        return ProtocolModels.CodeActionKind.QuickFix;
     }
 
     public static void ToFlattenCodeActions(this CodeAction codeAction, Action<CodeAction, string> handler) {

@@ -7,16 +7,16 @@ namespace DotRush.Roslyn.Server.Tests;
 
 [TestFixture]
 public abstract class BaseProjectTestFixture {
-    private string sandboxDirectory;
-    private string projectName;
+    protected string SandboxDirectory { get; init; }
+    protected string ProjectName { get; init; }
 
     protected WorkspaceService Workspace { get; private set; } = null!;
     protected string ProjectDirectory { get; private set; } = null!;
     protected string ProjectFilePath { get; private set; } = null!;
 
     protected BaseProjectTestFixture(string name) {
-        projectName = name;
-        sandboxDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sandbox");
+        ProjectName = name;
+        SandboxDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sandbox");
     }
 
     protected abstract string CreateProjectFileContent();
@@ -41,8 +41,8 @@ public abstract class BaseProjectTestFixture {
     [OneTimeSetUp]
     public async Task GlobalSetup() {
         SafeExtensions.ThrowOnExceptions = true;
-        FSExtensions.TryDeleteDirectory(sandboxDirectory);
-        Directory.CreateDirectory(sandboxDirectory);
+        FSExtensions.TryDeleteDirectory(SandboxDirectory);
+        Directory.CreateDirectory(SandboxDirectory);
 
         Workspace = CreateInitializedWorkspace();
         await Workspace.LoadAsync(new[] { CreateProject() }, CancellationToken.None).ConfigureAwait(false);
@@ -52,15 +52,15 @@ public abstract class BaseProjectTestFixture {
 
     [OneTimeTearDown]
     public void GlobalTearDown() {
-        FSExtensions.TryDeleteDirectory(sandboxDirectory);
+        FSExtensions.TryDeleteDirectory(SandboxDirectory);
         Workspace.Dispose();
         Workspace = null!;
         OnGlobalTearDown();
     }
 
     private string CreateProject() {
-        ProjectDirectory = Path.Combine(sandboxDirectory, projectName);
-        ProjectFilePath = Path.Combine(ProjectDirectory, $"{projectName}.csproj");
+        ProjectDirectory = Path.Combine(SandboxDirectory, ProjectName);
+        ProjectFilePath = Path.Combine(ProjectDirectory, $"{ProjectName}.csproj");
         if (Directory.Exists(ProjectDirectory))
             throw new InvalidOperationException($"Project directory '{ProjectDirectory}' already exists.");
 

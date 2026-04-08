@@ -26,6 +26,7 @@ public class CodeAnalysisService : IAdditionalComponentsProvider, IClearable {
 
     internal AnalysisScope CompilerDiagnosticsScope => configurationService.CompilerDiagnosticsScope;
     internal AnalysisScope AnalyzerDiagnosticsScope => configurationService.AnalyzerDiagnosticsScope;
+    internal FixAllContext.DiagnosticProvider DiagnosticProvider => compilationHost;
 
     public CodeAnalysisService(ConfigurationService configurationService, LanguageServer? serverFacade) {
         this.configurationService = configurationService;
