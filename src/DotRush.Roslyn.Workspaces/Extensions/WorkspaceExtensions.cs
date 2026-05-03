@@ -12,16 +12,15 @@ public static class WorkspaceExtensions {
     private static readonly string[] compilerGeneratedExtensions = { ".g.cs", ".sg.cs" };
     private static readonly string[] projectFileExtensions = { ".csproj", /* fsproj vbproj */};
     private static readonly string[] solutionFileExtensions = { ".sln", ".slnf", ".slnx" };
-    private static readonly string[] relevantExtensions = sourceCodeExtensions.Concat(additionalDocumentExtensions).ToArray();
 
     public static bool IsSourceCodeDocument(string filePath) {
-        return sourceCodeExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
+        return !IsCompilerGeneratedDocument(filePath) && sourceCodeExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
     }
     public static bool IsAdditionalDocument(string filePath) {
         return additionalDocumentExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
     }
     public static bool IsRelevantDocument(string filePath) {
-        return relevantExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));
+        return IsSourceCodeDocument(filePath) || IsAdditionalDocument(filePath);
     }
     public static bool IsProjectFile(string filePath) {
         return projectFileExtensions.Any(it => Path.GetExtension(filePath).Equals(it, StringComparison.OrdinalIgnoreCase));

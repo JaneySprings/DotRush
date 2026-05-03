@@ -5,8 +5,17 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace DotRush.Roslyn.CodeAnalysis.Diagnostics;
 
+public class CompilerDiagnosticContext : DiagnosticContext {
+    public CompilerDiagnosticContext(Diagnostic diagnostic, Document document, AnalysisScope scope) : base(diagnostic, document, scope) { }
+    public CompilerDiagnosticContext(Diagnostic diagnostic, Project project, AnalysisScope scope) : base(diagnostic, project, scope) { }
+}
+public class AnalyzerDiagnosticContext : DiagnosticContext {
+    public AnalyzerDiagnosticContext(Diagnostic diagnostic, Document document, AnalysisScope scope) : base(diagnostic, document, scope) { }
+    public AnalyzerDiagnosticContext(Diagnostic diagnostic, Project project, AnalysisScope scope) : base(diagnostic, project, scope) { }
+}
+
 [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
-public class DiagnosticContext {
+public abstract class DiagnosticContext {
     public Diagnostic Diagnostic { get; }
     public Document? Document { get; } //TODO: Potential memory leak
     public string SourceName { get; }
@@ -16,10 +25,10 @@ public class DiagnosticContext {
     public string Id => Diagnostic.Id;
     public TextSpan Span => Diagnostic.Location.SourceSpan;
 
-    public DiagnosticContext(Diagnostic diagnostic, Document document, AnalysisScope scope) : this(diagnostic, document.Project.Name, scope) {
+    protected DiagnosticContext(Diagnostic diagnostic, Document document, AnalysisScope scope) : this(diagnostic, document.Project.Name, scope) {
         Document = document;
     }
-    public DiagnosticContext(Diagnostic diagnostic, Project project, AnalysisScope scope) : this(diagnostic, project.Name, scope) {
+    protected DiagnosticContext(Diagnostic diagnostic, Project project, AnalysisScope scope) : this(diagnostic, project.Name, scope) {
         Document = project.GetDocumentsWithFilePath(FilePath).FirstOrDefault();
     }
     private DiagnosticContext(Diagnostic diagnostic, string sourceName, AnalysisScope scope) {

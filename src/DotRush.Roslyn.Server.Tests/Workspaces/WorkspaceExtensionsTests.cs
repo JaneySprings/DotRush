@@ -42,6 +42,23 @@ public class WorkspaceExtensionsTests : MultitargetProjectFixture {
         Assert.That(projectIds.First(), Is.EqualTo(expectedProject.Id), $"ProjectId is not {expectedProject.Name}");
     }
 
+    [TestCase("test.cs", true, false, false)]
+    [TestCase("test.xaml", false, true, false)]
+    [TestCase("data\test.cs", true, false, false)]
+    [TestCase("data\\test.cs", true, false, false)]
+    [TestCase("data\\test.xaml", false, true, false)]
+    [TestCase("data/test.cs", true, false, false)]
+    [TestCase("data/test.g.cs", false, false, true)]
+    [TestCase("A:/data test/test.cs", true, false, false)]
+    [TestCase("D:\\data test/test..xaml", false, true, false)]
+    [TestCase("C:\\data test/test.sg.cs", false, false, true)]
+    public void GetDocumentTypeTest(string path, bool isSource, bool isAdditional, bool isGen) {
+        Assert.That(WorkspaceExtensions.IsSourceCodeDocument(path), Is.EqualTo(isSource), $"{nameof(WorkspaceExtensions.IsSourceCodeDocument)} check failed for '{path}'");
+        Assert.That(WorkspaceExtensions.IsAdditionalDocument(path), Is.EqualTo(isAdditional), $"{nameof(WorkspaceExtensions.IsAdditionalDocument)} check failed for '{path}'");
+        Assert.That(WorkspaceExtensions.IsRelevantDocument(path), Is.EqualTo(isSource || isAdditional), $"{nameof(WorkspaceExtensions.IsRelevantDocument)} check failed for '{path}'");
+        Assert.That(WorkspaceExtensions.IsCompilerGeneratedDocument(path), Is.EqualTo(isGen), $"{nameof(WorkspaceExtensions.IsCompilerGeneratedDocument)} check failed for '{path}'");
+    }
+
 
     private Document[] CreateAndGetDocuments(string[] parts, string content) {
         if (parts.Length == 0)
