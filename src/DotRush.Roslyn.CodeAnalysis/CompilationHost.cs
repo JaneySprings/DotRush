@@ -103,7 +103,7 @@ public class CompilationHost : FixAllContext.DiagnosticProvider, IClearable {
             return;
 
         var diagnostics = semanticModel.GetDiagnostics(null, cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(document.Project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document, AnalysisScope.Document)));
+        workspaceDiagnostics.AddDiagnostics(document.Project.Id, diagnostics.Select(diagnostic => new CompilerDiagnosticContext(diagnostic, document, AnalysisScope.Document)));
     }
     private async Task DiagnoseAsync(Project project, AnalysisScope scope, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
@@ -114,7 +114,7 @@ public class CompilationHost : FixAllContext.DiagnosticProvider, IClearable {
             return;
 
         var diagnostics = compilation.GetDiagnostics(cancellationToken);
-        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, scope)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new CompilerDiagnosticContext(diagnostic, project, scope)));
     }
     private async Task DiagnoseWithSuppressorsAsync(Project project, AnalysisScope scope, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
@@ -132,7 +132,7 @@ public class CompilationHost : FixAllContext.DiagnosticProvider, IClearable {
             return;
 
         var diagnostics = await compilationWithSuppressors.GetAllDiagnosticsAsync(cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, scope)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new CompilerDiagnosticContext(diagnostic, project, scope)));
     }
     private async Task DiagnoseWithSuppressorsAsync(Solution solution, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
@@ -160,10 +160,10 @@ public class CompilationHost : FixAllContext.DiagnosticProvider, IClearable {
             return;
 
         var syntaxDiagnostics = await compilationWithAnalyzers.GetAnalyzerSyntaxDiagnosticsAsync(syntaxTree, cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, syntaxDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document, AnalysisScope.Document)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, syntaxDiagnostics.Select(diagnostic => new AnalyzerDiagnosticContext(diagnostic, document, AnalysisScope.Document)));
 
         var semanticDiagnostics = await compilationWithAnalyzers.GetAnalyzerSemanticDiagnosticsAsync(semanticModel, null, cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, semanticDiagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, document, AnalysisScope.Document)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, semanticDiagnostics.Select(diagnostic => new AnalyzerDiagnosticContext(diagnostic, document, AnalysisScope.Document)));
     }
     private async Task AnalyzerDiagnoseAsync(Project project, AnalysisScope scope, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)
@@ -179,7 +179,7 @@ public class CompilationHost : FixAllContext.DiagnosticProvider, IClearable {
             return;
 
         var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken).ConfigureAwait(false);
-        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new DiagnosticContext(diagnostic, project, scope)));
+        workspaceDiagnostics.AddDiagnostics(project.Id, diagnostics.Select(diagnostic => new AnalyzerDiagnosticContext(diagnostic, project, scope)));
     }
     private async Task AnalyzerDiagnoseAsync(Solution solution, CancellationToken cancellationToken) {
         if (cancellationToken.IsCancellationRequested)

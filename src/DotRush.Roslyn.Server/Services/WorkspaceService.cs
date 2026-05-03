@@ -110,6 +110,9 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
     }
     void IWorkspaceChangeListener.OnDocumentDeleted(string documentPath) {
         DeleteDocument(documentPath);
+        // From FileSystemWatcher, we can get directory changes as well.
+        Solution?.GetDocumentsWithDirectoryPath(documentPath)?.ForEach(x => DeleteDocument(x.FilePath ?? string.Empty));
+        Solution?.GetAdditionalDocumentsWithDirectoryPath(documentPath)?.ForEach(x => DeleteDocument(x.FilePath ?? string.Empty));
         if (ApplyWorkspaceChanges)
             DefaultItemsRewriter.RemoveCompilerItem(documentPath);
     }

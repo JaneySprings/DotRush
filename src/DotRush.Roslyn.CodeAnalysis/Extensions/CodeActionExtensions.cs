@@ -23,7 +23,7 @@ public static class CodeActionExtensions {
     }
     public static async Task RegisterFixAllCodeFixesAsync(this CodeFixProvider provider, Document document, DiagnosticContext? diagnosticContext, FixAllContext.DiagnosticProvider host, Action<CodeAction> registerCodeFix, CancellationToken cancellationToken) {
         var fixAllProvider = provider.GetFixAllProvider();
-        if (fixAllProvider == null || diagnosticContext == null)
+        if (fixAllProvider == null || diagnosticContext is not CompilerDiagnosticContext) //TODO: analyzer fixAllProvider codefix has no textEdits
             return;
 
         foreach (var scope in fixAllProvider.GetSupportedFixAllScopes()) {

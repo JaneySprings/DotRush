@@ -84,9 +84,6 @@ public abstract class SolutionController : ProjectsController {
             DeleteSourceCodeDocument(path);
             return;
         }
-        // From FileSystemWatcher, we can get directory changes as well.
-        Solution?.GetDocumentsWithDirectoryPath(path)?.ForEach(x => DeleteDocument(x.FilePath ?? string.Empty));
-        Solution?.GetAdditionalDocumentsWithDirectoryPath(path)?.ForEach(x => DeleteDocument(x.FilePath ?? string.Empty));
     }
 
     public void UnloadProject(string projectPath) {
@@ -224,8 +221,6 @@ public abstract class SolutionController : ProjectsController {
 
     private bool CanBeProcessed(string file, Project project) {
         if (PathExtensions.StartsWith(file, project.GetIntermediateOutputPath()) || PathExtensions.StartsWith(file, project.GetOutputPath()))
-            return false;
-        if (WorkspaceExtensions.IsCompilerGeneratedDocument(file))
             return false;
 
         var folders = project.GetFolders(file);
