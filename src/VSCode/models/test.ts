@@ -3,6 +3,7 @@ import { Range } from "vscode";
 export interface TestItem {
     id: string;
     name: string;
+    namespace?: string;
     filePath: string;
     range: Range;
     locations: string[];

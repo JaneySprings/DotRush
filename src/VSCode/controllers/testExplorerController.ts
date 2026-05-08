@@ -35,7 +35,7 @@ export class TestExplorerController {
             return;
 
         let processed = false;
-        project.children.forEach(fixture => {
+        TestExplorerExtensions.getFixtureItemsFromProject(project).forEach(fixture => {
             if (fixture.uri?.fsPath === documentPath) {
                 TestExplorerController.resolveTestItem(fixture);
                 processed = true;
@@ -54,11 +54,24 @@ export class TestExplorerController {
 
         if (TestExplorerExtensions.isProjectItem(item)) {
             const fixtures = await LanguageServerController.sendRequest<TestItem[]>('dotrush/testExplorer/fixtures', { textDocument: Extensions.documentIdFromUri(item.uri) });
-            if (fixtures !== undefined)
-                item.children.replace(fixtures.map(fixture => TestExplorerExtensions.createTestItem(TestExplorerController.controller, fixture, true)));
+            if (fixtures !== undefined) {
+                const namespaceItems = new Map<string, vscode.TestItem>();
+                for (const fixture of fixtures) {
+                    const namespace = TestExplorerExtensions.toNamespaceName(fixture.namespace);
+                    const namespaceId = TestExplorerExtensions.toNamespaceId(item.id, namespace);
+                    let namespaceItem = namespaceItems.get(namespaceId);
+                    if (namespaceItem === undefined) {
+                        namespaceItem = TestExplorerExtensions.createNamespaceItem(TestExplorerController.controller, namespaceId, namespace, item.uri);
+                        namespaceItems.set(namespaceId, namespaceItem);
+                    }
 
-            for (const child of item.children)
-                await TestExplorerController.resolveTestItem(child[1]);
+                    namespaceItem.children.add(TestExplorerExtensions.createTestItem(TestExplorerController.controller, fixture, true));
+                }
+                item.children.replace(Array.from(namespaceItems.values()));
+            }
+
+            for (const fixture of TestExplorerExtensions.getFixtureItemsFromProject(item))
+                await TestExplorerController.resolveTestItem(fixture);
         }
         else if (TestExplorerExtensions.isFixtureItem(item)) {
             const testCases = await LanguageServerController.sendRequest<TestItem[]>('dotrush/testExplorer/tests', { textDocument: Extensions.documentIdFromUri(item.uri), fixtureId: item.id });
@@ -133,9 +146,10 @@ export class TestExplorerController {
                         id = id.substring(0, id.indexOf('('));
                     const fixtureId = id.substring(0, id.lastIndexOf('.'));
                     for (const project of projects) {
-                        const fixture = project.children.get(fixtureId);
-                        if (fixture !== undefined)
+                        const fixture = TestExplorerExtensions.findFixtureItem(project, fixtureId);
+                        if (fixture !== undefined) {
                             return fixture.children.get(id);
+                        }
                     }
                     return undefined;
                 };
@@ -163,11 +177,18 @@ export class TestExplorerController {
 }
 
 class TestExplorerExtensions {
+    private static readonly globalNamespace = 'Global';
+
     public static createProjectItem(controller: vscode.TestController, project: Project): vscode.TestItem {
         const item = controller.createTestItem(project.name, project.name, vscode.Uri.file(project.path));
         item.canResolveChildren = true;
         item.description = project.frameworks.join(' ');
         item.tags = project.frameworks?.map(tfm => new vscode.TestTag(tfm));
+        return item;
+    }
+    public static createNamespaceItem(controller: vscode.TestController, id: string, namespace: string, projectUri?: vscode.Uri): vscode.TestItem {
+        const item = controller.createTestItem(id, namespace, projectUri);
+        item.canResolveChildren = false;
         return item;
     }
     public static createTestItem(controller: vscode.TestController, modelItem: TestItem, canResolve: boolean, parentId?: string): vscode.TestItem {
@@ -178,14 +199,42 @@ class TestExplorerExtensions {
         return item;
     }
 
+    public static toNamespaceName(namespace?: string): string {
+        return namespace?.trim() || TestExplorerExtensions.globalNamespace;
+    }
+    public static toNamespaceId(projectId: string, namespace: string): string {
+        return `${projectId}::namespace::${namespace}`;
+    }
+
     public static isProjectItem(item: vscode.TestItem): boolean {
         return item.parent === undefined;
     }
+    public static isNamespaceItem(item: vscode.TestItem): boolean {
+        return TestExplorerExtensions.getItemDepth(item) === 1;
+    }
     public static isFixtureItem(item: vscode.TestItem): boolean {
-        return item.parent !== undefined && item.parent.parent === undefined;
+        return TestExplorerExtensions.getItemDepth(item) === 2;
     }
     public static isTestCaseItem(item: vscode.TestItem): boolean {
-        return item.parent !== undefined && item.parent.parent !== undefined;
+        return TestExplorerExtensions.getItemDepth(item) === 3;
+    }
+
+    public static getFixtureItemsFromProject(projectItem: vscode.TestItem): vscode.TestItem[] {
+        const fixtures: vscode.TestItem[] = [];
+        projectItem.children.forEach(child => {
+            if (TestExplorerExtensions.isNamespaceItem(child))
+                child.children.forEach(fixture => fixtures.push(fixture));
+            else if (TestExplorerExtensions.isFixtureItem(child))
+                fixtures.push(child);
+        });
+        return fixtures;
+    }
+    public static findFixtureItem(projectItem: vscode.TestItem, fixtureId: string): vscode.TestItem | undefined {
+        for (const fixture of TestExplorerExtensions.getFixtureItemsFromProject(projectItem)) {
+            if (fixture.id === fixtureId)
+                return fixture;
+        }
+        return undefined;
     }
 
     public static findProjectItem(childPath: string, items: vscode.TestItemCollection): vscode.TestItem | undefined {
@@ -206,6 +255,25 @@ class TestExplorerExtensions {
         if (request.include === undefined)
             return handler([], []);
 
+        function collectRunnableIds(item: vscode.TestItem, ids: Set<string>): void {
+            if (TestExplorerExtensions.isTestCaseItem(item)) {
+                ids.add(item.id);
+                return;
+            }
+
+            if (TestExplorerExtensions.isFixtureItem(item)) {
+                if (item.children.size === 0) {
+                    // Fixture node might be collapsed/unresolved: use fixture id to run all its tests.
+                    ids.add(item.id);
+                    return;
+                }
+
+                item.children.forEach(child => collectRunnableIds(child, ids));
+                return;
+            }
+
+            item.children.forEach(child => collectRunnableIds(child, ids));
+        }
         function getRootNode(item: vscode.TestItem): vscode.TestItem {
             if (item.parent === undefined)
                 return item;
@@ -213,18 +281,21 @@ class TestExplorerExtensions {
         }
 
         const projectItems: vscode.TestItem[] = [];
-        const filter: string[] = [];
+        const filter = new Set<string>();
         request.include?.forEach(item => {
             const rootNode = getRootNode(item);
-            if (TestExplorerExtensions.isFixtureItem(item))
-                item.children.forEach(test => filter.push(test.id));
+            if (TestExplorerExtensions.isProjectItem(item)) {
+            }
             else if (TestExplorerExtensions.isTestCaseItem(item))
-                filter.push(item.id);
+                filter.add(item.id);
+            else
+                collectRunnableIds(item, filter);
+
             if (!projectItems.includes(rootNode))
                 projectItems.push(rootNode);
         });
 
-        return handler(projectItems, filter);
+        return handler(projectItems, Array.from(filter));
     }
 
     public static toDurationNumber(duration: string | null): number {
@@ -269,5 +340,15 @@ class TestExplorerExtensions {
             return `\x1b[33m${Outcome[outcome]}\x1b[0m`;
 
         return Outcome[outcome];
+    }
+
+    private static getItemDepth(item: vscode.TestItem): number {
+        let depth = 0;
+        let parent = item.parent;
+        while (parent !== undefined) {
+            depth++;
+            parent = parent.parent;
+        }
+        return depth;
     }
 }
