@@ -97,14 +97,19 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
         }
     }
 
-    [Test, Retry(5)] //TODO: Unstable on Windows
+    [Test, Retry(3)]
     public async Task SkipFilesSyncInIntermidiateFoldersTest() {
         var filePaths = new List<string>();
         foreach (var project in Workspace.Solution!.Projects) {
             var path1 = Path.Combine(project.GetIntermediateOutputPath(), $"{nameof(WorkspaceFilesWatcherTests)}.cs");
             var path2 = Path.Combine(project.GetOutputPath(), $"{nameof(WorkspaceFilesWatcherTests)}.cs");
-            File.WriteAllText(path1, "public class TestFile1 {}");
-            File.WriteAllText(path2, "public class TestFile2 {}");
+            try {
+                File.WriteAllText(path1, "public class TestFile1 {}");
+                File.WriteAllText(path2, "public class TestFile2 {}");
+            } catch {
+                Assert.Fail($"Failed to write files.");
+            }
+
             filePaths.Add(path1);
             filePaths.Add(path2);
         }
