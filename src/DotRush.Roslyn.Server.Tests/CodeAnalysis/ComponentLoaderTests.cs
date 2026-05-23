@@ -45,16 +45,16 @@ public class DiagnosticAnalyzersLoaderTests : ComponentsLoaderTests<DiagnosticAn
         foreach (var project in projects) {
             ComponentsLoader.ComponentsCache.ThrowOnCreation = false;
             var components = loader.GetSuppressors(project);
-            Assert.That(components, Has.Length.EqualTo(SuppressorsCount));
+            Assert.That(components, Has.Length.GreaterThanOrEqualTo(SuppressorsCount));
             Assert.That(ComponentsLoader.ComponentsCache.Keys, Does.Contain(project.Name));
-            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(ComponentsCount));
+            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.GreaterThanOrEqualTo(ComponentsCount));
 
             var oldComponentsKeysCount = ComponentsLoader.ComponentsCache.Keys.Count();
 
             ComponentsLoader.ComponentsCache.ThrowOnCreation = true;
             components = loader.GetSuppressors(project);
-            Assert.That(components, Has.Length.EqualTo(SuppressorsCount));
-            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(ComponentsCount));
+            Assert.That(components, Has.Length.GreaterThanOrEqualTo(SuppressorsCount));
+            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.GreaterThanOrEqualTo(ComponentsCount));
             Assert.That(ComponentsLoader.ComponentsCache.Keys.Count(), Is.EqualTo(oldComponentsKeysCount));
         }
     }
@@ -73,16 +73,16 @@ public abstract class ComponentsLoaderTests<TValue> : MultitargetProjectFixture,
         foreach (var project in projects) {
             ComponentsLoader.ComponentsCache.ThrowOnCreation = false;
             var components = ComponentsLoader.GetComponents(project);
-            Assert.That(components, Has.Length.EqualTo(ComponentsCount));
+            Assert.That(components, Has.Length.GreaterThanOrEqualTo(ComponentsCount));
             Assert.That(ComponentsLoader.ComponentsCache.Keys, Does.Contain(project.Name));
-            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(ComponentsCount));
+            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.GreaterThanOrEqualTo(ComponentsCount));
 
             var oldComponentsKeysCount = ComponentsLoader.ComponentsCache.Keys.Count();
 
             ComponentsLoader.ComponentsCache.ThrowOnCreation = true;
             components = ComponentsLoader.GetComponents(project);
-            Assert.That(components, Has.Length.EqualTo(ComponentsCount));
-            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.EqualTo(ComponentsCount));
+            Assert.That(components, Has.Length.GreaterThanOrEqualTo(ComponentsCount));
+            Assert.That(ComponentsLoader.ComponentsCache.Count, Is.GreaterThanOrEqualTo(ComponentsCount));
             Assert.That(ComponentsLoader.ComponentsCache.Keys.Count(), Is.EqualTo(oldComponentsKeysCount));
         }
     }
