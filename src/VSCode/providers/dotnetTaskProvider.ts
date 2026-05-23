@@ -55,7 +55,7 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
         if (definition.target === DotNetTarget.Build) {
             builder.conditional('--no-restore', () => Extensions.getSetting<boolean>(res.configIdMSBuildNoRestore, false));
             builder.conditional('--no-dependencies', () => Extensions.getSetting<boolean>(res.configIdMSBuildNoDependencies, false));
-            Extensions.getSetting<string[]>(res.configIdMSBuildAdditionalBuildArguments)?.forEach(arg => builder.append(arg));
+            Extensions.getSetting<string[]>(res.configIdMSBuildAdditionalBuildArguments)?.forEach(arg => builder.override(arg));
         }
 
         definition.args?.forEach((arg: string) => builder.override(arg));
