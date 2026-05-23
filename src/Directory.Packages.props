@@ -2,15 +2,15 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
     <CodeAnalysisVersion>5.3.0</CodeAnalysisVersion>
-    <TestPlatformVersion>18.3.0</TestPlatformVersion>
+    <TestPlatformVersion>18.5.1</TestPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="NLog" Version="6.1.1" />
-    <PackageVersion Include="ICSharpCode.Decompiler" Version="10.0.0.8282-preview2" />
-    <PackageVersion Include="StreamJsonRpc" Version="2.24.84" />
+    <PackageVersion Include="NLog" Version="6.1.3" />
+    <PackageVersion Include="ICSharpCode.Decompiler" Version="10.0.1.8346" />
+    <PackageVersion Include="StreamJsonRpc" Version="2.24.92" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.4" />
     <PackageVersion Include="Mono.Options" Version="6.12.0.148" />
-    <PackageVersion Include="EmmyLua.LanguageServer.Framework" Version="0.8.1" />
+    <!-- <PackageVersion Include="EmmyLua.LanguageServer.Framework" Version="0.8.1" /> -->
     <!-- <PackageVersion Include="DotRush.LanguageServer.Framework" Version="0.7.2" /> -->
     <PackageVersion Include="NUnit" Version="4.4.0" />
     <PackageVersion Include="NUnit.Analyzers" Version="4.10.0" />
@@ -24,7 +24,7 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(CodeAnalysisVersion)" />
-    <PackageVersion Include="Microsoft.TemplateEngine.IDE" Version="10.0.100-rc.1.25451.107" />
-    <PackageVersion Include="System.CommandLine" Version="2.0.0-rc.2.25502.107" />
+    <PackageVersion Include="Microsoft.TemplateEngine.IDE" Version="10.0.300" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.8" />
   </ItemGroup>
 </Project>
