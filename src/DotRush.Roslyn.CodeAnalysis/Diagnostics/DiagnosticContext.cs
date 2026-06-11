@@ -42,6 +42,10 @@ public abstract class DiagnosticContext {
         if (string.IsNullOrEmpty(message))
             return $"Missing subject for {Diagnostic.Id}";
 
+        // 尝试获取中文翻译，命中则返回中文消息，否则回退到分析器原始消息
+        if (DiagnosticTranslations.TryGet(Diagnostic.Id, out var translatedMessage))
+            return translatedMessage;
+
         return message;
     }
 
