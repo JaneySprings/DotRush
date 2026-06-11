@@ -58,6 +58,7 @@ public static class DiagnosticTranslations {
         ["UNT0040"] = "GameObject.isStatic 仅在编辑器中有效，在构建包中始终返回 false",
         ["UNT0041"] = "重复调用 Animator 方法时应使用 Animator.StringToHash 缓存哈希值，避免重复计算",
         ["UNT0042"] = "在循环中访问 Mesh 的数组属性（如 vertices、normals）会导致每次都分配新数组，应提前缓存",
+        ["UNT0043"] = "条件编译符号可能存在拼写错误（该符号未定义，但与已定义的符号非常相似）",
 
         // ===== 常见 C# 编译器警告 (CS 系列) =====
         ["CS0108"] = "成员隐藏了继承的成员，如有意为之请使用 new 关键字",
