@@ -31,6 +31,7 @@ public class ConfigurationService {
     public AnalysisScope CompilerDiagnosticsScope => configuration.CompilerDiagnosticsScope;
     public AnalysisScope AnalyzerDiagnosticsScope => configuration.AnalyzerDiagnosticsScope;
     public DiagnosticsFormat DiagnosticsFormat => configuration.DiagnosticsFormat;
+    public bool EnableChineseDiagnostics => configuration.EnableChineseDiagnostics;
     public string DotNetSdkDirectory => configuration.DotNetSdkDirectory ?? Environment.GetEnvironmentVariable("DOTNET_SDK_PATH") ?? string.Empty;
     public ReadOnlyDictionary<string, string> WorkspaceProperties => (configuration.WorkspaceProperties ?? new List<string>()).ToPropertiesDictionary();
     public ReadOnlyCollection<string> ProjectOrSolutionFiles => (configuration.ProjectOrSolutionFiles ?? new List<string>()).AsReadOnly();
@@ -140,6 +141,9 @@ internal sealed class RoslynSection {
 
     [JsonPropertyName("diagnosticsFormat")]
     public DiagnosticsFormat DiagnosticsFormat { get; set; }
+
+    [JsonPropertyName("enableChineseDiagnostics")]
+    public bool EnableChineseDiagnostics { get; set; }
 
     [JsonPropertyName("dispatcherType")]
     public DispatcherType DispatcherType { get; set; }

@@ -549,6 +549,11 @@
               "InfosAsHints"
             ]
           },
+          "dotrush.roslyn.enableChineseDiagnostics": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable Chinese translation for diagnostic messages (C# compiler, IDE, and code analysis warnings)."
+          },
           "dotrush.roslyn.dispatcherType": {
             "type": "string",
             "default": "MultiThread",

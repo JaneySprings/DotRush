@@ -29,10 +29,10 @@ public static class DiagnosticExtensions {
 
         throw new NotImplementedException($"Unknown diagnostic severity: {severity}");
     }
-    public static ProtocolModels.Diagnostic ToServerDiagnostic(this DiagnosticContext context, DiagnosticsFormat format) {
+    public static ProtocolModels.Diagnostic ToServerDiagnostic(this DiagnosticContext context, DiagnosticsFormat format, bool enableChineseDiagnostics = false) {
         var diagnostic = new ProtocolModels.Diagnostic() {
             Code = context.Diagnostic.Id,
-            Message = context.GetSubject(),
+            Message = context.GetSubject(enableChineseDiagnostics),
             Range = context.Diagnostic.Location.ToRange(),
             Severity = context.Diagnostic.Severity.ToServerSeverity(format),
             Source = context.SourceName,

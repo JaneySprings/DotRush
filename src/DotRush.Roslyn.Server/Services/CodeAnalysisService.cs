@@ -108,7 +108,7 @@ public class CodeAnalysisService : IAdditionalComponentsProvider, IClearable {
         if (format != DiagnosticsFormat.AsIs)
             diagnostics = diagnostics.Where(d => !d.IsHiddenInUI());
 
-        return diagnostics.Select(d => d.ToServerDiagnostic(format)).ToList();
+        return diagnostics.Select(d => d.ToServerDiagnostic(format, configurationService.EnableChineseDiagnostics)).ToList();
     }
 
     bool IAdditionalComponentsProvider.IsEnabled {
