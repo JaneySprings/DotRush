@@ -75,7 +75,7 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
     private static provideCommonConfiguration(config: vscode.DebugConfiguration, profile?: LaunchProfile) {
         // https://github.com/JaneySprings/DotRush/issues/39
         if (config.processPath !== undefined && config.request === 'attach')
-            config.processId = Interop.createProcess(config.processPath)
+            config.processId = Interop.createProcess(config.processPath, config.cwd)
 
         if (config.justMyCode === undefined)
             config.justMyCode = Extensions.getSetting(res.configIdDebuggerProjectAssembliesOnly, false);

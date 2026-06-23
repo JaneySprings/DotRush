@@ -10,7 +10,7 @@ using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Server;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 
-namespace DotRush.Roslyn.Server.Handlers.Framework;
+namespace DotRush.Roslyn.Server.Handlers.ExternalAccess;
 
 public class ReloadWorkspaceHandler : IJsonHandler {
     private readonly WorkspaceService workspaceService;

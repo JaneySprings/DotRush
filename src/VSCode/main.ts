@@ -5,7 +5,6 @@ import { StateController } from './controllers/stateController';
 import { StatusBarController } from './controllers/statusbarController';
 import { TemplateHostController } from './controllers/templateHostController';
 import { TestExplorerController } from './controllers/testExplorerController';
-import { ExternalTypeResolver } from './features/externalTypeResolver';
 import { ModulesView } from './features/modulesView';
 import { PerformanceView } from './features/performanceView';
 import { Interop } from './interop/interop';
@@ -28,7 +27,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	DebugAdapterController.activate(context);
 	ModulesView.feature.activate(context);
 	PerformanceView.feature.activate(context);
-	ExternalTypeResolver.feature.activate(context);
 
 	return exports;
 }
