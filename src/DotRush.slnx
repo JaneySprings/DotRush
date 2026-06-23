@@ -1,0 +1,10 @@
+<Solution>
+  <Project Path="DotRush.Common/DotRush.Common.csproj" />
+  <Project Path="DotRush.Debugging.Host/DotRush.Debugging.Host.csproj" />
+  <!-- <Project Path="DotRush.Debugging.Mono/DotRush.Debugging.Mono.csproj" /> -->
+  <Project Path="DotRush.Roslyn.Workspaces/DotRush.Roslyn.Workspaces.csproj" />
+  <Project Path="DotRush.Roslyn.CodeAnalysis/DotRush.Roslyn.CodeAnalysis.csproj" />
+  <Project Path="DotRush.Roslyn.Navigation/DotRush.Roslyn.Navigation.csproj" />
+  <Project Path="DotRush.Roslyn.Server/DotRush.Roslyn.Server.csproj" />
+  <Project Path="DotRush.Roslyn.Server.Tests/DotRush.Roslyn.Server.Tests.csproj" />
+</Solution>

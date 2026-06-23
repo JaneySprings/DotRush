@@ -59,8 +59,8 @@ export class Interop {
             .append("-p", JSON.stringify(parameters)));
     }
 
-    public static createProcess(executable: string): number | undefined {
-        return ProcessRunner.createProcess(new ProcessArgumentBuilder(executable));
+    public static createProcess(executable: string, cwd: string | undefined): number | undefined {
+        return ProcessRunner.createProcess(new ProcessArgumentBuilder(executable), cwd);
     }
     public static createTestHostRpc(configurator: (args: ProcessArgumentBuilder) => void): rpc.MessageConnection {
         const builder = new ProcessArgumentBuilder('dotnet').append(Interop.devHostPath).append('test');

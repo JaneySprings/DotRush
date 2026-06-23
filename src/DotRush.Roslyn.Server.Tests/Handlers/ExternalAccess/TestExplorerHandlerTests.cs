@@ -1,4 +1,4 @@
-using DotRush.Roslyn.Server.Handlers.Framework;
+using DotRush.Roslyn.Server.Handlers.ExternalAccess;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Server.Tests.Extensions;
 using NUnit.Framework;

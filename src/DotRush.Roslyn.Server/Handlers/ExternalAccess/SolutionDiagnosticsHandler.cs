@@ -6,7 +6,7 @@ using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Server;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 
-namespace DotRush.Roslyn.Server.Handlers.Framework;
+namespace DotRush.Roslyn.Server.Handlers.ExternalAccess;
 
 public class SolutionDiagnosticsHandler : IJsonHandler {
     private readonly WorkspaceService workspaceService;

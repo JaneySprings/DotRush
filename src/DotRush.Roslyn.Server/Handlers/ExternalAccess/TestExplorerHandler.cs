@@ -16,7 +16,7 @@ using EmmyLua.LanguageServer.Framework.Server;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 
-namespace DotRush.Roslyn.Server.Handlers.Framework;
+namespace DotRush.Roslyn.Server.Handlers.ExternalAccess;
 
 public class TestExplorerHandler : IJsonHandler {
     private readonly TestExplorerService testExplorerService;

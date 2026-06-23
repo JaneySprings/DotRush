@@ -2,7 +2,7 @@
     "dotrush.roslyn.workspaceProperties": [
     ],
     "dotrush.roslyn.projectOrSolutionFiles": [
-        "src\\DotRush.sln"
+        "src\\DotRush.slnx"
     ],
     "files.exclude": {
         "src/DotRush.*/bin": true,

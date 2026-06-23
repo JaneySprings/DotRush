@@ -44,11 +44,11 @@ export class ProcessRunner {
             child.unref();
         });
     }
-    public static createProcess(builder: ProcessArgumentBuilder): number | undefined {
+    public static createProcess(builder: ProcessArgumentBuilder, cwd: string | undefined): number | undefined {
         const child = spawn(builder.getCommand(), builder.getArguments(), {
             detached: true,
             stdio: ['ignore', 'ignore', 'ignore'],
-            cwd: Extensions.getCurrentWorkingDirectory()
+            cwd: cwd ?? Extensions.getCurrentWorkingDirectory()
         });
         child.unref();
         return child.pid;

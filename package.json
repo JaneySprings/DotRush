@@ -342,6 +342,9 @@
               "processPath": {
                 "type": "string"
               },
+              "cwd": {
+                "type": "string"
+              },
               "sourceFileMap": {
                 "type": "object"
               },
