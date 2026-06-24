@@ -6,6 +6,7 @@ using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.WorkspaceSymbol;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
+using SymbolExtensions = DotRush.Roslyn.CodeAnalysis.Extensions.SymbolExtensions;
 
 namespace DotRush.Roslyn.Server.Handlers.Workspace;
 
@@ -30,7 +31,7 @@ public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
                 if (compilation == null)
                     continue;
 
-                var symbols = compilation.GetSymbolsWithName((s) => WorkspaceSymbolFilter(s, request.Query), SymbolFilter.TypeAndMember, token);
+                var symbols = compilation.GetSymbolsWithName((s) => SymbolExtensions.FuzzySearch(s, request.Query), SymbolFilter.TypeAndMember, token);
                 foreach (var symbol in symbols) {
                     foreach (var location in symbol.Locations) {
                         var lspLocation = location.ToLocation();
@@ -52,21 +53,6 @@ public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
     }
     protected override Task<WorkspaceSymbol> Resolve(WorkspaceSymbol request, CancellationToken token) {
         return Task.FromResult(request);
-    }
-
-    private static bool WorkspaceSymbolFilter(string symbolName, string query) {
-        if (symbolName.Contains(query, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        var queryParts = query.SplitByCase();
-        bool isMatch = true;
-        foreach (var part in queryParts) {
-            if (!symbolName.Contains(part, StringComparison.OrdinalIgnoreCase)) {
-                isMatch = false;
-                break;
-            }
-        }
-        return isMatch;
     }
 
     class WorkspaceSymbolEqualityComparer : IEqualityComparer<WorkspaceSymbol> {

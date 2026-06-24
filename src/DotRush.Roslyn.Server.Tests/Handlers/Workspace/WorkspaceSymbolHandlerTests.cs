@@ -377,4 +377,49 @@ public class OuterClass {
         Assert.That(nestedClassSymbol.Kind, Is.EqualTo(SymbolKind.Class));
         Assert.That(nestedClassSymbol.ContainerName, Is.EqualTo("OuterClass"));
     }
+
+    [Test]
+    public async Task SearchForInterfacePartTest() {
+        CreateDocument(nameof(WorkspaceSymbolHandlerTests), @"
+namespace Tests;
+
+public interface ITestInterface {
+    void TestMethod();
+}
+");
+
+        var result = await handler.Handle(new WorkspaceSymbolParams {
+            Query = "IInterf"
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+
+        var nestedClassSymbol = result.Symbols.FirstOrDefault(s => s.Name == "ITestInterface");
+        Assert.That(nestedClassSymbol, Is.Not.Null);
+        Assert.That(nestedClassSymbol.Kind, Is.EqualTo(SymbolKind.Interface));
+    }
+    [Test]
+    public async Task SearchForMethodPartTest() {
+        CreateDocument(nameof(WorkspaceSymbolHandlerTests), @"
+namespace Tests;
+
+public class TestClass {
+    public void Do1_Something() { }
+}
+");
+
+        var result = await handler.Handle(new WorkspaceSymbolParams {
+            Query = "D1_"
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+
+        var addMethodSymbol = result.Symbols.FirstOrDefault(s => s.Name == "Do1_Something");
+        Assert.That(addMethodSymbol, Is.Not.Null);
+        Assert.That(addMethodSymbol.Kind, Is.EqualTo(SymbolKind.Method));
+        Assert.That(addMethodSymbol.ContainerName, Is.EqualTo("TestClass"));
+        Assert.That(addMethodSymbol.Location, Is.Not.Null);
+    }
 }

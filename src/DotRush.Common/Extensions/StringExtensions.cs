@@ -2,6 +2,10 @@
 namespace DotRush.Common.Extensions;
 
 public static class StringExtensions {
+    private static readonly char[] specialCharacters = new char[] {
+        '_', '@', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+    };
+
     public static bool StartsWithUpper(this string value) {
         if (string.IsNullOrEmpty(value))
             return false;
@@ -25,7 +29,7 @@ public static class StringExtensions {
 
         int wordStartIndex = 0;
         for (int i = 1; i < value.Length; i++) {
-            if (char.IsUpper(value[i]) && !char.IsUpper(value[i - 1])) {
+            if (char.IsUpper(value[i]) || specialCharacters.Contains(value[i])) {
                 parts.Add(value.Substring(wordStartIndex, i - wordStartIndex));
                 wordStartIndex = i;
             }
