@@ -76,7 +76,7 @@ public class StringExtensionsTests {
     [Test]
     public void SplitByCamelCaseWithNumbersInString() {
         var result = "version2Update".SplitByCase();
-        var expected = new[] { "version2", "Update" };
+        var expected = new[] { "version", "2", "Update" };
         Assert.That(result, Is.EqualTo(expected));
     }
 }
