@@ -1,4 +1,5 @@
 using System.Globalization;
+using DotRush.Common.Extensions;
 using Microsoft.CodeAnalysis;
 
 namespace DotRush.Roslyn.CodeAnalysis.Extensions;
@@ -100,5 +101,20 @@ public static class SymbolExtensions {
         }
 
         return members;
+    }
+
+    public static bool FuzzySearch(string symbolName, string query) {
+        if (symbolName.Contains(query, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var queryParts = query.SplitByCase();
+        bool isMatch = true;
+        foreach (var part in queryParts) {
+            if (!symbolName.Contains(part, StringComparison.OrdinalIgnoreCase)) {
+                isMatch = false;
+                break;
+            }
+        }
+        return isMatch;
     }
 }

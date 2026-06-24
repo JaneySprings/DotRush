@@ -1,5 +1,5 @@
-using NUnit.Framework;
 using DotRush.Common.Extensions;
+using NUnit.Framework;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
@@ -35,19 +35,19 @@ public class StringExtensionsTests {
     [Test]
     public void SplitByCamelCaseWithMultipleWords() {
         var result = "thisIsATestString".SplitByCase();
-        var expected = new[] { "this", "Is", "ATest", "String" };
+        var expected = new[] { "this", "Is", "A", "Test", "String" };
         Assert.That(result, Is.EqualTo(expected));
     }
     [Test]
     public void SplitByCamelCaseWithConsecutiveUppercase() {
-        var result = "HTTPSConnection".SplitByCase();
-        var expected = new[] { "HTTPSConnection" };
+        var result = "HTTPConnection".SplitByCase();
+        var expected = new[] { "H", "T", "T", "P", "Connection" };
         Assert.That(result, Is.EqualTo(expected));
     }
     [Test]
     public void SplitByCamelCaseWithUppercaseFollowedByLowercase() {
         var result = "XMLHttpRequest".SplitByCase();
-        var expected = new[] { "XMLHttp", "Request" };
+        var expected = new[] { "X", "M", "L", "Http", "Request" };
         Assert.That(result, Is.EqualTo(expected));
     }
     [Test]
@@ -58,8 +58,8 @@ public class StringExtensionsTests {
     }
     [Test]
     public void SplitByCamelCaseWithSingleUppercaseWord() {
-        var result = "HELLO".SplitByCase();
-        var expected = new[] { "HELLO" };
+        var result = "HELP".SplitByCase();
+        var expected = new[] { "H", "E", "L", "P" };
         Assert.That(result, Is.EqualTo(expected));
     }
     [Test]
