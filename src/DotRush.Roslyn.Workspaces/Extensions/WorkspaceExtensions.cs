@@ -77,7 +77,7 @@ public static class WorkspaceExtensions {
     }
 
     public static async Task<ProcessResult> RestoreProjectAsync(this MSBuildWorkspace workspace, string projectPath, CancellationToken cancellationToken) {
-        var processInfo = ProcessRunner.CreateProcess("dotnet", $"restore \"{projectPath}\"", captureOutput: true, displayWindow: false, cancellationToken: cancellationToken);
+        var processInfo = ProcessRunner.CreateProcess("dotnet", $"restore \"{projectPath}\" -nodeReuse:false", captureOutput: true, displayWindow: false, cancellationToken: cancellationToken);
         var restoreResult = await processInfo.Task;
 
         if (restoreResult.ExitCode != 0) {
