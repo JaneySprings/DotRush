@@ -47,7 +47,7 @@ public class Program {
               .AddHandler(new DidChangeConfigurationHandler(configurationService))
               .AddHandler(new WorkspaceSymbolHandler(workspaceService))
         // Framework handlers
-              .AddHandler(new SolutionDiagnosticsHandler(workspaceService, codeAnalysisService))
+              .AddHandler(new WorkspaceDiagnosticsHandler(workspaceService, codeAnalysisService))
               .AddHandler(new ReloadWorkspaceHandler(workspaceService, navigationService, codeAnalysisService))
               .AddHandler(new TestExplorerHandler(testExplorerService, workspaceService));
 
