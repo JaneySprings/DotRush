@@ -54,6 +54,10 @@ export class LanguageServerController {
             if (e.execution.task.definition.type === res.taskDefinitionId && e.execution.task.name.includes('Build'))
                 LanguageServerController.client.sendNotification('dotrush/solutionDiagnostics', {});
         }));
+        context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(e => {
+            if (e != undefined && path.extname(e.document.fileName) == '.cs')
+                LanguageServerController.client.sendNotification('dotrush/documentDiagnostics', { textDocument: { uri: e.document.uri.toString() } });
+        }));
     }
 
     public static start() {
