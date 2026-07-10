@@ -1,3 +1,4 @@
+using DotRush.Common;
 using DotRush.Common.Extensions;
 using DotRush.Roslyn.Server.Services;
 using NUnit.Framework;
@@ -56,6 +57,10 @@ public abstract class BaseProjectTestFixture {
         Workspace.Dispose();
         Workspace = null!;
         OnGlobalTearDown();
+    }
+
+    protected TValue OnPlatform<TValue>(TValue unix, TValue win) {
+        return RuntimeInfo.IsWindows ? win : unix;
     }
 
     private string CreateProject() {

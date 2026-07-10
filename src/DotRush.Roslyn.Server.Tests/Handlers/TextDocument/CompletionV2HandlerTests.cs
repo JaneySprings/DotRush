@@ -124,7 +124,7 @@ class MyClass1 {
         Assert.That(autoUsingItem.InsertTextFormat, Is.EqualTo(InsertTextFormat.PlainText));
         Assert.That(autoUsingItem.TextEdit, Is.Null); // vscode provide calculated textEdit here by itemsDefault
         Assert.That(autoUsingItem.AdditionalTextEdits, Has.Count.EqualTo(1));
-        Assert.That(autoUsingItem.AdditionalTextEdits[0].NewText, Is.EqualTo("using System.Text.Json;\n\n"));
+        Assert.That(autoUsingItem.AdditionalTextEdits[0].NewText.ToLF(), Is.EqualTo("using System.Text.Json;\n\n"));
         Assert.That(autoUsingItem.AdditionalTextEdits[0].Range, Is.EqualTo(PositionExtensions.CreateRange(1, 0, 1, 0)));
         Assert.That(autoUsingItem.Command, Is.Null);
     }
@@ -179,9 +179,9 @@ class MyClass1 {
         var argument1 = equalsOvrItem.Command.Arguments[1].Value as TextEdit;
         var argument2 = equalsOvrItem.Command.Arguments[2].Value as int?;
         Assert.That(argument0, Is.EqualTo(documentPath));
-        Assert.That(argument1!.NewText, Is.EqualTo("public override bool Equals(object? obj)\n    {\n        return base.Equals(obj);\n    }"));
+        Assert.That(argument1!.NewText.ToLF(), Is.EqualTo("public override bool Equals(object? obj)\n    {\n        return base.Equals(obj);\n    }"));
         Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 4, 15)));
-        Assert.That(argument2!.Value, Is.EqualTo(119));
+        Assert.That(argument2!.Value, Is.EqualTo(OnPlatform(119, 125)));
     }
     [Test]
     public async Task HandleExplicitInterfaceTest() {
@@ -237,12 +237,12 @@ interface IInterface {
         var argument1 = ifaceImplItem.Command.Arguments[1].Value as TextEdit;
         var argument2 = ifaceImplItem.Command.Arguments[2].Value as int?;
         Assert.That(argument0, Is.EqualTo(documentPath));
-        Assert.That(argument1!.NewText, Is.EqualTo("Method()\n    {\n        throw new NotImplementedException();\n    }"));
+        Assert.That(argument1!.NewText.ToLF(), Is.EqualTo("Method()\n    {\n        throw new NotImplementedException();\n    }"));
         Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(4, 22, 4, 22)));
-        Assert.That(argument2!.Value, Is.EqualTo(130));
+        Assert.That(argument2!.Value, Is.EqualTo(OnPlatform(130, 136)));
     }
     [Test]
-    public async Task HandleSimpleSnipperTest() {
+    public async Task HandleSimpleSnippetTest() {
         var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
 namespace Tests;
 
@@ -292,12 +292,12 @@ class MyClass1 : IInterface {
         var argument1 = snippetItem.Command.Arguments[1].Value as TextEdit;
         var argument2 = snippetItem.Command.Arguments[2].Value as int?;
         Assert.That(argument0, Is.EqualTo(documentPath));
-        Assert.That(argument1!.NewText, Is.EqualTo("public int MyProperty { get; set; }"));
+        Assert.That(argument1!.NewText.ToLF(), Is.EqualTo("public int MyProperty { get; set; }"));
         Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 4, 7)));
-        Assert.That(argument2!.Value, Is.EqualTo(88));
+        Assert.That(argument2!.Value, Is.EqualTo(OnPlatform(88, 92)));
     }
     [Test]
-    public async Task HandleCollectionSnippetsTest() {
+    public async Task HandleCollectionSnippetTest() {
         var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
 namespace Tests;
 
@@ -350,8 +350,8 @@ class MyClass1 {
         var argument1 = snippetItem.Command.Arguments[1].Value as TextEdit;
         var argument2 = snippetItem.Command.Arguments[2].Value as int?;
         Assert.That(argument0, Is.EqualTo(documentPath));
-        Assert.That(argument1!.NewText, Is.EqualTo("for (int i = 0; i < data.Length; i++)\n        {\n            \n        }"));
+        Assert.That(argument1!.NewText.ToLF(), Is.EqualTo("for (int i = 0; i < data.Length; i++)\n        {\n            \n        }"));
         Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(6, 8, 6, 13)));
-        Assert.That(argument2!.Value, Is.EqualTo(153));
+        Assert.That(argument2!.Value, Is.EqualTo(OnPlatform(153, 161)));
     }
 }
