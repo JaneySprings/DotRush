@@ -8,6 +8,8 @@ public static class RuntimeInfo {
     public static bool IsLinux => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
     public static bool IsAarch64 => RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
 
+    public static bool IsRunningOnVSCode => File.Exists(Path.Combine(AppContext.BaseDirectory, "..", "..", "main.js"));
+
     public static string ExecExtension => IsWindows ? ".exe" : "";
     public static string HomeDirectory => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     public static string ProgramX86Directory => IsWindows

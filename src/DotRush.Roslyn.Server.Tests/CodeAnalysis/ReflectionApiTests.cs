@@ -176,10 +176,9 @@ public class ReflectionApiTests {
     }
 
     [Test]
-    public void CompletionItemProviderNameTest() {
-        var item = CompletionItem.Create("testItem");
-        var providerName = InternalCompletionItem.GetProviderName(item);
-        Assert.That(providerName, Is.Null);
+    public void CompletionItemFlagsTest() {
+        Assert.That(InternalCompletionItem.flagsProperty, Is.Not.Null);
+        Assert.That(InternalCompletionItem.flagsProperty!.PropertyType.IsEnum, Is.True);
     }
 
     [Test]

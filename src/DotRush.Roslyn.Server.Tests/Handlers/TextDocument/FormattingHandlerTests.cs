@@ -27,7 +27,7 @@ public class DocumentFormattingHandlerTests : MultitargetProjectFixture {
 
     [Test]
     public async Task GeneralHandlerTest() {
-        var documentPath = CreateDocument(nameof(CompletionHandlerTests), @"
+        var documentPath = CreateDocument(nameof(DocumentFormattingHandlerTests), @"
 namespace Tests;
 
 class MyClass1 {
@@ -53,7 +53,7 @@ class MyClass1 {
     }
     [Test]
     public async Task GeneralHandlerWithRangeTest() {
-        var documentPath = CreateDocument(nameof(CompletionHandlerTests), @"
+        var documentPath = CreateDocument(nameof(DocumentFormattingHandlerTests), @"
 namespace Tests;
 
 class MyClass1 {
@@ -75,7 +75,7 @@ class MyClass1 {
 
     [Test]
     public async Task FormatDocumentInsideDirectivesTest() {
-        var documentPath = CreateDocument(nameof(CompletionHandlerTests), @"
+        var documentPath = CreateDocument(nameof(DocumentFormattingHandlerTests), @"
 namespace Tests;
 
 class MyClass1 {
@@ -109,7 +109,7 @@ var b = new object();
     }
     [Test]
     public async Task FormatDocumentInsideDirectivesWithCollisionTest() {
-        var documentPath = CreateDocument(nameof(CompletionHandlerTests), @"
+        var documentPath = CreateDocument(nameof(DocumentFormattingHandlerTests), @"
 namespace Tests;
 
 class MyClass1 {
@@ -137,7 +137,7 @@ var b = new object();
     }
     [Test]
     public async Task FormatDocumentRangeInsideDirectivesTest() {
-        var documentPath = CreateDocument(nameof(CompletionHandlerTests), @"
+        var documentPath = CreateDocument(nameof(DocumentFormattingHandlerTests), @"
 namespace Tests;
 
 class MyClass1 {

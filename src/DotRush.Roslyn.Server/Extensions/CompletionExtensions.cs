@@ -80,6 +80,10 @@ public static partial class CompletionExtensions {
 
         return false;
     }
+    public static bool IsAutoUsing(this CompletionItem item) {
+        //(flags & CompletionItemFlags.Expanded) != 0
+        return (InternalCompletionItem.GetFlags(item) & InternalCompletionItem.FlagExpanded) != 0;
+    }
 
     public static TextEdit ToTextEdit(this TextChange change, SourceText sourceText) {
         return new TextEdit() {

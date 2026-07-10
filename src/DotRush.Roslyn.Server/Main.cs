@@ -42,7 +42,7 @@ public class Program {
               .AddHandler(new TypeDefinitionHandler(navigationService))
               .AddHandler(new TypeHierarchyHandler(navigationService))
               .AddHandler(new CodeActionHandler(workspaceService, codeAnalysisService))
-              .AddHandler(new CompletionHandler(workspaceService, configurationService))
+              .AddHandler(new CompletionV2Handler(workspaceService, configurationService), new CompletionHandler(workspaceService, configurationService))
         // Workspace handlers
               .AddHandler(new DidChangeConfigurationHandler(configurationService))
               .AddHandler(new WorkspaceSymbolHandler(workspaceService))

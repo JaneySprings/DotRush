@@ -1,3 +1,4 @@
+using DotRush.Common;
 using DotRush.Common.Logging;
 
 namespace DotRush.Debugging.Host.TestPlatform;
@@ -40,7 +41,12 @@ public sealed class DotRushTestHostAdapter : ITestHostAdapter {
         if (assemblyDirectory == null)
             return false;
 
-        var vsTestAssemblies = Directory.GetFiles(assemblyDirectory, "Microsoft.VisualStudio.TestPlatform*.dll", SearchOption.TopDirectoryOnly);
-        return vsTestAssemblies.Length == 0;
+        var vsTestHostAssembly = Path.Combine(assemblyDirectory, "testhost.dll");
+        var vsTestHostBinary = Path.Combine(assemblyDirectory, "testhost.exe");
+        if (File.Exists(vsTestHostAssembly) || File.Exists(vsTestHostBinary))
+            return false;
+
+        var mtpConsoleName = Path.GetFileNameWithoutExtension(assemblyPath) + RuntimeInfo.ExecExtension;
+        return File.Exists(Path.Combine(assemblyDirectory, mtpConsoleName));
     }
 }
