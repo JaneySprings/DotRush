@@ -21,6 +21,7 @@ export const commandIdRestoreProject = "dotrush.restore";
 export const commandIdCleanProject = "dotrush.clean";
 export const commandIdAttachTraceProfiler = "dotrush.attachTraceProfiler";
 export const commandIdCreateHeapDump = "dotrush.createHeapDump";
+export const commandIdCompletionHandler = "dotrush.completionHandler";
 
 export const commandIdSelectActiveFramework = "dotrush.selectActiveFramework";
 export const commandTitleSelectActiveFramework = "Select target framework";

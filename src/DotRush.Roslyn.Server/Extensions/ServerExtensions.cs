@@ -1,12 +1,15 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
+using DotRush.Common;
 using DotRush.Common.Logging;
+using EmmyLua.LanguageServer.Framework;
 using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.ShowMessage;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentFormatting;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Progress;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.WorkDoneProgress;
 using EmmyLua.LanguageServer.Framework.Server;
+using EmmyLua.LanguageServer.Framework.Server.Handler;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
@@ -82,5 +85,9 @@ public static class ServerExtensions {
             Options = formattingParams.Options,
             WorkDoneToken = formattingParams.WorkDoneToken
         };
+    }
+
+    public static LSPCommunicationBase AddHandler(this LSPCommunicationBase server, IJsonHandler vsHandler, IJsonHandler altHandler) {
+        return server.AddHandler(RuntimeInfo.IsRunningOnVSCode ? vsHandler : altHandler);
     }
 }

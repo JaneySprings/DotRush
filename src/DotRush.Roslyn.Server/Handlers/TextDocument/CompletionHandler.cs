@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Reflection;
@@ -25,7 +26,7 @@ public class CompletionHandler : CompletionHandlerBase {
     private readonly ConfigurationService configurationService;
     private readonly CurrentClassLogger currentClassLogger;
 
-    private Dictionary<int, RoslynCompletionItem>? completionItemsCache;
+    private ConcurrentDictionary<int, RoslynCompletionItem> completionItemsCache;
     private RoslynCompletionService? completionService;
     private DocumentId? documentId;
     private int offset;
@@ -34,6 +35,7 @@ public class CompletionHandler : CompletionHandlerBase {
         this.workspaceService = workspaceService;
         this.configurationService = configurationService;
         this.currentClassLogger = new CurrentClassLogger(nameof(CompletionHandler));
+        this.completionItemsCache = new ConcurrentDictionary<int, RoslynCompletionItem>();
     }
 
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
@@ -61,9 +63,8 @@ public class CompletionHandler : CompletionHandlerBase {
             var typedSpan = completionService.GetDefaultCompletionListSpan(sourceText, offset);
             var completions = await completionService.GetCompletionsAsync(document, offset, configurationService, token).ConfigureAwait(false);
 
-            var completionItems = new List<CompletionItem>();
-            completionItemsCache = new Dictionary<int, RoslynCompletionItem>(completions.ItemsList.Count);
-            foreach (var item in completions.ItemsList) {
+            completionItemsCache.Clear();
+            var completionItems = await Task.WhenAll(completions.ItemsList.Select(async item => {
                 var id = item.GetHashCode();
                 var completionItem = new CompletionItem() {
                     Data = id,
@@ -80,11 +81,11 @@ public class CompletionHandler : CompletionHandlerBase {
                 if (item.ShouldResolveImmediately())
                     await ResolveComplexItemAsync(completionService, item, completionItem, offset, document, sourceText, token).ConfigureAwait(false);
 
-                completionItems.Add(completionItem);
-                completionItemsCache.TryAdd(id, item);
-            }
+                completionItemsCache[id] = item;
+                return completionItem;
+            }));
 
-            return new CompletionResponse(completionItems);
+            return new CompletionResponse(completionItems.ToList());
         });
     }
     protected override Task<CompletionItem> Resolve(CompletionItem item, CancellationToken token) {

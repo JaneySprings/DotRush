@@ -112,9 +112,10 @@ public class CodeAnalysisService : IAdditionalComponentsProvider, IClearable {
     }
 
     bool IAdditionalComponentsProvider.IsEnabled {
-        get => configurationService.AnalyzerDiagnosticsScope != AnalysisScope.None;
+        get => AnalyzerDiagnosticsScope != AnalysisScope.None && configurationService.AnalyzerAssemblies.Count != 0;
     }
     IEnumerable<string> IAdditionalComponentsProvider.GetAdditionalAssemblies() {
+        // serverFacade?.ShowInfo(string.Format(null, Resources.ExternalAssembliesLoadedFormat, configurationService.AnalyzerAssemblies.Count));
         return configurationService.AnalyzerAssemblies;
     }
 }
