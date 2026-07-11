@@ -14,10 +14,19 @@
             "preLaunchTask": "tsc: watch"
         },
         {
-            "name": ".NET Attach to LSP",
+            "name": "Attach to LSP",
             "type": "coreclr",
             "request": "attach",
             "processId": "${command:dotrush.pickProcess}"
-        }
+        },
+        {
+            "name": ".NET Core (launch)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${command:dotrush.activeTargetPath}",
+            "args": [
+            ],
+            "preLaunchTask": "dotrush: Build"
+        },
     ]
 }
