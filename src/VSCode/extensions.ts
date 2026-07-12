@@ -177,6 +177,12 @@ export class Extensions {
     public static documentIdFromDocument(document?: vscode.TextDocument): any {
         return { uri: document?.uri?.toString() };
     }
+    public static toRange(range: any): vscode.Range {
+        return new vscode.Range(
+            new vscode.Position(range.start.line, range.start.character),
+            new vscode.Position(range.end.line, range.end.character),
+        );
+    }
 
     private static async findFiles(baseUri: vscode.Uri | undefined, filter: IFilter): Promise<vscode.Uri[]> {
         if (baseUri?.fsPath !== undefined && baseUri.fsPath.match(filter.regex) !== null)

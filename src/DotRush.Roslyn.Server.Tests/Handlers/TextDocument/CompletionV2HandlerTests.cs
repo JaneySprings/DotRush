@@ -171,17 +171,20 @@ class MyClass1 {
         Assert.That(equalsOvrItem.Command, Is.Not.Null);
         Assert.That(equalsOvrItem.Command.Title, Is.EqualTo(nameof(CompletionV2Handler)));
         Assert.That(equalsOvrItem.Command.Name, Is.EqualTo("dotrush.completionHandler"));
-        Assert.That(equalsOvrItem.Command.Arguments, Has.Count.EqualTo(3));
+        Assert.That(equalsOvrItem.Command.Arguments, Has.Count.EqualTo(4));
         Assert.That(equalsOvrItem.Command.Arguments[0].Value, Is.TypeOf<string>());
         Assert.That(equalsOvrItem.Command.Arguments[1].Value, Is.TypeOf<TextEdit>());
-        Assert.That(equalsOvrItem.Command.Arguments[2].Value, Is.TypeOf<int>());
+        Assert.That(equalsOvrItem.Command.Arguments[2].Value, Is.TypeOf<bool>());
+        Assert.That(equalsOvrItem.Command.Arguments[3].Value, Is.TypeOf<int>());
         var argument0 = equalsOvrItem.Command.Arguments[0].Value as string;
         var argument1 = equalsOvrItem.Command.Arguments[1].Value as TextEdit;
-        var argument2 = equalsOvrItem.Command.Arguments[2].Value as int?;
+        var argument2 = equalsOvrItem.Command.Arguments[2].Value as bool?;
+        var argument3 = equalsOvrItem.Command.Arguments[3].Value as int?;
         Assert.That(argument0, Is.EqualTo(documentPath));
         Assert.That(argument1!.NewText.ToLF(), Is.EqualTo("public override bool Equals(object? obj)\n    {\n        return base.Equals(obj);\n    }"));
         Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 4, 15)));
-        Assert.That(argument2!.Value, Is.EqualTo(OnPlatform(119, 125)));
+        Assert.That(argument2!.Value, Is.False);
+        Assert.That(argument3!.Value, Is.EqualTo(OnPlatform(119, 125)));
     }
     [Test]
     public async Task HandleExplicitInterfaceTest() {
@@ -229,17 +232,20 @@ interface IInterface {
         Assert.That(ifaceImplItem.Command, Is.Not.Null);
         Assert.That(ifaceImplItem.Command.Title, Is.EqualTo(nameof(CompletionV2Handler)));
         Assert.That(ifaceImplItem.Command.Name, Is.EqualTo("dotrush.completionHandler"));
-        Assert.That(ifaceImplItem.Command.Arguments, Has.Count.EqualTo(3));
+        Assert.That(ifaceImplItem.Command.Arguments, Has.Count.EqualTo(4));
         Assert.That(ifaceImplItem.Command.Arguments[0].Value, Is.TypeOf<string>());
         Assert.That(ifaceImplItem.Command.Arguments[1].Value, Is.TypeOf<TextEdit>());
-        Assert.That(ifaceImplItem.Command.Arguments[2].Value, Is.TypeOf<int>());
+        Assert.That(ifaceImplItem.Command.Arguments[2].Value, Is.TypeOf<bool>());
+        Assert.That(ifaceImplItem.Command.Arguments[3].Value, Is.TypeOf<int>());
         var argument0 = ifaceImplItem.Command.Arguments[0].Value as string;
         var argument1 = ifaceImplItem.Command.Arguments[1].Value as TextEdit;
-        var argument2 = ifaceImplItem.Command.Arguments[2].Value as int?;
+        var argument2 = ifaceImplItem.Command.Arguments[2].Value as bool?;
+        var argument3 = ifaceImplItem.Command.Arguments[3].Value as int?;
         Assert.That(argument0, Is.EqualTo(documentPath));
         Assert.That(argument1!.NewText.ToLF(), Is.EqualTo("Method()\n    {\n        throw new NotImplementedException();\n    }"));
         Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(4, 22, 4, 22)));
-        Assert.That(argument2!.Value, Is.EqualTo(OnPlatform(130, 136)));
+        Assert.That(argument2!.Value, Is.False);
+        Assert.That(argument3!.Value, Is.EqualTo(OnPlatform(130, 136)));
     }
     [Test]
     public async Task HandleSimpleSnippetTest() {
@@ -284,17 +290,20 @@ class MyClass1 : IInterface {
         Assert.That(snippetItem.Command, Is.Not.Null);
         Assert.That(snippetItem.Command.Title, Is.EqualTo(nameof(CompletionV2Handler)));
         Assert.That(snippetItem.Command.Name, Is.EqualTo("dotrush.completionHandler"));
-        Assert.That(snippetItem.Command.Arguments, Has.Count.EqualTo(3));
+        Assert.That(snippetItem.Command.Arguments, Has.Count.EqualTo(4));
         Assert.That(snippetItem.Command.Arguments[0].Value, Is.TypeOf<string>());
         Assert.That(snippetItem.Command.Arguments[1].Value, Is.TypeOf<TextEdit>());
-        Assert.That(snippetItem.Command.Arguments[2].Value, Is.TypeOf<int>());
+        Assert.That(snippetItem.Command.Arguments[2].Value, Is.TypeOf<bool>());
+        Assert.That(snippetItem.Command.Arguments[3].Value, Is.TypeOf<int>());
         var argument0 = snippetItem.Command.Arguments[0].Value as string;
         var argument1 = snippetItem.Command.Arguments[1].Value as TextEdit;
-        var argument2 = snippetItem.Command.Arguments[2].Value as int?;
+        var argument2 = snippetItem.Command.Arguments[2].Value as bool?;
+        var argument3 = snippetItem.Command.Arguments[3].Value as int?;
         Assert.That(argument0, Is.EqualTo(documentPath));
-        Assert.That(argument1!.NewText.ToLF(), Is.EqualTo("public int MyProperty { get; set; }"));
+        Assert.That(argument1!.NewText.ToLF(), Is.EqualTo("public ${1:int} ${2:MyProperty} { get; set; }$0"));
         Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 4, 7)));
-        Assert.That(argument2!.Value, Is.EqualTo(OnPlatform(88, 92)));
+        Assert.That(argument2!.Value, Is.True);
+        Assert.That(argument3!.Value, Is.EqualTo(OnPlatform(88, 92)));
     }
     [Test]
     public async Task HandleCollectionSnippetTest() {
@@ -342,16 +351,19 @@ class MyClass1 {
         Assert.That(snippetItem.Command, Is.Not.Null);
         Assert.That(snippetItem.Command.Title, Is.EqualTo(nameof(CompletionV2Handler)));
         Assert.That(snippetItem.Command.Name, Is.EqualTo("dotrush.completionHandler"));
-        Assert.That(snippetItem.Command.Arguments, Has.Count.EqualTo(3));
+        Assert.That(snippetItem.Command.Arguments, Has.Count.EqualTo(4));
         Assert.That(snippetItem.Command.Arguments[0].Value, Is.TypeOf<string>());
         Assert.That(snippetItem.Command.Arguments[1].Value, Is.TypeOf<TextEdit>());
-        Assert.That(snippetItem.Command.Arguments[2].Value, Is.TypeOf<int>());
+        Assert.That(snippetItem.Command.Arguments[2].Value, Is.TypeOf<bool>());
+        Assert.That(snippetItem.Command.Arguments[3].Value, Is.TypeOf<int>());
         var argument0 = snippetItem.Command.Arguments[0].Value as string;
         var argument1 = snippetItem.Command.Arguments[1].Value as TextEdit;
-        var argument2 = snippetItem.Command.Arguments[2].Value as int?;
+        var argument2 = snippetItem.Command.Arguments[2].Value as bool?;
+        var argument3 = snippetItem.Command.Arguments[3].Value as int?;
         Assert.That(argument0, Is.EqualTo(documentPath));
-        Assert.That(argument1!.NewText.ToLF(), Is.EqualTo("for (int i = 0; i < data.Length; i++)\n        {\n            \n        }"));
+        Assert.That(argument1!.NewText.ToLF(), Is.EqualTo("for (int ${1:i} = 0; ${1:i} < data.Length; ${1:i}++)\n{\n    $0\n}")); // This text includes indentation, but vscode doesn't expect it. Remove it before
         Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(6, 8, 6, 13)));
-        Assert.That(argument2!.Value, Is.EqualTo(OnPlatform(153, 161)));
+        Assert.That(argument2!.Value, Is.True);
+        Assert.That(argument3!.Value, Is.EqualTo(OnPlatform(153, 161)));
     }
 }
