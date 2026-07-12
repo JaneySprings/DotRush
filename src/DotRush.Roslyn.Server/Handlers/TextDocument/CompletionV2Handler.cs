@@ -10,10 +10,8 @@ using EmmyLua.LanguageServer.Framework.Protocol.Message.Completion;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.Kind;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.Markup;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Tags;
 using RoslynCompletionItem = Microsoft.CodeAnalysis.Completion.CompletionItem;
 using RoslynCompletionService = Microsoft.CodeAnalysis.Completion.CompletionService;
 
@@ -115,14 +113,7 @@ public class CompletionV2Handler : CompletionHandlerBase {
                 if (completionChange == null || sourceText == null)
                     return item;
 
-                var additionalTextEdits = new List<AnnotatedTextEdit>();
-                TextEdit? textEdit = null;
-                foreach (var textChange in completionChange.TextChanges) {
-                    if (!textChange.Span.IntersectsWith(cursorOffset))
-                        additionalTextEdits.Add(textChange.ToAnnotatedTextEdit(sourceText));
-                    else
-                        textEdit = textChange.ToTextEdit(sourceText, completionChange);
-                }
+                var (textEdit, additionalTextEdits) = completionChange.ToTextChanges(sourceText, cursorOffset);
 
                 item.AdditionalTextEdits = additionalTextEdits;
                 if (!roslynCompletionItem.IsAutoUsing()) {
