@@ -78,30 +78,30 @@ public static class CompletionExtensions {
             Range = change.Span.ToRange(sourceText)
         };
     }
-    public static TextEdit ToTextEdit(this TextChange change, SourceText sourceText, CompletionChange completionChange) {
-        var snippetText = RemoveIndentation(InternalCompletionChange.GetProperty(completionChange, InternalCompletionChange.SnippetTextKey));
-        var newText = (string.IsNullOrEmpty(snippetText) ? change.NewText : snippetText) ?? string.Empty;
-        // if (string.IsNullOrEmpty(snippetText) && completionChange.NewPosition.HasValue) {
-        //     var caretPosition = completionChange.NewPosition;
-        //     // caretPosition is the absolute position of the caret in the document.
-        //     // We want the position relative to the start of the snippet.
-        //     var relativeCaretPosition = caretPosition.Value - change.Span.Start;
-        //     // The caret could technically be placed outside the bounds of the text
-        //     // being inserted. This situation is currently unsupported in LSP, so in
-        //     // these cases we won't move the caret.
-        //     if (relativeCaretPosition >= 0 && relativeCaretPosition <= newText.Length)
-        //         newText = newText.Insert(relativeCaretPosition, "$0");
-        // }
-        return new TextEdit() {
-            NewText = newText,
-            Range = change.Span.ToRange(sourceText)
-        };
-    }
     public static AnnotatedTextEdit ToAnnotatedTextEdit(this TextChange change, SourceText sourceText) {
         return new AnnotatedTextEdit() {
             NewText = change.NewText ?? string.Empty,
             Range = change.Span.ToRange(sourceText)
         };
+    }
+    public static (TextEdit?, List<AnnotatedTextEdit>) ToTextChanges(this CompletionChange completionChange, SourceText sourceText, int cursorOffset) {
+        var additionalTextEdits = completionChange.TextChanges.Where(x => !x.Span.IntersectsWith(cursorOffset)).Select(x => x.ToAnnotatedTextEdit(sourceText)).ToList();
+        var currentLineTextChanges = completionChange.TextChanges.Where(x => x.Span.IntersectsWith(cursorOffset)).ToList();
+        if (currentLineTextChanges.Count == 0)
+            return (null, additionalTextEdits);
+
+        var currentLineTextChange = currentLineTextChanges.First(); // Single?
+        var snippetText = RemoveIndentation(InternalCompletionChange.GetProperty(completionChange, InternalCompletionChange.SnippetTextKey));
+        var newText = (string.IsNullOrEmpty(snippetText) ? currentLineTextChange.NewText : snippetText) ?? string.Empty;
+        var oldLineCount = additionalTextEdits.Sum(x => x.Range.Height());
+        var newLineCount = additionalTextEdits.SelectMany(x => x.NewText.Split('\n')).Count();
+
+        var textEdit = new TextEdit() {
+            NewText = newText,
+            Range = currentLineTextChange.Span.ToRange(sourceText).Offset(newLineCount - oldLineCount)
+        };
+
+        return (textEdit, additionalTextEdits);
     }
 
     public static Task<CompletionList> GetCompletionsAsync(this CompletionService completionService, Document document, int position, ConfigurationService configurationService, CancellationToken cancellationToken) {

@@ -187,6 +187,76 @@ class MyClass1 {
         Assert.That(argument3!.Value, Is.EqualTo(OnPlatform(119, 125)));
     }
     [Test]
+    public async Task HandleOverridesWithAutoImportTest() {
+        var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
+namespace Tests;
+
+class MyClass1 : MyBase {
+    override MyM
+}
+class MyBase {
+    protected virtual void MyMethod(System.Text.Json.JsonSerializerOptions obj) { }
+}
+");
+        configurationService.ChangeConfiguration(new ConfigurationSection {
+            DotRush = new DotRushSection {
+                Roslyn = new RoslynSection {
+                    ShowItemsFromUnimportedNamespaces = true
+                }
+            }
+        });
+        var result = await handler.Handle(new CompletionParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(4, 16),
+        }, CancellationToken.None);
+
+        Assert.That(result?.List, Is.Not.Null);
+        Assert.That(result.List.IsIncomplete, Is.False);
+        Assert.That(result.List.ItemDefaults, Is.Not.Null);
+        Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result1, Is.EqualTo(PositionExtensions.CreateRange(4, 13, 4, 16)));
+        Assert.That(result.List.Items, Has.Count.EqualTo(4));
+
+        var ovrItem = result.List.Items.FirstOrDefault(it => it.Label.StartsWith("MyMethod"));
+        Assert.That(ovrItem, Is.Not.Null);
+        Assert.That(ovrItem.Label, Is.EqualTo("MyMethod(System.Text.Json.JsonSerializerOptions obj)"));
+        Assert.That(ovrItem.Kind, Is.EqualTo(CompletionItemKind.Method));
+        Assert.That(ovrItem.SortText, Is.EqualTo("MyMethod"));
+        Assert.That(ovrItem.FilterText, Is.EqualTo("MyMethod"));
+        Assert.That(ovrItem.InsertTextFormat, Is.EqualTo(InsertTextFormat.PlainText));
+        Assert.That(ovrItem.TextEditText, Is.EqualTo("MyM"));
+        Assert.That(ovrItem.Data, Is.Not.Null);
+
+        ovrItem = await handler.Resolve(ovrItem, CancellationToken.None);
+        Assert.That(ovrItem.Label, Is.EqualTo("MyMethod(System.Text.Json.JsonSerializerOptions obj)"));
+        Assert.That(ovrItem.Kind, Is.EqualTo(CompletionItemKind.Method));
+        Assert.That(ovrItem.Documentation, Is.Not.Null);
+        Assert.That(ovrItem.SortText, Is.EqualTo("MyMethod"));
+        Assert.That(ovrItem.FilterText, Is.EqualTo("MyMethod"));
+        Assert.That(ovrItem.InsertTextFormat, Is.EqualTo(InsertTextFormat.PlainText));
+        Assert.That(ovrItem.TextEdit, Is.Null); // vscode provide calculated textEdit here by itemsDefault
+        Assert.That(ovrItem.AdditionalTextEdits, Has.Count.EqualTo(1));
+        Assert.That(ovrItem.AdditionalTextEdits[0].NewText.ToLF(), Is.EqualTo("using System.Text.Json;\n\n"));
+        Assert.That(ovrItem.AdditionalTextEdits[0].Range, Is.EqualTo(PositionExtensions.CreateRange(1, 0, 1, 0)));
+        Assert.That(ovrItem.Command, Is.Not.Null);
+        Assert.That(ovrItem.Command.Title, Is.EqualTo(nameof(CompletionV2Handler)));
+        Assert.That(ovrItem.Command.Name, Is.EqualTo("dotrush.completionHandler"));
+        Assert.That(ovrItem.Command.Arguments, Has.Count.EqualTo(4));
+        Assert.That(ovrItem.Command.Arguments[0].Value, Is.TypeOf<string>());
+        Assert.That(ovrItem.Command.Arguments[1].Value, Is.TypeOf<TextEdit>());
+        Assert.That(ovrItem.Command.Arguments[2].Value, Is.TypeOf<bool>());
+        Assert.That(ovrItem.Command.Arguments[3].Value, Is.TypeOf<int>());
+        var argument0 = ovrItem.Command.Arguments[0].Value as string;
+        var argument1 = ovrItem.Command.Arguments[1].Value as TextEdit;
+        var argument2 = ovrItem.Command.Arguments[2].Value as bool?;
+        var argument3 = ovrItem.Command.Arguments[3].Value as int?;
+        Assert.That(argument0, Is.EqualTo(documentPath));
+        Assert.That(argument1!.NewText.ToLF(), Is.EqualTo("protected override void MyMethod(JsonSerializerOptions obj)\n    {\n        base.MyMethod(obj);\n    }"));
+        Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(6, 4, 6, 16))); // Since additionalEdit adds two new lines, textChange shiffted to next lines
+        Assert.That(argument2!.Value, Is.False);
+        Assert.That(argument3!.Value, Is.Not.Zero);
+    }
+    [Test]
     public async Task HandleExplicitInterfaceTest() {
         var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
 namespace Tests;

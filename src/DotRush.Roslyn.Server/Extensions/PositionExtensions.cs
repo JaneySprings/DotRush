@@ -77,4 +77,13 @@ public static class PositionExtensions {
 
         return Compare(range1.Start, range2.End) <= 0 && Compare(range2.Start, range1.End) <= 0;
     }
+    public static ProtocolModels.DocumentRange Offset(this ProtocolModels.DocumentRange range, int lineOffset) {
+        return new ProtocolModels.DocumentRange {
+            Start = new ProtocolModels.Position(range.Start.Line + lineOffset, range.Start.Character),
+            End = new ProtocolModels.Position(range.End.Line + lineOffset, range.End.Character)
+        };
+    }
+    public static int Height(this ProtocolModels.DocumentRange range) {
+        return range.End.Line - range.Start.Line + 1;
+    }
 }
