@@ -52,6 +52,24 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
         _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectRestoreCompositeFormat, projectName));
     }
+    public override void OnProjectRestoreCompleted(string documentPath, ProcessResult result) {
+        var projectName = Path.GetFileNameWithoutExtension(documentPath);
+        var diagnostics = new List<Diagnostic>();
+        if (result.ExitCode != 0) {
+            var message = string.Join(Environment.NewLine, result.ErrorLines.Count == 0 ? result.OutputLines : result.ErrorLines);
+            diagnostics.Add(new Diagnostic() {
+                Message = string.Format(null, Resources.ProjectRestoreFailedCompositeFormat, projectName, message),
+                Range = default(DocumentRange),
+                Severity = DiagnosticSeverity.Error,
+                Source = projectName,
+                Code = "NU0000",
+            });
+        }
+        _ = serverFacade?.Client.PublishDiagnostics(new PublishDiagnosticsParams() {
+            Uri = documentPath,
+            Diagnostics = diagnostics,
+        });
+    }
     public override void OnProjectLoadStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
         _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectIndexCompositeFormat, projectName));
@@ -63,20 +81,6 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
     public override void OnProjectCompilationStarted(string documentPath) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
         _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectCompileCompositeFormat, projectName));
-    }
-    public override void OnProjectRestoreFailed(string documentPath, ProcessResult result) {
-        var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        var message = string.Join(Environment.NewLine, result.ErrorLines.Count == 0 ? result.OutputLines : result.ErrorLines);
-        _ = serverFacade?.Client.PublishDiagnostics(new PublishDiagnosticsParams() {
-            Uri = documentPath,
-            Diagnostics = [new Diagnostic() {
-                Message = string.Format(null, Resources.ProjectRestoreFailedCompositeFormat, projectName, message),
-                Range = default(DocumentRange),
-                Severity = DiagnosticSeverity.Error,
-                Source = projectName,
-                Code = "NU0000",
-            }],
-        });
     }
 
     internal IEnumerable<string>? GetProjectOrSolutionFiles(IEnumerable<string>? workspaceFolders) {
