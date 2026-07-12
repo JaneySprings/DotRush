@@ -67,7 +67,7 @@ public class CompletionV2Handler : CompletionHandlerBase {
                     Kind = item.ToCompletionItemKind(),
                     SortText = item.HasPriority() ? $"0_{item.SortText}" : item.SortText,
                     FilterText = item.FilterText,
-                    InsertTextFormat = item.Tags.Contains(WellKnownTags.Snippet) ? InsertTextFormat.Snippet : InsertTextFormat.PlainText,
+                    InsertTextFormat = item.IsSnippet() ? InsertTextFormat.Snippet : InsertTextFormat.PlainText,
                     Detail = item.InlineDescription,
                     Preselect = item.Rules.MatchPriority == Microsoft.CodeAnalysis.Completion.MatchPriority.Preselect,
                     Deprecated = item.Tags.Contains(InternalWellKnownTags.Deprecated),
@@ -121,7 +121,7 @@ public class CompletionV2Handler : CompletionHandlerBase {
                     if (!textChange.Span.IntersectsWith(cursorOffset))
                         additionalTextEdits.Add(textChange.ToAnnotatedTextEdit(sourceText));
                     else
-                        textEdit = textChange.ToTextEdit(sourceText);
+                        textEdit = textChange.ToTextEdit(sourceText, completionChange);
                 }
 
                 item.AdditionalTextEdits = additionalTextEdits;
@@ -132,6 +132,7 @@ public class CompletionV2Handler : CompletionHandlerBase {
                         Arguments = new List<LSPAny> {
                             new LSPAny(document.FilePath),
                             new LSPAny(textEdit),
+                            new LSPAny(roslynCompletionItem.IsSnippet()),
                             new LSPAny(completionChange.NewPosition ?? -1)
                         }
                     };

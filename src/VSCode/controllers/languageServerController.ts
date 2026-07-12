@@ -41,15 +41,20 @@ export class LanguageServerController {
         context.subscriptions.push(LanguageServerController.client);
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdReloadWorkspace, () => LanguageServerController.reload()));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickTargets, () => LanguageServerController.showQuickPickTargets()))
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdCompletionHandler, async (documentPath: string, textEdit, cursorOffset: number) => {
-            const newEdit = new vscode.WorkspaceEdit();
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdCompletionHandler, async (documentPath: string, textEdit, isSnippet: boolean, cursorOffset: number) => {
             const uri = vscode.Uri.parse(documentPath);
-            const range = textEdit.range as vscode.Range;
+            const editor = vscode.window.activeTextEditor;
+            const range = Extensions.toRange(textEdit.range);
+            if (editor?.document.uri.toString() !== uri.toString())
+                return;
+
+            if (isSnippet)
+                return await editor.insertSnippet(new vscode.SnippetString(textEdit.newText), range);
+
+            const newEdit = new vscode.WorkspaceEdit();
             newEdit.replace(uri, range, textEdit.newText);
             await vscode.workspace.applyEdit(newEdit);
-
-            const editor = vscode.window.activeTextEditor;
-            if (editor?.document.uri.toString() === uri.toString() && cursorOffset > 0) {
+            if (cursorOffset > 0) {
                 const position = editor.document.positionAt(cursorOffset);
                 editor.selection = new vscode.Selection(position, position);
                 editor.revealRange(new vscode.Range(position, position));
@@ -83,7 +88,7 @@ export class LanguageServerController {
         });
         LanguageServerController.client.onNotification('dotrush/loadCompleted', async () => {
             for (const document of vscode.workspace.textDocuments)
-                await TestExplorerController.resolveTestItemsByPath(document.fileName);
+                await TestExplorerController.resolveTestCases(document.uri);
         });
         LanguageServerController.client.start();
         LanguageServerController.running = true;
