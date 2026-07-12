@@ -38,9 +38,7 @@ public abstract class SolutionController : ProjectsController {
             if (RestoreProjectsBeforeLoading) {
                 OnProjectRestoreStarted(solutionFilePath);
                 var result = await workspace.RestoreProjectAsync(solutionFilePath, cancellationToken);
-                if (result.ExitCode != 0)
-                    OnProjectRestoreFailed(solutionFilePath, result);
-                OnProjectRestoreCompleted(solutionFilePath);
+                OnProjectRestoreCompleted(solutionFilePath, result);
             }
 
             OnProjectLoadStarted(solutionFilePath);

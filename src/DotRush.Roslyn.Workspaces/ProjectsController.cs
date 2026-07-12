@@ -15,8 +15,7 @@ public abstract class ProjectsController {
     public virtual Task OnLoadingStartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     public virtual Task OnLoadingCompletedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     public virtual void OnProjectRestoreStarted(string documentPath) { }
-    public virtual void OnProjectRestoreCompleted(string documentPath) { }
-    public virtual void OnProjectRestoreFailed(string documentPath, ProcessResult result) { }
+    public virtual void OnProjectRestoreCompleted(string documentPath, ProcessResult result) { }
     public virtual void OnProjectLoadStarted(string documentPath) { }
     public virtual void OnProjectLoadCompleted(Project project) { }
     public virtual void OnProjectCompilationStarted(string documentPath) { }
@@ -31,9 +30,7 @@ public abstract class ProjectsController {
                 if (RestoreProjectsBeforeLoading) {
                     OnProjectRestoreStarted(path);
                     var result = await workspace.RestoreProjectAsync(path, cancellationToken);
-                    if (result.ExitCode != 0)
-                        OnProjectRestoreFailed(path, result);
-                    OnProjectRestoreCompleted(path);
+                    OnProjectRestoreCompleted(path, result);
                 }
 
                 OnProjectLoadStarted(path);
