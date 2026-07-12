@@ -88,7 +88,7 @@ export class LanguageServerController {
         });
         LanguageServerController.client.onNotification('dotrush/loadCompleted', async () => {
             for (const document of vscode.workspace.textDocuments)
-                await TestExplorerController.resolveTestCases(document.uri);
+                await TestExplorerController.resolveTestItemsByPath(document.uri);
         });
         LanguageServerController.client.start();
         LanguageServerController.running = true;
