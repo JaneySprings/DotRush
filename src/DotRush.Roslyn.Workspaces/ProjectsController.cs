@@ -35,8 +35,6 @@ public abstract class ProjectsController {
 
                 OnProjectLoadStarted(path);
                 var project = await workspace.OpenProjectAsync(path, null, cancellationToken);
-                OnProjectLoadCompleted(project);
-
                 OnWorkspaceStateChanged(workspace.CurrentSolution);
 
                 if (CompileProjectsAfterLoading) {
@@ -44,6 +42,8 @@ public abstract class ProjectsController {
                     _ = await project.GetCompilationAsync(cancellationToken);
                     OnProjectCompilationCompleted(project);
                 }
+
+                OnProjectLoadCompleted(project);
             });
         }
 

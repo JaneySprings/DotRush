@@ -16,55 +16,43 @@ export class TestExplorerController {
     public static activate(context: vscode.ExtensionContext) {
         TestExplorerController.controller = vscode.tests.createTestController(res.testExplorerViewId, res.testExplorerViewTitle);
         TestExplorerController.controller.refreshHandler = TestExplorerController.refreshTestItems;
-        TestExplorerController.controller.resolveHandler = TestExplorerController.resolveTestItem;
 
         context.subscriptions.push(TestExplorerController.controller);
         context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileRun, vscode.TestRunProfileKind.Run, async (r, ct) => await TestExplorerController.createTestRun(r, false, ct), true));
         context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileDebug, vscode.TestRunProfileKind.Debug, async (r, ct) => await TestExplorerController.createTestRun(r, true, ct), true));
 
-        context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(async ev => await TestExplorerController.resolveTestItemsByPath(ev.uri.fsPath)));
-        context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async ev => await TestExplorerController.resolveTestItemsByPath(ev.uri.fsPath)));
+        context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(async ev => await TestExplorerController.resolveTestCases(ev.uri)));
+        context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async ev => await TestExplorerController.resolveTestCases(ev.uri)));
     }
     public static loadProject(project: Project): void {
         const item = TestExplorerExtensions.createProjectItem(TestExplorerController.controller, project);
+        TestExplorerController.resolveTestProject(item);
         TestExplorerController.controller.items.add(item);
     }
-    public static async resolveTestItemsByPath(documentPath: string): Promise<void> {
-        const project = TestExplorerExtensions.findProjectItem(documentPath, TestExplorerController.controller.items);
+    public static async resolveTestCases(uri: vscode.Uri): Promise<void> {
+        const project = TestExplorerExtensions.findProjectItem(uri.fsPath, TestExplorerController.controller.items);
         if (project === undefined)
             return;
 
-        let processed = false;
         project.children.forEach(fixture => {
-            if (fixture.uri?.fsPath === documentPath) {
-                TestExplorerController.resolveTestItem(fixture);
-                processed = true;
-            }
+            if (fixture.uri?.fsPath === uri.fsPath)
+                project.children.delete(fixture.id);
         });
-        if (!processed)
-            await TestExplorerController.resolveTestItem(project);
+
+        const updates = await TestExplorerExtensions.resolveTestItem(uri, true);
+        for (const update of updates)
+            project.children.add(TestExplorerExtensions.createTestItem(TestExplorerController.controller, update));
+    }
+    public static async resolveTestProject(projectItem?: vscode.TestItem): Promise<void> {
+        if (projectItem === undefined || projectItem.uri === undefined)
+            return;
+
+        const fixtures = await TestExplorerExtensions.resolveTestItem(projectItem.uri, true);
+        projectItem.children.replace(fixtures.map(x => TestExplorerExtensions.createTestItem(TestExplorerController.controller, x)));
     }
 
     private static refreshTestItems() {
-        TestExplorerController.controller.items.forEach(TestExplorerController.resolveTestItem);
-    }
-    private static async resolveTestItem(item?: vscode.TestItem): Promise<void> {
-        if (item === undefined || !item.canResolveChildren)
-            return;
-
-        if (TestExplorerExtensions.isProjectItem(item)) {
-            const fixtures = await LanguageServerController.sendRequest<TestItem[]>('dotrush/testExplorer/fixtures', { textDocument: Extensions.documentIdFromUri(item.uri) });
-            if (fixtures !== undefined)
-                item.children.replace(fixtures.map(fixture => TestExplorerExtensions.createTestItem(TestExplorerController.controller, fixture, true)));
-
-            for (const child of item.children)
-                await TestExplorerController.resolveTestItem(child[1]);
-        }
-        else if (TestExplorerExtensions.isFixtureItem(item)) {
-            const testCases = await LanguageServerController.sendRequest<TestItem[]>('dotrush/testExplorer/tests', { textDocument: Extensions.documentIdFromUri(item.uri), fixtureId: item.id });
-            if (testCases !== undefined)
-                item.children.replace(testCases.map(testCase => TestExplorerExtensions.createTestItem(TestExplorerController.controller, testCase, false, item.id)));
-        }
+        TestExplorerController.controller.items.forEach(TestExplorerController.resolveTestProject);
     }
     private static async createTestRun(request: vscode.TestRunRequest, attachDebugger: boolean, token: vscode.CancellationToken): Promise<void> {
         return TestExplorerExtensions.convertTestRequest(request, async (projects, filter) => {
@@ -73,7 +61,7 @@ export class TestExplorerController {
                 TestExplorerController.controller.items.forEach(item => projects.push(item));
             for (const project of projects) {
                 if (project.children.size === 0)
-                    await TestExplorerController.resolveTestItem(project);
+                    await TestExplorerController.resolveTestProject(project);
             }
 
             // Build projects
@@ -170,12 +158,18 @@ class TestExplorerExtensions {
         item.tags = project.frameworks?.map(tfm => new vscode.TestTag(tfm));
         return item;
     }
-    public static createTestItem(controller: vscode.TestController, modelItem: TestItem, canResolve: boolean, parentId?: string): vscode.TestItem {
+    public static createTestItem(controller: vscode.TestController, modelItem: TestItem, parentId?: string): vscode.TestItem {
         const id = parentId ? `${parentId}.${modelItem.id}` : modelItem.id;
         const item = controller.createTestItem(id, modelItem.name, vscode.Uri.file(modelItem.filePath));
         item.range = modelItem.range;
-        item.canResolveChildren = canResolve;
+        item.canResolveChildren = false;
+        if (modelItem.children)
+            item.children.replace(modelItem.children.map(x => TestExplorerExtensions.createTestItem(controller, x, modelItem.id)));
         return item;
+    }
+    public static async resolveTestItem(uri: vscode.Uri, includeChildren: boolean): Promise<TestItem[]> {
+        const result = await LanguageServerController.sendRequest<TestItem[]>('dotrush/testExplorer/tests', { textDocument: Extensions.documentIdFromUri(uri), includeChildren: includeChildren });
+        return result ?? [];
     }
 
     public static isProjectItem(item: vscode.TestItem): boolean {
