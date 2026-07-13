@@ -6,6 +6,7 @@ export interface TestItem {
     filePath: string;
     range: Range;
     locations: string[];
+    children?: TestItem[]
 }
 
 export enum Outcome {

@@ -45,16 +45,14 @@ export class LanguageServerController {
             const uri = vscode.Uri.parse(documentPath);
             const editor = vscode.window.activeTextEditor;
             const range = Extensions.toRange(textEdit.range);
-            if (editor?.document.uri.toString() !== uri.toString())
-                return;
 
             if (isSnippet)
-                return await editor.insertSnippet(new vscode.SnippetString(textEdit.newText), range);
+                return await editor?.insertSnippet(new vscode.SnippetString(textEdit.newText), range);
 
             const newEdit = new vscode.WorkspaceEdit();
             newEdit.replace(uri, range, textEdit.newText);
             await vscode.workspace.applyEdit(newEdit);
-            if (cursorOffset > 0) {
+            if (editor !== undefined && cursorOffset > 0) {
                 const position = editor.document.positionAt(cursorOffset);
                 editor.selection = new vscode.Selection(position, position);
                 editor.revealRange(new vscode.Range(position, position));
@@ -85,10 +83,6 @@ export class LanguageServerController {
             PublicExports.instance.onProjectLoaded.invoke(project);
             if (project.isTestProject)
                 TestExplorerController.loadProject(project);
-        });
-        LanguageServerController.client.onNotification('dotrush/loadCompleted', async () => {
-            for (const document of vscode.workspace.textDocuments)
-                await TestExplorerController.resolveTestItemsByPath(document.fileName);
         });
         LanguageServerController.client.start();
         LanguageServerController.running = true;

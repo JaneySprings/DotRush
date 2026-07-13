@@ -27,39 +27,46 @@ public class TestExplorerHandler : IJsonHandler {
         this.workspaceService = workspaceService;
     }
 
-    protected Task<ICollection<TestItem>> Handle(TestFixtureParams? request, CancellationToken token) {
+    protected Task<ICollection<TestItem>> Handle(TestItemParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync<ICollection<TestItem>>(Array.Empty<TestItem>(), async () => {
-            var project = workspaceService.Solution?.Projects.FirstOrDefault(p => PathExtensions.Equals(p.FilePath, request?.TextDocument?.Uri.FileSystemPath));
-            if (project == null)
+            var filePath = request.TextDocument?.Uri.FileSystemPath;
+            if (string.IsNullOrEmpty(filePath))
                 return Array.Empty<TestItem>();
 
-            var fixtureSymbols = await testExplorerService.GetTestFixturesAsync(project, token).ConfigureAwait(false);
-            return fixtureSymbols.Select(symbol => new TestItem(symbol)).ToHashSet();
-        });
-    }
-    protected Task<ICollection<TestItem>> Handle(TestCaseParams? request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync<ICollection<TestItem>>(Array.Empty<TestItem>(), async () => {
-            var documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request?.TextDocument?.Uri.FileSystemPath);
-            var document = workspaceService.Solution?.GetDocument(documentId?.FirstOrDefault());
-            if (document == null)
+            ICollection<INamedTypeSymbol>? fixtureSymbols = null;
+            if (WorkspaceExtensions.IsProjectFile(filePath)) {
+                var project = workspaceService.Solution?.Projects.FirstOrDefault(p => PathExtensions.Equals(p.FilePath, filePath));
+                if (project != null)
+                    fixtureSymbols = await testExplorerService.GetTestFixturesAsync(project, token);
+            }
+            if (WorkspaceExtensions.IsSourceCodeDocument(filePath)) {
+                var documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
+                var document = workspaceService.Solution?.GetDocument(documentId?.FirstOrDefault());
+                if (document != null)
+                    fixtureSymbols = await testExplorerService.GetTestFixturesAsync(document, token);
+            }
+
+            if (fixtureSymbols == null)
                 return Array.Empty<TestItem>();
 
-            if (string.IsNullOrEmpty(request?.FixtureId))
-                return Array.Empty<TestItem>();
-
-            var testCases = await testExplorerService.GetTestCasesAsync(document, request.FixtureId, token).ConfigureAwait(false);
-            return testCases.Select(symbol => new TestItem(symbol)).ToHashSet();
+            var result = new HashSet<TestItem>();
+            foreach (var fixtureSymbol in fixtureSymbols) {
+                var fixture = new TestItem(fixtureSymbol);
+                if (request.IncludeChildren) {
+                    var testCaseSymbols = await testExplorerService.GetTestCasesAsync(fixtureSymbol, token);
+                    if (testCaseSymbols != null)
+                        fixture.Children = testCaseSymbols.Select(x => new TestItem(x)).ToHashSet();
+                }
+                result.Add(fixture);
+            }
+            return result;
         });
     }
 
     public void RegisterHandler(LSPCommunicationBase lspCommunication) {
-        lspCommunication.AddRequestHandler("dotrush/testExplorer/fixtures", async delegate (RequestMessage message, CancellationToken token) {
-            var request = message.Params?.Deserialize<TestFixtureParams>(JsonSerializerConfig.Options);
-            return JsonSerializer.SerializeToDocument(await Handle(request, token).ConfigureAwait(false));
-        });
         lspCommunication.AddRequestHandler("dotrush/testExplorer/tests", async delegate (RequestMessage message, CancellationToken token) {
-            var request = message.Params?.Deserialize<TestCaseParams>(JsonSerializerConfig.Options);
-            return JsonSerializer.SerializeToDocument(await Handle(request, token).ConfigureAwait(false));
+            var request = message.Params?.Deserialize<TestItemParams>(JsonSerializerConfig.Options) ?? new TestItemParams();
+            return JsonSerializer.SerializeToDocument(await Handle(request, token));
         });
     }
     public void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
@@ -68,12 +75,9 @@ public class TestExplorerHandler : IJsonHandler {
     }
 }
 
-public class TestFixtureParams {
+public class TestItemParams {
     [JsonPropertyName("textDocument")] public TextDocumentIdentifier? TextDocument { get; set; }
-}
-public class TestCaseParams {
-    [JsonPropertyName("textDocument")] public TextDocumentIdentifier? TextDocument { get; set; }
-    [JsonPropertyName("fixtureId")] public string? FixtureId { get; set; }
+    [JsonPropertyName("includeChildren")] public bool IncludeChildren { get; set; }
 }
 public class TestItem {
     [JsonPropertyName("id")] public string Id { get; set; }
@@ -81,6 +85,7 @@ public class TestItem {
     [JsonPropertyName("filePath")] public string? FilePath { get; set; }
     [JsonPropertyName("range")] public DocumentRange Range { get; set; }
     [JsonPropertyName("locations")] public string[]? Locations { get; set; }
+    [JsonPropertyName("children")] public ICollection<TestItem>? Children { get; set; }
 
     public TestItem(ISymbol symbol) {
         Id = symbol.GetFullName();
