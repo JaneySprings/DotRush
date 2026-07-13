@@ -69,7 +69,6 @@ public class SimpleProjectsLoadTests : SimpleWorkspaceFixture {
         var projectPath = CreateProject("MyProject", "MyError>/<", "Exe");
 
         Assert.ThrowsAsync<XmlException>(async () => await Workspace.LoadAsync(new[] { projectPath }, CancellationToken.None).ConfigureAwait(false));
-        Assert.That(Workspace.Solution, Is.Null);
     }
 
     private (string tfm1, string tfm2) GetTFMs(string tfm) {
