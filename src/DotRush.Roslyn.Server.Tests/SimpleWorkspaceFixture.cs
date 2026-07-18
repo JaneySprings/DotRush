@@ -13,7 +13,7 @@ public abstract class SimpleWorkspaceFixture {
     protected WorkspaceService Workspace { get; private set; } = null!;
 
     protected SimpleWorkspaceFixture() {
-        SandboxDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sandbox");
+        SandboxDirectory = Path.Combine(AppContext.BaseDirectory, "Sandbox");
     }
 
     protected virtual void OnSetup() { }

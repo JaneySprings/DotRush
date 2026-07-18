@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using System.Reflection;
+using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
-using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 
@@ -40,7 +40,7 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
 
     public List<CodeFixProvider> LoadFromAssembly(string assemblyName) {
         var result = new List<CodeFixProvider>();
-        var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);
+        var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName)?.DefinedTypes;
         if (assemblyTypes == null)
             return result;
 
@@ -62,7 +62,8 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
                 }
                 result.Add(instance);
                 currentClassLogger.Debug($"Loaded code fix provider: {instance}");
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 currentClassLogger.Error($"Creating instance of '{providerInfo.Name}' failed, error: {ex}");
             }
         }

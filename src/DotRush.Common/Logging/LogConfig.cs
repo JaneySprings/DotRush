@@ -6,7 +6,7 @@ using NLog.Targets.Wrappers;
 namespace DotRush.Common.Logging;
 
 public static class LogConfig {
-    private static readonly string _logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+    private static readonly string _logDir = Path.Combine(AppContext.BaseDirectory, "logs");
     public static readonly string ErrorLogFile = Path.Combine(_logDir, "Error.log");
     public static readonly string DebugLogFile = Path.Combine(_logDir, "Debug.log");
 

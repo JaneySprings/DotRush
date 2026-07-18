@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
 using System.Reflection;
+using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Embedded.Refactorings;
-using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 
@@ -44,7 +44,7 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
 
     public List<CodeRefactoringProvider> LoadFromAssembly(string assemblyName) {
         var result = new List<CodeRefactoringProvider>();
-        var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);
+        var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName)?.DefinedTypes;
         if (assemblyTypes == null)
             return result;
 
@@ -66,7 +66,8 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
                 }
                 result.Add(instance);
                 currentClassLogger.Debug($"Loaded code refacotring provider: {instance}");
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 currentClassLogger.Error($"Creating instance of '{providerInfo.Name}' failed, error: {ex}");
             }
         }

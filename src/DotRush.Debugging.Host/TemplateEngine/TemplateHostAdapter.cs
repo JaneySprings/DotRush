@@ -26,7 +26,7 @@ public class TemplateHostAdapter {
     public TemplateHostAdapter() {
         var host = TemplateHostAdapter.CreateHost("dotrush_templateengine_host");
         currentClassLogger = new CurrentClassLogger(nameof(TemplateHostAdapter));
-        templatesTempPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".templateengine-packages");
+        templatesTempPath = Path.Combine(AppContext.BaseDirectory, ".templateengine-packages");
         templateEngineBootstrapper = new Bootstrapper(host, virtualizeConfiguration: true, loadDefaultComponents: true);
     }
 

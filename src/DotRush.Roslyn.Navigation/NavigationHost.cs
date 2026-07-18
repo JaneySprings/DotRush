@@ -18,9 +18,8 @@ public class NavigationHost : IClearable {
     private readonly Dictionary<string, ProjectId> decompilerDocuments;
 
     public NavigationHost() {
-        var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-        DecompiledCodeDirectory = Path.Combine(baseDirectory, "_decompiled_");
-        GeneratedCodeDirectory = Path.Combine(baseDirectory, "_generated_");
+        DecompiledCodeDirectory = Path.Combine(AppContext.BaseDirectory, "_decompiled_");
+        GeneratedCodeDirectory = Path.Combine(AppContext.BaseDirectory, "_generated_");
         currentClassLogger = new CurrentClassLogger(nameof(NavigationHost));
         decompilerDocuments = new Dictionary<string, ProjectId>();
         assemblyDecompiler = new AssemblyDecompiler();
