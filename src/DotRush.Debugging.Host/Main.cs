@@ -30,12 +30,12 @@ public class Program {
         };
         rootCommand.SetAction(result => {
             if (result.GetValue(installVsdbgOption)) {
-                var workingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".."));
+                var workingDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
                 InstallDebugger(new VsdbgInstaller(workingDirectory));
                 return;
             }
             if (result.GetValue(installNcdbgOption)) {
-                var workingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".."));
+                var workingDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
                 InstallDebugger(new NcdbgInstaller(workingDirectory));
                 return;
             }

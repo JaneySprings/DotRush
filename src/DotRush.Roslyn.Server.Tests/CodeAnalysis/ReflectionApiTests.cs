@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 using System.Reflection;
-using DotRush.Roslyn.CodeAnalysis.Extensions;
+using DotRush.Common.Extensions;
 using DotRush.Roslyn.CodeAnalysis.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;

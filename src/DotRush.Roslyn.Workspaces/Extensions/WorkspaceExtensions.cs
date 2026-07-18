@@ -1,7 +1,9 @@
 using DotRush.Common.Extensions;
 using DotRush.Common.InteropV2;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.Workspaces.Loaders;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.MSBuild;
 
 namespace DotRush.Roslyn.Workspaces.Extensions;
@@ -88,5 +90,25 @@ public static class WorkspaceExtensions {
         }
 
         return restoreResult;
+    }
+    public static Solution WithShadowCopiedAnalyzerReferences(this Solution solution, IAnalyzerAssemblyLoader analyzerLoader) {
+        var updatedSolution = solution;
+        foreach (var project in solution.Projects) {
+            var fileReferences = project.AnalyzerReferences.OfType<AnalyzerFileReference>().ToArray();
+            if (fileReferences.Length == 0)
+                continue;
+
+            foreach (var fileReference in fileReferences)
+                analyzerLoader.AddDependencyLocation(fileReference.FullPath);
+
+            var updatedReferences = project.AnalyzerReferences
+                .Select(reference => reference is AnalyzerFileReference fileReference
+                    ? new AnalyzerFileReference(fileReference.FullPath, analyzerLoader)
+                    : reference)
+                .ToArray();
+
+            updatedSolution = project.WithAnalyzerReferences(updatedReferences).Solution;
+        }
+        return updatedSolution;
     }
 }

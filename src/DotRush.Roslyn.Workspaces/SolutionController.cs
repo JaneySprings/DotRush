@@ -1,3 +1,4 @@
+using DotRush.Common;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Common.MSBuild;
@@ -43,7 +44,10 @@ public abstract class SolutionController : ProjectsController {
 
             OnProjectLoadStarted(solutionFilePath);
             var solution = await workspace.OpenSolutionAsync(solutionFilePath, null, cancellationToken);
-            OnWorkspaceStateChanged(workspace.CurrentSolution);
+            if (RuntimeInfo.IsWindows) { // issues/33
+                solution = solution.WithShadowCopiedAnalyzerReferences(AnalyzerLoader);
+            }
+            OnWorkspaceStateChanged(solution);
 
             if (CompileProjectsAfterLoading) {
                 foreach (var project in solution.Projects) {

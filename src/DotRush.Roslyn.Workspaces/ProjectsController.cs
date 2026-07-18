@@ -1,13 +1,16 @@
+using DotRush.Common;
 using DotRush.Common.Extensions;
 using DotRush.Common.InteropV2;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.Workspaces.Extensions;
+using DotRush.Roslyn.Workspaces.Loaders;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 
 namespace DotRush.Roslyn.Workspaces;
 
 public abstract class ProjectsController {
+    protected ShadowCopyAnalyzerLoader AnalyzerLoader { get; } = new ShadowCopyAnalyzerLoader();
 
     protected abstract bool RestoreProjectsBeforeLoading { get; }
     protected abstract bool CompileProjectsAfterLoading { get; }
@@ -35,7 +38,11 @@ public abstract class ProjectsController {
 
                 OnProjectLoadStarted(path);
                 var project = await workspace.OpenProjectAsync(path, null, cancellationToken);
-                OnWorkspaceStateChanged(workspace.CurrentSolution);
+                if (RuntimeInfo.IsWindows) { // issues/33
+                    var solution = project.Solution.WithShadowCopiedAnalyzerReferences(AnalyzerLoader);
+                    project = solution.GetProject(project.Id) ?? project;
+                }
+                OnWorkspaceStateChanged(project.Solution);
 
                 if (CompileProjectsAfterLoading) {
                     OnProjectCompilationStarted(path);

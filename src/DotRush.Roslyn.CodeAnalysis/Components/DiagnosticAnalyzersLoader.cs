@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
+using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
-using DotRush.Roslyn.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -53,7 +53,7 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
     }
     public List<DiagnosticAnalyzer> LoadFromAssembly(string assemblyName) {
         var result = new List<DiagnosticAnalyzer>();
-        var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName);
+        var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName)?.DefinedTypes;
         if (assemblyTypes == null)
             return result;
 
@@ -70,7 +70,8 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
                 }
                 result.Add(instance);
                 currentClassLogger.Debug($"Loaded analyzer: {instance}");
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 currentClassLogger.Error($"Creating instance of analyzer '{analyzerInfo.Name}' failed, error: {ex}");
             }
         }

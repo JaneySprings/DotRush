@@ -47,7 +47,7 @@ public class ConfigurationService {
 
         var configFilePath = Path.Combine(Environment.CurrentDirectory, ConfigurationFileName);
         if (!File.Exists(configFilePath))
-            configFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigurationFileName);
+            configFilePath = Path.Combine(AppContext.BaseDirectory, ConfigurationFileName);
         if (File.Exists(configFilePath)) {
             currentClassLogger.Debug($"Configuration file found: '{configFilePath}'");
             var configuration = SafeExtensions.Invoke(() => JsonSerializer.Deserialize<ConfigurationSection>(File.ReadAllText(configFilePath), JsonSerializerConfig.Options));

@@ -1,4 +1,4 @@
-using DotRush.Roslyn.CodeAnalysis.Extensions;
+using DotRush.Common.Extensions;
 
 namespace DotRush.Roslyn.CodeAnalysis.Reflection;
 
