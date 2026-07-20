@@ -28,7 +28,7 @@ public static partial class MarkdownConverter {
         return stringBuilder.ToString();
     }
     public static void TaggedTextToMarkdown(ImmutableArray<TaggedText> taggedParts, StringBuilder stringBuilder) {
-        FormattingOptions formattingOptions = new();
+        MarkdownFormattingOptions formattingOptions = new();
         bool isInCodeBlock = false;
         bool brokeLine = true;
         bool afterFirstLine = false;
