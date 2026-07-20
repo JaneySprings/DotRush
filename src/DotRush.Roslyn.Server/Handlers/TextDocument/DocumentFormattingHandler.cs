@@ -33,11 +33,12 @@ public class DocumentFormattingHandler : DocumentFormattingHandlerBase {
             if (document == null)
                 return null;
 
-            var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
-            var formattedDocument = await Formatter.FormatAsync(document, cancellationToken: token).ConfigureAwait(false);
-            formattedDocument = await Formatter.OrganizeImportsAsync(formattedDocument, token).ConfigureAwait(false);
+            var sourceText = await document.GetTextAsync(token);
+            var optionSet = await request.Options.ToOptionSetAsync(document, token);
+            var formattedDocument = await Formatter.FormatAsync(document, optionSet, cancellationToken: token);
+            formattedDocument = await Formatter.OrganizeImportsAsync(formattedDocument, token);
 
-            var textChanges = await formattedDocument.GetTextChangesAsync(document, token).ConfigureAwait(false);
+            var textChanges = await formattedDocument.GetTextChangesAsync(document, token);
             foreach (var textEdit in textChanges.Select(x => x.ToTextEdit(sourceText))) {
                 if (!edits.Any(x => PositionExtensions.CheckCollision(x.Range, textEdit.Range)))
                     edits.Add(textEdit);
@@ -57,10 +58,11 @@ public class DocumentFormattingHandler : DocumentFormattingHandlerBase {
             if (document == null)
                 return null;
 
-            var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
+            var sourceText = await document.GetTextAsync(token);
             var spans = request.Ranges.Select(range => range.ToTextSpan(sourceText)).ToArray();
-            var formattedDocument = await Formatter.FormatAsync(document, spans, cancellationToken: token).ConfigureAwait(false);
-            var textChanges = await formattedDocument.GetTextChangesAsync(document, token).ConfigureAwait(false);
+            var optionSet = await request.Options.ToOptionSetAsync(document, token);
+            var formattedDocument = await Formatter.FormatAsync(document, spans, optionSet, cancellationToken: token);
+            var textChanges = await formattedDocument.GetTextChangesAsync(document, token);
             foreach (var textEdit in textChanges.Select(x => x.ToTextEdit(sourceText))) {
                 if (!edits.Any(x => PositionExtensions.CheckCollision(x.Range, textEdit.Range)))
                     edits.Add(textEdit);

@@ -175,4 +175,43 @@ var b = new object();
         Assert.That(result.Edits[0].Range, Is.EqualTo(PositionExtensions.CreateRange(13, 0, 13, 0)));
         Assert.That(result.Edits[0].NewText.ToLF(), Is.EqualTo("        "));
     }
+    [Test]
+    public async Task FormatDocumentWithClientOptionsTest() {
+        var documentPath = CreateDocument(nameof(DocumentFormattingHandlerTests), @"
+namespace Tests;
+
+class MyClass1
+{
+    private void Method1()
+    {
+        var a = new object();
+    }
+}
+");
+        var result = await handler.Handle(new DocumentFormattingParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Options = new FormattingOptions() { InsertSpaces = true, TabSize = 4 }
+        }, CancellationToken.None);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Edits, Is.Empty);
+
+        result = await handler.Handle(new DocumentFormattingParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Options = new FormattingOptions() { InsertSpaces = false, TabSize = 4 }
+        }, CancellationToken.None);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Edits, Is.Not.Empty);
+        Assert.That(result.Edits.Any(x => x.NewText.Contains('\t')), Is.True);
+
+        result = await handler.Handle(new DocumentFormattingParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Options = new FormattingOptions() { InsertSpaces = true, TabSize = 2 }
+        }, CancellationToken.None);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Edits, Is.Not.Empty);
+        Assert.That(result.Edits.All(x => !x.NewText.Contains('\t')), Is.True);
+    }
 }

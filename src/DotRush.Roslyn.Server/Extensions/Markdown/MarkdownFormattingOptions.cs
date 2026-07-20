@@ -1,7 +1,7 @@
 namespace DotRush.Roslyn.Server.Extensions;
 
-public class FormattingOptions {
-    public FormattingOptions() {
+public class MarkdownFormattingOptions {
+    public MarkdownFormattingOptions() {
         //just defaults
         NewLine = "\n";
     }
