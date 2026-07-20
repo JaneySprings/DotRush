@@ -36,6 +36,14 @@ public static class ProjectExtensions {
     public static string GetProjectDirectory(this Project project) {
         return Path.GetDirectoryName(project.FilePath) ?? string.Empty;
     }
+    public static string GetDocumentFilePath(this Document document) {
+        if (!string.IsNullOrEmpty(document.FilePath))
+            return document.FilePath;
+
+        var documentFilePath = document.Project.GetProjectDirectory();
+        document.Folders.ForEach(folder => documentFilePath = Path.Combine(documentFilePath, folder));
+        return Path.Combine(documentFilePath, document.Name);
+    }
 
     public static IEnumerable<Document> GetDocumentsWithFilePath(this Project project, string? filePath) {
         return project.Documents.Where(it => PathExtensions.Equals(it.FilePath, filePath));
