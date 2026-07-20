@@ -11,6 +11,9 @@ public static class TextDocumentExtensions {
     public static TextDocumentIdentifier CreateDocumentId(this Document document) {
         return new TextDocumentIdentifier(new DocumentUri(new Uri(document.FilePath!)));
     }
+    public static TextDocumentIdentifier CreateDocumentId(this Document[] documents) {
+        return new TextDocumentIdentifier(new DocumentUri(new Uri(documents[0].FilePath!)));
+    }
     public static string ToLF(this string text) {
         return text.Replace("\r\n", "\n");
     }
