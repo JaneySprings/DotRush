@@ -1,7 +1,6 @@
 using DotRush.Common.Extensions;
 using DotRush.Common.InteropV2;
 using DotRush.Common.Logging;
-using DotRush.Roslyn.Workspaces.Loaders;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.MSBuild;

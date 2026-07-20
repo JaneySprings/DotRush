@@ -4,7 +4,7 @@ using DotRush.Common.Extensions;
 using Microsoft.CodeAnalysis;
 using FileSystemExtensions = DotRush.Common.Extensions.FileSystemExtensions;
 
-namespace DotRush.Roslyn.Workspaces.Loaders;
+namespace DotRush.Roslyn.Workspaces.Components;
 
 public sealed class ShadowCopyAnalyzerLoader : IAnalyzerAssemblyLoader {
     private readonly string shadowCopyDirectory;

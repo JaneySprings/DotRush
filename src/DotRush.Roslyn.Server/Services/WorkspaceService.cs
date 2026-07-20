@@ -48,9 +48,9 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
     public override async Task OnLoadingCompletedAsync(CancellationToken cancellationToken) {
         await serverFacade.EndWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken).ConfigureAwait(false);
     }
-    public override void OnProjectRestoreStarted(string documentPath) {
+    public override void OnProjectRestoreStarted(string documentPath, int progress) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectRestoreCompositeFormat, projectName));
+        _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectRestoreCompositeFormat, projectName), progress);
     }
     public override void OnProjectRestoreCompleted(string documentPath, ProcessResult result) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
@@ -70,17 +70,17 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
             Diagnostics = diagnostics,
         });
     }
-    public override void OnProjectLoadStarted(string documentPath) {
+    public override void OnProjectLoadStarted(string documentPath, int progress) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectIndexCompositeFormat, projectName));
+        _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectIndexCompositeFormat, projectName), progress);
     }
     public override void OnProjectLoadCompleted(Microsoft.CodeAnalysis.Project project) {
         var projectModel = MSBuildProjectsLoader.LoadProject(project.FilePath, true);
         _ = serverFacade?.SendNotification(Resources.ProjectLoadedNotification, JsonSerializer.SerializeToDocument(projectModel));
     }
-    public override void OnProjectCompilationStarted(string documentPath) {
+    public override void OnProjectCompilationStarted(string documentPath, int progress) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectCompileCompositeFormat, projectName));
+        _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectCompileCompositeFormat, projectName), progress);
     }
 
     internal IEnumerable<string>? GetProjectOrSolutionFiles(IEnumerable<string>? workspaceFolders) {
