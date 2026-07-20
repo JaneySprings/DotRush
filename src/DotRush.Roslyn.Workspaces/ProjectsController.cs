@@ -2,8 +2,8 @@ using DotRush.Common;
 using DotRush.Common.Extensions;
 using DotRush.Common.InteropV2;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.Workspaces.Components;
 using DotRush.Roslyn.Workspaces.Extensions;
-using DotRush.Roslyn.Workspaces.Loaders;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 
@@ -11,32 +11,35 @@ namespace DotRush.Roslyn.Workspaces;
 
 public abstract class ProjectsController {
     protected ShadowCopyAnalyzerLoader AnalyzerLoader { get; } = new ShadowCopyAnalyzerLoader();
+    protected WorkspaceProgressHandler ProgressHandler { get; } = new WorkspaceProgressHandler();
 
     protected abstract bool RestoreProjectsBeforeLoading { get; }
     protected abstract bool CompileProjectsAfterLoading { get; }
 
     public virtual Task OnLoadingStartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     public virtual Task OnLoadingCompletedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-    public virtual void OnProjectRestoreStarted(string documentPath) { }
+    public virtual void OnProjectRestoreStarted(string documentPath, int progress) { }
     public virtual void OnProjectRestoreCompleted(string documentPath, ProcessResult result) { }
-    public virtual void OnProjectLoadStarted(string documentPath) { }
+    public virtual void OnProjectLoadStarted(string documentPath, int progress) { }
     public virtual void OnProjectLoadCompleted(Project project) { }
-    public virtual void OnProjectCompilationStarted(string documentPath) { }
+    public virtual void OnProjectCompilationStarted(string documentPath, int progress) { }
     public virtual void OnProjectCompilationCompleted(Project project) { }
     protected abstract void OnWorkspaceStateChanged(Solution newSolution);
 
     protected async Task LoadProjectsAsync(MSBuildWorkspace workspace, string[] projectFilePaths, CancellationToken cancellationToken) {
         CurrentSessionLogger.Debug($"Loading projects: {string.Join(';', projectFilePaths)}"); ;
+        ProgressHandler.Reset();
+        ProgressHandler.ScheduleOperations(projectFilePaths.Length);
 
         foreach (var path in projectFilePaths) {
             await SafeExtensions.InvokeAsync(async () => {
                 if (RestoreProjectsBeforeLoading) {
-                    OnProjectRestoreStarted(path);
+                    OnProjectRestoreStarted(path, ProgressHandler.GetProgress());
                     var result = await workspace.RestoreProjectAsync(path, cancellationToken);
                     OnProjectRestoreCompleted(path, result);
                 }
 
-                OnProjectLoadStarted(path);
+                OnProjectLoadStarted(path, ProgressHandler.GetProgress());
                 var project = await workspace.OpenProjectAsync(path, null, cancellationToken);
                 if (RuntimeInfo.IsWindows) { // issues/33
                     var solution = project.Solution.WithShadowCopiedAnalyzerReferences(AnalyzerLoader);
@@ -45,11 +48,12 @@ public abstract class ProjectsController {
                 OnWorkspaceStateChanged(project.Solution);
 
                 if (CompileProjectsAfterLoading) {
-                    OnProjectCompilationStarted(path);
+                    OnProjectCompilationStarted(path, ProgressHandler.GetProgress());
                     _ = await project.GetCompilationAsync(cancellationToken);
                     OnProjectCompilationCompleted(project);
                 }
 
+                ProgressHandler.CompleteOperation();
                 OnProjectLoadCompleted(project);
             });
         }

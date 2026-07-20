@@ -36,23 +36,30 @@ public abstract class SolutionController : ProjectsController {
     }
     protected Task LoadSolutionAsync(MSBuildWorkspace workspace, string solutionFilePath, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
+            ProgressHandler.Reset();
+            ProgressHandler.ScheduleOperations(RestoreProjectsBeforeLoading ? 2 : 1);
+
             if (RestoreProjectsBeforeLoading) {
-                OnProjectRestoreStarted(solutionFilePath);
+                OnProjectRestoreStarted(solutionFilePath, ProgressHandler.GetProgress());
                 var result = await workspace.RestoreProjectAsync(solutionFilePath, cancellationToken);
+                ProgressHandler.CompleteOperation();
                 OnProjectRestoreCompleted(solutionFilePath, result);
             }
 
-            OnProjectLoadStarted(solutionFilePath);
+            OnProjectLoadStarted(solutionFilePath, ProgressHandler.GetProgress());
             var solution = await workspace.OpenSolutionAsync(solutionFilePath, null, cancellationToken);
             if (RuntimeInfo.IsWindows) { // issues/33
                 solution = solution.WithShadowCopiedAnalyzerReferences(AnalyzerLoader);
             }
             OnWorkspaceStateChanged(solution);
+            ProgressHandler.CompleteOperation();
 
             if (CompileProjectsAfterLoading) {
+                ProgressHandler.ScheduleOperations(solution.Projects.Count());
                 foreach (var project in solution.Projects) {
-                    OnProjectCompilationStarted(project.FilePath ?? solutionFilePath);
+                    OnProjectCompilationStarted(project.FilePath ?? solutionFilePath, ProgressHandler.GetProgress());
                     _ = await project.GetCompilationAsync(cancellationToken);
+                    ProgressHandler.CompleteOperation();
                     OnProjectCompilationCompleted(project);
                 }
             }
