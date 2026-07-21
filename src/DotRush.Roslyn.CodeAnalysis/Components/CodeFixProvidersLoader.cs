@@ -40,7 +40,7 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
 
     public List<CodeFixProvider> LoadFromAssembly(string assemblyName) {
         var result = new List<CodeFixProvider>();
-        var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName)?.DefinedTypes;
+        var assemblyTypes = ReflectionExtensions.LoadTypes(assemblyName);
         if (assemblyTypes == null)
             return result;
 

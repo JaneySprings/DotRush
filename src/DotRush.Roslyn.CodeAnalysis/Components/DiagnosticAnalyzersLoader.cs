@@ -53,7 +53,7 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
     }
     public List<DiagnosticAnalyzer> LoadFromAssembly(string assemblyName) {
         var result = new List<DiagnosticAnalyzer>();
-        var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName)?.DefinedTypes;
+        var assemblyTypes = ReflectionExtensions.LoadTypes(assemblyName);
         if (assemblyTypes == null)
             return result;
 

@@ -15,12 +15,11 @@ public static class InternalCompletionService {
         getCompletionsAsyncMethod = completionServiceType?.GetMethod("GetCompletionsAsync", BindingFlags.Instance | BindingFlags.NonPublic);
     }
 
-    public static Task<CompletionList> GetCompletionsAsync(CompletionService completionService, Document document, int position, object completionOptions, CancellationToken cancellationToken) {
+    public static Task<CompletionList> GetCompletionsAsync(CompletionService completionService, Document document, int position, object completionOptions, CompletionTrigger completionTrigger, CancellationToken cancellationToken) {
         if (getCompletionsAsyncMethod == null)
             return Task.FromResult(CompletionList.Empty);
 
         var passThroughOptions = document.Project.Solution.Options;
-        var completionTrigger = default(CompletionTrigger);
 
         var result = getCompletionsAsyncMethod.Invoke(completionService, new object?[] {
             document, /// <param name="document">The document that completion is occurring within.</param>

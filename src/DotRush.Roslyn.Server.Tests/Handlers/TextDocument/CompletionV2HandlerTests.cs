@@ -5,6 +5,7 @@ using EmmyLua.LanguageServer.Framework.Protocol.Message.Completion;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.Kind;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
 using NUnit.Framework;
+using CompletionExtensions = DotRush.Roslyn.Server.Extensions.CompletionExtensions;
 
 namespace DotRush.Roslyn.Server.Tests;
 
@@ -50,10 +51,12 @@ class MyClass1 {
         Assert.That(result.List.ItemDefaults, Is.Not.Null);
         Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
         Assert.That(result.List.ItemDefaults.EditRange?.Result1, Is.EqualTo(PositionExtensions.CreateRange(5, 25, 5, 26)));
+        Assert.That(result.List.ItemDefaults.CommitCharacters, Is.EquivalentTo(CompletionExtensions.DefaultCommitCharacters));
         Assert.That(result.List.Items, Has.Count.EqualTo(483));
 
         var preselect = result.List.Items.Where(it => it.Preselect == true).FirstOrDefault();
         Assert.That(preselect, Is.Not.Null);
+        Assert.That(preselect.CommitCharacters, Is.EquivalentTo([" ", "(", "[", "{", ";", "."]));
         Assert.That(preselect.Label, Is.EqualTo("MyClass1"));
         Assert.That(preselect.Kind, Is.EqualTo(CompletionItemKind.Class));
         Assert.That(preselect.SortText, Is.EqualTo("0_MyClass1"));
@@ -147,10 +150,12 @@ class MyClass1 {
         Assert.That(result.List.ItemDefaults, Is.Not.Null);
         Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
         Assert.That(result.List.ItemDefaults.EditRange?.Result1, Is.EqualTo(PositionExtensions.CreateRange(4, 13, 4, 15)));
+        Assert.That(result.List.ItemDefaults.CommitCharacters, Is.EqualTo(CompletionExtensions.DefaultCommitCharacters));
         Assert.That(result.List.Items, Has.Count.EqualTo(3));
 
         var equalsOvrItem = result.List.Items.FirstOrDefault(it => it.Label == "Equals(object? obj)");
         Assert.That(equalsOvrItem, Is.Not.Null);
+        Assert.That(equalsOvrItem.CommitCharacters, Is.EqualTo(["("]));
         Assert.That(equalsOvrItem.Label, Is.EqualTo("Equals(object? obj)"));
         Assert.That(equalsOvrItem.Kind, Is.EqualTo(CompletionItemKind.Method));
         Assert.That(equalsOvrItem.SortText, Is.EqualTo("Equals")); //0000Equals

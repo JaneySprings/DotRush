@@ -26,6 +26,7 @@ public class TextDocumentHandler : TextDocumentHandlerBase {
 
     protected override Task Handle(DidOpenTextDocumentParams request, CancellationToken token) {
         var filePath = request.TextDocument.Uri.FileSystemPath;
+        workspaceService.UpdateDocument(filePath);
         codeAnalysisService.RequestDiagnosticsPublishing(filePath, workspaceService);
         return Task.CompletedTask;
     }

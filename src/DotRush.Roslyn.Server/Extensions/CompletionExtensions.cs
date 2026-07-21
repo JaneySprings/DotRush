@@ -10,6 +10,8 @@ using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.Complet
 namespace DotRush.Roslyn.Server.Extensions;
 
 public static class CompletionExtensions {
+    public static readonly List<string> DefaultCommitCharacters = CompletionRules.Default.DefaultCommitCharacters.Select(c => c.ToString()).ToList();
+
     public static ProtocolModels.CompletionItemKind ToCompletionItemKind(this CompletionItem item) {
         if (item.Tags.Length == 0)
             return ProtocolModels.CompletionItemKind.Text;
@@ -72,6 +74,35 @@ public static class CompletionExtensions {
         return item.Tags.Contains(WellKnownTags.Snippet);
     }
 
+    public static CompletionTrigger ToCompletionTrigger(this ProtocolModels.CompletionContext? context) {
+        if (context?.TriggerKind == ProtocolModels.CompletionTriggerKind.TriggerCharacter && !string.IsNullOrEmpty(context.TriggerCharacter))
+            return CompletionTrigger.CreateInsertionTrigger(context.TriggerCharacter[0]);
+
+        return CompletionTrigger.Invoke;
+    }
+    public static List<string>? GetCommitCharacters(this CompletionItem item) {
+        var commitCharacterRules = item.Rules.CommitCharacterRules;
+        if (commitCharacterRules.IsDefaultOrEmpty)
+            return null;
+
+        var commitCharacters = new HashSet<char>(CompletionRules.Default.DefaultCommitCharacters);
+        foreach (var rule in commitCharacterRules) {
+            switch (rule.Kind) {
+                case CharacterSetModificationKind.Add:
+                    commitCharacters.UnionWith(rule.Characters);
+                    break;
+                case CharacterSetModificationKind.Remove:
+                    commitCharacters.ExceptWith(rule.Characters);
+                    break;
+                case CharacterSetModificationKind.Replace:
+                    commitCharacters.Clear();
+                    commitCharacters.UnionWith(rule.Characters);
+                    break;
+            }
+        }
+        return commitCharacters.Select(c => c.ToString()).ToList();
+    }
+
     public static TextEdit ToTextEdit(this TextChange change, SourceText sourceText) {
         return new TextEdit() {
             NewText = change.NewText ?? string.Empty,
@@ -104,7 +135,7 @@ public static class CompletionExtensions {
         return (textEdit, additionalTextEdits);
     }
 
-    public static Task<CompletionList> GetCompletionsAsync(this CompletionService completionService, Document document, int position, ConfigurationService configurationService, CancellationToken cancellationToken) {
+    public static Task<CompletionList> GetCompletionsAsync(this CompletionService completionService, Document document, int position, ConfigurationService configurationService, CompletionTrigger trigger = default, CancellationToken cancellationToken = default) {
         var completionOptions = InternalCompletionOptions.CreateNew();
         if (completionOptions != null)
             InternalCompletionOptions.AssignValues(completionOptions,
@@ -113,9 +144,9 @@ public static class CompletionExtensions {
                 forceExpandedCompletionIndexCreation: true);
 
         if (!InternalCompletionService.IsInitialized || completionOptions == null)
-            return completionService.GetCompletionsAsync(document, position, cancellationToken: cancellationToken);
+            return completionService.GetCompletionsAsync(document, position, trigger, cancellationToken: cancellationToken);
 
-        return InternalCompletionService.GetCompletionsAsync(completionService, document, position, completionOptions, cancellationToken);
+        return InternalCompletionService.GetCompletionsAsync(completionService, document, position, completionOptions, trigger, cancellationToken);
     }
 
     private static string? RemoveIndentation(string? text) {

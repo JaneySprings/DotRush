@@ -35,28 +35,27 @@ public class CompletionV2Handler : CompletionHandlerBase {
 
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
         serverCapabilities.CompletionProvider = new CompletionOptions {
-            TriggerCharacters = new List<string> { " ", ".", "#", ">", ":" },
+            TriggerCharacters = new List<string> { " ", ".", "#", ">", ":", "(", "[", "\"", "<", "~" },
             ResolveProvider = true,
         };
     }
     protected override Task<CompletionResponse?> Handle(CompletionParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(async () => {
-            if (request.Context?.TriggerKind == CompletionTriggerKind.TriggerCharacter && !configurationService.TriggerCompletionOnSpace) {
-                if (request.Context.TriggerCharacter == " ")
-                    return null;
-            }
-
             var documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath).FirstOrDefault();
             document = workspaceService.Solution?.GetDocument(documentId);
             var completionService = RoslynCompletionService.GetService(document);
             if (completionService == null || document == null)
                 return null;
 
-            var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
+            var sourceText = await document.GetTextAsync(token);
             cursorOffset = request.Position.ToOffset(sourceText);
             completionItemsCache.Clear();
 
-            var completions = await completionService.GetCompletionsAsync(document, cursorOffset, configurationService, token).ConfigureAwait(false);
+            var completionTrigger = request.Context.ToCompletionTrigger();
+            if (request.Context?.TriggerKind == CompletionTriggerKind.TriggerCharacter && !completionService.ShouldTriggerCompletion(sourceText, cursorOffset, completionTrigger))
+                return null;
+
+            var completions = await completionService.GetCompletionsAsync(document, cursorOffset, configurationService, completionTrigger, token);
             var completionItems = completions.ItemsList.Select(item => {
                 var id = item.GetHashCode();
                 var completionItem = new CompletionItem() {
@@ -69,6 +68,7 @@ public class CompletionV2Handler : CompletionHandlerBase {
                     Detail = item.InlineDescription,
                     Preselect = item.Rules.MatchPriority == Microsoft.CodeAnalysis.Completion.MatchPriority.Preselect,
                     Deprecated = item.Tags.Contains(InternalWellKnownTags.Deprecated),
+                    CommitCharacters = item.GetCommitCharacters(),
                 };
 
                 if (item.IsComplexTextEdit && !item.IsAutoUsing())
@@ -76,11 +76,12 @@ public class CompletionV2Handler : CompletionHandlerBase {
 
                 completionItemsCache[id] = item;
                 return completionItem;
-            });
+            }).ToList();
 
             return new CompletionResponse(new CompletionList {
-                Items = completionItems.ToList(),
+                Items = completionItems,
                 ItemDefaults = new CompletionListItemDefault {
+                    CommitCharacters = CompletionExtensions.DefaultCommitCharacters,
                     InsertTextMode = InsertTextMode.AsIs,
                     EditRange = new CompletionListItemDefaultEditRange(completions.Span.ToRange(sourceText))
                 },
@@ -99,7 +100,7 @@ public class CompletionV2Handler : CompletionHandlerBase {
                 return item;
 
             if (item.Documentation == null) {
-                var description = await completionService.GetDescriptionAsync(document, roslynCompletionItem, token).ConfigureAwait(false);
+                var description = await completionService.GetDescriptionAsync(document, roslynCompletionItem, token);
                 if (description != null) {
                     item.Documentation = new MarkupContent() {
                         Kind = MarkupKind.Markdown,
@@ -108,8 +109,8 @@ public class CompletionV2Handler : CompletionHandlerBase {
                 }
             }
             if (roslynCompletionItem.IsComplexTextEdit && item.Command == null && item.AdditionalTextEdits == null) {
-                var completionChange = await completionService.GetChangeAsync(document, roslynCompletionItem, cancellationToken: token).ConfigureAwait(false);
-                var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
+                var completionChange = await completionService.GetChangeAsync(document, roslynCompletionItem, cancellationToken: token);
+                var sourceText = await document.GetTextAsync(token);
                 if (completionChange == null || sourceText == null)
                     return item;
 
