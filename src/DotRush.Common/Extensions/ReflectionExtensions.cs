@@ -26,6 +26,20 @@ public static class ReflectionExtensions {
             return null;
         }
     }
+    public static IEnumerable<TypeInfo>? LoadTypes(string assemblyPathOrName) {
+        var assembly = LoadAssembly(assemblyPathOrName);
+        if (assembly == null)
+            return null;
+
+        try {
+            return assembly.DefinedTypes;
+        }
+        catch (Exception ex) {
+            CurrentSessionLogger.Error($"Loading assembly '{assemblyPathOrName}' failed, error: {ex.Message}");
+            return null;
+        }
+    }
+
     public static string GetAssemblyName(string assemblyPathOrName) {
         if (assemblyPathOrName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
             return Path.GetFileNameWithoutExtension(assemblyPathOrName);

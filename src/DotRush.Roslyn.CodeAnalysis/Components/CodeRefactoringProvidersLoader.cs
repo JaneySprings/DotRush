@@ -44,7 +44,7 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
 
     public List<CodeRefactoringProvider> LoadFromAssembly(string assemblyName) {
         var result = new List<CodeRefactoringProvider>();
-        var assemblyTypes = ReflectionExtensions.LoadAssembly(assemblyName)?.DefinedTypes;
+        var assemblyTypes = ReflectionExtensions.LoadTypes(assemblyName);
         if (assemblyTypes == null)
             return result;
 

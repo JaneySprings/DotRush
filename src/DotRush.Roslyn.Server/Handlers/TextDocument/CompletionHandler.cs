@@ -48,11 +48,6 @@ public class CompletionHandler : CompletionHandlerBase {
     }
     protected override Task<CompletionResponse?> Handle(CompletionParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(async () => {
-            if (request.Context?.TriggerKind == CompletionTriggerKind.TriggerCharacter && !configurationService.TriggerCompletionOnSpace) {
-                if (request.Context.TriggerCharacter == " ")
-                    return null;
-            }
-
             documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath).FirstOrDefault();
             var document = workspaceService.Solution?.GetDocument(documentId);
             if (completionService == null)
@@ -62,8 +57,13 @@ public class CompletionHandler : CompletionHandlerBase {
 
             var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
             offset = request.Position.ToOffset(sourceText);
+
+            var completionTrigger = request.Context.ToCompletionTrigger();
+            if (request.Context?.TriggerKind == CompletionTriggerKind.TriggerCharacter && !completionService.ShouldTriggerCompletion(sourceText, offset, completionTrigger))
+                return null;
+
             var typedSpan = completionService.GetDefaultCompletionListSpan(sourceText, offset);
-            var completions = await completionService.GetCompletionsAsync(document, offset, configurationService, token).ConfigureAwait(false);
+            var completions = await completionService.GetCompletionsAsync(document, offset, configurationService, completionTrigger, token).ConfigureAwait(false);
 
             completionItemsCache.Clear();
             var completionItems = await Task.WhenAll(completions.ItemsList.Select(async item => {

@@ -21,7 +21,6 @@ public class ConfigurationService {
 
     public bool ShowItemsFromUnimportedNamespaces => configuration.ShowItemsFromUnimportedNamespaces;
     public bool TargetTypedCompletionFilter => configuration.TargetTypedCompletionFilter;
-    public bool TriggerCompletionOnSpace => configuration.TriggerCompletionOnSpace;
 
     public bool SkipUnrecognizedProjects => configuration.SkipUnrecognizedProjects;
     public bool LoadMetadataForReferencedProjects => configuration.LoadMetadataForReferencedProjects;
@@ -113,9 +112,6 @@ internal sealed class RoslynSection {
 
     [JsonPropertyName("targetTypedCompletionFilter")]
     public bool TargetTypedCompletionFilter { get; set; }
-
-    [JsonPropertyName("triggerCompletionOnSpace")]
-    public bool TriggerCompletionOnSpace { get; set; }
 
     [JsonPropertyName("skipUnrecognizedProjects")]
     public bool SkipUnrecognizedProjects { get; set; } = true;
