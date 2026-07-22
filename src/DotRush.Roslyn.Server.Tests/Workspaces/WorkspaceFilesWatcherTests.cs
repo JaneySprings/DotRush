@@ -63,6 +63,41 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
     [TestCase(1)]
     [TestCase(2)]
     [TestCase(5)]
+    public async Task UpdateFilesViaAtomicRenameTest(int fileCount) {
+        for (int i = 0; i < fileCount; i++)
+            CreateFile($"{nameof(WorkspaceFilesWatcherTests)}{i}", "public class TestFile1 {}");
+        await Task.Delay(FSDelay).ConfigureAwait(false);
+        for (int i = 0; i < fileCount; i++) {
+            var path = Path.Combine(ProjectDirectory, $"{nameof(WorkspaceFilesWatcherTests)}{i}.cs");
+            var result = Workspace.Solution!.GetDocumentIdsWithFilePathV2(path).ToArray();
+            Assert.That(result, Has.Length.EqualTo(2));
+        }
+
+        for (int i = 0; i < fileCount; i++) {
+            var path = Path.Combine(ProjectDirectory, $"{nameof(WorkspaceFilesWatcherTests)}{i}.cs");
+            var tempPath = path + ".tmp";
+            File.WriteAllText(tempPath, "public class TestFile2 {}");
+            File.Move(tempPath, path, true);
+        }
+        await Task.Delay(FSDelay).ConfigureAwait(false);
+        for (int i = 0; i < fileCount; i++) {
+            var path = Path.Combine(ProjectDirectory, $"{nameof(WorkspaceFilesWatcherTests)}{i}.cs");
+            var result = Workspace.Solution!.GetDocumentIdsWithFilePathV2(path).ToArray();
+            Assert.That(result, Has.Length.EqualTo(2));
+            foreach (var documentId in result) {
+                var document = Workspace.Solution!.GetDocument(documentId);
+                var text = await document!.GetTextAsync().ConfigureAwait(false);
+                Assert.That(text.ToString(), Does.Contain("TestFile2"));
+            }
+        }
+
+        for (int i = 0; i < fileCount; i++)
+            DeleteFile($"{nameof(WorkspaceFilesWatcherTests)}{i}");
+    }
+
+    [TestCase(1)]
+    [TestCase(2)]
+    [TestCase(5)]
     public async Task CreateAndDeleteFilesInFolderTest(int fileCount) {
         for (int i = 0; i < fileCount; i++)
             CreateFile($"{nameof(WorkspaceFilesWatcherTests)}{i}", "TestFolder", "public class TestFile1 {}");
@@ -106,7 +141,8 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
             try {
                 File.WriteAllText(path1, "public class TestFile1 {}");
                 File.WriteAllText(path2, "public class TestFile2 {}");
-            } catch {
+            }
+            catch {
                 Assert.Fail($"Failed to write files.");
             }
 
