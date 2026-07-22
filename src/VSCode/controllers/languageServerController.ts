@@ -58,9 +58,9 @@ export class LanguageServerController {
                 editor.revealRange(new vscode.Range(position, position));
             }
         }));
-        context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async e => {
-            const extName = path.extname(e.fileName);
-            if (!Extensions.isProjectFile(e.fileName, true) && extName !== '.props')
+        context.subscriptions.push(vscode.workspace.onWillSaveTextDocument(async e => {
+            const extName = path.extname(e.document.fileName);
+            if (!e.document.isDirty || (!Extensions.isProjectFile(e.document.fileName, true) && extName !== '.props'))
                 return;
 
             const value = await vscode.window.showWarningMessage(res.messageProjectChanged, res.messageReload)
