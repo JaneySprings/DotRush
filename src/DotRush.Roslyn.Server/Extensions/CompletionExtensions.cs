@@ -80,27 +80,41 @@ public static class CompletionExtensions {
 
         return CompletionTrigger.Invoke;
     }
-    public static List<string>? GetCommitCharacters(this CompletionItem item) {
-        var commitCharacterRules = item.Rules.CommitCharacterRules;
-        if (commitCharacterRules.IsDefaultOrEmpty)
+    public static List<string>? GetCommitCharacters(this CompletionItem item, bool isSoftSelection, bool isSuggestionMode) {
+        if (isSuggestionMode)
             return null;
-
-        var commitCharacters = new HashSet<char>(CompletionRules.Default.DefaultCommitCharacters);
-        foreach (var rule in commitCharacterRules) {
-            switch (rule.Kind) {
-                case CharacterSetModificationKind.Add:
-                    commitCharacters.UnionWith(rule.Characters);
-                    break;
-                case CharacterSetModificationKind.Remove:
-                    commitCharacters.ExceptWith(rule.Characters);
-                    break;
-                case CharacterSetModificationKind.Replace:
-                    commitCharacters.Clear();
-                    commitCharacters.UnionWith(rule.Characters);
-                    break;
-            }
+        if (isSoftSelection) {
+            // Items that explicitly request hard selection keep their commit characters even when nothing
+            // is typed yet (e.g. preselected items in the `new ` context). List defaults are empty in this
+            // mode, so the default set must be returned explicitly
+            if (item.Rules.SelectionBehavior != CompletionItemSelectionBehavior.HardSelection)
+                return null;
+            return CollectCommitCharacters(item) ?? DefaultCommitCharacters;
         }
-        return commitCharacters.Select(c => c.ToString()).ToList();
+        return CollectCommitCharacters(item);
+
+        List<string>? CollectCommitCharacters(CompletionItem item) {
+            var commitCharacterRules = item.Rules.CommitCharacterRules;
+            if (commitCharacterRules.IsDefaultOrEmpty)
+                return null;
+
+            var commitCharacters = new HashSet<char>(CompletionRules.Default.DefaultCommitCharacters);
+            foreach (var rule in commitCharacterRules) {
+                switch (rule.Kind) {
+                    case CharacterSetModificationKind.Add:
+                        commitCharacters.UnionWith(rule.Characters);
+                        break;
+                    case CharacterSetModificationKind.Remove:
+                        commitCharacters.ExceptWith(rule.Characters);
+                        break;
+                    case CharacterSetModificationKind.Replace:
+                        commitCharacters.Clear();
+                        commitCharacters.UnionWith(rule.Characters);
+                        break;
+                }
+            }
+            return commitCharacters.Select(c => c.ToString()).ToList();
+        }
     }
 
     public static TextEdit ToTextEdit(this TextChange change, SourceText sourceText) {

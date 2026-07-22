@@ -381,6 +381,37 @@ class MyClass1 : IInterface {
         Assert.That(argument3!.Value, Is.EqualTo(OnPlatform(88, 92)));
     }
     [Test]
+    public async Task HandleSoftSelectionAfterTriggerCharacterTest() {
+        var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
+namespace Tests;
+
+class MyClass1 {
+    private void Method1(bool value) {
+        bool myValue = false;
+        Method1(
+    }
+}
+");
+        var result = await handler.Handle(new CompletionParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(6, 16),
+            Context = new CompletionContext() {
+                TriggerKind = CompletionTriggerKind.TriggerCharacter,
+                TriggerCharacter = "(",
+            },
+        }, CancellationToken.None);
+
+        Assert.That(result?.List, Is.Not.Null);
+        // Nothing typed after `(` - commit characters like `!` or ` ` must not commit the selected item
+        Assert.That(result.List.IsIncomplete, Is.True);
+        Assert.That(result.List.ItemDefaults, Is.Not.Null);
+        Assert.That(result.List.ItemDefaults.CommitCharacters, Is.Null);
+
+        var localItem = result.List.Items.FirstOrDefault(it => it.Label == "myValue");
+        Assert.That(localItem, Is.Not.Null);
+        Assert.That(localItem.CommitCharacters, Is.Null.Or.Empty);
+    }
+    [Test]
     public async Task HandleCollectionSnippetTest() {
         var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
 namespace Tests;
@@ -398,10 +429,11 @@ class MyClass1 {
         }, CancellationToken.None);
 
         Assert.That(result?.List, Is.Not.Null);
-        Assert.That(result.List.IsIncomplete, Is.False);
+        Assert.That(result.List.IsIncomplete, Is.True); // nothing typed after `data.` - list must be re-requested to restore commit characters
         Assert.That(result.List.ItemDefaults, Is.Not.Null);
         Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
         Assert.That(result.List.ItemDefaults.EditRange?.Result1, Is.EqualTo(PositionExtensions.CreateRange(6, 13, 6, 13)));
+        Assert.That(result.List.ItemDefaults.CommitCharacters, Is.Null);
         Assert.That(result.List.Items, Has.Count.EqualTo(127));
 
         var snippetItem = result.List.Items.FirstOrDefault(it => it.Label == "for");
