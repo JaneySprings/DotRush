@@ -56,6 +56,13 @@ public class CompletionV2Handler : CompletionHandlerBase {
                 return null;
 
             var completions = await completionService.GetCompletionsAsync(document, cursorOffset, configurationService, completionTrigger, token);
+            // VSCode has no soft selection - a commit character always commits the currently selected item.
+            // Emulate soft selection like dotnet/roslyn CompletionResultFactory: remove commit characters and
+            // mark the list incomplete so the client re-requests items once the user starts typing
+            var typedText = sourceText.GetSubText(completions.Span).ToString();
+            var isPunctuationOnly = typedText.Length != 0 && typedText.All(char.IsPunctuation);
+            var isSuggestionMode = completions.SuggestionModeItem != null || isPunctuationOnly;
+            var isSoftSelection = isSuggestionMode || typedText.Length == 0;
             var completionItems = completions.ItemsList.Select(item => {
                 var id = item.GetHashCode();
                 var completionItem = new CompletionItem() {
@@ -68,20 +75,21 @@ public class CompletionV2Handler : CompletionHandlerBase {
                     Detail = item.InlineDescription,
                     Preselect = item.Rules.MatchPriority == Microsoft.CodeAnalysis.Completion.MatchPriority.Preselect,
                     Deprecated = item.Tags.Contains(InternalWellKnownTags.Deprecated),
-                    CommitCharacters = item.GetCommitCharacters(),
+                    CommitCharacters = item.GetCommitCharacters(isSoftSelection, isSuggestionMode),
                 };
 
                 if (item.IsComplexTextEdit && !item.IsAutoUsing())
-                    completionItem.TextEditText = sourceText.GetSubText(item.Span).ToString();
+                    completionItem.TextEditText = typedText;
 
                 completionItemsCache[id] = item;
                 return completionItem;
             }).ToList();
 
             return new CompletionResponse(new CompletionList {
+                IsIncomplete = isPunctuationOnly || (typedText.Length == 0 && !isSuggestionMode),
                 Items = completionItems,
                 ItemDefaults = new CompletionListItemDefault {
-                    CommitCharacters = CompletionExtensions.DefaultCommitCharacters,
+                    CommitCharacters = isSoftSelection ? null : CompletionExtensions.DefaultCommitCharacters,
                     InsertTextMode = InsertTextMode.AsIs,
                     EditRange = new CompletionListItemDefaultEditRange(completions.Span.ToRange(sourceText))
                 },
