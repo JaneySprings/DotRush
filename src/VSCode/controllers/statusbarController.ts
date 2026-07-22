@@ -28,8 +28,8 @@ export class StatusBarController {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveProjectDirectory, () => StatusBarController.activeProject?.directory));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveConfiguration, () => StatusBarController.activeConfiguration));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveTargetFramework, () => StatusBarController.activeFramework));
-        context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async e => {
-            if (Extensions.isProjectFile(e.fileName) && StatusBarController.activeProject !== undefined)
+        context.subscriptions.push(vscode.workspace.onWillSaveTextDocument(async e => {
+            if (e.document.isDirty && Extensions.isProjectFile(e.document.fileName) && StatusBarController.activeProject !== undefined)
                 StatusBarController.updateStatusBarState(StatusBarController.activeProject.path);
         }));
 

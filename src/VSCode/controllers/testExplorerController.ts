@@ -20,9 +20,10 @@ export class TestExplorerController {
         context.subscriptions.push(TestExplorerController.controller);
         context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileRun, vscode.TestRunProfileKind.Run, async (r, ct) => await TestExplorerController.createTestRun(r, false, ct), true));
         context.subscriptions.push(TestExplorerController.controller.createRunProfile(res.testExplorerProfileDebug, vscode.TestRunProfileKind.Debug, async (r, ct) => await TestExplorerController.createTestRun(r, true, ct), true));
-
-        context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(async ev => await TestExplorerController.resolveTestCases(ev.uri)));
-        context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async ev => await TestExplorerController.resolveTestCases(ev.uri)));
+        context.subscriptions.push(vscode.workspace.onWillSaveTextDocument(async ev => {
+            if (ev.document.isDirty)
+                await TestExplorerController.resolveTestCases(ev.document.uri);
+        }));
     }
     public static loadProject(project: Project): void {
         const item = TestExplorerExtensions.createProjectItem(TestExplorerController.controller, project);
