@@ -109,8 +109,10 @@ public abstract class SolutionController : ProjectsController {
     }
 
     private void CreateSourceCodeDocument(string file) {
-        if (Solution != null && Solution.GetDocumentIdsWithFilePathV2(file).Any())
+        if (Solution != null && Solution.GetDocumentIdsWithFilePathV2(file).Any()) {
+            UpdateSourceCodeDocument(file);
             return;
+        }
         var projectIds = Solution?.GetProjectIdsMayContainsFilePath(file);
         if (projectIds == null || Solution == null)
             return;
@@ -150,8 +152,10 @@ public abstract class SolutionController : ProjectsController {
         }
     }
     private void CreateAdditionalDocument(string file) {
-        if (Solution != null && Solution.GetAdditionalDocumentIdsWithFilePathV2(file).Any())
+        if (Solution != null && Solution.GetAdditionalDocumentIdsWithFilePathV2(file).Any()) {
+            UpdateAdditionalDocument(file);
             return;
+        }
         var projectIds = Solution?.GetProjectIdsMayContainsFilePath(file);
         if (projectIds == null || Solution == null)
             return;
