@@ -41,6 +41,7 @@ public class Program {
               .AddHandler(new DefinitionHandler(navigationService))
               .AddHandler(new TypeDefinitionHandler(navigationService))
               .AddHandler(new TypeHierarchyHandler(navigationService))
+              .AddHandler(new CallHierarchyHandler(navigationService))
               .AddHandler(new CodeActionV2Handler(workspaceService, codeAnalysisService), new CodeActionHandler(workspaceService, codeAnalysisService))
               .AddHandler(new CompletionV2Handler(workspaceService, configurationService), new CompletionHandler(workspaceService, configurationService))
         // Workspace handlers
