@@ -12,6 +12,7 @@ using EmmyLua.LanguageServer.Framework.Protocol.Model.Kind;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.Markup;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 using RoslynCompletionItem = Microsoft.CodeAnalysis.Completion.CompletionItem;
 using RoslynCompletionService = Microsoft.CodeAnalysis.Completion.CompletionService;
 
@@ -56,10 +57,11 @@ public class CompletionV2Handler : CompletionHandlerBase {
                 return null;
 
             var completions = await completionService.GetCompletionsAsync(document, cursorOffset, configurationService, completionTrigger, token);
-            // VSCode has no soft selection - a commit character always commits the currently selected item.
-            // Emulate soft selection like dotnet/roslyn CompletionResultFactory: remove commit characters and
-            // mark the list incomplete so the client re-requests items once the user starts typing
-            var typedText = sourceText.GetSubText(completions.Span).ToString();
+            // Roslyn completion span covers the whole word the cursor is touching, including
+            // characters after the cursor. Only the part before the cursor was typed by the user
+            // and may be replaced on commit; the rest must survive an insert-mode commit
+            var typedSpan = TextSpan.FromBounds(completions.Span.Start, Math.Clamp(cursorOffset, completions.Span.Start, completions.Span.End));
+            var typedText = sourceText.GetSubText(typedSpan).ToString();
             var isPunctuationOnly = typedText.Length != 0 && typedText.All(char.IsPunctuation);
             var isSuggestionMode = completions.SuggestionModeItem != null || isPunctuationOnly;
             var isSoftSelection = isSuggestionMode || typedText.Length == 0;
@@ -91,7 +93,10 @@ public class CompletionV2Handler : CompletionHandlerBase {
                 ItemDefaults = new CompletionListItemDefault {
                     CommitCharacters = isSoftSelection ? null : CompletionExtensions.DefaultCommitCharacters,
                     InsertTextMode = InsertTextMode.AsIs,
-                    EditRange = new CompletionListItemDefaultEditRange(completions.Span.ToRange(sourceText))
+                    EditRange = new CompletionListItemDefaultEditRange(new InsertAndReplaceRange {
+                        Insert = typedSpan.ToRange(sourceText),
+                        Replace = completions.Span.ToRange(sourceText),
+                    })
                 },
             });
         });

@@ -50,7 +50,8 @@ class MyClass1 {
         Assert.That(result.List.IsIncomplete, Is.False);
         Assert.That(result.List.ItemDefaults, Is.Not.Null);
         Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
-        Assert.That(result.List.ItemDefaults.EditRange?.Result1, Is.EqualTo(PositionExtensions.CreateRange(5, 25, 5, 26)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Insert, Is.EqualTo(PositionExtensions.CreateRange(5, 25, 5, 26)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Replace, Is.EqualTo(PositionExtensions.CreateRange(5, 25, 5, 26)));
         Assert.That(result.List.ItemDefaults.CommitCharacters, Is.EquivalentTo(CompletionExtensions.DefaultCommitCharacters));
         Assert.That(result.List.Items, Has.Count.EqualTo(483));
 
@@ -104,7 +105,8 @@ class MyClass1 {
         Assert.That(result.List.IsIncomplete, Is.False);
         Assert.That(result.List.ItemDefaults, Is.Not.Null);
         Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
-        Assert.That(result.List.ItemDefaults.EditRange?.Result1, Is.EqualTo(PositionExtensions.CreateRange(5, 8, 5, 15)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Insert, Is.EqualTo(PositionExtensions.CreateRange(5, 8, 5, 15)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Replace, Is.EqualTo(PositionExtensions.CreateRange(5, 8, 5, 15)));
         Assert.That(result.List.Items, Has.Count.EqualTo(3439));
 
         var autoUsingItem = result.List.Items.FirstOrDefault(it => it.Label == "JsonSerializer");
@@ -149,7 +151,8 @@ class MyClass1 {
         Assert.That(result.List.IsIncomplete, Is.False);
         Assert.That(result.List.ItemDefaults, Is.Not.Null);
         Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
-        Assert.That(result.List.ItemDefaults.EditRange?.Result1, Is.EqualTo(PositionExtensions.CreateRange(4, 13, 4, 15)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Insert, Is.EqualTo(PositionExtensions.CreateRange(4, 13, 4, 15)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Replace, Is.EqualTo(PositionExtensions.CreateRange(4, 13, 4, 15)));
         Assert.That(result.List.ItemDefaults.CommitCharacters, Is.EqualTo(CompletionExtensions.DefaultCommitCharacters));
         Assert.That(result.List.Items, Has.Count.EqualTo(3));
 
@@ -219,7 +222,8 @@ class MyBase {
         Assert.That(result.List.IsIncomplete, Is.False);
         Assert.That(result.List.ItemDefaults, Is.Not.Null);
         Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
-        Assert.That(result.List.ItemDefaults.EditRange?.Result1, Is.EqualTo(PositionExtensions.CreateRange(4, 13, 4, 16)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Insert, Is.EqualTo(PositionExtensions.CreateRange(4, 13, 4, 16)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Replace, Is.EqualTo(PositionExtensions.CreateRange(4, 13, 4, 16)));
         Assert.That(result.List.Items, Has.Count.EqualTo(4));
 
         var ovrItem = result.List.Items.FirstOrDefault(it => it.Label.StartsWith("MyMethod"));
@@ -282,7 +286,8 @@ interface IInterface {
         Assert.That(result.List.IsIncomplete, Is.False);
         Assert.That(result.List.ItemDefaults, Is.Not.Null);
         Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
-        Assert.That(result.List.ItemDefaults.EditRange?.Result1, Is.EqualTo(PositionExtensions.CreateRange(4, 20, 4, 22)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Insert, Is.EqualTo(PositionExtensions.CreateRange(4, 20, 4, 22)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Replace, Is.EqualTo(PositionExtensions.CreateRange(4, 20, 4, 22)));
         Assert.That(result.List.Items, Has.Count.EqualTo(1));
 
         var ifaceImplItem = result.List.Items.FirstOrDefault(it => it.Label == "MyMethod()");
@@ -340,7 +345,8 @@ class MyClass1 : IInterface {
         Assert.That(result.List.IsIncomplete, Is.False);
         Assert.That(result.List.ItemDefaults, Is.Not.Null);
         Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
-        Assert.That(result.List.ItemDefaults.EditRange?.Result1, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 4, 7)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Insert, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 4, 7)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Replace, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 4, 7)));
         Assert.That(result.List.Items, Has.Count.EqualTo(521));
 
         var snippetItem = result.List.Items.FirstOrDefault(it => it.Label == "prop");
@@ -379,6 +385,33 @@ class MyClass1 : IInterface {
         Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 4, 7)));
         Assert.That(argument2!.Value, Is.True);
         Assert.That(argument3!.Value, Is.EqualTo(OnPlatform(88, 92)));
+    }
+    [Test]
+    public async Task HandleTypingBeforeExistingIdentifierTest() {
+        var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
+namespace Tests;
+
+class MyClass1 {
+    private void Method1() {
+        vamyVariable = false;
+    }
+}
+");
+        var result = await handler.Handle(new CompletionParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(5, 10),
+        }, CancellationToken.None);
+
+        Assert.That(result?.List, Is.Not.Null);
+        Assert.That(result.List.IsIncomplete, Is.False);
+        Assert.That(result.List.ItemDefaults, Is.Not.Null);
+        // Committing an item (e.g. `var` + space) must only replace the typed `va` prefix
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Insert, Is.EqualTo(PositionExtensions.CreateRange(5, 8, 5, 10)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Replace, Is.EqualTo(PositionExtensions.CreateRange(5, 8, 5, 20)));
+        Assert.That(result.List.ItemDefaults.CommitCharacters, Is.EquivalentTo(CompletionExtensions.DefaultCommitCharacters));
+
+        var varItem = result.List.Items.FirstOrDefault(it => it.Label == "var");
+        Assert.That(varItem, Is.Not.Null);
     }
     [Test]
     public async Task HandleSoftSelectionAfterTriggerCharacterTest() {
@@ -432,7 +465,8 @@ class MyClass1 {
         Assert.That(result.List.IsIncomplete, Is.True); // nothing typed after `data.` - list must be re-requested to restore commit characters
         Assert.That(result.List.ItemDefaults, Is.Not.Null);
         Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
-        Assert.That(result.List.ItemDefaults.EditRange?.Result1, Is.EqualTo(PositionExtensions.CreateRange(6, 13, 6, 13)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Insert, Is.EqualTo(PositionExtensions.CreateRange(6, 13, 6, 13)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Replace, Is.EqualTo(PositionExtensions.CreateRange(6, 13, 6, 13)));
         Assert.That(result.List.ItemDefaults.CommitCharacters, Is.Null);
         Assert.That(result.List.Items, Has.Count.EqualTo(127));
 

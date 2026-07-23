@@ -46,7 +46,12 @@ public class TestingPlatformToVSTestBridge : IDisposable {
         if (typeFilters.Length > 0) {
             var testNodes = await DiscoverTestsAsync();
             request.TestCases = testNodes.Where(it => typeFilters.Contains(it.GetFullyQualifiedName())).ToArray();
-            notificationHandler.HandleRawMessage($"{nameof(TestingPlatformHostAdapter)} discovered {request.TestCases?.Length} of {testNodes?.Length} test cases");
+            notificationHandler.HandleRawMessage($"{nameof(TestingPlatformHostAdapter)} discovered {request.TestCases.Length} of {testNodes.Length} test cases");
+            if (request.TestCases.Length == 0) {
+                notificationHandler.HandleRawMessage($"Could not find any test cases matching the provided filter: \"{string.Join(';', typeFilters)}\"");
+                CompleteTestRun();
+                return;
+            }
         }
 
         if (notificationHandler.IsDebug)

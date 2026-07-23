@@ -28,7 +28,7 @@ public class TestNode {
     public bool InProgress => ExecutionState == ExecutionStates.InProgress || ExecutionState == ExecutionStates.Discovered;
     public string GetFullyQualifiedName() {
         if (string.IsNullOrEmpty(LocationType) || string.IsNullOrEmpty(LocationMethod))
-            return Id ?? "<unknown>";
+            return RemoveBrackets(Id ?? "<unknown>");
 
         var typeName = RemoveBrackets(LocationType);
         var methodName = RemoveBrackets(LocationMethod);
