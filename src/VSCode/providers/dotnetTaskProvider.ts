@@ -46,7 +46,10 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
     }
 
     private static getTask(definition: vscode.TaskDefinition, configuration: string | undefined = undefined, framework: string | undefined = undefined): vscode.Task {
-        const options: vscode.ShellExecutionOptions = { cwd: Extensions.getCurrentWorkingDirectory() };
+        const options: vscode.ShellExecutionOptions = {
+            cwd: Extensions.getCurrentWorkingDirectory(),
+            env: Extensions.getSetting<{ [key: string]: string }>(res.configIdMSBuildAdditionalEnvironment)
+        };
         const builder = new ProcessArgumentBuilder('dotnet')
             .append(definition.target).append(Extensions.toUnixPath(definition.project) /*DotRush/issues/88*/)
             .conditional(`-p:Configuration=${configuration}`, () => configuration !== undefined)
