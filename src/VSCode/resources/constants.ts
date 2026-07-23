@@ -70,5 +70,6 @@ export const configIdDebuggerLaunchBrowser = "debugger.launchBrowser";
 export const configIdMSBuildNoRestore = "msbuild.noRestore";
 export const configIdMSBuildNoDependencies = "msbuild.noDependencies";
 export const configIdMSBuildAdditionalBuildArguments = "msbuild.additionalBuildArguments";
+export const configIdMSBuildAdditionalEnvironment = "msbuild.additionalEnvironment";
 export const configIdTestExplorerPreLaunchTask = "testExplorer.preLaunchTask";
 export const configIdTestExplorerRunSettings = "testExplorer.runSettingsPath";

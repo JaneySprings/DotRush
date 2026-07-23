@@ -639,6 +639,13 @@
             "items": {
               "type": "string"
             }
+          },
+          "dotrush.msbuild.additionalEnvironment": {
+            "type": "object",
+            "description": "%configuration.description.msbuild.additionalEnvironment%",
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         }
       },
