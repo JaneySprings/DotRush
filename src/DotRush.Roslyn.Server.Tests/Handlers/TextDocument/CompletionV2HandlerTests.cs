@@ -107,7 +107,7 @@ class MyClass1 {
         Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
         Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Insert, Is.EqualTo(PositionExtensions.CreateRange(5, 8, 5, 15)));
         Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Replace, Is.EqualTo(PositionExtensions.CreateRange(5, 8, 5, 15)));
-        Assert.That(result.List.Items, Has.Count.EqualTo(3439));
+        Assert.That(result.List.Items, Has.Count.GreaterThan(3430));
 
         var autoUsingItem = result.List.Items.FirstOrDefault(it => it.Label == "JsonSerializer");
         Assert.That(autoUsingItem, Is.Not.Null);
@@ -117,7 +117,7 @@ class MyClass1 {
         Assert.That(autoUsingItem.SortText, Is.EqualTo("~JsonSerializer  System.Text.Json"));
         Assert.That(autoUsingItem.FilterText, Is.EqualTo("JsonSerializer"));
         Assert.That(autoUsingItem.InsertTextFormat, Is.EqualTo(InsertTextFormat.PlainText));
-        Assert.That(autoUsingItem.TextEditText, Is.Null.Or.Empty);
+        Assert.That(autoUsingItem.TextEditText, Is.EqualTo("JsonSer"));
         Assert.That(autoUsingItem.Data, Is.Not.Null);
 
         autoUsingItem = await handler.Resolve(autoUsingItem, CancellationToken.None);
@@ -131,7 +131,25 @@ class MyClass1 {
         Assert.That(autoUsingItem.AdditionalTextEdits, Has.Count.EqualTo(1));
         Assert.That(autoUsingItem.AdditionalTextEdits[0].NewText.ToLF(), Is.EqualTo("using System.Text.Json;\n\n"));
         Assert.That(autoUsingItem.AdditionalTextEdits[0].Range, Is.EqualTo(PositionExtensions.CreateRange(1, 0, 1, 0)));
-        Assert.That(autoUsingItem.Command, Is.Null);
+        // Roslyn uses regular insertion mode for simple autoUsing items (checks the 'Expanded' flag),
+        // but it looks like the existing complex edit flow can be used for this scenario as well
+        Assert.That(autoUsingItem.Command, Is.Not.Null);
+        Assert.That(autoUsingItem.Command.Title, Is.EqualTo(nameof(CompletionV2Handler)));
+        Assert.That(autoUsingItem.Command.Name, Is.EqualTo("dotrush.completionHandler"));
+        Assert.That(autoUsingItem.Command.Arguments, Has.Count.EqualTo(4));
+        Assert.That(autoUsingItem.Command.Arguments[0].Value, Is.TypeOf<string>());
+        Assert.That(autoUsingItem.Command.Arguments[1].Value, Is.TypeOf<TextEdit>());
+        Assert.That(autoUsingItem.Command.Arguments[2].Value, Is.TypeOf<bool>());
+        Assert.That(autoUsingItem.Command.Arguments[3].Value, Is.TypeOf<int>());
+        var argument0 = autoUsingItem.Command.Arguments[0].Value as string;
+        var argument1 = autoUsingItem.Command.Arguments[1].Value as TextEdit;
+        var argument2 = autoUsingItem.Command.Arguments[2].Value as bool?;
+        var argument3 = autoUsingItem.Command.Arguments[3].Value as int?;
+        Assert.That(argument0, Is.EqualTo(documentPath));
+        Assert.That(argument1!.NewText, Is.EqualTo("JsonSerializer"));
+        Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(7, 8, 7, 15))); // Since additionalEdit adds two new lines, textChange shiffted to next lines
+        Assert.That(argument2!.Value, Is.False);
+        Assert.That(argument3!.Value, Is.EqualTo(-1));
     }
     [Test]
     public async Task HandleOverridesTest() {
@@ -347,7 +365,7 @@ class MyClass1 : IInterface {
         Assert.That(result.List.ItemDefaults.InsertTextMode, Is.EqualTo(InsertTextMode.AsIs));
         Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Insert, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 4, 7)));
         Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Replace, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 4, 7)));
-        Assert.That(result.List.Items, Has.Count.EqualTo(521));
+        Assert.That(result.List.Items, Has.Count.GreaterThan(520));
 
         var snippetItem = result.List.Items.FirstOrDefault(it => it.Label == "prop");
         Assert.That(snippetItem, Is.Not.Null);

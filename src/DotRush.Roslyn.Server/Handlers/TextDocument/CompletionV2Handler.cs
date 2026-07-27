@@ -23,9 +23,7 @@ public class CompletionV2Handler : CompletionHandlerBase {
     private readonly ConfigurationService configurationService;
 
     private Dictionary<int, RoslynCompletionItem> completionItemsCache;
-    // VSCode calls `handle` method for the first typed char, and then filter completions without
-    // updating current cache. Store this state of document for correct textEdit calculation in `resolve`
-    private Document? document;
+    private DocumentId? documentId;
     private int cursorOffset;
 
     public CompletionV2Handler(WorkspaceService workspaceService, ConfigurationService configurationService) {
@@ -42,8 +40,8 @@ public class CompletionV2Handler : CompletionHandlerBase {
     }
     protected override Task<CompletionResponse?> Handle(CompletionParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(async () => {
-            var documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath).FirstOrDefault();
-            document = workspaceService.Solution?.GetDocument(documentId);
+            documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath).FirstOrDefault();
+            var document = workspaceService.Solution?.GetDocument(documentId);
             var completionService = RoslynCompletionService.GetService(document);
             if (completionService == null || document == null)
                 return null;
@@ -52,7 +50,7 @@ public class CompletionV2Handler : CompletionHandlerBase {
             cursorOffset = request.Position.ToOffset(sourceText);
             completionItemsCache.Clear();
 
-            var completionTrigger = request.Context.ToCompletionTrigger();
+            var completionTrigger = request.Context.ToCompletionTrigger(configurationService.AlwaysShowCompletionList);
             if (request.Context?.TriggerKind == CompletionTriggerKind.TriggerCharacter && !completionService.ShouldTriggerCompletion(sourceText, cursorOffset, completionTrigger))
                 return null;
 
@@ -80,7 +78,7 @@ public class CompletionV2Handler : CompletionHandlerBase {
                     CommitCharacters = item.GetCommitCharacters(isSoftSelection, isSuggestionMode),
                 };
 
-                if (item.IsComplexTextEdit && !item.IsAutoUsing())
+                if (item.IsComplexTextEdit)
                     completionItem.TextEditText = typedText;
 
                 completionItemsCache[id] = item;
@@ -108,6 +106,7 @@ public class CompletionV2Handler : CompletionHandlerBase {
             if (!completionItemsCache.TryGetValue((int)item.Data.Value, out var roslynCompletionItem))
                 return item;
 
+            var document = workspaceService.Solution?.GetDocument(documentId);
             var completionService = RoslynCompletionService.GetService(document);
             if (completionService == null || document == null)
                 return item;
@@ -128,20 +127,17 @@ public class CompletionV2Handler : CompletionHandlerBase {
                     return item;
 
                 var (textEdit, additionalTextEdits) = completionChange.ToTextChanges(sourceText, cursorOffset);
-
                 item.AdditionalTextEdits = additionalTextEdits;
-                if (!roslynCompletionItem.IsAutoUsing()) {
-                    item.Command = new Command() {
-                        Title = nameof(CompletionV2Handler),
-                        Name = $"{Resources.ExtensionId}.{nameof(CompletionHandler).ToCamelCase()}",
-                        Arguments = new List<LSPAny> {
-                            new LSPAny(document.FilePath),
-                            new LSPAny(textEdit),
-                            new LSPAny(roslynCompletionItem.IsSnippet()),
-                            new LSPAny(completionChange.NewPosition ?? -1)
-                        }
-                    };
-                }
+                item.Command = new Command() {
+                    Title = nameof(CompletionV2Handler),
+                    Name = $"{Resources.ExtensionId}.{nameof(CompletionHandler).ToCamelCase()}",
+                    Arguments = new List<LSPAny> {
+                        new LSPAny(document.FilePath),
+                        new LSPAny(textEdit),
+                        new LSPAny(roslynCompletionItem.IsSnippet()),
+                        new LSPAny(completionChange.NewPosition ?? -1)
+                    }
+                };
             }
             return item;
         });

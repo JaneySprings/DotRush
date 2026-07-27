@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
-    <CodeAnalysisVersion>5.3.0</CodeAnalysisVersion>
+    <CodeAnalysisVersion>5.6.0</CodeAnalysisVersion>
     <TestPlatformVersion>18.7.0</TestPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
