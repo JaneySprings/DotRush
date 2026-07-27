@@ -66,16 +66,12 @@ public static class CompletionExtensions {
 
         return false;
     }
-    public static bool IsAutoUsing(this CompletionItem item) {
-        //(flags & CompletionItemFlags.Expanded) != 0
-        return (InternalCompletionItem.GetFlags(item) & InternalCompletionItem.FlagExpanded) != 0;
-    }
     public static bool IsSnippet(this CompletionItem item) {
         return item.Tags.Contains(WellKnownTags.Snippet);
     }
 
-    public static CompletionTrigger ToCompletionTrigger(this ProtocolModels.CompletionContext? context) {
-        if (context?.TriggerKind == ProtocolModels.CompletionTriggerKind.TriggerCharacter && !string.IsNullOrEmpty(context.TriggerCharacter))
+    public static CompletionTrigger ToCompletionTrigger(this ProtocolModels.CompletionContext? context, bool forceInvoke = false) {
+        if (!forceInvoke && context?.TriggerKind == ProtocolModels.CompletionTriggerKind.TriggerCharacter && !string.IsNullOrEmpty(context.TriggerCharacter))
             return CompletionTrigger.CreateInsertionTrigger(context.TriggerCharacter[0]);
 
         return CompletionTrigger.Invoke;

@@ -55,15 +55,11 @@ public class CompletionHandler : CompletionHandlerBase {
             if (completionService == null || document == null)
                 return null;
 
-            var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
+            var sourceText = await document.GetTextAsync(token);
             offset = request.Position.ToOffset(sourceText);
 
-            var completionTrigger = request.Context.ToCompletionTrigger();
-            if (request.Context?.TriggerKind == CompletionTriggerKind.TriggerCharacter && !completionService.ShouldTriggerCompletion(sourceText, offset, completionTrigger))
-                return null;
-
             var typedSpan = completionService.GetDefaultCompletionListSpan(sourceText, offset);
-            var completions = await completionService.GetCompletionsAsync(document, offset, configurationService, completionTrigger, token).ConfigureAwait(false);
+            var completions = await completionService.GetCompletionsAsync(document, offset, configurationService, cancellationToken: token);
 
             completionItemsCache.Clear();
             var completionItems = await Task.WhenAll(completions.ItemsList.Select(async item => {
@@ -81,7 +77,7 @@ public class CompletionHandler : CompletionHandlerBase {
                 };
 
                 if (ShouldResolveImmediately(item))
-                    await ResolveComplexItemAsync(completionService, item, completionItem, offset, document, sourceText, token).ConfigureAwait(false);
+                    await ResolveComplexItemAsync(completionService, item, completionItem, offset, document, sourceText, token);
 
                 completionItemsCache[id] = item;
                 return completionItem;
@@ -104,7 +100,7 @@ public class CompletionHandler : CompletionHandlerBase {
             }
 
             if (item.Documentation == null) {
-                var description = await completionService.GetDescriptionAsync(document, roslynCompletionItem, token).ConfigureAwait(false);
+                var description = await completionService.GetDescriptionAsync(document, roslynCompletionItem, token);
                 if (description != null) {
                     item.Documentation = new MarkupContent() {
                         Kind = MarkupKind.Markdown,
@@ -114,8 +110,8 @@ public class CompletionHandler : CompletionHandlerBase {
             }
 
             if (item.TextEdit == null && roslynCompletionItem.IsComplexTextEdit) {
-                var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
-                await ResolveComplexItemAsync(completionService, roslynCompletionItem, item, offset, document, sourceText, token).ConfigureAwait(false);
+                var sourceText = await document.GetTextAsync(token);
+                await ResolveComplexItemAsync(completionService, roslynCompletionItem, item, offset, document, sourceText, token);
             }
 
             return item;
@@ -124,7 +120,7 @@ public class CompletionHandler : CompletionHandlerBase {
 
     //https://github.com/OmniSharp/omnisharp-roslyn/blob/c38e89b04a97ec8bc488926ef2f501d7401c4b33/src/OmniSharp.Roslyn.CSharp/Services/Completion/CompletionListBuilder_Sync.cs#L135
     private static async Task<CompletionItem> ResolveComplexItemAsync(RoslynCompletionService completionService, RoslynCompletionItem completionItem, CompletionItem item, int offset, Document document, SourceText sourceText, CancellationToken token) {
-        var completionChange = await completionService.GetChangeAsync(document, completionItem, cancellationToken: token).ConfigureAwait(false);
+        var completionChange = await completionService.GetChangeAsync(document, completionItem, cancellationToken: token);
         if (completionChange == null)
             return item;
 
