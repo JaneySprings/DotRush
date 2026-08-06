@@ -17,4 +17,10 @@
     <PackageReference Include="System.CommandLine" />
     <PackageReference Include="StreamJsonRpc" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Installers\DotNetSdkInstaller.bat" CopyToOutputDirectory="PreserveNewest" Link="DotNetSdkInstaller.bat" />
+    <None Update="Installers\DotNetSdkInstaller.ps1" CopyToOutputDirectory="PreserveNewest" Link="DotNetSdkInstaller.ps1" />
+    <None Update="Installers\DotNetSdkInstaller.sh" CopyToOutputDirectory="PreserveNewest" Link="DotNetSdkInstaller.sh" />
+  </ItemGroup>
 </Project>

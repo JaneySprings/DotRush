@@ -90,6 +90,9 @@
           ],
           "field": [
             "entity.name.variable.field.cs"
+          ],
+          "excludedCode": [
+            "support.other.excluded.cs"
           ]
         }
       }

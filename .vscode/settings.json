@@ -1,6 +1,4 @@
 {
-    "dotrush.roslyn.workspaceProperties": [
-    ],
     "dotrush.roslyn.projectOrSolutionFiles": [
         "src\\DotRush.slnx"
     ],
