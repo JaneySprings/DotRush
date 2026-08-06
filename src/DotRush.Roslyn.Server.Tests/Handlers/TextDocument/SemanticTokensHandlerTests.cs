@@ -154,6 +154,31 @@ switch(a) {
         AssertToken(result, 16, 0, 9, SemanticTokenType.ControlKeyword, 5); // break
     }
 
+    [Test]
+    public async Task ExcludedCodeTest() {
+        var documentPath = CreateDocument(nameof(SemanticTokensHandlerTests), @"
+#if NON_EXISTENT_SYMBOL
+using System.Text;
+var excluded = 42;
+#endif
+var included = 24;
+");
+        navigationService.UpdateSolution(Workspace.Solution);
+        var result = await handler.Handle(new SemanticTokensParams() {
+            TextDocument = documentPath.CreateDocumentId()
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result?.Data, Is.Not.Null.Or.Empty);
+        Assert.That(result.Data.Count % 5, Is.EqualTo(0));
+        Assert.That(result.Data.Count / 5, Is.EqualTo(5));
+
+        AssertToken(result, 0, 2, 0, SemanticTokenType.ExcludedCode, 18); // using System.Text;
+        AssertToken(result, 1, 1, 0, SemanticTokenType.ExcludedCode, 18); // var excluded = 42;
+        AssertToken(result, 2, 2, 0, SemanticTokenType.Keyword, 3); // var
+        AssertToken(result, 3, 0, 4, SemanticTokenType.Variable, 8); // included
+        AssertToken(result, 4, 0, 11, SemanticTokenType.Number, 2); // 24
+    }
+
     private void AssertToken(SemanticTokens tokens, int index, uint deltaLine, uint deltaColumn, SemanticTokenType type, uint length) {
         Assert.That(tokens.Data[index * 5], Is.EqualTo(deltaLine));
         Assert.That(tokens.Data[index * 5 + 1], Is.EqualTo(deltaColumn));

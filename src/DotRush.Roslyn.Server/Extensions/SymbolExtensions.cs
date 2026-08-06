@@ -126,5 +126,6 @@ public enum SemanticTokenType {
     Event,
     Delegate,
     Label,
+    ExcludedCode,
     Unknown
 }
