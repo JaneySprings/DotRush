@@ -3,13 +3,22 @@ setlocal
 
 if "%~1"=="" goto :error
 if "%~2"=="" goto :error
+if "%~3"=="" goto :error
 
 set "VERSION=%~1"
-set "RUNTIME_ID=%~2"
-set "SDK_DIR=%CD%\..\Sdk"
+set "PLATFORM=%~2"
+set "ARCH=%~3"
+
+if /i "%PLATFORM%"=="darwin" set "PLATFORM=osx"
+if /i "%PLATFORM%"=="win32" set "PLATFORM=win"
+
+for %%I in ("%~dp0..") do set "PARENT_DIR=%%~fI"
+
+set "RUNTIME_ID=%PLATFORM%-%ARCH%"
+set "SDK_DIR=%PARENT_DIR%\Sdk"
 set "ARCHIVE_NAME=dotnet-sdk-%VERSION%-%RUNTIME_ID%.zip"
 set "DOWNLOAD_URL=https://builds.dotnet.microsoft.com/dotnet/Sdk/%VERSION%/%ARCHIVE_NAME%"
-set "ARCHIVE_PATH=%CD%\%ARCHIVE_NAME%"
+set "ARCHIVE_PATH=%~dp0%ARCHIVE_NAME%"
 
 curl -fsSL "%DOWNLOAD_URL%" -o "%ARCHIVE_PATH%"
 if errorlevel 1 (

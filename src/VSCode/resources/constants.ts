@@ -59,6 +59,7 @@ export const messageNewProjectOpenAction = "Do you want to add the new project t
 export const messageOpen = "Open";
 export const messageAddToWorkspace = "Add to Workspace";
 
+export const configIdRoslynDotnetSdkDirectory = "roslyn.dotnetSdkDirectory";
 export const configIdRoslynProjectOrSolutionFiles = "roslyn.projectOrSolutionFiles";
 export const configIdDebuggerProjectAssembliesOnly = "debugger.projectAssembliesOnly";
 export const configIdDebuggerStepOverPropertiesAndOperators = "debugger.stepOverPropertiesAndOperators";

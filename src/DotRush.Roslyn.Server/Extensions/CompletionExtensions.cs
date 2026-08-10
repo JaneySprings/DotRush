@@ -66,6 +66,10 @@ public static class CompletionExtensions {
 
         return false;
     }
+    public static bool IsAutoUsing(this CompletionItem item) {
+        //(flags & CompletionItemFlags.Expanded) != 0
+        return (InternalCompletionItem.GetFlags(item) & InternalCompletionItem.FlagExpanded) != 0;
+    }
     public static bool IsSnippet(this CompletionItem item) {
         return item.Tags.Contains(WellKnownTags.Snippet);
     }
@@ -137,6 +141,7 @@ public static class CompletionExtensions {
         var oldLineCount = additionalTextEdits.Sum(x => x.Range.Height());
         var newLineCount = additionalTextEdits.SelectMany(x => x.NewText.Split('\n')).Count();
 
+        // var changeSpan = TextSpan.FromBounds(currentLineTextChange.Span.Start, Math.Clamp(cursorOffset, currentLineTextChange.Span.Start, currentLineTextChange.Span.End));
         var textEdit = new TextEdit() {
             NewText = newText,
             Range = currentLineTextChange.Span.ToRange(sourceText).Offset(newLineCount - oldLineCount)

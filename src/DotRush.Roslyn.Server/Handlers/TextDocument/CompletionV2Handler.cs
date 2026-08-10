@@ -78,7 +78,7 @@ public class CompletionV2Handler : CompletionHandlerBase {
                     CommitCharacters = item.GetCommitCharacters(isSoftSelection, isSuggestionMode),
                 };
 
-                if (item.IsComplexTextEdit)
+                if (item.IsComplexTextEdit && !item.IsAutoUsing())
                     completionItem.TextEditText = typedText;
 
                 completionItemsCache[id] = item;
@@ -127,17 +127,20 @@ public class CompletionV2Handler : CompletionHandlerBase {
                     return item;
 
                 var (textEdit, additionalTextEdits) = completionChange.ToTextChanges(sourceText, cursorOffset);
+
                 item.AdditionalTextEdits = additionalTextEdits;
-                item.Command = new Command() {
-                    Title = nameof(CompletionV2Handler),
-                    Name = $"{Resources.ExtensionId}.{nameof(CompletionHandler).ToCamelCase()}",
-                    Arguments = new List<LSPAny> {
-                        new LSPAny(document.FilePath),
-                        new LSPAny(textEdit),
-                        new LSPAny(roslynCompletionItem.IsSnippet()),
-                        new LSPAny(completionChange.NewPosition ?? -1)
-                    }
-                };
+                if (!roslynCompletionItem.IsAutoUsing()) {
+                    item.Command = new Command() {
+                        Title = nameof(CompletionV2Handler),
+                        Name = $"{Resources.ExtensionId}.{nameof(CompletionHandler).ToCamelCase()}",
+                        Arguments = new List<LSPAny> {
+                            new LSPAny(document.FilePath),
+                            new LSPAny(textEdit),
+                            new LSPAny(roslynCompletionItem.IsSnippet()),
+                            new LSPAny(completionChange.NewPosition ?? -1)
+                        }
+                    };
+                }
             }
             return item;
         });

@@ -32,4 +32,7 @@ public static class RuntimeInfo {
 
         return "unknown";
     }
+    public static string GetOperationSystemV2() {
+        return GetOperationSystem().Replace("darwin", "osx").Replace("win32", "win");
+    }
 }
