@@ -117,7 +117,7 @@ class MyClass1 {
         Assert.That(autoUsingItem.SortText, Is.EqualTo("~JsonSerializer  System.Text.Json"));
         Assert.That(autoUsingItem.FilterText, Is.EqualTo("JsonSerializer"));
         Assert.That(autoUsingItem.InsertTextFormat, Is.EqualTo(InsertTextFormat.PlainText));
-        Assert.That(autoUsingItem.TextEditText, Is.EqualTo("JsonSer"));
+        Assert.That(autoUsingItem.TextEditText, Is.Null.Or.Empty);
         Assert.That(autoUsingItem.Data, Is.Not.Null);
 
         autoUsingItem = await handler.Resolve(autoUsingItem, CancellationToken.None);
@@ -131,25 +131,7 @@ class MyClass1 {
         Assert.That(autoUsingItem.AdditionalTextEdits, Has.Count.EqualTo(1));
         Assert.That(autoUsingItem.AdditionalTextEdits[0].NewText.ToLF(), Is.EqualTo("using System.Text.Json;\n\n"));
         Assert.That(autoUsingItem.AdditionalTextEdits[0].Range, Is.EqualTo(PositionExtensions.CreateRange(1, 0, 1, 0)));
-        // Roslyn uses regular insertion mode for simple autoUsing items (checks the 'Expanded' flag),
-        // but it looks like the existing complex edit flow can be used for this scenario as well
-        Assert.That(autoUsingItem.Command, Is.Not.Null);
-        Assert.That(autoUsingItem.Command.Title, Is.EqualTo(nameof(CompletionV2Handler)));
-        Assert.That(autoUsingItem.Command.Name, Is.EqualTo("dotrush.completionHandler"));
-        Assert.That(autoUsingItem.Command.Arguments, Has.Count.EqualTo(4));
-        Assert.That(autoUsingItem.Command.Arguments[0].Value, Is.TypeOf<string>());
-        Assert.That(autoUsingItem.Command.Arguments[1].Value, Is.TypeOf<TextEdit>());
-        Assert.That(autoUsingItem.Command.Arguments[2].Value, Is.TypeOf<bool>());
-        Assert.That(autoUsingItem.Command.Arguments[3].Value, Is.TypeOf<int>());
-        var argument0 = autoUsingItem.Command.Arguments[0].Value as string;
-        var argument1 = autoUsingItem.Command.Arguments[1].Value as TextEdit;
-        var argument2 = autoUsingItem.Command.Arguments[2].Value as bool?;
-        var argument3 = autoUsingItem.Command.Arguments[3].Value as int?;
-        Assert.That(argument0, Is.EqualTo(documentPath));
-        Assert.That(argument1!.NewText, Is.EqualTo("JsonSerializer"));
-        Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(7, 8, 7, 15))); // Since additionalEdit adds two new lines, textChange shiffted to next lines
-        Assert.That(argument2!.Value, Is.False);
-        Assert.That(argument3!.Value, Is.EqualTo(-1));
+        Assert.That(autoUsingItem.Command, Is.Null);
     }
     [Test]
     public async Task HandleOverridesTest() {
@@ -430,6 +412,49 @@ class MyClass1 {
 
         var varItem = result.List.Items.FirstOrDefault(it => it.Label == "var");
         Assert.That(varItem, Is.Not.Null);
+    }
+    [Test]
+    public async Task HandleTypingBeforeMethodWithAutoImportTest() {
+        var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
+namespace Tests;
+
+class MyClass1 {
+    private void Method1() {
+        JsonSeriaSerialize(1);
+    }
+}
+");
+        configurationService.ChangeConfiguration(new ConfigurationSection {
+            DotRush = new DotRushSection {
+                Roslyn = new RoslynSection {
+                    ShowItemsFromUnimportedNamespaces = true
+                }
+            }
+        });
+
+        var result = await handler.Handle(new CompletionParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(5, 17),
+        }, CancellationToken.None);
+
+        Assert.That(result?.List, Is.Not.Null);
+        Assert.That(result.List.IsIncomplete, Is.False);
+        Assert.That(result.List.ItemDefaults, Is.Not.Null);
+
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Insert, Is.EqualTo(PositionExtensions.CreateRange(5, 8, 5, 17)));
+        Assert.That(result.List.ItemDefaults.EditRange?.Result2?.Replace, Is.EqualTo(PositionExtensions.CreateRange(5, 8, 5, 26)));
+        Assert.That(result.List.ItemDefaults.CommitCharacters, Is.EquivalentTo(CompletionExtensions.DefaultCommitCharacters));
+
+        var varItem = result.List.Items.FirstOrDefault(it => it.Label == "JsonSerializer");
+        Assert.That(varItem, Is.Not.Null);
+        Assert.That(varItem.TextEditText, Is.Null.Or.Empty);
+
+        varItem = await handler.Resolve(varItem, CancellationToken.None);
+        Assert.That(varItem.TextEdit, Is.Null); // vscode provide calculated textEdit here by itemsDefault
+        Assert.That(varItem.AdditionalTextEdits, Has.Count.EqualTo(1));
+        Assert.That(varItem.AdditionalTextEdits[0].NewText.ToLF(), Is.EqualTo("using System.Text.Json;\n\n"));
+        Assert.That(varItem.AdditionalTextEdits[0].Range, Is.EqualTo(PositionExtensions.CreateRange(1, 0, 1, 0)));
+        Assert.That(varItem.Command, Is.Null);
     }
     [Test]
     public async Task HandleSoftSelectionAfterTriggerCharacterTest() {

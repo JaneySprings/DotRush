@@ -1,19 +1,26 @@
 param(
     [string]$Version,
-    [string]$RuntimeId
+    [string]$Platform,
+    [string]$Arch
 )
 
 $ErrorActionPreference = "Stop"
 
-if ([string]::IsNullOrEmpty($Version) -or [string]::IsNullOrEmpty($RuntimeId)) {
+if ([string]::IsNullOrEmpty($Version) -or [string]::IsNullOrEmpty($Platform) -or [string]::IsNullOrEmpty($Arch)) {
     Write-Host '{"isSuccess":false,"message":"Invocation error!"}'
     exit 1
 }
 
-$SdkDir = Join-Path (Get-Location) "..\Sdk"
+switch ($Platform) {
+    "darwin" { $Platform = "osx" }
+    "win32" { $Platform = "win" }
+}
+
+$RuntimeId = "$Platform-$Arch"
+$SdkDir = Join-Path (Split-Path -Parent $PSScriptRoot) "Sdk"
 $ArchiveName = "dotnet-sdk-$Version-$RuntimeId.zip"
 $DownloadUrl = "https://builds.dotnet.microsoft.com/dotnet/Sdk/$Version/$ArchiveName"
-$ArchivePath = Join-Path (Get-Location) $ArchiveName
+$ArchivePath = Join-Path $PSScriptRoot $ArchiveName
 
 try {
     Invoke-WebRequest -Uri $DownloadUrl -OutFile $ArchivePath -UseBasicParsing

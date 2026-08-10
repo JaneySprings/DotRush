@@ -41,15 +41,15 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
             if (documentId == null || document == null)
                 return null;
 
-            var syntaxTree = await document.GetSyntaxTreeAsync(token).ConfigureAwait(false);
+            var syntaxTree = await document.GetSyntaxTreeAsync(token);
             if (syntaxTree == null)
                 return null;
 
-            var root = await syntaxTree.GetRootAsync(token).ConfigureAwait(false);
+            var root = await syntaxTree.GetRootAsync(token);
             if (root == null)
                 return null;
 
-            return await TraverseSyntaxTree(root.DescendantTokens(), document, token).ConfigureAwait(false);
+            return await TraverseSyntaxTree(root.DescendantTokens(), document, token);
         });
     }
     protected override Task<SemanticTokens?> Handle(SemanticTokensRangeParams request, CancellationToken token) {
@@ -60,13 +60,13 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
             if (documentId == null || document == null)
                 return null;
 
-            var syntaxTree = await document.GetSyntaxTreeAsync(token).ConfigureAwait(false);
+            var syntaxTree = await document.GetSyntaxTreeAsync(token);
             if (syntaxTree == null)
                 return null;
 
-            var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
+            var sourceText = await document.GetTextAsync(token);
             var range = request.Range.ToTextSpan(sourceText);
-            var root = await syntaxTree.GetRootAsync(token).ConfigureAwait(false);
+            var root = await syntaxTree.GetRootAsync(token);
             if (root == null)
                 return null;
 
@@ -74,7 +74,7 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
                 .Where(node => node.FullSpan.IntersectsWith(range))
                 .ToList();
 
-            return await TraverseSyntaxTree(nodes, document, token).ConfigureAwait(false);
+            return await TraverseSyntaxTree(nodes, document, token);
         });
     }
     protected override Task<SemanticTokensDeltaResponse?> Handle(SemanticTokensDeltaParams semanticTokensDeltaParams, CancellationToken cancellationToken) {
@@ -101,8 +101,8 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
             data.Add(0);
         }
 
-        var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
-        var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
+        var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+        var sourceText = await document.GetTextAsync(cancellationToken);
         foreach (var token in tokens) {
             foreach (var trivia in token.LeadingTrivia)
                 ProcessToken(trivia, sourceText, AddToken);
