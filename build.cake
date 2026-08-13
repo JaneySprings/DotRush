@@ -73,7 +73,7 @@ Task("test")
 	.Does(() => {
 		var debuggerDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "Debugger");
 		EnsureDirectoryDeleted(debuggerDirectory);
-		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "DevHost", "devhost.dll")} -ncdbg");
+		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "DevHost", "devhost.dll")} -sharpdbg");
 
 		EnsureDirectoryDeleted(debuggerDirectory);
 		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "DevHost", "devhost.dll")} -vsdbg");

@@ -39,7 +39,7 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
             return; //serverFacade?.ShowError(Resources.ProjectOrSolutionFileSpecificationRequired);
 
         await LoadAsync(targets, cancellationToken).ConfigureAwait(false);
-        StartObserving(workspaceFolders);
+        StartObserving();
     }
 
     public override async Task OnLoadingStartedAsync(CancellationToken cancellationToken) {
@@ -99,11 +99,15 @@ public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListene
 
         return null;
     }
-    internal void StartObserving(string[]? workspaceFolders) {
+    internal void StartObserving() {
         fileWatcher?.Dispose();
-        if (workspaceFolders != null) {
-            fileWatcher = new WorkspaceFilesWatcher(this);
-            fileWatcher.StartObserving(workspaceFolders);
+        if (Solution == null)
+            return;
+
+        fileWatcher = new WorkspaceFilesWatcher(this);
+        foreach (var projectDirectory in Solution.Projects.Select(x => Path.GetDirectoryName(x.FilePath))) {
+            if (!string.IsNullOrEmpty(projectDirectory))
+                fileWatcher.AddDirectoryWatcher(projectDirectory);
         }
     }
 

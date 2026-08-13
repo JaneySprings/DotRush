@@ -8,7 +8,7 @@ public class WorkspaceFilesWatcherTests : MultitargetProjectFixture {
     private const int FSDelay = 250;
 
     protected override void OnGlobalSetup() {
-        Workspace.StartObserving(new[] { ProjectDirectory });
+        Workspace.StartObserving();
         WaitLinux();
     }
 

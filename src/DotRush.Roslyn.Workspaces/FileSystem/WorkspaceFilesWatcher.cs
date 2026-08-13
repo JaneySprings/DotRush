@@ -2,34 +2,29 @@ namespace DotRush.Roslyn.Workspaces.FileSystem;
 
 public sealed class WorkspaceFilesWatcher : IDisposable {
     private readonly IWorkspaceChangeListener listener;
-    private readonly List<FileSystemWatcher> fileWatchers;
+    private readonly Dictionary<string, FileSystemWatcher> fileWatchers;
 
     public WorkspaceFilesWatcher(IWorkspaceChangeListener listener) {
         this.listener = listener;
-        this.fileWatchers = new List<FileSystemWatcher>();
+        this.fileWatchers = new Dictionary<string, FileSystemWatcher>();
     }
 
-    public void StartObserving(string[] workspaceFolders) {
-        if (fileWatchers.Count > 0)
-            throw new InvalidOperationException("File watchers are already initialized.");
+    public void AddDirectoryWatcher(string directoryPath) {
+        if (!Directory.Exists(directoryPath) || fileWatchers.ContainsKey(directoryPath.ToLowerInvariant()))
+            return;
 
-        foreach (var folderPath in workspaceFolders) {
-            if (!Directory.Exists(folderPath))
-                continue;
-
-            var fileWatcher = new FileSystemWatcher {
-                Path = folderPath,
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.Size,
-                IncludeSubdirectories = true,
-                EnableRaisingEvents = true,
-                Filter = "*.*",
-            };
-            fileWatcher.Created += OnCreated;
-            fileWatcher.Changed += OnChanged;
-            fileWatcher.Deleted += OnDeleted;
-            fileWatcher.Renamed += OnRenamed;
-            fileWatchers.Add(fileWatcher);
-        }
+        var fileWatcher = new FileSystemWatcher {
+            Path = directoryPath,
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.Size,
+            IncludeSubdirectories = true,
+            EnableRaisingEvents = true,
+            Filter = "*.*",
+        };
+        fileWatcher.Created += OnCreated;
+        fileWatcher.Changed += OnChanged;
+        fileWatcher.Deleted += OnDeleted;
+        fileWatcher.Renamed += OnRenamed;
+        fileWatchers.Add(directoryPath.ToLowerInvariant(), fileWatcher);
     }
 
     private void OnCreated(object source, FileSystemEventArgs e) {
@@ -57,7 +52,7 @@ public sealed class WorkspaceFilesWatcher : IDisposable {
     }
 
     public void Dispose() {
-        foreach (var watcher in fileWatchers) {
+        foreach (var watcher in fileWatchers.Values) {
             watcher.Created -= OnCreated;
             watcher.Changed -= OnChanged;
             watcher.Deleted -= OnDeleted;
