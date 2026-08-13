@@ -7,7 +7,7 @@ using DotRush.Common.Logging;
 namespace DotRush.Debugging.Host.Installers;
 
 public class SharpdbgInstaller : IDebuggerInstaller {
-    private const string LatestReleaseVersion = "0.1.10";
+    private const string LatestReleaseVersion = "head";
     private readonly string debuggerDirectory;
 
     public SharpdbgInstaller(string workingDirectory) {
