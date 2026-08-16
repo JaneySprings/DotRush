@@ -1,6 +1,8 @@
 using DotRush.Common;
 using DotRush.Common.Extensions;
+using DotRush.Common.InteropV2;
 using DotRush.Roslyn.Server.Services;
+using EmmyLua.LanguageServer.Framework.Server;
 using NUnit.Framework;
 using FSExtensions = DotRush.Common.Extensions.FileSystemExtensions;
 
@@ -24,7 +26,7 @@ public abstract class BaseProjectTestFixture {
     protected virtual void OnGlobalSetup() { }
     protected virtual void OnGlobalTearDown() { }
     protected virtual WorkspaceService CreateInitializedWorkspace() {
-        var workspace = new WorkspaceService(new ConfigurationService(null), null);
+        var workspace = new TestWorkspaceService(new ConfigurationService(null), null);
         if (!workspace.InitializeWorkspace())
             throw new InvalidOperationException("Failed to initialize workspace.");
 
@@ -72,5 +74,15 @@ public abstract class BaseProjectTestFixture {
         Directory.CreateDirectory(ProjectDirectory);
         File.WriteAllText(ProjectFilePath, CreateProjectFileContent());
         return ProjectFilePath;
+    }
+
+    class TestWorkspaceService : WorkspaceService {
+        public TestWorkspaceService(ConfigurationService configurationService, LanguageServer? serverFacade) : base(configurationService, serverFacade) { }
+
+        public override void OnProjectRestoreCompleted(string documentPath, ProcessResult result) {
+            base.OnProjectRestoreCompleted(documentPath, result);
+            var message = string.Join(Environment.NewLine, result.ErrorLines.Count == 0 ? result.OutputLines : result.ErrorLines);
+            Assert.That(result.Success, Is.True, $"Restore error: {message}");
+        }
     }
 }
