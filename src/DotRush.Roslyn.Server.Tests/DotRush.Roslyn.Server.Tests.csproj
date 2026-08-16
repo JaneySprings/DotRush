@@ -2,7 +2,6 @@
 	<Import Project="..\Common.Build.props" />
 
 	<PropertyGroup>
-		<TargetFramework>$(ServerTargetFramework)</TargetFramework>
 		<NoWarn>$(NoWarn);NUnit2045</NoWarn>
 	</PropertyGroup>
 

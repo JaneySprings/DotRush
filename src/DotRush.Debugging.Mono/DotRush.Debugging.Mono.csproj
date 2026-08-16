@@ -4,6 +4,7 @@
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<AssemblyName>monodbg</AssemblyName>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 		<OutputPath>$(AssetsPath)DebuggerMono</OutputPath>
         <PublishDir>$(OutputPath)</PublishDir>
 	</PropertyGroup>

@@ -3,6 +3,7 @@ import { TestExplorerController } from "./testExplorerController";
 import { PublicExports } from "../publicExports";
 import { Extensions } from "../extensions";
 import { Project } from "../models/project";
+import { Interop } from "../interop/interop";
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -15,7 +16,8 @@ export class LanguageServerController {
 
     public static async activate(context: vscode.ExtensionContext): Promise<void> {
         LanguageServerController.serverOptions = {
-            command: path.join(context.extensionPath, "extension", "bin", "LanguageServer", "DotRush" + (process.platform === 'win32' ? '.exe' : '')),
+            command: Interop.dotnetPath,
+            args: [path.join(context.extensionPath, "extension", "bin", "LanguageServer", "DotRush.dll")],
             options: { cwd: Extensions.getCurrentWorkingDirectory() }
         };
         LanguageServerController.clientOptions = {

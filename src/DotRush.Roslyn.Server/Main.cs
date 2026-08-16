@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
+using DotRush.Common;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Handlers.ExternalAccess;
@@ -23,6 +24,7 @@ public class Program {
         Console.SetError(TextWriter.Null);
         Console.SetOut(TextWriter.Null);
         Console.SetIn(TextReader.Null);
+        Localizer.Init();
 
         languageServer = LanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
         ConfigureServices();

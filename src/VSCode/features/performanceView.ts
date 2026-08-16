@@ -52,8 +52,9 @@ export class PerformanceView implements vscode.DebugAdapterTrackerFactory {
     }
     private getProfilerTask(processId: number, profilerType: DotNetProfilerType): vscode.Task {
         const options: vscode.ShellExecutionOptions = { cwd: Extensions.getCurrentWorkingDirectory() };
-        const toolPath = path.join(Interop.binariesPath, 'Diagnostics', `dotnet-${profilerType}${Interop.execExtension}`);
-        const builder = new ProcessArgumentBuilder(toolPath)
+        const toolPath = path.join(Interop.binariesPath, 'Diagnostics', `dotnet-${profilerType}.dll`);
+        const builder = new ProcessArgumentBuilder(Interop.dotnetPath)
+            .append(toolPath)
             .append('collect')
             .append('-p').append(processId.toString());
 

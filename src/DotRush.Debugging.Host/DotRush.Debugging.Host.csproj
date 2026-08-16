@@ -4,6 +4,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>devhost</AssemblyName>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <OutputPath>$(AssetsPath)DevHost</OutputPath>
     <PublishDir>$(OutputPath)</PublishDir>
   </PropertyGroup>

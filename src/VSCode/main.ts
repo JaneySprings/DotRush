@@ -13,20 +13,26 @@ import * as vscode from 'vscode';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const exports = new PublicExports();
-	Interop.initialize(context.extensionPath);
 
-	if (vscode.workspace.workspaceFolders !== undefined) {
-		StateController.activate(context);
-		StatusBarController.activate(context);
-		ContextMenuController.activate(context);
-		TestExplorerController.activate(context);
-		LanguageServerController.activate(context);
-	}
+	Interop.initialize(context.extensionPath).then(status => {
+		if (!status.isSuccess) {
+			vscode.window.showErrorMessage(status.message!, { modal: true });
+			return;
+		}
 
-	TemplateHostController.activate(context);
-	DebugAdapterController.activate(context);
-	ModulesView.feature.activate(context);
-	PerformanceView.feature.activate(context);
+		if (vscode.workspace.workspaceFolders !== undefined) {
+			StateController.activate(context);
+			StatusBarController.activate(context);
+			ContextMenuController.activate(context);
+			TestExplorerController.activate(context);
+			LanguageServerController.activate(context);
+		}
+
+		TemplateHostController.activate(context);
+		DebugAdapterController.activate(context);
+		ModulesView.feature.activate(context);
+		PerformanceView.feature.activate(context);
+	});
 
 	return exports;
 }

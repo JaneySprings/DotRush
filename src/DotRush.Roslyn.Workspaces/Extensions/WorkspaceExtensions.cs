@@ -1,6 +1,7 @@
 using DotRush.Common.Extensions;
 using DotRush.Common.InteropV2;
 using DotRush.Common.Logging;
+using DotRush.Common.MSBuild;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -78,7 +79,7 @@ public static class WorkspaceExtensions {
     }
 
     public static async Task<ProcessResult> RestoreProjectAsync(this MSBuildWorkspace workspace, string projectPath, CancellationToken cancellationToken) {
-        var processInfo = ProcessRunner.CreateProcess("dotnet", $"restore \"{projectPath}\" -nodeReuse:false", captureOutput: true, displayWindow: false, cancellationToken: cancellationToken);
+        var processInfo = ProcessRunner.CreateProcess(MSBuildLocator.DotNetTool.FullName, $"restore \"{projectPath}\" -nodeReuse:false", captureOutput: true, displayWindow: false, cancellationToken: cancellationToken);
         var restoreResult = await processInfo.Task;
 
         if (restoreResult.ExitCode != 0) {

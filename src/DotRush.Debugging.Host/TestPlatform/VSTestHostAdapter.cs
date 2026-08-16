@@ -12,7 +12,7 @@ public class VSTestHostAdapter : ITestHostAdapter {
     private readonly CurrentClassLogger currentClassLogger;
 
     public VSTestHostAdapter(bool attachDebugger = false) {
-        var consoleTestHostPath = MSBuildLocator.GetConsoleTestHostLocation();
+        var consoleTestHostPath = MSBuildLocator.GetConsoleTestHostPath();
         vsTestConsoleWrapper = new VsTestConsoleWrapper(consoleTestHostPath);
         notificationHandler = new RpcTestHostNotificationHandler(attachDebugger, vsTestConsoleWrapper.CancelTestRun);
         currentClassLogger = new CurrentClassLogger(nameof(VSTestHostAdapter));

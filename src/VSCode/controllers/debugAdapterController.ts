@@ -27,9 +27,6 @@ export class DebugAdapterController {
         context.subscriptions.push(vscode.tasks.registerTaskProvider(res.taskDefinitionId, new DotNetTaskProvider()));
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerNetCoreId, new DotNetDebugConfigurationProvider()));
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerUnityId, new MonoDebugConfigurationProvider()));
-
-        if (!fs.existsSync(path.join(context.extensionPath, 'extension', 'bin', 'Debugger')))
-            await DebugAdapterController.installDebugger(Extensions.onVSCode(res.debuggerVsdbgInstallId, res.debuggerNcdbgInstallId));
     }
 
     public static getLaunchProfile(launchSettingsPath: string, profileName: string | undefined): LaunchProfile | undefined {
@@ -83,23 +80,7 @@ export class DebugAdapterController {
         return path.join(programDirectory, programFile + Interop.execExtension);
     }
 
-    private static async installDebugger(id: string): Promise<void> {
-        const getNameByDebuggerId = (id: string) => {
-            switch (id) {
-                case res.debuggerVsdbgInstallId: return res.debuggerVsdbgDisplayName;
-                case res.debuggerNcdbgInstallId: return res.debuggerNcdbgDisplayName;
-                default: return id;
-            }
-        };
-        const options: vscode.ProgressOptions = {
-            title: res.messageInstallingComponentTitle + getNameByDebuggerId(id),
-            location: vscode.ProgressLocation.Notification,
-            cancellable: false
-        };
-        const status = await vscode.window.withProgress(options, (_p, _ct) => Interop.installDebugger(id));
-        if (status !== undefined && !status.isSuccess)
-            vscode.window.showErrorMessage(`${res.messageInstallingComponentFailed}: ${status.message}`);
-    }
+
     private static async showQuickPickProgram(): Promise<string | undefined> {
         const programPath = await vscode.window.showOpenDialog({
             title: res.messageSelectProgramTitle,

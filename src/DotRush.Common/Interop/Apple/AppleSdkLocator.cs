@@ -36,7 +36,7 @@ public static class AppleSdkLocator {
             return Path.Combine("/usr", "bin"); // There is no 'Microsoft.iOS.Linux.Sdk' workload
 
         var sdkPath = string.Empty;
-        var dotnetPacksPath = Path.Combine(MSBuildLocator.GetRootLocation(), "packs");
+        var dotnetPacksPath = Path.Combine(MSBuildLocator.GetRootDirectory(), "packs");
         var sdkPaths = Directory.GetDirectories(dotnetPacksPath, "Microsoft.iOS.Windows.Sdk.net*");
 
         if (sdkPaths.Length > 0)
@@ -80,7 +80,7 @@ public static class AppleSdkLocator {
             return new FileInfo(mlaunchToolPath);
 
         var sdkPath = string.Empty;
-        var dotnetPacksPath = Path.Combine(MSBuildLocator.GetRootLocation(), "packs");
+        var dotnetPacksPath = Path.Combine(MSBuildLocator.GetRootDirectory(), "packs");
         var sdkPaths = Directory.GetDirectories(dotnetPacksPath, "Microsoft.iOS.Sdk.net*");
 
         if (sdkPaths.Length > 0)
