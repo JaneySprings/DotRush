@@ -14,7 +14,7 @@ using EmmyLua.LanguageServer.Framework.Server;
 
 namespace DotRush.Roslyn.Server.Services;
 
-public sealed class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDisposable {
+public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDisposable {
     private readonly ConfigurationService configurationService;
     private readonly LanguageServer? serverFacade;
     private WorkspaceFilesWatcher? fileWatcher;

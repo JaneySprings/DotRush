@@ -1,6 +1,4 @@
-using System.Collections;
 using DotRush.Common.Interop;
-using DotRush.Common.Logging;
 
 namespace DotRush.Common.MSBuild;
 
