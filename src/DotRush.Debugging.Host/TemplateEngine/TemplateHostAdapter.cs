@@ -24,6 +24,7 @@ public class TemplateHostAdapter {
         HostVersion = version != null ? $"{version.Major}.{version.Minor}.{version.Build}" : "1.0.0";
     }
     public TemplateHostAdapter() {
+        Localizer.Init();
         var host = TemplateHostAdapter.CreateHost("dotrush_templateengine_host");
         currentClassLogger = new CurrentClassLogger(nameof(TemplateHostAdapter));
         templatesTempPath = Path.Combine(AppContext.BaseDirectory, ".templateengine-packages");
@@ -39,7 +40,8 @@ public class TemplateHostAdapter {
             }
             var templates = await templateEngineBootstrapper.GetTemplatesAsync(cancellationToken);
             return templates.Where(IsProjectTemplate).ToHashSet(TemplateInfoEqualityComparer.Default);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             currentClassLogger.Error(ex);
             return Array.Empty<ITemplateInfo>();
         }
@@ -59,17 +61,18 @@ public class TemplateHostAdapter {
             // var outputFiles = result.CreationResult?.PrimaryOutputs?.Select(x => x.Path)?.ToArray();
             currentClassLogger.Debug($"'{identity}' created at '{outputPath}' | '{result.OutputBaseDirectory}");
             return Status.Success(/*payload: outputFiles*/);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             currentClassLogger.Error(ex);
             return Status.Fail(ex.Message);
         }
     }
 
     private async Task LoadEmbededTemplatePackagesAsync(CancellationToken cancellationToken) {
-        var templateDirectory = MSBuildLocator.GetTemplatePackagesLocation();
+        var templateDirectory = MSBuildLocator.GetTemplatePackagesDirectory();
         await LoadTemplatePackagesAsync(templateDirectory, cancellationToken);
 
-        templateDirectory = Path.Combine(MSBuildLocator.GetRootLocation(), "template-packs");
+        templateDirectory = Path.Combine(MSBuildLocator.GetRootDirectory(), "template-packs");
         await LoadTemplatePackagesAsync(templateDirectory, cancellationToken);
     }
     private async Task LoadUserTemplatePackagesAsync(CancellationToken cancellationToken) {

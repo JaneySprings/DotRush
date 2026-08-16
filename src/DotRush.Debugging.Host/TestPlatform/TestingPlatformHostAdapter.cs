@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using DotRush.Common.Interop;
 using DotRush.Common.Logging;
+using DotRush.Common.MSBuild;
 
 namespace DotRush.Debugging.Host.TestPlatform;
 
@@ -45,7 +46,8 @@ public class TestingPlatformHostAdapter : ITestHostAdapter {
 
     private Process? CreateTestingPlatformProcess(string testAssembly, int port, string? runSettingsFilePath) {
         var requiresDotNetRuntime = testAssembly.EndsWith(".dll", StringComparison.OrdinalIgnoreCase);
-        var executable = requiresDotNetRuntime ? "dotnet" : testAssembly;
+        var executable = requiresDotNetRuntime ? MSBuildLocator.DotNetTool.FullName : testAssembly;
+
         currentClassLogger.Debug($"Starting process '{testAssembly}' with port '{port}'");
         return new ProcessRunner(executable, new ProcessArgumentBuilder()
             .Conditional(testAssembly, () => requiresDotNetRuntime)

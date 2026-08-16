@@ -56,6 +56,7 @@ public abstract class DotRushWorkspace : SolutionController {
                 return true;
             if (!string.IsNullOrEmpty(DotNetSdkDirectory)) {
                 CurrentSessionLogger.Debug($"Registering MSBuild path: {DotNetSdkDirectory}");
+                DotRushMSBuildLocator.DotNetSdkDirectory = DotNetSdkDirectory;
                 MSBuildLocator.RegisterMSBuildPath(DotNetSdkDirectory);
                 return true;
             }
@@ -68,7 +69,7 @@ public abstract class DotRushWorkspace : SolutionController {
 
         CurrentSessionLogger.Error("Faied to register MSBuild path. Trying to register the latest SDK path.");
         registrationResult = SafeExtensions.Invoke(false, () => {
-            var latestSdkPath = DotRushMSBuildLocator.GetLatestSdkLocation();
+            var latestSdkPath = DotRushMSBuildLocator.GetLatestSdkDirectory();
             if (string.IsNullOrEmpty(latestSdkPath))
                 return false;
 

@@ -2,12 +2,10 @@
 	<Import Project="..\Common.Build.props" />
 
 	<PropertyGroup>
-		<TargetFramework>$(ServerTargetFramework)</TargetFramework>
 		<OutputType>Exe</OutputType>
 		<AssemblyName>DotRush</AssemblyName>
-		<SelfContained>true</SelfContained>
+		<!-- <SelfContained>true</SelfContained> -->
 		<NoWarn>$(NoWarn);MSB3277</NoWarn>
-
 		<OutputPath>$(AssetsPath)LanguageServer</OutputPath>
         <PublishDir>$(OutputPath)</PublishDir>
 	</PropertyGroup>

@@ -1,5 +1,6 @@
 import { StatusBarController } from '../controllers/statusbarController';
 import { ProcessArgumentBuilder } from '../interop/processArgumentBuilder';
+import { Interop } from '../interop/interop';
 import { Extensions } from '../extensions';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
@@ -50,7 +51,7 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
             cwd: Extensions.getCurrentWorkingDirectory(),
             env: Extensions.getSetting<{ [key: string]: string }>(res.configIdMSBuildAdditionalEnvironment)
         };
-        const builder = new ProcessArgumentBuilder('dotnet')
+        const builder = new ProcessArgumentBuilder(Interop.dotnetPath)
             .append(definition.target).append(Extensions.toUnixPath(definition.project) /*DotRush/issues/88*/)
             .conditional(`-p:Configuration=${configuration}`, () => configuration !== undefined)
             .conditional(`-p:TargetFramework=${framework}`, () => framework !== undefined);
