@@ -46,7 +46,7 @@ public class TestingPlatformHostAdapter : ITestHostAdapter {
 
     private Process? CreateTestingPlatformProcess(string testAssembly, int port, string? runSettingsFilePath) {
         var requiresDotNetRuntime = testAssembly.EndsWith(".dll", StringComparison.OrdinalIgnoreCase);
-        var executable = requiresDotNetRuntime ? MSBuildLocator.DotNetTool.FullName : testAssembly;
+        var executable = requiresDotNetRuntime ? MSBuildLocator.GetMuxerPath() : testAssembly;
 
         currentClassLogger.Debug($"Starting process '{testAssembly}' with port '{port}'");
         return new ProcessRunner(executable, new ProcessArgumentBuilder()

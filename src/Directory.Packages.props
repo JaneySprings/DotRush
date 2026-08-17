@@ -19,7 +19,6 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="$(TestPlatformVersion)" />
     <PackageVersion Include="Microsoft.TestPlatform.TestHost" Version="$(TestPlatformVersion)" />
     <PackageVersion Include="Microsoft.TestPlatform.TranslationLayer" Version="$(TestPlatformVersion)" />
-    <PackageVersion Include="Microsoft.Build.Locator" Version="1.7.8" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(CodeAnalysisVersion)" />

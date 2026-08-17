@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.Workspaces.Extensions;
-using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis.MSBuild;
 using DotRushMSBuildLocator = DotRush.Common.MSBuild.MSBuildLocator;
 
@@ -51,33 +50,13 @@ public abstract class DotRushWorkspace : SolutionController {
     }
 
     private bool TryRegisterDotNetEnvironment() {
-        var registrationResult = SafeExtensions.Invoke(false, () => {
-            if (!MSBuildLocator.CanRegister || MSBuildLocator.IsRegistered)
+        return SafeExtensions.Invoke(false, () => {
+            if (string.IsNullOrEmpty(DotNetSdkDirectory))
                 return true;
-            if (!string.IsNullOrEmpty(DotNetSdkDirectory)) {
-                CurrentSessionLogger.Debug($"Registering MSBuild path: {DotNetSdkDirectory}");
-                DotRushMSBuildLocator.DotNetSdkDirectory = DotNetSdkDirectory;
-                MSBuildLocator.RegisterMSBuildPath(DotNetSdkDirectory);
-                return true;
-            }
-            MSBuildLocator.RegisterDefaults();
+
+            CurrentSessionLogger.Debug($"Registering MSBuild path: {DotNetSdkDirectory}");
+            DotRushMSBuildLocator.RegisterMSBuildPath(DotNetSdkDirectory);
             return true;
         });
-
-        if (registrationResult)
-            return true;
-
-        CurrentSessionLogger.Error("Faied to register MSBuild path. Trying to register the latest SDK path.");
-        registrationResult = SafeExtensions.Invoke(false, () => {
-            var latestSdkPath = DotRushMSBuildLocator.GetLatestSdkDirectory();
-            if (string.IsNullOrEmpty(latestSdkPath))
-                return false;
-
-            CurrentSessionLogger.Debug($"Registering MSBuild path: {latestSdkPath}");
-            MSBuildLocator.RegisterMSBuildPath(latestSdkPath);
-            return true;
-        });
-
-        return registrationResult;
     }
 }

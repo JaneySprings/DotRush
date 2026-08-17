@@ -7,18 +7,12 @@ public class ProcessRunner {
     private List<string> standardError = null!;
     private readonly Process process;
 
-    public ProcessRunner(FileInfo executable, ProcessArgumentBuilder? builder = null, IProcessLogger? logger = null) {
-        process = new Process();
-        process.StartInfo.Arguments = builder?.ToString();
-        process.StartInfo.FileName = executable.FullName;
-        process.StartInfo.WorkingDirectory = executable.DirectoryName;
-
-        SetupProcessLogging(logger);
-    }
+    public ProcessRunner(FileInfo executable, ProcessArgumentBuilder? builder = null, IProcessLogger? logger = null) : this(executable.FullName, builder, logger) { }
     public ProcessRunner(string command, ProcessArgumentBuilder? builder = null, IProcessLogger? logger = null) {
         process = new Process();
         process.StartInfo.Arguments = builder?.ToString();
         process.StartInfo.FileName = command;
+        process.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
 
         SetupProcessLogging(logger);
     }

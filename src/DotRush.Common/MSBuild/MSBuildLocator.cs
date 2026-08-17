@@ -3,21 +3,25 @@ using DotRush.Common.Interop;
 namespace DotRush.Common.MSBuild;
 
 public static class MSBuildLocator {
-    public static string? DotNetSdkDirectory { get; set; }
+    private static string? dotnetSdkDirectory;
 
-    public static FileInfo DotNetTool {
-        get {
-            var path = Path.Combine(MSBuildLocator.GetRootDirectory(), "dotnet" + RuntimeInfo.ExecExtension);
-            if (!File.Exists(path))
-                throw new FileNotFoundException("Could not find 'dotnet' tool");
+    public static void RegisterMSBuildPath(string? sdkPath) {
+        if (string.IsNullOrEmpty(sdkPath) || !Directory.Exists(sdkPath))
+            throw new DirectoryNotFoundException($"Invalid SDK directory '{sdkPath}'");
 
-            return new FileInfo(path);
-        }
+        dotnetSdkDirectory = sdkPath;
     }
 
+    public static string GetMuxerPath() {
+        var path = Path.Combine(MSBuildLocator.GetRootDirectory(), "dotnet" + RuntimeInfo.ExecExtension);
+        if (!File.Exists(path))
+            throw new FileNotFoundException("Could not find 'dotnet' tool");
+
+        return path;
+    }
     public static string GetRootDirectory() {
-        if (!string.IsNullOrEmpty(DotNetSdkDirectory))
-            return Path.GetFullPath(Path.Combine(DotNetSdkDirectory, "..", ".."));
+        if (!string.IsNullOrEmpty(dotnetSdkDirectory))
+            return Path.GetFullPath(Path.Combine(dotnetSdkDirectory, "..", ".."));
 
         var dotnetRoot = Environment.GetEnvironmentVariable("DOTNET_ROOT");
         if (!string.IsNullOrEmpty(dotnetRoot) && Directory.Exists(dotnetRoot))
@@ -43,11 +47,11 @@ public static class MSBuildLocator {
         throw new FileNotFoundException("Could not find dotnet tool");
     }
     public static string GetLatestSdkDirectory() {
-        if (!string.IsNullOrEmpty(DotNetSdkDirectory))
-            return DotNetSdkDirectory;
+        if (!string.IsNullOrEmpty(dotnetSdkDirectory))
+            return dotnetSdkDirectory;
 
         var sdkPath = Path.Combine(GetRootDirectory(), "sdk");
-        var result = new ProcessRunner(DotNetTool, new ProcessArgumentBuilder()
+        var result = new ProcessRunner(GetMuxerPath(), new ProcessArgumentBuilder()
            .Append("--version")).WaitForExit();
         if (result.Success)
             return Path.Combine(sdkPath, string.Concat(result.StandardOutput).Trim());
