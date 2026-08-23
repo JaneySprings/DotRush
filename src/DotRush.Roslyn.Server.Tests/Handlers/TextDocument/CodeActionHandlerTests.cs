@@ -45,7 +45,7 @@ class CodeActionTest {
             Range = PositionExtensions.CreateRange(4, 5)
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.And.Not.Empty);
         Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(13));
         result.CommandOrCodeActions.ForEach(ca => Assert.That(ca.CodeAction, Is.Not.Null));
         // QuickFix
@@ -91,7 +91,7 @@ class CodeActionTest {
             Context = new CodeActionContext { Only = new List<CodeActionKind>() }
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.And.Not.Empty);
         Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(13));
         result.CommandOrCodeActions.ForEach(ca => Assert.That(ca.CodeAction, Is.Not.Null));
     }
@@ -114,7 +114,7 @@ class CodeActionTest {
             Context = new CodeActionContext { Only = new List<CodeActionKind>() { new CodeActionKind(kind) } }
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null);
         Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(expectedCount));
         result.CommandOrCodeActions.ForEach(ca => Assert.That(ca.CodeAction, Is.Not.Null));
     }
@@ -142,7 +142,7 @@ sealed class CodeActionTest {
             Range = PositionExtensions.CreateRange(startLine, endLine)
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.And.Not.Empty);
         Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title == "Remove unused variable"));
 
         var removeCodeAction = result.CommandOrCodeActions.Single(it => it.CodeAction!.Title == "Remove unused variable");
@@ -171,7 +171,7 @@ sealed class CodeActionTest {
             Range = PositionExtensions.CreateRange(4, 5)
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.And.Not.Empty);
         Assert.That(result.CommandOrCodeActions, Has.None.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title.StartsWith("Fix all")));
     }
     [Test]
@@ -190,7 +190,7 @@ sealed class CodeActionTest {
             Range = PositionExtensions.CreateRange(4, 5)
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.And.Not.Empty);
         Assert.That(result.CommandOrCodeActions, Has.One.Matches<CommandOrCodeAction>(ca => ca.CodeAction!.Title.StartsWith("Fix all 'CS0219'")));
 
         var removeCodeAction = result.CommandOrCodeActions.Single(it => it.CodeAction!.Title == $"Fix all 'CS0219' in '{nameof(CodeActionHandlerTests)}.cs'");
@@ -226,7 +226,7 @@ sealed class CodeActioSecondTest {
             Range = PositionExtensions.CreateRange(4, 5)
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.And.Not.Empty);
         Assert.That(result.CommandOrCodeActions.Where(ca => ca.CodeAction!.Title.StartsWith("Fix all 'CS0219'")).ToArray(), Has.Length.EqualTo(2));
 
         var removeCodeAction = result.CommandOrCodeActions.Single(it => it.CodeAction!.Title.StartsWith($"Fix all 'CS0219' in '{ProjectName}"));

@@ -1,13 +1,12 @@
 using System.Reflection.PortableExecutable;
+using System.Text;
 using DotRush.Roslyn.Navigation.Extensions;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using Microsoft.CodeAnalysis;
 using ISymbol = Microsoft.CodeAnalysis.ISymbol;
-using SyntaxTree = ICSharpCode.Decompiler.CSharp.Syntax.SyntaxTree;
 
 namespace DotRush.Roslyn.Navigation.Decompilation;
 
@@ -34,7 +33,7 @@ public class AssemblyDecompiler {
 
         return new CSharpDecompiler(module, resolver, DecompilerSettings);
     }
-    public SyntaxTree DecompileType(CSharpDecompiler decompiler, ISymbol typeSymbol) {
+    public string DecompileType(CSharpDecompiler decompiler, ISymbol typeSymbol) {
         var typeName = typeSymbol.GetNamedTypeFullName();
         if (string.IsNullOrEmpty(typeName))
             throw new InvalidOperationException("Type name is empty");
@@ -42,14 +41,15 @@ public class AssemblyDecompiler {
         var fullTypeName = new FullTypeName(typeName);
         decompiler = ValidateDecompilerTypeSystem(decompiler, fullTypeName);
 
-        var result = decompiler.DecompileType(fullTypeName);
         var metadataFile = decompiler.TypeSystem.MainModule.MetadataFile;
+        var sourceText = new StringBuilder()
+            .AppendLine($"#region Assembly {metadataFile.FullName}")
+            .AppendLine($"// {metadataFile.FileName}")
+            .AppendLine("#endregion")
+            .AppendLine()
+            .Append(decompiler.DecompileTypeAsString(fullTypeName));
 
-        result.InsertChildBefore(result.Children.First(), new PreProcessorDirective(PreProcessorDirectiveType.Region, $"Assembly {metadataFile.FullName}"), Roles.PreProcessorDirective);
-        result.InsertChildAfter(result.Children.First(), new Comment(" " + metadataFile.FileName), Roles.Comment);
-        result.InsertChildAfter(result.Children.Skip(1).First(), new PreProcessorDirective(PreProcessorDirectiveType.Endregion, "\n"), Roles.PreProcessorDirective);
-        result.FileName = typeName + ".cs";
-        return result;
+        return sourceText.ToString();
     }
 
     private async Task<PortableExecutableReference?> GetPEReference(IAssemblySymbol assemblySymbol, Project project, CancellationToken cancellationToken) {

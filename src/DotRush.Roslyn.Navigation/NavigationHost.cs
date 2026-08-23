@@ -2,6 +2,7 @@ using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.Navigation.Decompilation;
+using DotRush.Roslyn.Navigation.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using FileSystemExtensions = DotRush.Common.Extensions.FileSystemExtensions;
@@ -32,9 +33,9 @@ public class NavigationHost : IClearable {
             return null;
         }
 
-        var syntaxTree = assemblyDecompiler.DecompileType(csharpDecompiler, symbol);
-        var outputFilePath = Path.Combine(DecompiledCodeDirectory, project.Name, symbol.ContainingAssembly.Name, syntaxTree.FileName);
-        FileSystemExtensions.WriteAllText(outputFilePath, syntaxTree.ToString());
+        var sourceText = assemblyDecompiler.DecompileType(csharpDecompiler, symbol);
+        var outputFilePath = Path.Combine(DecompiledCodeDirectory, project.Name, symbol.ContainingAssembly.Name, symbol.GetNamedTypeFullName() + ".cs");
+        FileSystemExtensions.WriteAllText(outputFilePath, sourceText);
         // FileSystemExtensions.MakeFileReadOnly(outputFilePath); // TODO: May be issues with deleting files if they are read-only
         CreateDocument(outputFilePath, project.Id);
 

@@ -46,7 +46,7 @@ class CodeActionTest {
             Range = PositionExtensions.CreateRange(4, 5)
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.And.Not.Empty);
         Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(14));
         // QuickFix
         Assert.That(GetCodeAction(result, "using System.Text.Json;"), Is.Not.Null);
@@ -99,7 +99,7 @@ class CodeActionTest {
             Context = new CodeActionContext { Only = new List<CodeActionKind> { new CodeActionKind(kind) } }
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null);
         Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(expectedCount));
         result.CommandOrCodeActions.ForEach(ca => Assert.That(ca.CodeAction, Is.Not.Null));
     }
@@ -117,7 +117,7 @@ class CodeActionTest {
             Context = new CodeActionContext { Only = new List<CodeActionKind> { CodeActionKind.Refactor } }
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.And.Not.Empty);
         Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(4));
 
         Assert.That(GetCodeAction(result, "Generate description in XML"), Is.Not.Null);
@@ -151,7 +151,7 @@ class MyClass {
             Context = new CodeActionContext { Only = new List<CodeActionKind> { CodeActionKind.Refactor } }
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.Or.Empty);
+        Assert.That(result.CommandOrCodeActions, Is.Not.Null.And.Not.Empty);
         Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(5));
 
         Assert.That(GetCodeAction(result, "Generate description in XML"), Is.Not.Null);

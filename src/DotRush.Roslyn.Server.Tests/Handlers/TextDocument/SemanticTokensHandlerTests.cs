@@ -54,7 +54,7 @@ namespace Tests {
             TextDocument = documentPath.CreateDocumentId()
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result?.Data, Is.Not.Null.Or.Empty);
+        Assert.That(result?.Data, Is.Not.Null.And.Not.Empty);
         Assert.That(result.Data.Count % 5, Is.EqualTo(0));
         Assert.That(result.Data.Count / 5, Is.EqualTo(41));
 
@@ -129,7 +129,7 @@ switch(a) {
             TextDocument = documentPath.CreateDocumentId()
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result?.Data, Is.Not.Null.Or.Empty);
+        Assert.That(result?.Data, Is.Not.Null.And.Not.Empty);
         Assert.That(result.Data.Count % 5, Is.EqualTo(0));
         Assert.That(result.Data.Count / 5, Is.EqualTo(17));
 
@@ -168,7 +168,7 @@ var included = 24;
             TextDocument = documentPath.CreateDocumentId()
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result?.Data, Is.Not.Null.Or.Empty);
+        Assert.That(result?.Data, Is.Not.Null.And.Not.Empty);
         Assert.That(result.Data.Count % 5, Is.EqualTo(0));
         Assert.That(result.Data.Count / 5, Is.EqualTo(5));
 
