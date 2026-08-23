@@ -35,7 +35,7 @@ export class Interop {
 
         const dotnetDebuggerPath = path.join(Interop.binariesPath, "Debugger", "clrdbg" + Interop.execExtension);
         if (!fs.existsSync(dotnetDebuggerPath)) {
-            Interop.installDebugger(Extensions.onVSCode(res.debuggerVsdbgInstallId, res.debuggerSharpdbgInstallId)).then(result => {
+            Interop.installDebugger(res.debuggerInstallId).then(result => {
                 if (result !== undefined && !result.isSuccess) // Not a blocker, run intellisense only
                     vscode.window.showErrorMessage(`${res.messageInstallingComponentFailed}: ${result.message}`);
             });
@@ -102,7 +102,7 @@ export class Interop {
         const getNameByDebuggerId = (id: string) => {
             switch (id) {
                 case res.debuggerVsdbgInstallId: return res.debuggerVsdbgDisplayName;
-                case res.debuggerSharpdbgInstallId: return res.debuggerSharpdbgDisplayName;
+                case res.debuggerInstallId: return res.debuggerDisplayName;
                 default: return id;
             }
         };

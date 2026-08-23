@@ -8,11 +8,9 @@ export const debuggerNetCoreTitle = ".NET Core Debugger";
 export const debuggerUnityId = "unity";
 export const debuggerUnityTitle = "Unity Debugger";
 export const debuggerVsdbgInstallId = 'vsdbg';
-// export const debuggerNcdbgInstallId = 'ncdbg';
-export const debuggerSharpdbgInstallId = 'sharpdbg';
+export const debuggerInstallId = 'clrdbg';
 export const debuggerVsdbgDisplayName = "Microsoft .NET Core Debugger (vsdbg)"
-// export const debuggerNcdbgDisplayName = "Samsung Debugger (NetCoreDbg)"
-export const debuggerSharpdbgDisplayName = "Matt Parker's Debugger (SharpDbg)"
+export const debuggerDisplayName = ".NET Core Debugger"
 
 export const commandIdReloadWorkspace = "dotrush.reloadWorkspace";
 export const commandIdPickProcess = "dotrush.pickProcess";
