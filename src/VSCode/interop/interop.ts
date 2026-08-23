@@ -35,7 +35,7 @@ export class Interop {
 
         const dotnetDebuggerPath = path.join(Interop.binariesPath, "Debugger", "clrdbg" + Interop.execExtension);
         if (!fs.existsSync(dotnetDebuggerPath)) {
-            Interop.installDebugger(res.debuggerInstallId).then(result => {
+            Interop.installDebugger(Extensions.onVSCode(res.debuggerVsdbgInstallId, res.debuggerInstallId)).then(result => {
                 if (result !== undefined && !result.isSuccess) // Not a blocker, run intellisense only
                     vscode.window.showErrorMessage(`${res.messageInstallingComponentFailed}: ${result.message}`);
             });
@@ -81,9 +81,6 @@ export class Interop {
             .append("-p", JSON.stringify(parameters)));
     }
 
-    public static createProcess(executable: string, cwd: string | undefined): number | undefined {
-        return ProcessRunner.createProcess(new ProcessArgumentBuilder(executable), cwd);
-    }
     public static createTestHostRpc(configurator: (args: ProcessArgumentBuilder) => void): rpc.MessageConnection {
         const builder = new ProcessArgumentBuilder(Interop.dotnetPath).append(Interop.devHostPath).append('test');
         configurator(builder);
