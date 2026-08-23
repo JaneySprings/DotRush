@@ -7,7 +7,7 @@ using DotRush.Common.Logging;
 namespace DotRush.Debugging.Host.Installers;
 
 public class SharpdbgInstaller : IDebuggerInstaller {
-    private const string LatestReleaseVersion = "head";
+    private const string LatestReleaseVersion = "18.0.0";
     private readonly string debuggerDirectory;
 
     public SharpdbgInstaller(string workingDirectory) {
@@ -19,7 +19,7 @@ public class SharpdbgInstaller : IDebuggerInstaller {
     }
     string? IDebuggerInstaller.GetDownloadLink() {
         var runtime = $"{RuntimeInfo.GetOperationSystemV2()}-{RuntimeInfo.GetArchitecture64()}";
-        return $"https://github.com/JaneySprings/sharpdbg/releases/download/{LatestReleaseVersion}/SharpDbg-{runtime}.zip";
+        return $"https://github.com/JaneySprings/clrdbg/releases/download/{LatestReleaseVersion}/clrdbg_{runtime}.zip";
     }
     string? IDebuggerInstaller.Install(string downloadUrl) {
         CurrentSessionLogger.Debug($"Downloading debugger from '{downloadUrl}'");
@@ -33,22 +33,12 @@ public class SharpdbgInstaller : IDebuggerInstaller {
 
         CurrentSessionLogger.Debug($"Extracting debugger to '{debuggerDirectory}'");
 
-        using var archive = new ZipArchive(response.Content.ReadAsStream());
-        foreach (var entry in archive.Entries) {
-            if (string.IsNullOrEmpty(entry.Name))
-                continue;
+        using var memoryStream = new MemoryStream();
+        response.Content.ReadAsStream().CopyTo(memoryStream);
+        memoryStream.Position = 0;
+        ZipFile.ExtractToDirectory(memoryStream, debuggerDirectory);
 
-            var targetPath = Path.Combine(debuggerDirectory, entry.Name);
-            var targetDirectory = Path.GetDirectoryName(targetPath)!;
-            if (!Directory.Exists(targetDirectory))
-                Directory.CreateDirectory(targetDirectory);
-
-            using var fileStream = File.Create(targetPath);
-            using var stream = entry.Open();
-            stream.CopyTo(fileStream);
-        }
-
-        var executable = Path.Combine(debuggerDirectory, "SharpDbg.Cli" + RuntimeInfo.ExecExtension);
+        var executable = Path.Combine(debuggerDirectory, "clrdbg" + RuntimeInfo.ExecExtension);
         if (!File.Exists(executable)) {
             CurrentSessionLogger.Error($"Debugger executable not found: '{executable}'");
             return null;
@@ -62,8 +52,5 @@ public class SharpdbgInstaller : IDebuggerInstaller {
             if (!registrationResult.Success)
                 CurrentSessionLogger.Error($"Failed to register debugger executable: {registrationResult.GetError()}");
         }
-
-        var linkPath = Path.Combine(Path.GetDirectoryName(executablePath)!, "clrdbg" + RuntimeInfo.ExecExtension);
-        File.Copy(executablePath, linkPath);
     }
 }

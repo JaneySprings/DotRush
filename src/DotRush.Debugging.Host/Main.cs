@@ -14,14 +14,14 @@ public class Program {
     public static int Main(string[] args) {
         var installVsdbgOption = new Option<bool>("--install-vsdbg", "-vsdbg");
         var installNcdbgOption = new Option<bool>("--install-ncdbg", "-ncdbg");
-        var installSharpdbgOption = new Option<bool>("--install-sharpdbg", "-sharpdbg");
+        var installDebuggerOption = new Option<bool>("--install-clrdbg", "-clrdbg");
         var evaluateProjectOption = new Option<string>("--project", "-p");
         var processListOption = new Option<bool>("--processes", "-ps");
         var rootCommand = new RootCommand("DotRush Test Host") {
             Options = {
                 installVsdbgOption,
                 installNcdbgOption,
-                installSharpdbgOption,
+                installDebuggerOption,
                 evaluateProjectOption,
                 processListOption
             },
@@ -41,7 +41,7 @@ public class Program {
                 InstallDebugger(new NcdbgInstaller(workingDirectory));
                 return;
             }
-            if (result.GetValue(installSharpdbgOption)) {
+            if (result.GetValue(installDebuggerOption)) {
                 var workingDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
                 InstallDebugger(new SharpdbgInstaller(workingDirectory));
                 return;
