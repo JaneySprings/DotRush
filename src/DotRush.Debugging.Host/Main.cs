@@ -43,7 +43,7 @@ public class Program {
             }
             if (result.GetValue(installDebuggerOption)) {
                 var workingDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
-                InstallDebugger(new SharpdbgInstaller(workingDirectory));
+                InstallDebugger(new UniversalInstaller(workingDirectory));
                 return;
             }
             if (result.GetValue(processListOption)) {
