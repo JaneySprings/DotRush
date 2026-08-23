@@ -73,10 +73,7 @@ Task("test")
 	.Does(() => {
 		var debuggerDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "Debugger");
 		EnsureDirectoryDeleted(debuggerDirectory);
-		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "DevHost", "devhost.dll")} -sharpdbg");
-
-		EnsureDirectoryDeleted(debuggerDirectory);
-		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "DevHost", "devhost.dll")} -vsdbg");
+		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "DevHost", "devhost.dll")} -clrdbg");
 	});
 
 Task("repack").DoesForEach(GetFiles(_Path.Combine(ArtifactsDirectory, "**", "*.vsix")), file => {
