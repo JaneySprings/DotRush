@@ -342,9 +342,6 @@
               "processId": {
                 "type": "string"
               },
-              "processPath": {
-                "type": "string"
-              },
               "cwd": {
                 "type": "string"
               },

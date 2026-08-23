@@ -108,10 +108,10 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Debugger (attach)",
+            "name": ".NET Core Debugger (launch)",
             "type": "coreclr",
-            "request": "attach",
-            "processPath": "C:\\Programs\\Godot\\Godot_v4.4.1-stable_mono_win64.exe",
+            "request": "launch",
+            "program": "C:\\Programs\\Godot\\Godot_v4.4.1-stable_mono_win64.exe",
             "preLaunchTask": "dotrush: Build"
         }
     ]

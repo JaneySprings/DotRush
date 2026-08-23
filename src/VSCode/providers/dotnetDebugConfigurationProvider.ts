@@ -1,7 +1,6 @@
 import { DebugAdapterController } from '../controllers/debugAdapterController';
 import { LaunchProfile } from '../models/profile';
 import { Extensions } from '../extensions';
-import { Interop } from '../interop/interop';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -32,7 +31,7 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
 
         if (config.request === 'launch' && !config.program)
             config.program = await vscode.commands.executeCommand(res.commandIdActiveTargetPath);
-        if (config.request === 'attach' && !config.processId && !config.processName && !config.processPath)
+        if (config.request === 'attach' && !config.processId && !config.processName)
             config.processId = await vscode.commands.executeCommand(res.commandIdPickProcess);
 
         if (!config.cwd && config.program)
@@ -73,10 +72,6 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
         DotNetDebugConfigurationProvider.provideCommonConfiguration(config, profile);
     }
     private static provideCommonConfiguration(config: vscode.DebugConfiguration, profile?: LaunchProfile) {
-        // https://github.com/JaneySprings/DotRush/issues/39
-        if (config.processPath !== undefined && config.request === 'attach')
-            config.processId = Interop.createProcess(config.processPath, config.cwd)
-
         if (config.justMyCode === undefined)
             config.justMyCode = Extensions.getSetting(res.configIdDebuggerProjectAssembliesOnly, false);
         if (config.enableStepFiltering === undefined)
