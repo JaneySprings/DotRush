@@ -1,7 +1,7 @@
 <Project>
     <!-- https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core -->
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <RollForward>LatestMajor</RollForward>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
