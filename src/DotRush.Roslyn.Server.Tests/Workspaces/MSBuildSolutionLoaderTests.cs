@@ -1,3 +1,4 @@
+using System.Text.Json;
 using DotRush.Common.MSBuild;
 using NUnit.Framework;
 
@@ -63,6 +64,101 @@ public class MSBuildSolutionLoaderTests : SimpleWorkspaceFixture {
         Assert.That(projects, Has.Length.EqualTo(2));
         Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project1)));
         Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project2)));
+    }
+    [Test]
+    public void GetProjectsFromSolutionFilterWithRelativePathsTest() {
+        var project1 = CreateProject("Project1");
+        var project2 = CreateProject("Project2");
+        var solutionPath = CreateSolution("TestSolution", project1, project2);
+        var filterDirectory = Path.Combine(SandboxDirectory, "Filters");
+        Directory.CreateDirectory(filterDirectory);
+        var filterPath = Path.Combine(filterDirectory, "TestSolution.slnf");
+        File.WriteAllText(filterPath, JsonSerializer.Serialize(new MSBuildSolutionFilter {
+            Solution = new MSBuildSolution {
+                Path = Path.Combine("..", "TestSolution.sln"),
+                Projects = new List<string> { Path.GetRelativePath(SandboxDirectory, project1), Path.GetRelativePath(SandboxDirectory, project2) }
+            }
+        }));
+
+        var projects = MSBuildSolutionLoader.GetProjectFiles(filterPath);
+
+        Assert.That(projects, Is.Not.Null);
+        Assert.That(projects, Has.Length.EqualTo(2), "Projects should be resolved relative to the referenced solution, not the filter");
+        Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project1)));
+        Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project2)));
+    }
+    [Test]
+    public void GetProjectsFromSolutionFilterWithWindowsStylePathsTest() {
+        var project1 = CreateProject("Project1");
+        var project2 = CreateProject("Project2");
+        var solutionPath = CreateSolution("TestSolution", project1, project2);
+        var filterDirectory = Path.Combine(SandboxDirectory, "Filters");
+        Directory.CreateDirectory(filterDirectory);
+        var filterPath = Path.Combine(filterDirectory, "TestSolution.slnf");
+        File.WriteAllText(filterPath, JsonSerializer.Serialize(new MSBuildSolutionFilter {
+            Solution = new MSBuildSolution {
+                Path = "..\\TestSolution.sln",
+                Projects = new List<string> { "Project1\\Project1.csproj", "Project2\\Project2.csproj" }
+            }
+        }));
+
+        var projects = MSBuildSolutionLoader.GetProjectFiles(filterPath);
+
+        Assert.That(projects, Is.Not.Null);
+        Assert.That(projects, Has.Length.EqualTo(2), "Windows-style separators should be normalized to the platform separator");
+        Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project1)));
+        Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project2)));
+    }
+    [Test]
+    public void GetProjectsFromClassicSolutionWithWindowsStylePathsTest() {
+        var project1 = CreateProject("Project1");
+        var solutionPath = Path.Combine(SandboxDirectory, "TestSolution.sln");
+        var solutionContent = @"Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+Project(""{9A19103F-16F7-4668-BE54-9A1E7A4F7556}"") = ""Project1"", ""Project1\Project1.csproj"", ""{" + Guid.NewGuid() + @"}""
+EndProject
+Global
+EndGlobal";
+        File.WriteAllText(solutionPath, solutionContent);
+
+        var projects = MSBuildSolutionLoader.GetProjectFiles(solutionPath);
+
+        Assert.That(projects, Is.Not.Null);
+        Assert.That(projects, Has.Length.EqualTo(1));
+        Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project1)));
+    }
+    [Test]
+    public void GetProjectsFromSolutionFilterWithAbsoluteSolutionPathTest() {
+        var project1 = CreateProject("Project1");
+        var solutionPath = CreateSolution("TestSolution", project1);
+        var filterDirectory = Path.Combine(SandboxDirectory, "Filters");
+        Directory.CreateDirectory(filterDirectory);
+        var filterPath = Path.Combine(filterDirectory, "TestSolution.slnf");
+        File.WriteAllText(filterPath, JsonSerializer.Serialize(new MSBuildSolutionFilter {
+            Solution = new MSBuildSolution {
+                Path = solutionPath,
+                Projects = new List<string> { Path.GetRelativePath(SandboxDirectory, project1) }
+            }
+        }));
+
+        var projects = MSBuildSolutionLoader.GetProjectFiles(filterPath);
+
+        Assert.That(projects, Is.Not.Null);
+        Assert.That(projects, Has.Length.EqualTo(1));
+        Assert.That(projects.Select(Path.GetFullPath), Contains.Item(Path.GetFullPath(project1)));
+    }
+    [Test]
+    public void GetProjectsFromSolutionFilterWithoutSolutionPathTest() {
+        var filterPath = Path.Combine(SandboxDirectory, "NoSolutionPath.slnf");
+        File.WriteAllText(filterPath, JsonSerializer.Serialize(new MSBuildSolutionFilter {
+            Solution = new MSBuildSolution {
+                Projects = new List<string> { Path.Combine("Project1", "Project1.csproj") }
+            }
+        }));
+
+        var projects = MSBuildSolutionLoader.GetProjectFiles(filterPath);
+
+        Assert.That(projects, Is.Empty);
     }
     [Test]
     public void GetProjectsFromEmptySolutionTest() {

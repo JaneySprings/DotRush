@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Xml.Linq;
+using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 
 namespace DotRush.Common.MSBuild;
@@ -26,7 +27,8 @@ public static class MSBuildSolutionLoader {
                 case ".slnf":
                     return GetProjectsFromSolutionFilter(solutionFile);
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             CurrentSessionLogger.Error(e);
         }
 
@@ -48,7 +50,7 @@ public static class MSBuildSolutionLoader {
             if (line.Contains("{2150E333-8FDC-42A3-9474-1A3956D46DE8}", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var projectPath = lineParts[1].Trim().Trim('"');
+            var projectPath = lineParts[1].Trim().Trim('"').ToPlatformPath();
             if (!Path.IsPathRooted(projectPath))
                 projectPath = Path.Combine(solutionDirectory, projectPath);
 
@@ -60,14 +62,18 @@ public static class MSBuildSolutionLoader {
     private static string[] GetProjectsFromSolutionFilter(string solutionPath) {
         var solutionFilterDirectory = Path.GetDirectoryName(solutionPath)!;
         var solutionFilter = JsonSerializer.Deserialize<MSBuildSolutionFilter>(File.ReadAllText(solutionPath));
-        if (solutionFilter?.Solution == null || solutionFilter.Solution.Projects == null)
+        if (solutionFilter?.Solution == null || solutionFilter.Solution.Projects == null || solutionFilter.Solution.Path == null)
             return Array.Empty<string>();
+
+        var targetSolutionPath = solutionFilter.Solution.Path.ToPlatformPath();
+        if (!Path.IsPathRooted(targetSolutionPath))
+            targetSolutionPath = Path.Combine(solutionFilterDirectory, targetSolutionPath);
 
         var projects = new List<string>();
         foreach (var path in solutionFilter.Solution.Projects) {
-            var currentPath = path;
+            var currentPath = path.ToPlatformPath();
             if (!Path.IsPathRooted(currentPath))
-                currentPath = Path.Combine(solutionFilterDirectory, path);
+                currentPath = Path.Combine(Path.GetDirectoryName(targetSolutionPath)!, currentPath);
 
             projects.Add(Path.GetFullPath(currentPath));
         }
@@ -82,7 +88,7 @@ public static class MSBuildSolutionLoader {
         var projects = new List<string>();
 
         foreach (var projectElement in projectElements) {
-            var projectPath = projectElement.Attribute("Path")?.Value;
+            var projectPath = projectElement.Attribute("Path")?.Value?.ToPlatformPath();
             if (string.IsNullOrWhiteSpace(projectPath))
                 continue;
 
