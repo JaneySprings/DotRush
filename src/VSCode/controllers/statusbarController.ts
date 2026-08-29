@@ -59,8 +59,8 @@ export class StatusBarController {
 
         const configuration = StateController.getLocal<string>('configuration');
         const framework = StateController.getLocal<string>('framework');
-        const activeConfiguration = project.configurations.find(it => it === configuration) ?? project.configurations.at(0);
-        const activeFramework = project.frameworks.find(it => it === framework) ?? project.frameworks.at(0);
+        const activeConfiguration = project.configurations.find(it => it === configuration) ?? project.configurations[0];
+        const activeFramework = project.frameworks.find(it => it === framework) ?? project.frameworks[0];
         StatusBarController.performSelectConfiguration(activeConfiguration, activeFramework);
         StatusBarController.configurationStatusBarItem.show();
     }
