@@ -1,60 +1,68 @@
-import { TreeDataProvider, DebugAdapterTracker, DebugAdapterTrackerFactory } from 'vscode';
 import { Icons } from '../resources/icons';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 
-export class ModulesView implements TreeDataProvider<any>, DebugAdapterTrackerFactory {
-    public static feature : ModulesView = new ModulesView();
-    
-    private loadedModules : any[] = [];
-    private treeViewDataChangedEmitter = new vscode.EventEmitter();
+// The 'module' event body the debugger sends for every loaded assembly
+interface DebugModule {
+    id: number;
+    name: string;
+    path?: string;
+    version?: string;
+    symbolStatus?: string;
+    symbolFilePath?: string;
+    isOptimized?: boolean;
+    isUserCode?: boolean;
+}
+
+type ModuleTreeNode = DebugModule | ModuleProperty;
+
+export class ModulesView implements vscode.TreeDataProvider<ModuleTreeNode>, vscode.DebugAdapterTrackerFactory {
+    public static feature: ModulesView = new ModulesView();
+
+    private loadedModules: DebugModule[] = [];
+    private treeViewDataChangedEmitter = new vscode.EventEmitter<void>();
     public readonly onDidChangeTreeData = this.treeViewDataChangedEmitter.event;
 
     public activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.window.registerTreeDataProvider(res.extendedViewIdModules, this));
         context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerNetCoreId, this));
         context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerUnityId, this));
-        context.subscriptions.push(vscode.debug.onDidStartDebugSession(() => this.treeViewDataChangedEmitter.fire(null), this));
+        context.subscriptions.push(vscode.debug.onDidStartDebugSession(() => this.clearModules(), this));
     }
 
-    public getChildren(element?: any): vscode.ProviderResult<any[]> {
-        if (element == undefined)
+    public getChildren(element?: ModuleTreeNode): vscode.ProviderResult<ModuleTreeNode[]> {
+        if (element === undefined)
             return this.loadedModules;
-        
-        if (!(element instanceof ModuleProperty)) {
-            const props = [];
-            if (element.path)
-                props.push(new ModuleProperty('Path:', element.path));
-            if (element.version)
-                props.push(new ModuleProperty('Version:', element.version));
-            if (element.symbolFilePath)
-                props.push(new ModuleProperty('Symbols:', element.symbolFilePath));
-            if (element.vsAppDomain)
-                props.push(new ModuleProperty('App Domain:', element.vsAppDomain));
-            if (element.addressRange)
-                props.push(new ModuleProperty('Load Address:', element.addressRange));
+        if (element instanceof ModuleProperty)
+            return undefined;
 
-            props.push(new ModuleProperty('Optimized:', element.isOptimized ? 'Yes' : 'No'));
-            props.push(new ModuleProperty('User Code:', element.isUserCode ? 'Yes' : 'No'));
+        const properties = [];
+        if (element.path)
+            properties.push(new ModuleProperty('Path:', element.path));
+        if (element.version)
+            properties.push(new ModuleProperty('Version:', element.version));
+        if (element.symbolStatus)
+            properties.push(new ModuleProperty('Symbols:', element.symbolStatus));
+        if (element.symbolFilePath)
+            properties.push(new ModuleProperty('Symbol File:', element.symbolFilePath));
 
-            return props;
-        }
-
-        return undefined;
+        properties.push(new ModuleProperty('Optimized:', element.isOptimized ? 'Yes' : 'No'));
+        properties.push(new ModuleProperty('User Code:', element.isUserCode ? 'Yes' : 'No'));
+        return properties;
     }
-    public getTreeItem(element: any): vscode.TreeItem {
+    public getTreeItem(element: ModuleTreeNode): vscode.TreeItem {
         if (element instanceof ModuleProperty) {
             const item = new vscode.TreeItem(element.key);
             item.description = element.value;
             item.tooltip = element.value;
             return item;
-        } else {
-            const item = new vscode.TreeItem(element.name, vscode.TreeItemCollapsibleState.Collapsed);
-            item.iconPath = Icons.moduleIcon;
-            return item;
         }
+
+        const item = new vscode.TreeItem(element.name, vscode.TreeItemCollapsibleState.Collapsed);
+        item.iconPath = Icons.moduleIcon;
+        return item;
     }
-    public createDebugAdapterTracker(session: vscode.DebugSession): vscode.ProviderResult<DebugAdapterTracker> {
+    public createDebugAdapterTracker(session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
         const treeView = this;
         return {
             onDidSendMessage(message: any) {
@@ -62,24 +70,29 @@ export class ModulesView implements TreeDataProvider<any>, DebugAdapterTrackerFa
                     return;
                 if (message.body.reason != 'new')
                     return;
-        
-                if (treeView.loadedModules.find((m) => m.id == message.body.module.id))
+
+                const module: DebugModule = message.body.module;
+                if (treeView.loadedModules.some(it => it.id == module.id))
                     return;
 
-                treeView.loadedModules.push(message.body.module);
-                treeView.treeViewDataChangedEmitter.fire(null);
+                treeView.loadedModules.push(module);
+                treeView.treeViewDataChangedEmitter.fire();
             },
             onWillStopSession() {
-                treeView.loadedModules = [];
-                treeView.treeViewDataChangedEmitter.fire(null);
+                treeView.clearModules();
             }
         }
+    }
+
+    private clearModules() {
+        this.loadedModules = [];
+        this.treeViewDataChangedEmitter.fire();
     }
 }
 
 class ModuleProperty {
-    key: string;
-    value: string;
+    public readonly key: string;
+    public readonly value: string;
 
     constructor(key: string, value: string) {
         this.key = key;

@@ -137,4 +137,4 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 DotRush does not support [CodeLens features](https://code.visualstudio.com/api/language-extensions/programmatic-language-features#codelens-show-actionable-context-information-within-source-code) such as references, tests, and other CodeLens features.
 
 ## Alternative Editors
-You can also use DotRush with other editors. See the [following readme](https://github.com/JaneySprings/DotRush/blob/main/src/AltEditors/Readme.md) files for more information.
+You can also use DotRush with other editors. See the [following repository](https://github.com/JaneySprings/dotrush-alt-editors) files for more information.

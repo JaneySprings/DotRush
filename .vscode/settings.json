@@ -7,7 +7,6 @@
         "src/DotRush.*/obj": true,
         "**/node_modules": true,
         ".config": true,
-        ".github": true,
         ".editorconfig": true,
         ".gitignore": true,
         ".gitmodules": true
