@@ -36,6 +36,12 @@ class EventHandler {
     }
     public invoke(data: any) {
         this.delayedData = data;
-        this.callbacks.forEach(callback => callback(data));
+        this.callbacks.forEach(callback => {
+            try {
+                callback(data);
+            } catch (error) {
+                console.error(error);
+            }
+        });
     }
 }

@@ -58,7 +58,7 @@ export const messageNewProjectName = "Enter the new project name";
 export const messageNewProjectOpenAction = "Do you want to add the new project to the workspace or open it?";
 export const messageOpen = "Open";
 export const messageAddToWorkspace = "Add to Workspace";
-export const messageInvalidDotnetSdk = "Failed to run the .NET SDK. Please make sure the .NET SDK is installed, or configure the path to an existing installation using the 'dotrush.roslyn.dotnetSdkDirectory' setting.";
+export const messageInvalidDotnetSdk = "Failed to run the .NET SDK. Please make sure the .NET SDK 10 or higher is installed, or configure the path to an existing installation using the 'dotrush.roslyn.dotnetSdkDirectory' setting.";
 
 export const configIdRoslynDotnetSdkDirectory = "roslyn.dotnetSdkDirectory";
 export const configIdRoslynProjectOrSolutionFiles = "roslyn.projectOrSolutionFiles";
