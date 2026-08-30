@@ -1,5 +1,4 @@
 using DotRush.Common.Extensions;
-using DotRush.Roslyn.CodeAnalysis.Reflection;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
@@ -25,12 +24,12 @@ public class ReferenceHandler : ReferenceHandlerBase {
     protected override Task<ReferenceResponse?> Handle(ReferenceParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync<ReferenceResponse?>(async () => {
             var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
-            if (documentIds == null || navigationService.Solution == null)
+            if (documentIds == null)
                 return null;
 
             var result = new HashSet<Location>();
             foreach (var documentId in documentIds) {
-                var document = navigationService.Solution.GetDocument(documentId);
+                var document = navigationService.Solution?.GetDocument(documentId);
                 if (document == null)
                     continue;
 
@@ -39,27 +38,8 @@ public class ReferenceHandler : ReferenceHandlerBase {
                 if (symbol == null)
                     continue;
 
-                var referenceSymbols = await SymbolFinder.FindReferencesAsync(symbol, navigationService.Solution, cancellationToken);
-                var referenceLocations = referenceSymbols
-                    .SelectMany(r => r.Locations);
-
-                if (symbol is Microsoft.CodeAnalysis.IMethodSymbol methodSymbol) {
-                    if (methodSymbol.MethodKind == Microsoft.CodeAnalysis.MethodKind.PropertyGet)
-                        referenceLocations = referenceLocations.Where(l => !InternalReferenceLocation.IsWrittenTo(l));
-                    if (methodSymbol.MethodKind == Microsoft.CodeAnalysis.MethodKind.PropertySet)
-                        referenceLocations = referenceLocations.Where(l => InternalReferenceLocation.IsWrittenTo(l));
-                }
-
-                foreach (var referenceLocation in referenceLocations) {
-                    var location = referenceLocation.Location;
-                    var filePath = location.SourceTree?.FilePath ?? string.Empty;
-                    if (!File.Exists(filePath))
-                        filePath = await navigationService.EmitCompilerGeneratedFileAsync(location, document.Project, cancellationToken).ConfigureAwait(false);
-
-                    var serverLocation = location.ToLocation(filePath);
-                    if (serverLocation != null)
-                        result.Add(serverLocation.Value);
-                }
+                var referenceSpans = await navigationService.FindReferencesAsync(symbol, cancellationToken);
+                result.AddRange(referenceSpans.Select(x => x.ToLocation()));
             }
 
             return new ReferenceResponse(result.ToList());

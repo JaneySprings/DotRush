@@ -1,4 +1,3 @@
-using DotRush.Common.Extensions;
 using DotRush.Roslyn.Navigation;
 using Microsoft.CodeAnalysis;
 
@@ -12,15 +11,14 @@ public class NavigationService {
         navigationHost = new NavigationHost();
     }
 
-    public Task<string?> EmitDecompiledFileAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync(default(string), async () => {
-            return await navigationHost.EmitDecompiledFileAsync(symbol, project, cancellationToken).ConfigureAwait(false);
-        });
+    public Task<List<FileLinePositionSpan>> FindDefinitionsAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
+        return navigationHost.FindDefinitionsAsync(symbol, project, cancellationToken);
     }
-    public Task<string?> EmitCompilerGeneratedFileAsync(Location location, Project project, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync(default(string), async () => {
-            return await navigationHost.EmitCompilerGeneratedFileAsync(location, project, cancellationToken).ConfigureAwait(false);
-        });
+    public Task<List<FileLinePositionSpan>> FindReferencesAsync(ISymbol symbol, CancellationToken cancellationToken) {
+        return navigationHost.FindReferencesAsync(symbol, cancellationToken);
+    }
+    public Task<FileLinePositionSpan?> EmitCompilerGeneratedFileAsync(Location location, Project project, CancellationToken cancellationToken) {
+        return navigationHost.EmitCompilerGeneratedFileAsync(location, project, cancellationToken);
     }
     public void UpdateSolution(Solution? solution) {
         navigationHost.UpdateSolution(solution);

@@ -34,14 +34,13 @@ public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
                 var symbols = compilation.GetSymbolsWithName((s) => SymbolExtensions.FuzzySearch(s, request.Query), SymbolFilter.TypeAndMember, token);
                 foreach (var symbol in symbols) {
                     foreach (var location in symbol.Locations) {
-                        var lspLocation = location.ToLocation();
-                        if (lspLocation == null)
+                        if (location.SourceTree == null)
                             continue;
 
                         workspaceSymbols.Add(new WorkspaceSymbol {
                             Kind = symbol.ToSymbolKind(),
                             Name = symbol.Name,
-                            Location = lspLocation,
+                            Location = location.ToLocation(),
                             ContainerName = symbol.ContainingType?.Name
                         });
                     }
