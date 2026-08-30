@@ -16,9 +16,6 @@ public static class PositionExtensions {
         var linePosition = sourceText.Lines.GetLinePosition(offset);
         return new ProtocolModels.Position(linePosition.Line, linePosition.Character);
     }
-    public static ProtocolModels.Position ToPosition(this LinePosition linePosition) {
-        return new ProtocolModels.Position(linePosition.Line, linePosition.Character);
-    }
 
     public static ProtocolModels.DocumentRange ToRange(this LinePositionSpan span) {
         return new ProtocolModels.DocumentRange(
@@ -39,13 +36,17 @@ public static class PositionExtensions {
         return new ProtocolModels.DocumentRange(position, position);
     }
 
-    public static ProtocolModels.Location? ToLocation(this Location location, string? filePath = null) {
-        if (location.SourceTree == null)
-            return null;
-
+    public static ProtocolModels.Location ToLocation(this Location location) {
+        ArgumentNullException.ThrowIfNull(location.SourceTree);
         return new ProtocolModels.Location() {
-            Uri = filePath ?? location.SourceTree.FilePath,
+            Uri = location.SourceTree.FilePath,
             Range = location.SourceSpan.ToRange(location.SourceTree.GetText())
+        };
+    }
+    public static ProtocolModels.Location ToLocation(this FileLinePositionSpan span) {
+        return new ProtocolModels.Location() {
+            Uri = span.Path,
+            Range = span.Span.ToRange()
         };
     }
 
@@ -54,16 +55,6 @@ public static class PositionExtensions {
             range.Start.ToOffset(sourceText),
             range.End.ToOffset(sourceText)
         );
-    }
-
-    public static ProtocolModels.Location? ToDecompiledUnknownLocation(string? filePath) {
-        if (filePath == null)
-            return null;
-
-        return new ProtocolModels.Location() {
-            Uri = filePath,
-            Range = default(ProtocolModels.DocumentRange)
-        };
     }
 
     public static bool CheckCollision(ProtocolModels.DocumentRange range1, ProtocolModels.DocumentRange range2) {

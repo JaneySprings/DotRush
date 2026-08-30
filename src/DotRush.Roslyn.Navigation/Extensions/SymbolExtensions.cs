@@ -4,18 +4,21 @@ using Microsoft.CodeAnalysis;
 namespace DotRush.Roslyn.Navigation.Extensions;
 
 internal static class SymbolExtensions {
-    internal static string GetNamedTypeFullName(this ISymbol symbol) {
-        var containingType = symbol.GetNamedTypeSymbol();
-        var stack = new Stack<string>();
-        if (containingType?.MetadataName == null)
+    // Nested symbols are located inside the decompiled top-level type document
+    internal static string GetTopLevelTypeFullName(this ISymbol symbol) {
+        var type = symbol.GetNamedTypeSymbol();
+        while (type?.ContainingType != null)
+            type = type.ContainingType;
+        if (type?.MetadataName == null)
             return string.Empty;
 
-        stack.Push(containingType.MetadataName);
-        var ns = containingType.ContainingNamespace;
-        do {
+        var stack = new Stack<string>();
+        stack.Push(type.MetadataName);
+        var ns = type.ContainingNamespace;
+        while (ns != null && !ns.IsGlobalNamespace) {
             stack.Push(ns.Name);
             ns = ns.ContainingNamespace;
-        } while (ns != null && !ns.IsGlobalNamespace);
+        }
 
         return string.Join(".", stack);
     }

@@ -21,52 +21,28 @@ public class DefinitionHandler : DefinitionHandlerBase {
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
         serverCapabilities.DefinitionProvider = true;
     }
-    protected override async Task<DefinitionResponse?> Handle(DefinitionParams request, CancellationToken cancellationToken) {
-        var result = new NullableValueCollection<Location>();
-        var decompiledResult = new NullableValueCollection<Location>();
-        var isDecompiled = false;
+    protected override Task<DefinitionResponse?> Handle(DefinitionParams request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<DefinitionResponse?>(async () => {
+            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
+            if (documentIds == null)
+                return null;
 
-        var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
-        if (documentIds == null)
-            return null;
-
-        handle:
-        foreach (var documentId in documentIds) {
-            var document = navigationService.Solution?.GetDocument(documentId);
-            if (document == null)
-                continue;
-
-            var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
-            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken).ConfigureAwait(false);
-            if (symbol == null)
-                continue;
-
-            foreach (var location in symbol.Locations) {
-                if (location.IsInMetadata && !isDecompiled) {
-                    var decompiledFilePath = await navigationService.EmitDecompiledFileAsync(symbol, document.Project, cancellationToken).ConfigureAwait(false);
-                    decompiledResult.Add(PositionExtensions.ToDecompiledUnknownLocation(decompiledFilePath));
-                    continue;
-                }
-
-                if (!location.IsInSource || location.SourceTree == null)
+            var result = new HashSet<Location>();
+            foreach (var documentId in documentIds) {
+                var document = navigationService.Solution?.GetDocument(documentId);
+                if (document == null)
                     continue;
 
-                var filePath = location.SourceTree?.FilePath ?? string.Empty;
-                if (!File.Exists(filePath))
-                    filePath = await navigationService.EmitCompilerGeneratedFileAsync(location, document.Project, cancellationToken).ConfigureAwait(false);
+                var sourceText = await document.GetTextAsync(cancellationToken);
+                var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
+                if (symbol == null)
+                    continue;
 
-                result.Add(location.ToLocation(filePath));
+                var definitionSpans = await navigationService.FindDefinitionsAsync(symbol, document.Project, cancellationToken);
+                result.AddRange(definitionSpans.Select(x => x.ToLocation()));
             }
-        }
 
-        if (result.Count == 0 && !isDecompiled) {
-            isDecompiled = true;
-            goto handle;
-        }
-
-        return new DefinitionResponse(result.IsEmpty && !decompiledResult.IsEmpty
-            ? decompiledResult.ToNonNullableList()
-            : result.ToNonNullableList()
-        );
+            return new DefinitionResponse(result.ToList());
+        });
     }
 }

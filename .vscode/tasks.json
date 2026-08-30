@@ -3,13 +3,8 @@
     "tasks": [
         {
             "label": "tsc: watch",
-            "type": "shell",
-            "command": "tsc",
-            "args": [
-                "-w",
-                "-p",
-                "${workspaceFolder}/src/VSCode"
-            ],
+            "type": "npm",
+            "script": "watch",
             "isBackground": true,
             "problemMatcher": [
                 "$tsc-watch"

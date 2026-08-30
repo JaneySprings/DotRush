@@ -20,46 +20,49 @@ public class AssemblyDecompiler {
         UseDebugSymbols = true,
     };
 
-    public async Task<CSharpDecompiler?> CreateDecompilerAsync(IAssemblySymbol assemblySymbol, Project project, CancellationToken cancellationToken) {
-        var peReference = await GetPEReference(assemblySymbol, project, cancellationToken);
-        if (peReference == null || peReference.FilePath == null)
+    public async Task<string?> DecompileTypeAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
+        var typeName = symbol.GetTopLevelTypeFullName();
+        if (string.IsNullOrEmpty(typeName))
             return null;
 
-        var module = new PEFile(peReference.FilePath, PEStreamOptions.PrefetchEntireImage);
-        var resolver = new UniversalAssemblyResolver(project.OutputFilePath, false, module.DetectTargetFrameworkId(), module.DetectRuntimePack());
-        var resolvedAssemblyPath = resolver.FindAssemblyFile(new AssemblyReference(assemblySymbol));
-        if (!string.IsNullOrEmpty(resolvedAssemblyPath))
-            module = new PEFile(resolvedAssemblyPath, PEStreamOptions.PrefetchEntireImage);
-
-        return new CSharpDecompiler(module, resolver, DecompilerSettings);
-    }
-    public string DecompileType(CSharpDecompiler decompiler, ISymbol typeSymbol) {
-        var typeName = typeSymbol.GetNamedTypeFullName();
-        if (string.IsNullOrEmpty(typeName))
-            throw new InvalidOperationException("Type name is empty");
+        var decompiler = await CreateDecompilerAsync(symbol.ContainingAssembly, project, cancellationToken);
+        if (decompiler == null)
+            return null;
 
         var fullTypeName = new FullTypeName(typeName);
-        decompiler = ValidateDecompilerTypeSystem(decompiler, fullTypeName);
+        decompiler = ResolveTypeForwarding(decompiler, fullTypeName);
 
         var metadataFile = decompiler.TypeSystem.MainModule.MetadataFile;
-        var sourceText = new StringBuilder()
+        return new StringBuilder()
             .AppendLine($"#region Assembly {metadataFile.FullName}")
             .AppendLine($"// {metadataFile.FileName}")
             .AppendLine("#endregion")
             .AppendLine()
-            .Append(decompiler.DecompileTypeAsString(fullTypeName));
-
-        return sourceText.ToString();
+            .Append(decompiler.DecompileTypeAsString(fullTypeName))
+            .ToString();
     }
 
-    private async Task<PortableExecutableReference?> GetPEReference(IAssemblySymbol assemblySymbol, Project project, CancellationToken cancellationToken) {
+    private async Task<CSharpDecompiler?> CreateDecompilerAsync(IAssemblySymbol? assemblySymbol, Project project, CancellationToken cancellationToken) {
+        if (assemblySymbol == null)
+            return null;
+
         var compilation = await project.GetCompilationAsync(cancellationToken);
-        var metadataReference = compilation?.GetMetadataReference(assemblySymbol);
-        return metadataReference as PortableExecutableReference;
-    }
-    private CSharpDecompiler ValidateDecompilerTypeSystem(CSharpDecompiler decompiler, FullTypeName fullTypeName) {
-        var type = decompiler.TypeSystem.FindType(fullTypeName.TopLevelTypeName).GetDefinition();
+        var peReference = compilation?.GetMetadataReference(assemblySymbol) as PortableExecutableReference;
+        if (peReference?.FilePath == null)
+            return null;
 
+        // The compilation may reference a 'reference assembly' without method bodies - resolve the implementation assembly
+        var module = new PEFile(peReference.FilePath, PEStreamOptions.PrefetchEntireImage);
+        var resolver = new UniversalAssemblyResolver(project.OutputFilePath, false, module.DetectTargetFrameworkId(), module.DetectRuntimePack());
+        var implementationAssemblyPath = resolver.FindAssemblyFile(AssemblyNameReference.Parse(assemblySymbol.Identity.GetDisplayName()));
+        if (!string.IsNullOrEmpty(implementationAssemblyPath))
+            module = new PEFile(implementationAssemblyPath, PEStreamOptions.PrefetchEntireImage);
+
+        return new CSharpDecompiler(module, resolver, DecompilerSettings);
+    }
+    private CSharpDecompiler ResolveTypeForwarding(CSharpDecompiler decompiler, FullTypeName fullTypeName) {
+        // The type may be forwarded to another assembly (e.g. System.String: System.Runtime -> System.Private.CoreLib)
+        var type = decompiler.TypeSystem.FindType(fullTypeName.TopLevelTypeName).GetDefinition();
         if (type?.ParentModule != null && type.ParentModule != decompiler.TypeSystem.MainModule) {
             var parentModulePath = type.ParentModule.MetadataFile?.FileName;
             if (File.Exists(parentModulePath))
@@ -67,24 +70,5 @@ public class AssemblyDecompiler {
         }
 
         return decompiler;
-    }
-
-    class AssemblyReference : IAssemblyReference {
-        public string Name { get; init; }
-        public string FullName { get; init; }
-        public Version? Version { get; init; }
-        public string? Culture { get; init; }
-        public byte[]? PublicKeyToken { get; init; }
-        public bool IsRetargetable { get; init; }
-        public bool IsWindowsRuntime => false;
-
-        public AssemblyReference(IAssemblySymbol assemblySymbol) {
-            Name = assemblySymbol.Identity.Name;
-            FullName = assemblySymbol.Identity.GetDisplayName();
-            Version = assemblySymbol.Identity.Version;
-            Culture = assemblySymbol.Identity.CultureName;
-            PublicKeyToken = assemblySymbol.Identity.PublicKeyToken.ToArray();
-            IsRetargetable = assemblySymbol.Identity.IsRetargetable;
-        }
     }
 }

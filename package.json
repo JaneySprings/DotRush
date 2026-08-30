@@ -47,7 +47,7 @@
     "package": "webpack --mode production"
   },
   "devDependencies": {
-    "@types/node": "26.x",
+    "@types/node": "22.x",
     "@types/vscode": "^1.83.0",
     "ts-loader": "^9.6.2",
     "typescript": "^5.9.2",
