@@ -50,6 +50,13 @@ jobs:
             dotnet cake --target=vsix --configuration=release --arch=$arch
           done
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix-build
+          path: artifacts/
+          retention-days: 3
+
       - name: Generate server archives
         run: dotnet cake --target=repack
 

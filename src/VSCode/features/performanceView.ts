@@ -1,73 +1,89 @@
-import { ProcessArgumentBuilder } from '../interop/processArgumentBuilder';
-import { Extensions } from '../extensions';
+import { DebugAdapterController } from '../controllers/debugAdapterController';
+import { initializeComponents } from './performanceView.html';
+import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
 import { Interop } from '../interop/interop';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
-import * as path from 'path';
+import * as rpc from 'vscode-jsonrpc/node';
 
-enum DotNetProfilerType {
-    Trace = 'trace',
-    Dump = 'gcdump',
-    // sample, SOS, etc.
-}
-
-export class PerformanceView implements vscode.DebugAdapterTrackerFactory {
+export class PerformanceView implements vscode.WebviewViewProvider {
     public static feature: PerformanceView = new PerformanceView();
 
-    private processId?: number;
+    private samples: UsageSample[] = [];
+    private webviewView: vscode.WebviewView | undefined;
+    private samplerConnection: rpc.MessageConnection | undefined;
+    private processId: number | undefined;
+    private readonly viewDurationSeconds = 60;
 
     public activate(context: vscode.ExtensionContext) {
-        context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerNetCoreId, this));
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdAttachTraceProfiler, async () => await PerformanceView.feature.startProfiler(DotNetProfilerType.Trace, this.processId)));
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdCreateHeapDump, async () => await PerformanceView.feature.startProfiler(DotNetProfilerType.Dump, this.processId)));
-        context.subscriptions.push(vscode.debug.onDidStartDebugSession(s => {
-            if (s.type === res.debuggerNetCoreId && s.configuration.processId !== undefined)
-                this.processId = s.configuration.processId;
+        context.subscriptions.push(vscode.window.registerWebviewViewProvider(res.extendedViewIdPerformance, this));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdAttachTraceProfiler, async () => {
+            const processId = this.processId ?? await vscode.commands.executeCommand(res.commandIdPickProcess);
+            if (processId !== undefined)
+                return vscode.tasks.executeTask(DotNetTaskProvider.getTraceTask(processId));
+        }));
+        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdCreateHeapDump, async () => {
+            const processId = this.processId ?? await vscode.commands.executeCommand(res.commandIdPickProcess);
+            if (processId !== undefined)
+                return vscode.tasks.executeTask(DotNetTaskProvider.getGCDumpTask(processId));
+        }));
+
+        context.subscriptions.push(DebugAdapterController.tracker.onProcessStarted((pid: number) => {
+            this.samples = [];
+            this.processId = pid;
+            this.startSampler(pid);
+            this.postState();
+        }));
+        context.subscriptions.push(DebugAdapterController.tracker.onTargetExited(() => {
+            this.processId = undefined;
+            this.stopSampler();
+            this.postState();
         }));
     }
 
-    public createDebugAdapterTracker(session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
-        const performanceView = this;
-        return {
-            onDidSendMessage(message: any) {
-                if (message.type != 'event' || message.event != 'process')
-                    return;
-
-                performanceView.processId = message.body.systemProcessId;
-            },
-            onWillStopSession() {
-                performanceView.processId = undefined;
-            }
-        }
+    resolveWebviewView(webviewView: vscode.WebviewView): void {
+        this.webviewView = webviewView;
+        webviewView.webview.options = { enableScripts: true };
+        webviewView.webview.html = initializeComponents(this.viewDurationSeconds);
+        webviewView.onDidDispose(() => {
+            if (this.webviewView === webviewView)
+                this.webviewView = undefined;
+        });
+        webviewView.onDidChangeVisibility(() => {
+            if (webviewView.visible)
+                this.postState();
+        });
+        this.postState();
     }
 
-    private async startProfiler(profilerType: DotNetProfilerType, processId?: number): Promise<vscode.TaskExecution | undefined> {
-        if (processId === undefined)
-            processId = await vscode.commands.executeCommand(res.commandIdPickProcess);
-        if (processId === undefined)
-            return undefined;
-
-        const task = PerformanceView.feature.getProfilerTask(processId, profilerType);
-        return vscode.tasks.executeTask(task);
+    private startSampler(processId: number) {
+        if (this.samplerConnection !== undefined)
+            return;
+        const connection = Interop.createDevHostRpc('sample', builder => builder.append('-p', processId.toString()));
+        this.samplerConnection = connection;
+        connection.onNotification('handleUsageSample', (sample: any) => {
+            this.samples.push({ timestamp: Date.now(), workingSet: sample.workingSet, cpuUsage: sample.cpuUsage });
+            const cutoff = Date.now() - (this.viewDurationSeconds + 5) * 1000;
+            while (this.samples.length > 0 && this.samples[0].timestamp < cutoff)
+                this.samples.shift();
+            this.postState();
+        });
     }
-    private getProfilerTask(processId: number, profilerType: DotNetProfilerType): vscode.Task {
-        const options: vscode.ShellExecutionOptions = { cwd: Extensions.getCurrentWorkingDirectory() };
-        const toolPath = path.join(Interop.binariesPath, 'Diagnostics', `dotnet-${profilerType}.dll`);
-        const builder = new ProcessArgumentBuilder(Interop.dotnetPath)
-            .append(toolPath)
-            .append('collect')
-            .append('-p').append(processId.toString());
-
-        if (profilerType === DotNetProfilerType.Trace) {
-            builder.append('--format').append('speedscope');
-        }
-
-        return new vscode.Task(
-            { type: res.taskDefinitionId },
-            vscode.TaskScope.Workspace,
-            'Profile',
-            res.extensionId,
-            new vscode.ShellExecution(builder.getCommand(), builder.getArguments(), options),
-        );
+    private stopSampler() {
+        const connection = this.samplerConnection;
+        if (connection === undefined)
+            return;
+        this.samplerConnection = undefined;
+        connection.sendNotification('handleSamplingStop').then(() => connection.dispose(), () => connection.dispose());
     }
+    private postState() {
+        if (this.webviewView !== undefined && this.webviewView.visible)
+            this.webviewView.webview.postMessage({ samples: this.samples, frozen: this.processId === undefined });
+    }
+}
+
+interface UsageSample {
+    timestamp: number;
+    workingSet: number;
+    cpuUsage?: number;
 }

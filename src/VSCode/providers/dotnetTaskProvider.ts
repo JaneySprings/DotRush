@@ -4,11 +4,16 @@ import { Interop } from '../interop/interop';
 import { Extensions } from '../extensions';
 import * as res from '../resources/constants';
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 enum DotNetTarget {
     Build = 'build',
     Clean = 'clean',
     Restore = 'restore',
+}
+enum DotNetProfilerType {
+    Trace = 'trace',
+    GCDump = 'gcdump',
 }
 
 export class DotNetTaskProvider implements vscode.TaskProvider {
@@ -45,6 +50,12 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
     public static getCleanTask(projectFile: string): vscode.Task {
         return DotNetTaskProvider.getTask({ type: res.taskDefinitionId, target: DotNetTarget.Clean, project: projectFile });
     }
+    public static getTraceTask(processId: number | string): vscode.Task {
+        return DotNetTaskProvider.getDiagnosticTask(processId, DotNetProfilerType.Trace);
+    }
+    public static getGCDumpTask(processId: number | string): vscode.Task {
+        return DotNetTaskProvider.getDiagnosticTask(processId, DotNetProfilerType.GCDump);
+    }
 
     private static getTask(definition: vscode.TaskDefinition, configuration: string | undefined = undefined, framework: string | undefined = undefined): vscode.Task {
         const options: vscode.ShellExecutionOptions = {
@@ -70,6 +81,26 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
             Extensions.capitalize(definition.target),
             res.extensionId,
             new vscode.ShellExecution(builder.getCommand(), builder.getArguments(), options)
+        );
+    }
+    private static getDiagnosticTask(processId: number | string, profilerType: DotNetProfilerType): vscode.Task {
+        const options: vscode.ShellExecutionOptions = { cwd: Extensions.getCurrentWorkingDirectory() };
+        const toolPath = path.join(Interop.binariesPath, 'Diagnostics', `dotnet-${profilerType}.dll`);
+        const builder = new ProcessArgumentBuilder(Interop.dotnetPath)
+            .append(toolPath)
+            .append('collect')
+            .append('-p').append(processId.toString());
+
+        if (profilerType === DotNetProfilerType.Trace) {
+            builder.append('--format').append('speedscope');
+        }
+
+        return new vscode.Task(
+            { type: res.taskDefinitionId },
+            vscode.TaskScope.Workspace,
+            'Profile',
+            res.extensionId,
+            new vscode.ShellExecution(builder.getCommand(), builder.getArguments(), options),
         );
     }
 }

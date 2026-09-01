@@ -152,8 +152,15 @@
         {
           "id": "dotrush.modulesView",
           "name": "Modules",
-          "when": "debugType == coreclr || debugType == unity",
+          "when": "debugType == coreclr",
           "icon": "$(symbol-namespace)"
+        },
+        {
+          "type": "webview",
+          "id": "dotrush.performanceView",
+          "name": "Performance",
+          "when": "debugType == coreclr",
+          "icon": "$(pulse)"
         }
       ]
     },

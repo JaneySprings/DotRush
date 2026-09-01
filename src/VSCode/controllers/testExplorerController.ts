@@ -99,7 +99,7 @@ export class TestExplorerController {
             // Run tests
             const runSettings = Extensions.getSetting<string>(res.configIdTestExplorerRunSettings);
             const testRun = TestExplorerController.controller.createTestRun(request);
-            const testHostRpc = Interop.createTestHostRpc(builder => builder
+            const testHostRpc = Interop.createDevHostRpc('test', builder => builder
                 .append(...testAssemblies.map(assembly => `-a:"${assembly}"`))
                 .conditional2(() => filter.length > 0, ...filter.map(f => `-f:${f}`))
                 .conditional(`-s:"${runSettings}"`, () => runSettings)

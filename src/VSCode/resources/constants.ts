@@ -39,6 +39,7 @@ export const commandIdStatusBarEnabled = "dotrush.statusBarEnabled";
 
 export const taskDefinitionId = "dotrush.task";
 export const extendedViewIdModules = "dotrush.modulesView";
+export const extendedViewIdPerformance = "dotrush.performanceView";
 export const testExplorerViewId = "dotrush.testExplorer";
 export const testExplorerViewTitle = "DotRush Test Explorer";
 export const testExplorerProfileRun = "Run VSTest Host";

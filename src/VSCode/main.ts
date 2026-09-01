@@ -30,6 +30,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		TemplateHostController.activate(context);
 		DebugAdapterController.activate(context);
+
 		ModulesView.feature.activate(context);
 		PerformanceView.feature.activate(context);
 	});
