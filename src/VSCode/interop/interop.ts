@@ -81,8 +81,8 @@ export class Interop {
             .append("-p", JSON.stringify(parameters)));
     }
 
-    public static createTestHostRpc(configurator: (args: ProcessArgumentBuilder) => void): rpc.MessageConnection {
-        const builder = new ProcessArgumentBuilder(Interop.dotnetPath).append(Interop.devHostPath).append('test');
+    public static createDevHostRpc(command: string, configurator: (args: ProcessArgumentBuilder) => void): rpc.MessageConnection {
+        const builder = new ProcessArgumentBuilder(Interop.dotnetPath).append(Interop.devHostPath).append(command);
         configurator(builder);
 
         const childProcess = spawn(builder.getCommand(), builder.getArguments(), { stdio: ['pipe', 'pipe', 'pipe'], cwd: Extensions.getCurrentWorkingDirectory() });

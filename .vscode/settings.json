@@ -15,6 +15,7 @@
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
         "package.json": "package*.json",
+        "*.ts": "${capture}.html.ts",
     },
     "debug.onTaskErrors": "debugAnyway"
 }

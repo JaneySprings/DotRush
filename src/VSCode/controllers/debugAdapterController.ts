@@ -11,8 +11,11 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
+
 export class DebugAdapterController {
-    public static async activate(context: vscode.ExtensionContext): Promise<void> {
+    public static tracker: DebugAdapterTracker;
+
+    public static activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickProcess, async () => await DebugAdapterController.showQuickPickProcess()));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdActiveTargetPath, async () => await DebugAdapterController.getProjectTargetPath(
             StatusBarController.activeProject?.path,
@@ -27,6 +30,9 @@ export class DebugAdapterController {
         context.subscriptions.push(vscode.tasks.registerTaskProvider(res.taskDefinitionId, new DotNetTaskProvider()));
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerNetCoreId, new DotNetDebugConfigurationProvider()));
         context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(res.debuggerUnityId, new MonoDebugConfigurationProvider()));
+
+        DebugAdapterController.tracker = new DebugAdapterTracker();
+        context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory(res.debuggerNetCoreId, DebugAdapterController.tracker));
     }
 
     public static getLaunchProfile(launchSettingsPath: string, profileName: string | undefined): LaunchProfile | undefined {
@@ -80,7 +86,6 @@ export class DebugAdapterController {
         return path.join(programDirectory, programFile + Interop.execExtension);
     }
 
-
     private static async showQuickPickProgram(): Promise<string | undefined> {
         const programPath = await vscode.window.showOpenDialog({
             title: res.messageSelectProgramTitle,
@@ -97,5 +102,41 @@ export class DebugAdapterController {
 
         const selectedItem = await vscode.window.showQuickPick(processes.map(p => new ProcessItem(p)), { placeHolder: res.messageSelectProcessTitle });
         return selectedItem?.item.id.toString();
+    }
+}
+
+class DebugAdapterTracker implements vscode.DebugAdapterTrackerFactory {
+    private readonly onModuleLoadedEmitter = new vscode.EventEmitter<any>();
+    private readonly onProcessStartedEmitter = new vscode.EventEmitter<number>();
+    private readonly onTargetExitedEmitter = new vscode.EventEmitter<void>();
+
+    public readonly onModuleLoaded: vscode.Event<any> = this.onModuleLoadedEmitter.event;
+    public readonly onProcessStarted: vscode.Event<number> = this.onProcessStartedEmitter.event;
+    public readonly onTargetExited: vscode.Event<void> = this.onTargetExitedEmitter.event;
+
+    createDebugAdapterTracker(session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
+        const tracker = this;
+        return {
+            onDidSendMessage(message: any) {
+                if (message.type === 'event' && message.event === 'module' && message.body.reason === 'new') {
+                    tracker.onModuleLoadedEmitter.fire(message.body.module);
+                    return;
+                }
+                // TODO: add custom same event for attach
+                if (message.type === 'event' && message.event === 'process') {
+                    tracker.onProcessStartedEmitter.fire(message.body.systemProcessId)
+                    return;
+                }
+            },
+            onWillReceiveMessage(message: any) {
+                if (message.type === 'request' && message.command === 'attach') {
+                    tracker.onProcessStartedEmitter.fire(message.arguments.processId);
+                    return;
+                }
+            },
+            onWillStopSession() {
+                tracker.onTargetExitedEmitter.fire();
+            },
+        }
     }
 }
