@@ -24,13 +24,15 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
     }
     protected override Task<TypeDefinitionResponse?> Handle(TypeDefinitionParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync<TypeDefinitionResponse?>(async () => {
-            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
+            var documentPath = request.TextDocument.Uri.FileSystemPath;
+            var solution = navigationService.GetRequiredSolution(documentPath);
+            var documentIds = solution?.GetDocumentIdsWithFilePathV2(documentPath);
             if (documentIds == null)
                 return null;
 
             var result = new HashSet<ProtocolModels.Location>();
             foreach (var documentId in documentIds) {
-                var document = navigationService.Solution?.GetDocument(documentId);
+                var document = solution?.GetDocument(documentId);
                 if (document == null)
                     continue;
 

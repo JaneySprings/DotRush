@@ -27,16 +27,17 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
     protected override Task<DocumentSymbolResponse> Handle(DocumentSymbolParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(new DocumentSymbolResponse(new List<DocumentSymbol>()), async () => {
             var documentPath = request.TextDocument.Uri.FileSystemPath;
-            var documentId = navigationService?.Solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
-            var document = navigationService?.Solution?.GetDocument(documentId);
+            var solution = navigationService.GetRequiredSolution(documentPath);
+            var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
+            var document = solution?.GetDocument(documentId);
             if (documentId == null || document == null)
                 return new DocumentSymbolResponse(new List<DocumentSymbol>());
 
-            var syntaxTree = await document.GetSyntaxTreeAsync(token).ConfigureAwait(false);
+            var syntaxTree = await document.GetSyntaxTreeAsync(token);
             if (syntaxTree == null)
                 return new DocumentSymbolResponse(new List<DocumentSymbol>());
 
-            var root = await syntaxTree.GetRootAsync(token).ConfigureAwait(false);
+            var root = await syntaxTree.GetRootAsync(token);
             if (root == null)
                 return new DocumentSymbolResponse(new List<DocumentSymbol>());
 

@@ -24,36 +24,38 @@ public class ImplementationHandler : ImplementationHandlerBase {
     }
     protected override Task<ImplementationResponse?> Handle(ImplementationParams request, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync<ImplementationResponse?>(async () => {
-            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
+            var documentPath = request.TextDocument.Uri.FileSystemPath;
+            var solution = navigationService.GetRequiredSolution(documentPath);
+            var documentIds = solution?.GetDocumentIdsWithFilePathV2(documentPath);
             if (documentIds == null)
                 return null;
 
             var result = new HashSet<ProtocolModels.Location>();
             foreach (var documentId in documentIds) {
                 var implementationLocations = new List<Location>();
-                var document = navigationService.Solution?.GetDocument(documentId);
+                var document = solution?.GetDocument(documentId);
                 if (document == null)
                     continue;
 
                 var sourceText = await document.GetTextAsync(cancellationToken);
                 var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), cancellationToken);
-                if (symbol == null || navigationService.Solution == null)
+                if (symbol == null || solution == null)
                     continue;
 
-                var symbols = await SymbolFinder.FindImplementationsAsync(symbol, navigationService.Solution, cancellationToken: cancellationToken);
+                var symbols = await SymbolFinder.FindImplementationsAsync(symbol, solution, cancellationToken: cancellationToken);
                 if (symbols != null)
                     implementationLocations.AddRange(symbols.SelectMany(it => it.Locations));
 
-                symbols = await SymbolFinder.FindOverridesAsync(symbol, navigationService.Solution, cancellationToken: cancellationToken);
+                symbols = await SymbolFinder.FindOverridesAsync(symbol, solution, cancellationToken: cancellationToken);
                 if (symbols != null)
                     implementationLocations.AddRange(symbols.SelectMany(it => it.Locations));
 
                 if (symbol is INamedTypeSymbol namedTypeSymbol) {
-                    symbols = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken);
+                    symbols = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, solution, transitive: false, cancellationToken: cancellationToken);
                     if (symbols != null)
                         implementationLocations.AddRange(symbols.SelectMany(it => it.Locations));
 
-                    symbols = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken);
+                    symbols = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, solution, transitive: false, cancellationToken: cancellationToken);
                     if (symbols != null)
                         implementationLocations.AddRange(symbols.SelectMany(it => it.Locations));
                 }

@@ -9,8 +9,6 @@ public string VSCodeExtensionDirectory => _Path.Combine(RootDirectory, "extensio
 var target = Argument("target", "vsix");
 var version = Argument("release-version", "1.0.0");
 var configuration = Argument("configuration", "debug");
-var runtime = Argument("arch", RuntimeInformation.RuntimeIdentifier);
-var bundle = HasArgument("bundle");
 
 Setup(context => {
 	var date = DateTime.Now;
@@ -30,36 +28,27 @@ Task("server")
 	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Roslyn.Server", "DotRush.Roslyn.Server.csproj"), new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 		Configuration = configuration,
-		Runtime = runtime,
 	}));
 
 Task("debugging")
 	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Host", "DotRush.Debugging.Host.csproj"), new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 		Configuration = configuration,
-		Runtime = runtime,
 	}))
 	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Mono", "DotRush.Debugging.Mono.csproj"), new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { AssemblyVersion = version },
 		Configuration = configuration,
-		Runtime = runtime,
-	}))
-	.Does(() => {
-		if (!bundle) return;
-		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "DevHost", "devhost.dll")} -ncdbg");
-	});
+	}));
 
 Task("diagnostics")
 	.Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Diagnostics", "src", "Tools", "dotnet-trace", "dotnet-trace.csproj"), new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { ArgumentCustomization = args => args.Append("-p:SatelliteResourceLanguages=en") },
 		OutputDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "Diagnostics"),
 		Configuration = configuration,
-		Runtime = runtime,
 	})).Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Diagnostics", "src", "Tools", "dotnet-gcdump", "dotnet-gcdump.csproj"), new DotNetPublishSettings {
 		MSBuildSettings = new DotNetMSBuildSettings { ArgumentCustomization = args => args.Append("-p:SatelliteResourceLanguages=en") },
 		OutputDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "Diagnostics"),
 		Configuration = configuration,
-		Runtime = runtime,
 	}));
 
 Task("test")
@@ -100,11 +89,9 @@ Task("vsix")
 	.IsDependentOn("debugging")
 	.IsDependentOn("diagnostics")
 	.Does(() => {
-		var vsruntime = runtime.Replace("win-", "win32-").Replace("osx-", "darwin-");
-		var suffix = bundle ? ".Bundle" : string.Empty;
-		var output = _Path.Combine(ArtifactsDirectory, $"DotRush{suffix}.v{version}_{vsruntime}.vsix");
+		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}.vsix");
 		ExecuteCommand("npm", "install");
-		ExecuteCommand("vsce", $"package --target {vsruntime} --out {output} --no-git-tag-version {version}");
+		ExecuteCommand("vsce", $"package --out {output} --no-git-tag-version {version}");
 	});
 
 
@@ -116,10 +103,7 @@ void ExecuteCommand(string command, string arguments) {
 	if (StartProcess(command, arguments) != 0)
 		throw new Exception("Command exited with non-zero exit code.");
 }
-void EnsureFileDeleted(string path) {
-	if (FileExists(path)) 
-		DeleteFile(path);
-}
+
 void EnsureDirectoryDeleted(string path) {
 	if (DirectoryExists(path)) 
 		DeleteDirectory(path, new DeleteDirectorySettings { Recursive = true, Force = true });

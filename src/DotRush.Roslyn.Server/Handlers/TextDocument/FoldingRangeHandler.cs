@@ -25,9 +25,11 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
         return SafeExtensions.InvokeAsync(new FoldingRangeResponse(new List<FoldingRange>()), async () => {
             var result = new List<FoldingRange>();
 
-            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
+            var documentPath = request.TextDocument.Uri.FileSystemPath;
+            var solution = navigationService.GetRequiredSolution(documentPath);
+            var documentIds = solution?.GetDocumentIdsWithFilePathV2(documentPath);
             var documentId = documentIds?.FirstOrDefault();
-            var document = navigationService.Solution?.GetDocument(documentId);
+            var document = solution?.GetDocument(documentId);
             if (document == null)
                 return new FoldingRangeResponse(result);
 

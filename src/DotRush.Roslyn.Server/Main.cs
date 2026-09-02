@@ -64,7 +64,6 @@ public class Program {
         if (!workspaceService.InitializeWorkspace())
             languageServer.ShowError(Resources.DotNetRegistrationFailed);
 
-        workspaceService.WorkspaceStateChanged += (_, _) => navigationService.UpdateSolution(workspaceService.Solution);
         await workspaceService.LoadAsync(parameters.WorkspaceFolders, CancellationToken.None).ConfigureAwait(false);
         codeAnalysisService.StartWorkerThread();
 
@@ -90,9 +89,9 @@ public class Program {
     }
     private static void ConfigureServices() {
         configurationService = new ConfigurationService(languageServer);
-        navigationService = new NavigationService();
         testExplorerService = new TestExplorerService();
         workspaceService = new WorkspaceService(configurationService, languageServer);
+        navigationService = new NavigationService(workspaceService);
         codeAnalysisService = new CodeAnalysisService(configurationService, languageServer);
     }
 }

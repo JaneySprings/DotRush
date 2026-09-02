@@ -27,20 +27,22 @@ public class HoverHandler : HoverHandlerBase {
     }
     protected override Task<HoverResponse?> Handle(HoverParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(async () => {
-            var documentIds = navigationService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
+            var documentPath = request.TextDocument.Uri.FileSystemPath;
+            var solution = navigationService.GetRequiredSolution(documentPath);
+            var documentIds = solution?.GetDocumentIdsWithFilePathV2(documentPath);
             if (documentIds == null)
                 return null;
 
             var displayDictionary = new Dictionary<string, List<string>>();
             var documentation = string.Empty;
             foreach (var documentId in documentIds) {
-                var document = navigationService.Solution?.GetDocument(documentId);
+                var document = solution?.GetDocument(documentId);
                 if (document == null)
                     continue;
 
-                var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
+                var sourceText = await document.GetTextAsync(token);
                 var offset = request.Position.ToOffset(sourceText);
-                var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset).ConfigureAwait(false);
+                var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset);
                 if (symbol == null)
                     continue;
 

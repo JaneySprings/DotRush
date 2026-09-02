@@ -3,6 +3,7 @@ using DotRush.Common.Extensions;
 using DotRush.Common.InteropV2;
 using DotRush.Roslyn.Server.Services;
 using EmmyLua.LanguageServer.Framework.Server;
+using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 using FSExtensions = DotRush.Common.Extensions.FileSystemExtensions;
 
@@ -75,14 +76,18 @@ public abstract class BaseProjectTestFixture {
         File.WriteAllText(ProjectFilePath, CreateProjectFileContent());
         return ProjectFilePath;
     }
+}
 
-    class TestWorkspaceService : WorkspaceService {
-        public TestWorkspaceService(ConfigurationService configurationService, LanguageServer? serverFacade) : base(configurationService, serverFacade) { }
+public class TestWorkspaceService : WorkspaceService {
+    public TestWorkspaceService(ConfigurationService configurationService, LanguageServer? serverFacade) : base(configurationService, serverFacade) { }
 
-        public override void OnProjectRestoreCompleted(string documentPath, ProcessResult result) {
-            base.OnProjectRestoreCompleted(documentPath, result);
-            var message = string.Join(Environment.NewLine, result.ErrorLines.Count == 0 ? result.OutputLines : result.ErrorLines);
-            Assert.That(result.Success, Is.True, $"Restore error: {message}");
-        }
+    public override void OnProjectRestoreCompleted(string documentPath, ProcessResult result) {
+        base.OnProjectRestoreCompleted(documentPath, result);
+        var message = string.Join(Environment.NewLine, result.ErrorLines.Count == 0 ? result.OutputLines : result.ErrorLines);
+        Assert.That(result.Success, Is.True, $"Restore error: {message}");
+    }
+
+    public void UpdateSolution(Solution newSolution) {
+        OnWorkspaceStateChanged(newSolution);
     }
 }

@@ -4,6 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <RollForward>LatestMajor</RollForward>
         <ImplicitUsings>enable</ImplicitUsings>
+        <UseAppHost>false</UseAppHost>
         <Nullable>enable</Nullable>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>

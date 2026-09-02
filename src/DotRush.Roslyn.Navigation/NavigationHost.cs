@@ -145,6 +145,9 @@ public class NavigationHost : IClearable {
         return new FileLinePositionSpan(outputFilePath, location.GetLineSpan().Span);
     }
 
+    public bool IsAttachedToHost(string filePath) {
+        return PathExtensions.StartsWith(filePath, decompiledCodeDirectory) || PathExtensions.StartsWith(filePath, generatedCodeDirectory);
+    }
     public void UpdateSolution(Solution? solution) {
         var currentSolution = solution;
         foreach (var pair in temporaryDocuments) {

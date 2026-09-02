@@ -20,7 +20,7 @@ public class FoldingRangeHandlerTests : MultitargetProjectFixture {
 
     [SetUp]
     public void SetUp() {
-        navigationService = new NavigationService();
+        navigationService = new NavigationService(Workspace);
         handler = new FoldingRangeHandlerMock(navigationService);
     }
 
@@ -43,7 +43,6 @@ namespace Tests {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new FoldingRangeParams() {
             TextDocument = documentPath.CreateDocumentId()
         }, CancellationToken.None).ConfigureAwait(false);
