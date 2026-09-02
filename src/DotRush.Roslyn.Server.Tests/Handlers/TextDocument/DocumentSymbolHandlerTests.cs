@@ -20,7 +20,7 @@ public class DocumentSymbolHandlerTests : MultitargetProjectFixture {
 
     [SetUp]
     public void SetUp() {
-        navigationService = new NavigationService();
+        navigationService = new NavigationService(Workspace);
         handler = new DocumentSymbolHandlerMock(navigationService);
     }
 
@@ -38,7 +38,6 @@ class Class1 {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new DocumentSymbolParams() {
             TextDocument = documentPath.CreateDocumentId()
         }, CancellationToken.None).ConfigureAwait(false);
@@ -94,7 +93,6 @@ class Class1 {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new DocumentSymbolParams() {
             TextDocument = documentPath.CreateDocumentId()
         }, CancellationToken.None).ConfigureAwait(false);

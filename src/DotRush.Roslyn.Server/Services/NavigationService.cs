@@ -1,14 +1,21 @@
+using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.Navigation;
 using Microsoft.CodeAnalysis;
 
 namespace DotRush.Roslyn.Server.Services;
 
-public class NavigationService {
+public class NavigationService : IClearable {
     private readonly NavigationHost navigationHost;
-    public Solution? Solution => navigationHost.Solution;
+    private readonly WorkspaceService workspaceService;
 
-    public NavigationService() {
-        navigationHost = new NavigationHost();
+    public Solution? HostSolution => navigationHost.Solution;
+    public Solution? OriginalSolution => workspaceService.Solution;
+
+    public NavigationService(WorkspaceService workspaceService) {
+        this.workspaceService = workspaceService;
+        this.navigationHost = new NavigationHost();
+
+        workspaceService.WorkspaceStateChanged += (_, _) => navigationHost.UpdateSolution(workspaceService.Solution);
     }
 
     public Task<List<FileLinePositionSpan>> FindDefinitionsAsync(ISymbol symbol, Project project, CancellationToken cancellationToken) {
@@ -20,8 +27,10 @@ public class NavigationService {
     public Task<FileLinePositionSpan?> EmitCompilerGeneratedFileAsync(Location location, Project project, CancellationToken cancellationToken) {
         return navigationHost.EmitCompilerGeneratedFileAsync(location, project, cancellationToken);
     }
-    public void UpdateSolution(Solution? solution) {
-        navigationHost.UpdateSolution(solution);
+    public Solution? GetRequiredSolution(string documentFilePath) {
+        if (navigationHost.IsAttachedToHost(documentFilePath))
+            return navigationHost.Solution;
+        return workspaceService.Solution;
     }
     public void ClearCache() {
         // We can't use CloseDocument(string) because vscode can close and reopen decompiled file

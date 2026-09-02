@@ -23,7 +23,7 @@ public class ReferenceHandlerTests : MultitargetProjectFixture {
 
     [SetUp]
     public void SetUp() {
-        navigationService = new NavigationService();
+        navigationService = new NavigationService(Workspace);
         handler = new ReferencesHandlerMock(navigationService);
     }
 
@@ -42,7 +42,6 @@ class MyClass2 {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ReferenceParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -70,7 +69,6 @@ class MyClass1 {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ReferenceParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -95,7 +93,6 @@ class MyClass1 {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ReferenceParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -123,7 +120,6 @@ class Usage {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ReferenceParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -151,7 +147,6 @@ class Usage {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ReferenceParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -177,7 +172,6 @@ class Usage {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ReferenceParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -204,7 +198,6 @@ class Usage {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ReferenceParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -234,7 +227,6 @@ class Usage {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ReferenceParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -266,24 +258,29 @@ public partial class MyClass {
     }
 }
 ";
+        var originalSolution = Workspace.Solution!;
         var solution = Workspace.Solution!;
         foreach (var project in solution.Projects) {
             var generatedDoc = project.AddDocument(
                 "MyClass.g.cs",
                 SourceText.From(generatedContent),
-                filePath: Path.Combine("__generated__", "MyClass.g.cs"));
+                filePath: Path.Combine("codegen", "MyClass.g.cs"));
             solution = generatedDoc.Project.Solution;
         }
 
-        navigationService.UpdateSolution(solution);
+        (Workspace as TestWorkspaceService)?.UpdateSolution(solution);
+        try {
+            var result = await handler.Handle(new ReferenceParams() {
+                TextDocument = documentPath.CreateDocumentId(),
+                Position = PositionExtensions.CreatePosition(4, 24)
+            }, CancellationToken.None);
 
-        var result = await handler.Handle(new ReferenceParams() {
-            TextDocument = documentPath.CreateDocumentId(),
-            Position = PositionExtensions.CreatePosition(4, 24)
-        }, CancellationToken.None);
-
-        Assert.That(result?.Result, Is.Not.Null);
-        Assert.That(result.Result, Is.Not.Empty);
-        Assert.That(result.Result, Has.Some.Matches<Location>(it => !PathExtensions.Equals(it.Uri.FileSystemPath, documentPath)));
+            Assert.That(result?.Result, Is.Not.Null);
+            Assert.That(result.Result, Is.Not.Empty);
+            Assert.That(result.Result, Has.Some.Matches<Location>(it => !PathExtensions.Equals(it.Uri.FileSystemPath, documentPath)));
+        }
+        finally {
+            (Workspace as TestWorkspaceService)?.UpdateSolution(originalSolution);
+        }
     }
 }

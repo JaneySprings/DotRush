@@ -21,7 +21,7 @@ public class HoverHandlerTests : MultitargetProjectFixture {
 
     [SetUp]
     public void SetUp() {
-        navigationService = new NavigationService();
+        navigationService = new NavigationService(Workspace);
         handler = new HoverHandlerMock(navigationService);
     }
 
@@ -37,7 +37,6 @@ public class TestClass {
     public int Property { get; set; }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(6, 15)
@@ -67,7 +66,6 @@ public class TestClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(10, 15)
@@ -97,7 +95,6 @@ public class TestClass {
     public string Name { get; set; }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(7, 19)
@@ -122,7 +119,6 @@ public class TestClass {
     private DateTime _testField;
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(7, 21)
@@ -143,7 +139,6 @@ namespace Tests.SubNamespace;
 public class TestClass {
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(1, 10)
@@ -166,7 +161,6 @@ public class TestClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(4, 11)
@@ -190,7 +184,6 @@ public class TestClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(4, 11)
@@ -215,7 +208,6 @@ public class TestClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(5, 12)
@@ -242,7 +234,6 @@ public class TestClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(9, 26)
@@ -266,7 +257,6 @@ public interface ITestInterface {
     void TestMethod();
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(6, 18)
@@ -298,7 +288,6 @@ public enum TestEnum {
     Value2
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(6, 13)
@@ -319,7 +308,6 @@ namespace Tests;
 public class TestClass {
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(0, 0)
@@ -341,7 +329,6 @@ public class GenericClass<T> {
     public T Value { get; set; }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(7, 15)
@@ -373,7 +360,6 @@ public class TestClass {
     public void TestMethod(int value) { }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(13, 16)
@@ -398,7 +384,6 @@ namespace Tests;
 /// <param name=""args"">The event arguments</param>
 public delegate void EventHandler(object sender, EventArgs args);
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(8, 25)
@@ -430,7 +415,6 @@ public class TestClass {
     public Calculator Calc { get; set; }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(11, 22)
@@ -459,7 +443,6 @@ public class TestClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(7, 12)
@@ -486,7 +469,6 @@ public class TestClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(8, 13)
@@ -516,7 +498,6 @@ public class TestClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(11, 8)
@@ -539,7 +520,6 @@ class TestClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
             Position = PositionExtensions.CreatePosition(4, 37)

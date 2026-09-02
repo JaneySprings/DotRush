@@ -23,7 +23,7 @@ public class DefinitionHandlerTests : MultitargetProjectFixture {
 
     [SetUp]
     public void SetUp() {
-        navigationService = new NavigationService();
+        navigationService = new NavigationService(Workspace);
         handler = new DefinitionHandlerMock(navigationService);
     }
 
@@ -38,7 +38,6 @@ class MyClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -62,7 +61,6 @@ class MyClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -84,7 +82,6 @@ class MyClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -106,7 +103,6 @@ class MyClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -128,7 +124,6 @@ class MyClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var request = new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -162,28 +157,33 @@ public partial class MyClass {
     }
 }
 ";
+        var originalSolution = Workspace.Solution!;
         var solution = Workspace.Solution!;
         foreach (var project in solution.Projects) {
             var generatedDoc = project.AddDocument(
                 "MyClass.g.cs",
                 SourceText.From(generatedContent),
-                filePath: Path.Combine("__generated__", "MyClass.g.cs"));
+                filePath: Path.Combine("codegen", "MyClass.g.cs"));
             solution = generatedDoc.Project.Solution;
         }
 
-        navigationService.UpdateSolution(solution);
+        (Workspace as TestWorkspaceService)?.UpdateSolution(solution);
+        try {
+            var result = await handler.Handle(new DefinitionParams() {
+                TextDocument = documentPath.CreateDocumentId(),
+                Position = PositionExtensions.CreatePosition(5, 10)
+            }, CancellationToken.None);
 
-        var result = await handler.Handle(new DefinitionParams() {
-            TextDocument = documentPath.CreateDocumentId(),
-            Position = PositionExtensions.CreatePosition(5, 10)
-        }, CancellationToken.None);
-
-        Assert.That(result?.Result2, Is.Not.Null.And.Not.Empty);
-        foreach (var location in result!.Result2!) {
-            var filePath = location.Uri.FileSystemPath;
-            Assert.That(filePath, Does.Contain("_generated_"));
-            Assert.That(File.Exists(filePath), Is.True, $"Emitted file '{filePath}' does not exist");
-            Assert.That(location.Range, Is.EqualTo(PositionExtensions.CreateRange(4, 23, 4, 38)));
+            Assert.That(result?.Result2, Is.Not.Null.And.Not.Empty);
+            foreach (var location in result!.Result2!) {
+                var filePath = location.Uri.FileSystemPath;
+                Assert.That(filePath, Does.Contain("_generated_"));
+                Assert.That(File.Exists(filePath), Is.True, $"Emitted file '{filePath}' does not exist");
+                Assert.That(location.Range, Is.EqualTo(PositionExtensions.CreateRange(4, 23, 4, 38)));
+            }
+        }
+        finally {
+            (Workspace as TestWorkspaceService)?.UpdateSolution(originalSolution);
         }
     }
 
@@ -203,7 +203,6 @@ class Usage {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -231,7 +230,6 @@ class Usage {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -255,7 +253,6 @@ class MyClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -279,7 +276,6 @@ class MyClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -304,7 +300,6 @@ class MyClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -328,7 +323,6 @@ class MyClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -352,7 +346,6 @@ class MyClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -376,7 +369,6 @@ class MyClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new DefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),

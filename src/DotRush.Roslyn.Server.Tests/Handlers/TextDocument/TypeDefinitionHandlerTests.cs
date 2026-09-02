@@ -21,7 +21,7 @@ public class TypeDefinitionHandlerTests : MultitargetProjectFixture {
 
     [SetUp]
     public void SetUp() {
-        navigationService = new NavigationService();
+        navigationService = new NavigationService(Workspace);
         handler = new TypeDefinitionHandlerMock(navigationService);
     }
 
@@ -40,7 +40,6 @@ class Usage {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new TypeDefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -65,7 +64,6 @@ class MyClass {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new TypeDefinitionParams() {
             TextDocument = documentPath.CreateDocumentId(),

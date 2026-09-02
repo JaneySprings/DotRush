@@ -36,8 +36,9 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
     protected override Task<SemanticTokens?> Handle(SemanticTokensParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(async () => {
             var documentPath = request.TextDocument.Uri.FileSystemPath;
-            var documentId = navigationService?.Solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
-            var document = navigationService?.Solution?.GetDocument(documentId);
+            var solution = navigationService.GetRequiredSolution(documentPath);
+            var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
+            var document = solution?.GetDocument(documentId);
             if (documentId == null || document == null)
                 return null;
 
@@ -55,8 +56,9 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
     protected override Task<SemanticTokens?> Handle(SemanticTokensRangeParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(async () => {
             var documentPath = request.TextDocument.Uri.FileSystemPath;
-            var documentId = navigationService?.Solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
-            var document = navigationService?.Solution?.GetDocument(documentId);
+            var solution = navigationService.GetRequiredSolution(documentPath);
+            var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
+            var document = solution?.GetDocument(documentId);
             if (documentId == null || document == null)
                 return null;
 

@@ -31,12 +31,14 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
         typeHierarchyCache.Clear();
 
         return SafeExtensions.InvokeAsync(async () => {
-            var documentId = navigationService.Solution?.GetDocumentIdsWithFilePathV2(typeHierarchyPrepareParams.TextDocument.Uri.FileSystemPath).FirstOrDefault();
-            if (documentId == null || navigationService.Solution == null)
+            var documentPath = typeHierarchyPrepareParams.TextDocument.Uri.FileSystemPath;
+            var solution = navigationService.GetRequiredSolution(documentPath);
+            var documentId = solution?.GetDocumentIdsWithFilePathV2(typeHierarchyPrepareParams.TextDocument.Uri.FileSystemPath).FirstOrDefault();
+            if (documentId == null || solution == null)
                 return null;
 
             var result = new List<TypeHierarchyItem>();
-            var document = navigationService.Solution.GetDocument(documentId);
+            var document = solution.GetDocument(documentId);
             if (document == null)
                 return null;
 
@@ -68,7 +70,7 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
     }
     protected override Task<TypeHierarchyResponse?> Handle(TypeHierarchySubtypesParams typeHierarchySubtypesParams, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
-            if (typeHierarchySubtypesParams.Item.Data?.Value == null || navigationService.Solution == null)
+            if (typeHierarchySubtypesParams.Item.Data?.Value == null || navigationService.HostSolution == null)
                 return null;
 
             var result = new List<TypeHierarchyItem>();
@@ -76,15 +78,15 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
             if (symbol == null || symbol is not INamedTypeSymbol namedTypeSymbol)
                 return null;
 
-            var subtypes = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var subtypes = await SymbolFinder.FindDerivedInterfacesAsync(namedTypeSymbol, navigationService.HostSolution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
             foreach (var subtype in subtypes)
                 result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item));
 
-            subtypes = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+            subtypes = await SymbolFinder.FindDerivedClassesAsync(namedTypeSymbol, navigationService.HostSolution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
             foreach (var subtype in subtypes)
                 result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item));
 
-            subtypes = await SymbolFinder.FindImplementationsAsync(namedTypeSymbol, navigationService.Solution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+            subtypes = await SymbolFinder.FindImplementationsAsync(namedTypeSymbol, navigationService.HostSolution, transitive: false, cancellationToken: cancellationToken).ConfigureAwait(false);
             foreach (var subtype in subtypes)
                 result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item));
 

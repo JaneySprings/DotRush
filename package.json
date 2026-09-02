@@ -375,10 +375,8 @@
         }
       },
       {
-        "program": "extension/bin/DebuggerMono/monodbg",
-        "windows": {
-          "program": "extension/bin/DebuggerMono/monodbg.exe"
-        },
+        "runtime": "dotnet",
+        "program": "extension/bin/DebuggerMono/monodbg.dll",
         "type": "unity",
         "label": "Unity Debugger",
         "languages": [

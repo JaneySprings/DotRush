@@ -21,7 +21,7 @@ public class SemanticTokensHandlerTests : MultitargetProjectFixture {
 
     [SetUp]
     public void SetUp() {
-        navigationService = new NavigationService();
+        navigationService = new NavigationService(Workspace);
         handler = new SemanticTokensHandlerMock(navigationService);
     }
 
@@ -49,7 +49,6 @@ namespace Tests {
     }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new SemanticTokensParams() {
             TextDocument = documentPath.CreateDocumentId()
         }, CancellationToken.None).ConfigureAwait(false);
@@ -124,7 +123,6 @@ switch(a) {
     default: break;
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new SemanticTokensParams() {
             TextDocument = documentPath.CreateDocumentId()
         }, CancellationToken.None).ConfigureAwait(false);
@@ -163,7 +161,6 @@ var excluded = 42;
 #endif
 var included = 24;
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
         var result = await handler.Handle(new SemanticTokensParams() {
             TextDocument = documentPath.CreateDocumentId()
         }, CancellationToken.None).ConfigureAwait(false);

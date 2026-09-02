@@ -23,7 +23,7 @@ public class ImplementationHandlerTests : MultitargetProjectFixture {
 
     [SetUp]
     public void SetUp() {
-        navigationService = new NavigationService();
+        navigationService = new NavigationService(Workspace);
         handler = new ImplementationHandlerMock(navigationService);
     }
 
@@ -39,7 +39,6 @@ class MyServiceImpl : IMyService {
     public void Execute() { }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ImplementationParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -66,7 +65,6 @@ class Cat : IAnimal {
     public void Speak() { }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ImplementationParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -91,7 +89,6 @@ class DerivedClass : BaseClass {
     public override void DoWork() { }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ImplementationParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -115,7 +112,6 @@ class Child : Parent {
     public override void Run() { }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ImplementationParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -136,7 +132,6 @@ class Animal { }
 class Dog : Animal { }
 class Cat : Animal { }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ImplementationParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -157,7 +152,6 @@ namespace Tests;
 interface IBase { }
 interface IDerived : IBase { }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ImplementationParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -178,7 +172,6 @@ interface IEmpty {
     void Nothing();
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ImplementationParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -204,7 +197,6 @@ class ProcessorB : IProcessor {
     public void Process() { }
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ImplementationParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -229,7 +221,6 @@ class Circle : Shape {
     public override double Area => 3.14;
 }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ImplementationParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -249,7 +240,6 @@ namespace Tests;
 // just a comment
 class MyClass { }
 ");
-        navigationService.UpdateSolution(Workspace.Solution);
 
         var result = await handler.Handle(new ImplementationParams() {
             TextDocument = documentPath.CreateDocumentId(),
@@ -277,24 +267,29 @@ public class GeneratedService : IService {
     public void Execute() { }
 }
 ";
+        var originalSolution = Workspace.Solution!;
         var solution = Workspace.Solution!;
         foreach (var project in solution.Projects) {
             var generatedDoc = project.AddDocument(
                 "GeneratedService.g.cs",
                 SourceText.From(generatedContent),
-                filePath: Path.Combine("__generated__", "GeneratedService.g.cs"));
+                filePath: Path.Combine("codegen", "GeneratedService.g.cs"));
             solution = generatedDoc.Project.Solution;
         }
 
-        navigationService.UpdateSolution(solution);
+        (Workspace as TestWorkspaceService)?.UpdateSolution(solution);
+        try {
+            var result = await handler.Handle(new ImplementationParams() {
+                TextDocument = documentPath.CreateDocumentId(),
+                Position = PositionExtensions.CreatePosition(4, 10)
+            }, CancellationToken.None).ConfigureAwait(false);
 
-        var result = await handler.Handle(new ImplementationParams() {
-            TextDocument = documentPath.CreateDocumentId(),
-            Position = PositionExtensions.CreatePosition(4, 10)
-        }, CancellationToken.None).ConfigureAwait(false);
-
-        Assert.That(result?.Result2, Is.Not.Null);
-        Assert.That(result.Result2, Is.Not.Empty);
-        Assert.That(result.Result2, Has.Some.Matches<Location>(it => !PathExtensions.Equals(it.Uri.FileSystemPath, documentPath)));
+            Assert.That(result?.Result2, Is.Not.Null);
+            Assert.That(result.Result2, Is.Not.Empty);
+            Assert.That(result.Result2, Has.Some.Matches<Location>(it => !PathExtensions.Equals(it.Uri.FileSystemPath, documentPath)));
+        }
+        finally {
+            (Workspace as TestWorkspaceService)?.UpdateSolution(originalSolution);
+        }
     }
 }
