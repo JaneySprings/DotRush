@@ -25,9 +25,7 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
         config: vscode.DebugConfiguration,
         token?: vscode.CancellationToken): Promise<vscode.DebugConfiguration> {
 
-        Extensions.onVSCode(true, false)
-            ? DotNetDebugConfigurationProvider.provideVsdbgConfiguration(config)
-            : DotNetDebugConfigurationProvider.provideNcdbgConfiguration(config);
+        DotNetDebugConfigurationProvider.provideCommonConfiguration(config);
 
         if (config.request === 'launch' && !config.program)
             config.program = await vscode.commands.executeCommand(res.commandIdActiveTargetPath);
@@ -40,38 +38,14 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
         return config;
     }
 
-    private static provideVsdbgConfiguration(config: vscode.DebugConfiguration) {
+
+    private static provideCommonConfiguration(config: vscode.DebugConfiguration) {
         let profile: LaunchProfile | undefined = undefined;
         if (config.launchSettingsFilePath === undefined && config.request === 'launch')
             config.launchSettingsFilePath = DebugAdapterController.getLaunchSettingsPath();
-        if (config.launchSettingsFilePath !== undefined) {
+        if (config.launchSettingsFilePath !== undefined)
             profile = DebugAdapterController.getLaunchProfile(config.launchSettingsFilePath, config.launchSettingsProfile);
-        }
 
-        DotNetDebugConfigurationProvider.provideCommonConfiguration(config, profile);
-    }
-    private static provideNcdbgConfiguration(config: vscode.DebugConfiguration) {
-        let profile: LaunchProfile | undefined = undefined;
-        if (config.launchSettingsFilePath === undefined && config.request === 'launch')
-            config.launchSettingsFilePath = DebugAdapterController.getLaunchSettingsPath();
-        if (config.launchSettingsFilePath !== undefined) {
-            profile = DebugAdapterController.getLaunchProfile(config.launchSettingsFilePath, config.launchSettingsProfile);
-            /* https://github.com/JaneySprings/DotRush/issues/22 */
-            if (profile?.workingDirectory !== undefined)
-                config.cwd = profile.workingDirectory;
-            if (profile?.executablePath !== undefined)
-                config.program = profile.executablePath;
-            if (profile?.environmentVariables !== undefined)
-                config.env = profile.environmentVariables;
-            if (profile?.commandLineArgs !== undefined)
-                config.args = [profile.commandLineArgs]; //TODO: We need to split the command line args
-            if (profile?.applicationUrl !== undefined)
-                config.env = { ...config.env, ASPNETCORE_URLS: profile.applicationUrl };
-        }
-
-        DotNetDebugConfigurationProvider.provideCommonConfiguration(config, profile);
-    }
-    private static provideCommonConfiguration(config: vscode.DebugConfiguration, profile?: LaunchProfile) {
         if (config.justMyCode === undefined)
             config.justMyCode = Extensions.getSetting(res.configIdDebuggerProjectAssembliesOnly, false);
         if (config.enableStepFiltering === undefined)
