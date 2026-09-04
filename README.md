@@ -102,7 +102,7 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image4.jpg)
 
 ## Debugging Godot Projects
-&emsp;To debug your Godot project, open it in VSCode and create a `launch.json` file with the following content (adjust the `processPath` to the location of your Godot Engine executable):
+&emsp;To debug your Godot project, open it in VSCode and create a `launch.json` file with the following content (adjust the `program` to the location of your Godot Engine executable):
 ```jsonc
 {
     "version": "0.2.0",
@@ -127,7 +127,7 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image7.jpg)
 
-- For the `trace` report, you can use the [Speedscope in VSCode](https://marketplace.visualstudio.com/items?itemName=sransara.speedscope-in-vscode) extension to view it. Alternatively, you can upload it directly to the [speedscope](https://www.speedscope.app) site.
+- For the `trace` report, open the generated `*.speedscope.json` file from the explorer. It is displayed in the built-in [speedscope](https://www.speedscope.app) viewer.
 - For the `gcdump` report, you can use the [dotnet-heapview](https://github.com/1hub/dotnet-heapview) or _Visual Studio for Windows_.
 
 ## Limitations
