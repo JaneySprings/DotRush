@@ -10,7 +10,7 @@ export class ModulesView implements vscode.TreeDataProvider<ModuleTreeNode> {
     private readonly treeViewDataEmitter = new vscode.EventEmitter<void>();
 
     public activate(context: vscode.ExtensionContext) {
-        context.subscriptions.push(vscode.window.registerTreeDataProvider(res.extendedViewIdModules, this));
+        context.subscriptions.push(vscode.window.registerTreeDataProvider('dotrush.modulesView', this));
         context.subscriptions.push(DebugAdapterController.tracker.onModuleLoaded((module: DebugModule) => {
             if (ModulesView.feature.loadedModules.some(it => it.id == module.id))
                 return;
@@ -18,7 +18,11 @@ export class ModulesView implements vscode.TreeDataProvider<ModuleTreeNode> {
             ModulesView.feature.loadedModules.push(module);
             ModulesView.feature.treeViewDataEmitter.fire();
         }));
-        // context.subscriptions.push(DebugAdapterController.tracker.onTargetExited(() => {
+        context.subscriptions.push(DebugAdapterController.tracker.onSessionStarted(() => {
+            ModulesView.feature.loadedModules = [];
+            ModulesView.feature.treeViewDataEmitter.fire();
+        }));
+        // context.subscriptions.push(DebugAdapterController.tracker.onSessionExited(() => {
         //     ModulesView.feature.loadedModules = [];
         //     ModulesView.feature.treeViewDataEmitter.fire();
         // }));

@@ -69,7 +69,7 @@ Task("test")
 
 Task("repack").DoesForEach(GetFiles(_Path.Combine(ArtifactsDirectory, "**", "*.vsix")), file => {
 	var tempDirectory = _Path.Combine(ArtifactsDirectory, "repack");
-	var outputFileName = "DotRush.Bundle.Server_" + _Path.GetFileNameWithoutExtension(file.FullPath).Split('_').Last() + ".zip";
+	var outputFileName = "DotRush.Bundle.Server.zip";
 	EnsureDirectoryDeleted(tempDirectory);
 	Unzip(file, tempDirectory);
 	System.IO.File.WriteAllText(_Path.Combine(tempDirectory, "extension", "extension", "bin", "LanguageServer", "_dotrush.config.json"), """
