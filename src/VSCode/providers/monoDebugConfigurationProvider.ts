@@ -8,7 +8,7 @@ export class MonoDebugConfigurationProvider implements vscode.DebugConfiguration
         token?: vscode.CancellationToken): Promise<vscode.DebugConfiguration | undefined> {
 
         if (!config.type && !config.request && !config.name) {
-            config.name = res.debuggerUnityTitle;
+            config.name = 'Unity Debugger';
             config.type = res.debuggerUnityId;
             config.request = 'attach';
         }

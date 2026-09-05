@@ -16,12 +16,7 @@ export class PerformanceView implements vscode.WebviewViewProvider {
     private readonly viewDurationSeconds = 60;
 
     public activate(context: vscode.ExtensionContext) {
-        context.subscriptions.push(vscode.window.registerWebviewViewProvider(res.extendedViewIdPerformance, this));
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdAttachTraceProfiler, async () => {
-            const processId = this.processId ?? await vscode.commands.executeCommand(res.commandIdPickProcess);
-            if (processId !== undefined)
-                return vscode.tasks.executeTask(DotNetTaskProvider.getTraceTask(processId));
-        }));
+        context.subscriptions.push(vscode.window.registerWebviewViewProvider('dotrush.performanceView', this));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdCreateHeapDump, async () => {
             const processId = this.processId ?? await vscode.commands.executeCommand(res.commandIdPickProcess);
             if (processId !== undefined)
@@ -34,7 +29,7 @@ export class PerformanceView implements vscode.WebviewViewProvider {
             this.startSampler(pid);
             this.postState();
         }));
-        context.subscriptions.push(DebugAdapterController.tracker.onTargetExited(() => {
+        context.subscriptions.push(DebugAdapterController.tracker.onSessionExited(() => {
             this.processId = undefined;
             this.stopSampler();
             this.postState();

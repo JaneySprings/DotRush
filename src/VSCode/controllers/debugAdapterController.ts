@@ -108,11 +108,13 @@ export class DebugAdapterController {
 class DebugAdapterTracker implements vscode.DebugAdapterTrackerFactory {
     private readonly onModuleLoadedEmitter = new vscode.EventEmitter<any>();
     private readonly onProcessStartedEmitter = new vscode.EventEmitter<number>();
-    private readonly onTargetExitedEmitter = new vscode.EventEmitter<void>();
+    private readonly onSessionStartedEmitter = new vscode.EventEmitter<void>();
+    private readonly onSessionExitedEmitter = new vscode.EventEmitter<void>();
 
     public readonly onModuleLoaded: vscode.Event<any> = this.onModuleLoadedEmitter.event;
     public readonly onProcessStarted: vscode.Event<number> = this.onProcessStartedEmitter.event;
-    public readonly onTargetExited: vscode.Event<void> = this.onTargetExitedEmitter.event;
+    public readonly onSessionStarted: vscode.Event<void> = this.onSessionStartedEmitter.event;
+    public readonly onSessionExited: vscode.Event<void> = this.onSessionExitedEmitter.event;
 
     createDebugAdapterTracker(session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
         const tracker = this;
@@ -134,8 +136,11 @@ class DebugAdapterTracker implements vscode.DebugAdapterTrackerFactory {
                     return;
                 }
             },
-            onWillStopSession() {
-                tracker.onTargetExitedEmitter.fire();
+            onWillStartSession() {
+                tracker.onSessionStartedEmitter.fire();
+            },
+            onExit() {
+                tracker.onSessionExitedEmitter.fire();
             },
         }
     }

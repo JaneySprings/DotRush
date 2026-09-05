@@ -16,10 +16,12 @@ export class Interop {
     private static devHostPath: string;
     public static execExtension: string;
     public static binariesPath: string;
+    public static webviewsPath: string;
     public static dotnetPath: string;
 
     public static async initialize(extensionPath: string): Promise<Status> {
         Interop.execExtension = process.platform === 'win32' ? '.exe' : '';
+        Interop.webviewsPath = path.join(extensionPath, "extension");
         Interop.binariesPath = path.join(extensionPath, "extension", "bin");
         Interop.devHostPath = path.join(Interop.binariesPath, "DevHost", "devhost.dll");
 
@@ -35,7 +37,7 @@ export class Interop {
 
         const dotnetDebuggerPath = path.join(Interop.binariesPath, "Debugger", "clrdbg" + Interop.execExtension);
         if (!fs.existsSync(dotnetDebuggerPath)) {
-            Interop.installDebugger(Extensions.onVSCode(res.debuggerVsdbgInstallId, res.debuggerInstallId)).then(result => {
+            Interop.installDebugger(Extensions.onVSCode('vsdbg', 'clrdbg')).then(result => {
                 if (result !== undefined && !result.isSuccess) // Not a blocker, run intellisense only
                     vscode.window.showErrorMessage(`${res.messageInstallingComponentFailed}: ${result.message}`);
             });
@@ -98,8 +100,8 @@ export class Interop {
     private static installDebugger(id: string): Thenable<Status | undefined> {
         const getNameByDebuggerId = (id: string) => {
             switch (id) {
-                case res.debuggerVsdbgInstallId: return res.debuggerVsdbgDisplayName;
-                case res.debuggerInstallId: return res.debuggerDisplayName;
+                case 'vsdbg': return 'Microsoft .NET Core Debugger (vsdbg)';
+                case 'clrdbg': return '.NET Core Debugger';
                 default: return id;
             }
         };

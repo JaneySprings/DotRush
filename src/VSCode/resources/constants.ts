@@ -1,16 +1,7 @@
 export const extensionId = "dotrush";
-export const extensionPublisher = "nromanov";
-
-export const extensionMicrosoftId = "ms-dotnettools.csharp";
 export const vscodeAppName = "Visual Studio Code";
 export const debuggerNetCoreId = "coreclr";
-export const debuggerNetCoreTitle = ".NET Core Debugger";
 export const debuggerUnityId = "unity";
-export const debuggerUnityTitle = "Unity Debugger";
-export const debuggerVsdbgInstallId = 'vsdbg';
-export const debuggerInstallId = 'clrdbg';
-export const debuggerVsdbgDisplayName = "Microsoft .NET Core Debugger (vsdbg)"
-export const debuggerDisplayName = ".NET Core Debugger"
 
 export const commandIdReloadWorkspace = "dotrush.reloadWorkspace";
 export const commandIdPickProcess = "dotrush.pickProcess";
@@ -22,7 +13,6 @@ export const commandIdCleanProject = "dotrush.clean";
 export const commandIdAttachTraceProfiler = "dotrush.attachTraceProfiler";
 export const commandIdCreateHeapDump = "dotrush.createHeapDump";
 export const commandIdCompletionHandler = "dotrush.completionHandler";
-
 export const commandIdSelectActiveFramework = "dotrush.selectActiveFramework";
 export const commandTitleSelectActiveFramework = "Select target framework";
 export const commandIdSelectActiveConfiguration = "dotrush.selectActiveConfiguration";
@@ -38,12 +28,8 @@ export const commandIdBuildWorkspace = "dotrush.buildWorkspace";
 export const commandIdStatusBarEnabled = "dotrush.statusBarEnabled";
 
 export const taskDefinitionId = "dotrush.task";
-export const extendedViewIdModules = "dotrush.modulesView";
-export const extendedViewIdPerformance = "dotrush.performanceView";
-export const testExplorerViewId = "dotrush.testExplorer";
-export const testExplorerViewTitle = "DotRush Test Explorer";
-export const testExplorerProfileRun = "Run VSTest Host";
-export const testExplorerProfileDebug = "Debug VSTest Host";
+export const testExplorerProfileRun = "Run Test Host";
+export const testExplorerProfileDebug = "Debug Test Host";
 
 export const messageProjectChanged = "Projects have changed. Reload the DotRush to apply changes.";
 export const messageNoProjectFileFound = "No project files found in the current workspace folder.";
@@ -68,6 +54,7 @@ export const configIdDebuggerStepOverPropertiesAndOperators = "debugger.stepOver
 export const configIdDebuggerConsole = "debugger.console";
 export const configIdDebuggerSymbolSearchPaths = "debugger.symbolSearchPaths";
 export const configIdDebuggerSearchMicrosoftSymbolServer = "debugger.searchMicrosoftSymbolServer";
+export const configIdDebuggerSearchNugetSymbolServer = "debugger.searchNugetSymbolServer";
 export const configIdDebuggerAutomaticSourcelinkDownload = "debugger.automaticSourcelinkDownload";
 export const configIdDebuggerLaunchBrowser = "debugger.launchBrowser";
 export const configIdMSBuildNoRestore = "msbuild.noRestore";

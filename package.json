@@ -49,6 +49,7 @@
   "devDependencies": {
     "@types/node": "22.x",
     "@types/vscode": "^1.83.0",
+    "speedscope": "^1.25.0",
     "ts-loader": "^9.6.2",
     "typescript": "^5.9.2",
     "webpack": "^5.110.1",
@@ -164,69 +165,81 @@
         }
       ]
     },
+    "customEditors": [
+      {
+        "viewType": "dotrush.traceView",
+        "displayName": "%title.traceView%",
+        "selector": [
+          {
+            "filenamePattern": "*.speedscope.json"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
     "viewsWelcome": [
       {
         "view": "explorer",
-        "contents": "%view.title.createNewProject%"
+        "contents": "%content.createNewProject%"
       }
     ],
     "commands": [
       {
         "command": "dotrush.reloadWorkspace",
         "category": "%extension.displayName%",
-        "title": "%command.title.reloadWorkspace%"
+        "title": "%title.reloadWorkspace%"
       },
       {
         "command": "dotrush.setStartupProject",
         "category": "%extension.displayName%",
-        "title": "%command.title.setStartupProject%"
+        "title": "%title.setStartupProject%"
       },
       {
         "command": "dotrush.selectActiveConfiguration",
         "category": "%extension.displayName%",
-        "title": "%command.title.selectActiveConfiguration%"
+        "title": "%title.selectActiveConfiguration%"
       },
       {
         "command": "dotrush.pickProjectOrSolutionFiles",
         "category": "%extension.displayName%",
-        "title": "%command.title.pickProjectOrSolutionFiles%"
+        "title": "%title.pickProjectOrSolutionFiles%"
       },
       {
         "command": "dotrush.buildWorkspace",
         "category": "%extension.displayName%",
-        "title": "%command.title.buildWorkspace%"
+        "title": "%title.buildWorkspace%"
       },
       {
         "command": "dotrush.createNewProject",
         "category": "%extension.displayName%",
-        "title": "%command.title.createNewProject%"
+        "title": "%title.createNewProject%"
       },
       {
         "command": "dotrush.build",
         "category": "%extension.displayName%",
-        "title": "%command.title.build%"
+        "title": "%title.build%"
       },
       {
         "command": "dotrush.restore",
         "category": "%extension.displayName%",
-        "title": "%command.title.restore%"
+        "title": "%title.restore%"
       },
       {
         "command": "dotrush.clean",
         "category": "%extension.displayName%",
-        "title": "%command.title.clean%"
+        "title": "%title.clean%"
       },
       {
         "command": "dotrush.attachTraceProfiler",
         "category": "%extension.displayName%",
         "icon": "$(bracket-dot)",
-        "title": "%command.title.attachTraceProfiler%"
+        "title": "%title.attachTraceProfiler%"
       },
       {
         "command": "dotrush.createHeapDump",
         "category": "%extension.displayName%",
         "icon": "$(file-binary)",
-        "title": "%command.title.createHeapDump%"
+        "title": "%title.createHeapDump%"
       }
     ],
     "debuggers": [
@@ -481,54 +494,54 @@
               "type": "string"
             },
             "default": [],
-            "description": "%configuration.description.roslyn.workspaceProperties%"
+            "description": "%description.workspaceProperties%"
           },
           "dotrush.roslyn.projectOrSolutionFiles": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "%configuration.description.roslyn.projectOrSolutionFiles%"
+            "description": "%description.projectOrSolutionFiles%"
           },
           "dotrush.roslyn.showItemsFromUnimportedNamespaces": {
             "type": "boolean",
             "default": true,
-            "description": "%configuration.description.roslyn.showItemsFromUnimportedNamespaces%"
+            "description": "%description.showItemsFromUnimportedNamespaces%"
           },
           "dotrush.roslyn.targetTypedCompletionFilter": {
             "type": "boolean",
             "default": true,
-            "description": "%configuration.description.roslyn.targetTypedCompletionFilter%"
+            "description": "%description.targetTypedCompletionFilter%"
           },
           "dotrush.roslyn.alwaysShowCompletionList": {
             "type": "boolean",
             "default": false,
-            "description": "%configuration.description.roslyn.alwaysShowCompletionList%"
+            "description": "%description.alwaysShowCompletionList%"
           },
           "dotrush.roslyn.skipUnrecognizedProjects": {
             "type": "boolean",
             "default": true,
-            "description": "%configuration.description.roslyn.skipUnrecognizedProjects%"
+            "description": "%description.skipUnrecognizedProjects%"
           },
           "dotrush.roslyn.loadMetadataForReferencedProjects": {
             "type": "boolean",
             "default": false,
-            "description": "%configuration.description.roslyn.loadMetadataForReferencedProjects%"
+            "description": "%description.loadMetadataForReferencedProjects%"
           },
           "dotrush.roslyn.restoreProjectsBeforeLoading": {
             "type": "boolean",
             "default": true,
-            "description": "%configuration.description.roslyn.restoreProjectsBeforeLoading%"
+            "description": "%description.restoreProjectsBeforeLoading%"
           },
           "dotrush.roslyn.compileProjectsAfterLoading": {
             "type": "boolean",
             "default": true,
-            "description": "%configuration.description.roslyn.compileProjectsAfterLoading%"
+            "description": "%description.compileProjectsAfterLoading%"
           },
           "dotrush.roslyn.compilerDiagnosticsScope": {
             "type": "string",
             "default": "Project",
-            "description": "%configuration.description.roslyn.compilerDiagnosticsScope%",
+            "description": "%description.compilerDiagnosticsScope%",
             "enum": [
               "None",
               "Document",
@@ -539,7 +552,7 @@
           "dotrush.roslyn.analyzerDiagnosticsScope": {
             "type": "string",
             "default": "Document",
-            "description": "%configuration.description.roslyn.analyzerDiagnosticsScope%",
+            "description": "%description.analyzerDiagnosticsScope%",
             "enum": [
               "None",
               "Document",
@@ -550,7 +563,7 @@
           "dotrush.roslyn.diagnosticsFormat": {
             "type": "string",
             "default": "NoHints",
-            "description": "%configuration.description.roslyn.diagnosticsFormat%",
+            "description": "%description.diagnosticsFormat%",
             "enum": [
               "AsIs",
               "NoHints",
@@ -560,7 +573,7 @@
           "dotrush.roslyn.dispatcherType": {
             "type": "string",
             "default": "MultiThread",
-            "description": "%configuration.description.roslyn.dispatcherType%",
+            "description": "%description.dispatcherType%",
             "enum": [
               "SingleThread",
               "MultiThread",
@@ -569,7 +582,7 @@
           },
           "dotrush.roslyn.dotnetSdkDirectory": {
             "type": "string",
-            "description": "%configuration.description.roslyn.dotnetSdkDirectory%"
+            "description": "%description.dotnetSdkDirectory%"
           },
           "dotrush.roslyn.analyzerAssemblies": {
             "type": "array",
@@ -577,7 +590,7 @@
             "items": {
               "type": "string"
             },
-            "description": "%configuration.description.roslyn.analyzerAssemblies%"
+            "description": "%description.analyzerAssemblies%"
           }
         }
       },
@@ -588,26 +601,31 @@
           "dotrush.debugger.projectAssembliesOnly": {
             "type": "boolean",
             "default": true,
-            "description": "%configuration.description.debugger.projectAssembliesOnly%"
+            "description": "%description.projectAssembliesOnly%"
           },
           "dotrush.debugger.stepOverPropertiesAndOperators": {
             "type": "boolean",
-            "default": true,
-            "description": "%configuration.description.debugger.stepOverPropertiesAndOperators%"
+            "default": false,
+            "description": "%description.stepOverPropertiesAndOperators%"
           },
           "dotrush.debugger.searchMicrosoftSymbolServer": {
             "type": "boolean",
             "default": false,
-            "description": "%configuration.description.debugger.searchMicrosoftSymbolServer%"
+            "description": "%description.searchMicrosoftSymbolServer%"
+          },
+          "dotrush.debugger.searchNugetSymbolServer": {
+            "type": "boolean",
+            "default": false,
+            "description": "%description.searchNugetSymbolServer%"
           },
           "dotrush.debugger.automaticSourcelinkDownload": {
             "type": "boolean",
             "default": true,
-            "description": "%configuration.description.debugger.automaticSourcelinkDownload%"
+            "description": "%description.automaticSourcelinkDownload%"
           },
           "dotrush.debugger.symbolSearchPaths": {
             "type": "array",
-            "description": "%configuration.description.debugger.symbolSearchPaths%",
+            "description": "%description.symbolSearchPaths%",
             "items": {
               "type": "string"
             }
@@ -615,7 +633,7 @@
           "dotrush.debugger.console": {
             "type": "string",
             "default": "internalConsole",
-            "description": "%configuration.description.debugger.console%",
+            "description": "%description.console%",
             "enum": [
               "internalConsole",
               "integratedTerminal",
@@ -625,7 +643,7 @@
           "dotrush.debugger.launchBrowser": {
             "type": "boolean",
             "default": true,
-            "description": "%configuration.description.debugger.launchBrowser%"
+            "description": "%description.launchBrowser%"
           }
         }
       },
@@ -636,23 +654,23 @@
           "dotrush.msbuild.noRestore": {
             "type": "boolean",
             "default": false,
-            "description": "%configuration.description.msbuild.noRestore%"
+            "description": "%description.noRestore%"
           },
           "dotrush.msbuild.noDependencies": {
             "type": "boolean",
             "default": false,
-            "description": "%configuration.description.msbuild.noDependencies%"
+            "description": "%description.noDependencies%"
           },
           "dotrush.msbuild.additionalBuildArguments": {
             "type": "array",
-            "description": "%configuration.description.msbuild.additionalBuildArguments%",
+            "description": "%description.additionalBuildArguments%",
             "items": {
               "type": "string"
             }
           },
           "dotrush.msbuild.additionalEnvironment": {
             "type": "object",
-            "description": "%configuration.description.msbuild.additionalEnvironment%",
+            "description": "%description.additionalEnvironment%",
             "additionalProperties": {
               "type": "string"
             }
@@ -665,11 +683,11 @@
         "properties": {
           "dotrush.testExplorer.preLaunchTask": {
             "type": "string",
-            "description": "%configuration.description.testExplorer.preLaunchTask%"
+            "description": "%description.preLaunchTask%"
           },
           "dotrush.testExplorer.runSettingsPath": {
             "type": "string",
-            "description": "%configuration.description.testExplorer.runSettingsPath%"
+            "description": "%description.runSettingsPath%"
           }
         }
       }
@@ -689,9 +707,6 @@
       "files.readonlyInclude": {
         "**/LanguageServer/_decompiled_/**": true,
         "**/LanguageServer/_generated_/**": true
-      },
-      "workbench.editorAssociations": {
-        "*speedscope.json": "speedscope-in-vscode.speedscope"
       }
     }
   }

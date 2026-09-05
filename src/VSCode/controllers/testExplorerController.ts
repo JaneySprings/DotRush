@@ -14,7 +14,7 @@ export class TestExplorerController {
     private static controller: vscode.TestController;
 
     public static activate(context: vscode.ExtensionContext) {
-        TestExplorerController.controller = vscode.tests.createTestController(res.testExplorerViewId, res.testExplorerViewTitle);
+        TestExplorerController.controller = vscode.tests.createTestController('dotrush.testExplorer', 'DotRush Test Explorer');
         TestExplorerController.controller.refreshHandler = TestExplorerController.refreshTestItems;
 
         context.subscriptions.push(TestExplorerController.controller);

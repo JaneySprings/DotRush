@@ -2,10 +2,24 @@
 
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
+
+class CopySpeedscopePlugin {
+  /** @param {import('webpack').Compiler} compiler */
+  apply(compiler) {
+    compiler.hooks.afterEmit.tap('CopySpeedscopePlugin', () => {
+      const source = path.resolve(__dirname, 'node_modules', 'speedscope');
+      const target = path.resolve(__dirname, 'extension', 'speedscope');
+      fs.rmSync(target, { recursive: true, force: true });
+      fs.cpSync(path.join(source, 'dist', 'release'), target, { recursive: true });
+      fs.copyFileSync(path.join(source, 'LICENSE'), path.join(target, 'LICENSE'));
+    });
+  }
+}
 
 /** @type WebpackConfig */
 const extensionConfig = {
@@ -37,6 +51,7 @@ const extensionConfig = {
       }
     ]
   },
+  plugins: [ new CopySpeedscopePlugin() ],
   devtool: false,
   infrastructureLogging: {
     level: "log",

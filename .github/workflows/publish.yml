@@ -45,10 +45,7 @@ jobs:
         run: npm install -g @vscode/vsce webpack-cli
 
       - name: Build VSIX
-        run: |
-          for arch in linux-x64 linux-arm64 osx-x64 osx-arm64 win-x64 win-arm64; do
-            dotnet cake --target=vsix --configuration=release --arch=$arch
-          done
+        run: dotnet cake --target=vsix --configuration=release
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

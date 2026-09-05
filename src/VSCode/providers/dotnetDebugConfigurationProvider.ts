@@ -12,7 +12,7 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
         token?: vscode.CancellationToken): Promise<vscode.DebugConfiguration> {
 
         if (!config.type && !config.request && !config.name) {
-            config.name = res.debuggerNetCoreTitle;
+            config.name = '.NET Core Debugger';
             config.type = res.debuggerNetCoreId;
             config.request = folder === undefined ? 'attach' : 'launch';
             config.preLaunchTask = folder === undefined ? undefined : `${res.extensionId}: Build`;
@@ -56,6 +56,7 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
             config.symbolOptions = {
                 searchPaths: Extensions.getSetting(res.configIdDebuggerSymbolSearchPaths),
                 searchMicrosoftSymbolServer: Extensions.getSetting(res.configIdDebuggerSearchMicrosoftSymbolServer, false),
+                searchNuGetOrgSymbolServer: Extensions.getSetting(res.configIdDebuggerSearchNugetSymbolServer, false),
             };
         if (config.sourceLinkOptions === undefined)
             config.sourceLinkOptions = {
