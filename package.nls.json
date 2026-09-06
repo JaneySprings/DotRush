@@ -15,6 +15,7 @@
 	"title.createHeapDump": "Create Heap Dump",
 	"title.createNewProject": "Create New Project",
 	"title.traceView": "Trace Viewer",
+	"title.memoryView": "Memory Viewer",
 	
 	"description.workspaceProperties": "Additional MSBuild properties to pass to the workspace (e.g. Configuration=Debug).",
 	"description.skipUnrecognizedProjects": "Determines if unrecognized projects are skipped when projects are opened.",

@@ -91,9 +91,10 @@ export class DotNetTaskProvider implements vscode.TaskProvider {
             .append('collect')
             .append('-p').append(processId.toString());
 
-        if (profilerType === DotNetProfilerType.Trace) {
+        if (profilerType === DotNetProfilerType.Trace)
             builder.append('--format').append('speedscope');
-        }
+        if (profilerType === DotNetProfilerType.GCDump)
+            builder.append('--format').append('json');
 
         return new vscode.Task(
             { type: res.taskDefinitionId },

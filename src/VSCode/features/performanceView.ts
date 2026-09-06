@@ -1,8 +1,6 @@
 import { DebugAdapterController } from '../controllers/debugAdapterController';
 import { initializeComponents } from './performanceView.html';
-import { DotNetTaskProvider } from '../providers/dotnetTaskProvider';
 import { Interop } from '../interop/interop';
-import * as res from '../resources/constants';
 import * as vscode from 'vscode';
 import * as rpc from 'vscode-jsonrpc/node';
 
@@ -17,12 +15,6 @@ export class PerformanceView implements vscode.WebviewViewProvider {
 
     public activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.window.registerWebviewViewProvider('dotrush.performanceView', this));
-        context.subscriptions.push(vscode.commands.registerCommand(res.commandIdCreateHeapDump, async () => {
-            const processId = this.processId ?? await vscode.commands.executeCommand(res.commandIdPickProcess);
-            if (processId !== undefined)
-                return vscode.tasks.executeTask(DotNetTaskProvider.getGCDumpTask(processId));
-        }));
-
         context.subscriptions.push(DebugAdapterController.tracker.onProcessStarted((pid: number) => {
             this.samples = [];
             this.processId = pid;

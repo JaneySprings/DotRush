@@ -8,6 +8,7 @@ import { TestExplorerController } from './controllers/testExplorerController';
 import { ModulesView } from './features/modulesView';
 import { PerformanceView } from './features/performanceView';
 import { TraceView } from './features/traceView';
+import { MemoryView } from './features/memoryView';
 import { Interop } from './interop/interop';
 import { PublicExports } from './publicExports';
 import * as vscode from 'vscode';
@@ -35,6 +36,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		ModulesView.feature.activate(context);
 		PerformanceView.feature.activate(context);
 		TraceView.feature.activate(context);
+		MemoryView.feature.activate(context);
 	});
 
 	return exports;
