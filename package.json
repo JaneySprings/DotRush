@@ -49,6 +49,7 @@
   "devDependencies": {
     "@types/node": "22.x",
     "@types/vscode": "^1.83.0",
+    "memoryviewer": "^1.0.0",
     "speedscope": "^1.25.0",
     "ts-loader": "^9.6.2",
     "typescript": "^5.9.2",
@@ -172,6 +173,16 @@
         "selector": [
           {
             "filenamePattern": "*.speedscope.json"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "dotrush.memoryView",
+        "displayName": "%title.memoryView%",
+        "selector": [
+          {
+            "filenamePattern": "*.gcdump.json"
           }
         ],
         "priority": "default"

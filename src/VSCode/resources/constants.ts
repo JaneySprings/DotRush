@@ -38,6 +38,7 @@ export const messageSelectProjectTitle = "Select a project file";
 export const messageSelectProgramTitle = "Select a Program to Debug";
 export const messageSelectTargetTitle = "Select Project or Solution files";
 export const messageSelectTemplateTitle = "Select a project template";
+export const messageSelectBaselineSnapshot = "Select a baseline heap snapshot (*.gcdump.json)";
 export const messageReload = "Reload";
 export const messageInstallingComponentTitle = "Installing component: ";
 export const messageInstallingComponentFailed = "Component installation failed";

@@ -128,7 +128,7 @@ Lightweight and efficient, DotRush is designed to be fast and responsive.
 ![image](https://github.com/JaneySprings/DotRush/raw/main/assets/image7.jpg)
 
 - For the `trace` report, open the generated `*.speedscope.json` file from the explorer. It is displayed in the built-in [speedscope](https://www.speedscope.app) viewer.
-- For the `gcdump` report, you can use the [dotnet-heapview](https://github.com/1hub/dotnet-heapview) or _Visual Studio for Windows_.
+- For the `gcdump` report, open the generated `*.gcdump.json` file from the explorer. It is displayed in the built-in memory viewer: type summary with retained sizes, dominator tree, GC roots, treemap, retention graph, leak suspects and a comparison with a second snapshot. The `*.gcdump` file written next to it can be opened with the [dotnet-heapview](https://github.com/1hub/dotnet-heapview) or _Visual Studio for Windows_.
 
 ## Limitations
 &emsp;DotRush currently supports **only C# language** features and does not support `Razor`, `XAML`, or other languages. Also it does not support the following language features:

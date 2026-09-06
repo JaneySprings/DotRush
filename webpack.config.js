@@ -8,15 +8,32 @@ const path = require('path');
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
 
-class CopySpeedscopePlugin {
+/** Copies the release build of a web app (speedscope, memoryviewer) into the extension folder so webviews can load it. */
+class CopyWebAppPlugin {
+  /**
+   * @param {string} name folder name under extension/
+   * @param {string[]} sources candidate source directories, the first existing one is used
+   * @param {string} [license] license file to copy next to the release files
+   */
+  constructor(name, sources, license) {
+    this.name = name;
+    this.sources = sources;
+    this.license = license;
+  }
   /** @param {import('webpack').Compiler} compiler */
   apply(compiler) {
-    compiler.hooks.afterEmit.tap('CopySpeedscopePlugin', () => {
-      const source = path.resolve(__dirname, 'node_modules', 'speedscope');
-      const target = path.resolve(__dirname, 'extension', 'speedscope');
+    compiler.hooks.afterEmit.tap('CopyWebAppPlugin', () => {
+      const source = this.sources.find(candidate => fs.existsSync(candidate));
+      const target = path.resolve(__dirname, 'extension', this.name);
+      if (source === undefined) {
+        if (!fs.existsSync(target))
+          console.warn(`[CopyWebAppPlugin] no release build found for '${this.name}', looked in: ${this.sources.join(', ')}`);
+        return;
+      }
       fs.rmSync(target, { recursive: true, force: true });
-      fs.cpSync(path.join(source, 'dist', 'release'), target, { recursive: true });
-      fs.copyFileSync(path.join(source, 'LICENSE'), path.join(target, 'LICENSE'));
+      fs.cpSync(source, target, { recursive: true });
+      if (this.license !== undefined && fs.existsSync(this.license))
+        fs.copyFileSync(this.license, path.join(target, 'LICENSE'));
     });
   }
 }
@@ -51,7 +68,16 @@ const extensionConfig = {
       }
     ]
   },
-  plugins: [ new CopySpeedscopePlugin() ],
+  plugins: [
+    new CopyWebAppPlugin('speedscope',
+      [path.resolve(__dirname, 'node_modules', 'speedscope', 'dist', 'release')],
+      path.resolve(__dirname, 'node_modules', 'speedscope', 'LICENSE')),
+    // The npm package is preferred; the sibling checkout is used while developing the viewer locally
+    new CopyWebAppPlugin('memoryview', [
+      path.resolve(__dirname, 'node_modules', 'memoryviewer', 'dist', 'release'),
+      path.resolve(__dirname, '..', 'MemoryViewer', 'dist', 'release'),
+    ]),
+  ],
   devtool: false,
   infrastructureLogging: {
     level: "log",
