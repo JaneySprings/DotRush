@@ -1,6 +1,6 @@
 [submodule "src/DotRush.Debugging.Diagnostics"]
 	path = src/DotRush.Debugging.Diagnostics
-	url = https://github.com/dotnet/diagnostics
+	url = https://github.com/JaneySprings/diagnostics.git
 [submodule "src/DotRush.Debugging.MonoLib"]
 	path = src/DotRush.Debugging.MonoLib
 	url = https://github.com/JaneySprings/Mono.Debugger
