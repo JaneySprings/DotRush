@@ -357,6 +357,9 @@
               "sourceLinkOptions": {
                 "type": "object"
               },
+              "logging": {
+                "type": "object"
+              },
               "launchSettingsFilePath": {
                 "type": "string"
               },
@@ -392,6 +395,9 @@
                 "type": "object"
               },
               "sourceLinkOptions": {
+                "type": "object"
+              },
+              "logging": {
                 "type": "object"
               }
             }
