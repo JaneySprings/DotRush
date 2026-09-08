@@ -1,12 +1,21 @@
+using System.Collections.Immutable;
+using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace DotRush.Roslyn.CodeAnalysis.Extensions;
 
 public static class CodeActionExtensions {
+    internal static readonly Type? compilerAnalyzerType;
+
+    static CodeActionExtensions() {
+        compilerAnalyzerType = ReflectionExtensions.GetTypeFromLoadedAssembly(KnownAssemblies.CommonAssemblyName, "Microsoft.CodeAnalysis.Diagnostics.CompilerDiagnosticAnalyzer");
+    }
+
     public static int GetUniqueId(this CodeAction codeAction) {
         var id = codeAction.EquivalenceKey ?? codeAction.Title;
         return id.GetHashCode();
@@ -16,7 +25,8 @@ public static class CodeActionExtensions {
         try {
             // Some providers can throw an exceptions. Wait for result here and try-catch it.
             return await provider.GetFixAsync(context);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             CurrentSessionLogger.Error(e);
             return null;
         }
@@ -37,6 +47,17 @@ public static class CodeActionExtensions {
 
             registerCodeFix.Invoke(codeAction);
         }
+    }
+
+    public static CompilationWithAnalyzers WithAnalyzers(this Compilation compilation, ImmutableArray<DiagnosticAnalyzer> analyzers, AnalyzerOptions analyzerOptions, bool concurrentAnalysis) {
+        var options = new CompilationWithAnalyzersOptions(analyzerOptions, null, concurrentAnalysis, logAnalyzerExecutionTime: false);
+        return compilation.WithAnalyzers(analyzers, options);
+    }
+    public static bool IsCompilerAnalyzer(this DiagnosticAnalyzer analyzer) {
+        if (compilerAnalyzerType == null)
+            return false;
+
+        return analyzer.GetType().IsSubclassOf(compilerAnalyzerType);
     }
 
     private static bool IsSupportedScope(this DiagnosticContext context, FixAllScope scope) {

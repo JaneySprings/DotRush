@@ -55,13 +55,11 @@ public abstract class SolutionController : ProjectsController {
             ProgressHandler.CompleteOperation();
 
             if (CompileProjectsAfterLoading) {
-                ProgressHandler.ScheduleOperations(solution.Projects.Count());
-                foreach (var project in solution.Projects) {
-                    OnProjectCompilationStarted(project.FilePath ?? solutionFilePath, ProgressHandler.GetProgress());
-                    _ = await project.GetCompilationAsync(cancellationToken);
-                    ProgressHandler.CompleteOperation();
-                    OnProjectCompilationCompleted(project);
-                }
+                ProgressHandler.ScheduleOperations(1);
+                OnProjectCompilationStarted(solutionFilePath, ProgressHandler.GetProgress());
+                await Task.WhenAll(solution.Projects.Select(project => project.GetCompilationAsync(cancellationToken)));
+                ProgressHandler.CompleteOperation();
+                OnProjectCompilationCompleted(solutionFilePath);
             }
 
             solution.Projects.Distinct(ProjectByPathComparer.Instance).ForEach(project => OnProjectLoadCompleted(project));
