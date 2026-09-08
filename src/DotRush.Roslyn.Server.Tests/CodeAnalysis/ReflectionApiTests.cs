@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Reflection;
 using DotRush.Common.Extensions;
+using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.CodeAnalysis.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
@@ -191,5 +192,10 @@ public class ReflectionApiTests {
         Assert.That(InternalReferenceLocation.referenceLocationType, Is.Not.Null);
         Assert.That(InternalReferenceLocation.isWrittenToProperty, Is.Not.Null);
         Assert.That(InternalReferenceLocation.isWrittenToProperty!.PropertyType, Is.EqualTo(typeof(bool)));
+    }
+
+    [Test]
+    public void compilerAnalyzerTypeTest() {
+        Assert.That(CodeActionExtensions.compilerAnalyzerType, Is.Not.Null);
     }
 }

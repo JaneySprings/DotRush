@@ -20,6 +20,15 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
     }
 
     public ImmutableArray<DiagnosticAnalyzer> GetComponents(Project project) {
+        return GetDiagnosticAnalyzers(project).ToImmutableArray();
+    }
+    public ImmutableArray<DiagnosticAnalyzer> GetComponents(Project project, Func<DiagnosticAnalyzer, bool> filter) {
+        return GetDiagnosticAnalyzers(project).Where(filter).ToImmutableArray();
+    }
+    public ImmutableArray<DiagnosticAnalyzer> GetSuppressors(Project project) {
+        return GetComponents(project).Where(it => it is DiagnosticSuppressor).ToImmutableArray();
+    }
+    private List<DiagnosticAnalyzer> GetDiagnosticAnalyzers(Project project) {
         return ComponentsCache.GetOrCreate(project.Name, () => {
             var result = new List<DiagnosticAnalyzer>();
             result.AddRange(LoadFromDotRush());
@@ -34,10 +43,7 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
             }
 
             return result;
-        }).ToImmutableArray();
-    }
-    public ImmutableArray<DiagnosticAnalyzer> GetSuppressors(Project project) {
-        return GetComponents(project).Where(it => it is DiagnosticSuppressor).ToImmutableArray();
+        });
     }
 
     public List<DiagnosticAnalyzer> LoadFromProject(Project project) {

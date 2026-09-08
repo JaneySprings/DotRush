@@ -23,7 +23,7 @@ public abstract class ProjectsController {
     public virtual void OnProjectLoadStarted(string documentPath, int progress) { }
     public virtual void OnProjectLoadCompleted(Project project) { }
     public virtual void OnProjectCompilationStarted(string documentPath, int progress) { }
-    public virtual void OnProjectCompilationCompleted(Project project) { }
+    public virtual void OnProjectCompilationCompleted(string documentPath) { }
     protected abstract void OnWorkspaceStateChanged(Solution newSolution);
 
     protected async Task LoadProjectsAsync(MSBuildWorkspace workspace, string[] projectFilePaths, CancellationToken cancellationToken) {
@@ -50,7 +50,7 @@ public abstract class ProjectsController {
                 if (CompileProjectsAfterLoading) {
                     OnProjectCompilationStarted(path, ProgressHandler.GetProgress());
                     _ = await project.GetCompilationAsync(cancellationToken);
-                    OnProjectCompilationCompleted(project);
+                    OnProjectCompilationCompleted(path);
                 }
 
                 ProgressHandler.CompleteOperation();

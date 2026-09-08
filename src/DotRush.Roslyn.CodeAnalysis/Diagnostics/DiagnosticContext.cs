@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -29,7 +28,7 @@ public abstract class DiagnosticContext {
         Document = document;
     }
     protected DiagnosticContext(Diagnostic diagnostic, Project project, AnalysisScope scope) : this(diagnostic, project.Name, scope) {
-        Document = project.GetDocumentsWithFilePath(FilePath).FirstOrDefault();
+        Document = project.GetDocument(diagnostic.Location.SourceTree);
     }
     private DiagnosticContext(Diagnostic diagnostic, string sourceName, AnalysisScope scope) {
         Diagnostic = diagnostic;

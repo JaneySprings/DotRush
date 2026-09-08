@@ -17,12 +17,15 @@ using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnosti
 namespace DotRush.Roslyn.Server.Services;
 
 public class CodeAnalysisService : IAdditionalComponentsProvider, IClearable {
+    private const int AnalysisDebounceMilliseconds = 250;
+
     private readonly ConfigurationService configurationService;
     private readonly LanguageServer? serverFacade;
     private readonly CodeActionHost codeActionHost;
     private readonly CompilationHost compilationHost;
     private readonly Thread workerThread;
-    private readonly BlockingCollection<Func<Task>> workerTasks;
+    private readonly BlockingCollection<Func<CancellationToken, Task>> workerTasks;
+    private readonly ConcurrentTokenSource analysisCancellation;
 
     internal AnalysisScope CompilerDiagnosticsScope => configurationService.CompilerDiagnosticsScope;
     internal AnalysisScope AnalyzerDiagnosticsScope => configurationService.AnalyzerDiagnosticsScope;
@@ -33,15 +36,20 @@ public class CodeAnalysisService : IAdditionalComponentsProvider, IClearable {
         this.serverFacade = serverFacade;
         this.codeActionHost = new CodeActionHost(this);
         this.compilationHost = new CompilationHost(this);
-        this.workerTasks = new BlockingCollection<Func<Task>>();
+        this.workerTasks = new BlockingCollection<Func<CancellationToken, Task>>();
+        this.analysisCancellation = new ConcurrentTokenSource();
         this.workerThread = new Thread(() => {
             foreach (var currentTask in workerTasks.GetConsumingEnumerable()) {
-                Func<Task> latestTask = currentTask;
+                Thread.Sleep(AnalysisDebounceMilliseconds);
+
                 // Drain queue and keep the most recent task
+                var latestTask = currentTask;
                 while (workerTasks.TryTake(out var task))
                     latestTask = task;
 
-                SafeExtensions.InvokeAsync(latestTask).Wait();
+                var cancellationToken = analysisCancellation.Restart();
+                SafeExtensions.InvokeAsync(() => latestTask.Invoke(cancellationToken)).Wait();
+                analysisCancellation.Complete();
             }
         });
         this.workerThread.IsBackground = true;
@@ -51,27 +59,23 @@ public class CodeAnalysisService : IAdditionalComponentsProvider, IClearable {
         workerThread.Start();
     }
     public void RequestDiagnosticsPublishing(string filePath, WorkspaceService workspaceService) {
-        workerTasks.Add(async () => {
+        workerTasks.Add(async cancellationToken => {
             var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
             var documents = workspaceService.Solution?.GetDocuments(documentIds);
             if (documents == null || documents.Length == 0)
                 return;
 
-            await compilationHost.AnalyzeAsync(
-                documents,
-                configurationService.CompilerDiagnosticsScope,
-                configurationService.AnalyzerDiagnosticsScope,
-                CancellationToken.None
-            ).ConfigureAwait(false);
-
-            await PublishDiagnosticsAsync().ConfigureAwait(false);
+            await compilationHost.AnalyzeAsync(documents, CompilerDiagnosticsScope, AnalyzerDiagnosticsScope, cancellationToken);
+            await PublishDiagnosticsAsync();
         });
+        analysisCancellation.Cancel();
     }
     public void RequestDiagnosticsPublishing(Solution solution) {
-        workerTasks.Add(async () => {
-            await compilationHost.AnalyzeAsync(solution, CancellationToken.None).ConfigureAwait(false);
-            await PublishDiagnosticsAsync().ConfigureAwait(false);
+        workerTasks.Add(async cancellationToken => {
+            await compilationHost.AnalyzeAsync(solution, cancellationToken);
+            await PublishDiagnosticsAsync();
         });
+        analysisCancellation.Cancel();
     }
 
     public ReadOnlyCollection<DiagnosticContext> GetDiagnosticsByDocumentSpan(Document document, TextSpan span) {
@@ -101,7 +105,7 @@ public class CodeAnalysisService : IAdditionalComponentsProvider, IClearable {
             await serverFacade.Client.PublishDiagnostics(new PublishDiagnosticsParams {
                 Uri = pair.Key,
                 Diagnostics = FilterDiagnostics(pair.Value, configurationService.DiagnosticsFormat),
-            }).ConfigureAwait(false);
+            });
         }
     }
     private List<ProtocolModels.Diagnostic> FilterDiagnostics(IEnumerable<DiagnosticContext> diagnostics, DiagnosticsFormat format) {

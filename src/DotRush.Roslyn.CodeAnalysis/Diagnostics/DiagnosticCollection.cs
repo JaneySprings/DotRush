@@ -15,10 +15,10 @@ public class DiagnosticCollection {
     }
 
     public void BeginUpdate() {
-        if (tempWorkspaceDiagnostics != null)
-            throw new InvalidOperationException($"{nameof(EndUpdate)} method must be called before starting a new update.");
-
         lock (lockObject) {
+            if (tempWorkspaceDiagnostics != null)
+                throw new InvalidOperationException($"{nameof(EndUpdate)} method must be called before starting a new update.");
+
             tempWorkspaceDiagnostics = new Dictionary<string, List<DiagnosticContext>>(workspaceDiagnostics.Count);
             foreach (var kvp in workspaceDiagnostics) {
                 if (kvp.Value.Count > 0)
@@ -27,30 +27,55 @@ public class DiagnosticCollection {
         }
     }
     public IEnumerable<DiagnosticContext> AddDiagnostics(ProjectId key, IEnumerable<DiagnosticContext> diagnostics) {
-        if (tempWorkspaceDiagnostics == null)
-            throw new InvalidOperationException($"{nameof(BeginUpdate)} method must be called before adding diagnostics.");
+        var diagnosticsGroups = diagnostics
+            .Where(c => !string.IsNullOrEmpty(c.FilePath))
+            .GroupBy(c => c.FilePath!)
+            .Where(g => File.Exists(g.Key))
+            .ToArray();
 
+        var validDiagnostics = new List<DiagnosticContext>();
         lock (lockObject) {
-            var validDiagnostics = diagnostics.Where(c => !string.IsNullOrEmpty(c.FilePath) && File.Exists(c.FilePath)).ToArray();
-            foreach (var diagnosticsGroup in validDiagnostics.GroupBy(c => c.FilePath!)) {
+            if (tempWorkspaceDiagnostics == null)
+                throw new InvalidOperationException($"{nameof(BeginUpdate)} method must be called before adding diagnostics.");
+
+            foreach (var diagnosticsGroup in diagnosticsGroups) {
                 if (!tempWorkspaceDiagnostics.TryGetValue(diagnosticsGroup.Key, out List<DiagnosticContext>? container)) {
                     container = new List<DiagnosticContext>();
                     tempWorkspaceDiagnostics[diagnosticsGroup.Key] = container;
                 }
                 container.AddRange(diagnosticsGroup);
+                validDiagnostics.AddRange(diagnosticsGroup);
             }
-
-            return validDiagnostics;
         }
+
+        return validDiagnostics;
     }
     public void EndUpdate() {
-        if (tempWorkspaceDiagnostics == null)
-            throw new InvalidOperationException($"{nameof(BeginUpdate)} method must be called before ending an update.");
-
         lock (lockObject) {
+            if (tempWorkspaceDiagnostics == null)
+                throw new InvalidOperationException($"{nameof(BeginUpdate)} method must be called before ending an update.");
+
             workspaceDiagnostics = tempWorkspaceDiagnostics;
             tempWorkspaceDiagnostics = null;
         }
+    }
+    public void CancelUpdate() {
+        lock (lockObject) {
+            tempWorkspaceDiagnostics = null;
+        }
+    }
+
+    public async Task Execute(Func<Task> handler, CancellationToken cancellationToken) {
+        BeginUpdate();
+        try {
+            await handler.Invoke();
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        catch {
+            CancelUpdate();
+            throw;
+        }
+        EndUpdate();
     }
 
     public ReadOnlyDictionary<string, List<DiagnosticContext>> GetDiagnostics() {
