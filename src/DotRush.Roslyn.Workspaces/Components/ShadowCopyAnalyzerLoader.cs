@@ -6,15 +6,14 @@ using FileSystemExtensions = DotRush.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Workspaces.Components;
 
-public sealed class ShadowCopyAnalyzerLoader : IAnalyzerAssemblyLoader {
-    private readonly string shadowCopyDirectory;
+public class ShadowCopyAnalyzerLoader : IAnalyzerAssemblyLoader, IDisposable {
+    private static readonly string shadowCopyDirectory;
     private readonly ConcurrentDictionary<string, string> dependencyPathsByName;
     private readonly object copyLock = new();
 
-    public ShadowCopyAnalyzerLoader() {
+    static ShadowCopyAnalyzerLoader() {
         var baseDirectory = Path.Combine(AppContext.BaseDirectory, "_analyzersCopy_");
         shadowCopyDirectory = Path.Combine(baseDirectory, Guid.NewGuid().ToString());
-        dependencyPathsByName = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         if (!Directory.Exists(baseDirectory))
             Directory.CreateDirectory(baseDirectory);
@@ -22,6 +21,9 @@ public sealed class ShadowCopyAnalyzerLoader : IAnalyzerAssemblyLoader {
             FileSystemExtensions.TryDeleteDirectory(directory);
 
         Directory.CreateDirectory(shadowCopyDirectory);
+    }
+    public ShadowCopyAnalyzerLoader() {
+        dependencyPathsByName = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         AppDomain.CurrentDomain.AssemblyResolve += ResolveDependency;
     }
 
@@ -40,15 +42,7 @@ public sealed class ShadowCopyAnalyzerLoader : IAnalyzerAssemblyLoader {
         var shadowPath = CreateShadowCopy(fullPath);
         return ReflectionExtensions.LoadAssembly(shadowPath) ?? throw new FileLoadException($"Unable to load analyzer assembly from '{shadowPath}'.");
     }
-
-    private Assembly? ResolveDependency(object? sender, ResolveEventArgs args) {
-        var assemblyName = new AssemblyName(args.Name).Name;
-        if (string.IsNullOrEmpty(assemblyName) || !dependencyPathsByName.TryGetValue(assemblyName, out var originalPath))
-            return null;
-
-        return LoadFromPath(originalPath);
-    }
-    private string CreateShadowCopy(string originalPath) {
+    public string CreateShadowCopy(string originalPath) {
         // Copy each analyzer into a per-source-directory shadow folder. This keeps assemblies from the same
         // package together (so co-located dependencies resolve) and avoids collisions between packages that
         // ship files with identical names.
@@ -67,5 +61,19 @@ public sealed class ShadowCopyAnalyzerLoader : IAnalyzerAssemblyLoader {
             FileSystemExtensions.TryCopyFile(originalPath, targetPath, overwrite: true);
         }
         return targetPath;
+    }
+
+    private Assembly? ResolveDependency(object? sender, ResolveEventArgs args) {
+        var assemblyName = new AssemblyName(args.Name).Name;
+        if (string.IsNullOrEmpty(assemblyName) || !dependencyPathsByName.TryGetValue(assemblyName, out var originalPath))
+            return null;
+
+        return LoadFromPath(originalPath);
+    }
+
+
+    public void Dispose() {
+        AppDomain.CurrentDomain.AssemblyResolve -= ResolveDependency;
+        dependencyPathsByName.Clear();
     }
 }

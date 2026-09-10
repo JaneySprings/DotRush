@@ -19,22 +19,22 @@ public abstract class SolutionController : ProjectsController {
         WorkspaceStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    protected async Task LoadSolutionAsync(MSBuildWorkspace workspace, IEnumerable<string> solutionFilePaths, CancellationToken cancellationToken) {
+    protected async Task LoadSolutionAsync(MSBuildWorkspace workspace, IEnumerable<string> solutionFilePaths, IAnalyzerAssemblyLoader? analyzerLoader, CancellationToken cancellationToken) {
         CurrentSessionLogger.Debug($"Loading solutions: {string.Join(';', solutionFilePaths)}");
 
         (var primarySolution, var otherSolutions) = SplitSolutions(solutionFilePaths);
 
         if (!string.IsNullOrEmpty(primarySolution))
-            await LoadSolutionAsync(workspace, primarySolution, cancellationToken);
+            await LoadSolutionAsync(workspace, primarySolution, analyzerLoader, cancellationToken);
 
         foreach (var solutionFilePath in otherSolutions) {
             var projectFilePaths = MSBuildSolutionLoader.GetProjectFiles(solutionFilePath);
-            await LoadProjectsAsync(workspace, projectFilePaths, cancellationToken);
+            await LoadProjectsAsync(workspace, projectFilePaths, analyzerLoader, cancellationToken);
         }
 
         CurrentSessionLogger.Debug($"Solution loading completed, loaded {workspace.CurrentSolution.ProjectIds.Count} projects");
     }
-    protected Task LoadSolutionAsync(MSBuildWorkspace workspace, string solutionFilePath, CancellationToken cancellationToken) {
+    protected Task LoadSolutionAsync(MSBuildWorkspace workspace, string solutionFilePath, IAnalyzerAssemblyLoader? analyzerLoader, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
             ProgressHandler.Reset();
             ProgressHandler.ScheduleOperations(RestoreProjectsBeforeLoading ? 2 : 1);
@@ -48,8 +48,8 @@ public abstract class SolutionController : ProjectsController {
 
             OnProjectLoadStarted(solutionFilePath, ProgressHandler.GetProgress());
             var solution = await workspace.OpenSolutionAsync(solutionFilePath, null, cancellationToken);
-            if (RuntimeInfo.IsWindows) { // issues/33
-                solution = solution.WithShadowCopiedAnalyzerReferences(AnalyzerLoader);
+            if (RuntimeInfo.IsWindows && analyzerLoader != null) { // issues/33
+                solution = solution.WithShadowCopiedAnalyzerReferences(analyzerLoader);
             }
             OnWorkspaceStateChanged(solution);
             ProgressHandler.CompleteOperation();

@@ -1,7 +1,9 @@
 using System.Collections.Immutable;
 using System.Reflection;
+using DotRush.Common;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.Workspaces.Components;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 
@@ -72,7 +74,23 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
     }
     public List<CodeFixProvider> LoadFromProject(Project project) {
         var analyzerReferenceAssemblies = project.AnalyzerReferences.Select(it => it.FullPath);
-        var result = analyzerReferenceAssemblies.SelectMany(it => LoadFromAssembly(it ?? string.Empty)).ToList();
+        var result = new List<CodeFixProvider>();
+
+        if (RuntimeInfo.IsWindows) {
+            using (var analyzerLoader = new ShadowCopyAnalyzerLoader()) {
+                foreach (var referenceAssembly in analyzerReferenceAssemblies) {
+                    if (!string.IsNullOrEmpty(referenceAssembly))
+                        result.AddRange(LoadFromAssembly(analyzerLoader.CreateShadowCopy(referenceAssembly)));
+                }
+            }
+        }
+        else {
+            foreach (var referenceAssembly in analyzerReferenceAssemblies) {
+                if (!string.IsNullOrEmpty(referenceAssembly))
+                    result.AddRange(LoadFromAssembly(referenceAssembly));
+            }
+        }
+
         currentClassLogger.Debug($"Loaded {result.Count} codeFixProviders from project '{project.Name}'");
         return result;
     }
