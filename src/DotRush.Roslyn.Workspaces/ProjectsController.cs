@@ -10,7 +10,6 @@ using Microsoft.CodeAnalysis.MSBuild;
 namespace DotRush.Roslyn.Workspaces;
 
 public abstract class ProjectsController {
-    protected ShadowCopyAnalyzerLoader AnalyzerLoader { get; } = new ShadowCopyAnalyzerLoader();
     protected WorkspaceProgressHandler ProgressHandler { get; } = new WorkspaceProgressHandler();
 
     protected abstract bool RestoreProjectsBeforeLoading { get; }
@@ -26,7 +25,7 @@ public abstract class ProjectsController {
     public virtual void OnProjectCompilationCompleted(string documentPath) { }
     protected abstract void OnWorkspaceStateChanged(Solution newSolution);
 
-    protected async Task LoadProjectsAsync(MSBuildWorkspace workspace, string[] projectFilePaths, CancellationToken cancellationToken) {
+    protected async Task LoadProjectsAsync(MSBuildWorkspace workspace, string[] projectFilePaths, IAnalyzerAssemblyLoader? analyzerLoader, CancellationToken cancellationToken) {
         CurrentSessionLogger.Debug($"Loading projects: {string.Join(';', projectFilePaths)}"); ;
         ProgressHandler.Reset();
         ProgressHandler.ScheduleOperations(projectFilePaths.Length);
@@ -41,8 +40,8 @@ public abstract class ProjectsController {
 
                 OnProjectLoadStarted(path, ProgressHandler.GetProgress());
                 var project = await workspace.OpenProjectAsync(path, null, cancellationToken);
-                if (RuntimeInfo.IsWindows) { // issues/33
-                    var solution = project.Solution.WithShadowCopiedAnalyzerReferences(AnalyzerLoader);
+                if (RuntimeInfo.IsWindows && analyzerLoader != null) { // issues/33
+                    var solution = project.Solution.WithShadowCopiedAnalyzerReferences(analyzerLoader);
                     project = solution.GetProject(project.Id) ?? project;
                 }
                 OnWorkspaceStateChanged(project.Solution);

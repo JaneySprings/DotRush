@@ -75,10 +75,12 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
         return result;
     }
     public List<CodeRefactoringProvider> LoadFromProject(Project project) {
-        var analyzerReferenceAssemblies = project.AnalyzerReferences.Select(it => it.FullPath);
-        var result = analyzerReferenceAssemblies.SelectMany(it => LoadFromAssembly(it ?? string.Empty)).ToList();
-        currentClassLogger.Debug($"Loaded {result.Count} codeRefactoringProviders from project '{project.Name}'");
-        return result;
+        // TODO: Do we really need it?
+        // var analyzerReferenceAssemblies = project.AnalyzerReferences.Select(it => it.FullPath);
+        // var result = analyzerReferenceAssemblies.SelectMany(it => LoadFromAssembly(it ?? string.Empty)).ToList();
+        // currentClassLogger.Debug($"Loaded {result.Count} codeRefactoringProviders from project '{project.Name}'");
+        // return result;
+        return new List<CodeRefactoringProvider>();
     }
     public List<CodeRefactoringProvider> LoadFromDotRush() {
         return new List<CodeRefactoringProvider> {

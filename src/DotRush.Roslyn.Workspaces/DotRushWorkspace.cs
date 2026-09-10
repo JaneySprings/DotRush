@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.Workspaces.Components;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis.MSBuild;
 using DotRushMSBuildLocator = DotRush.Common.MSBuild.MSBuildLocator;
@@ -9,6 +10,7 @@ namespace DotRush.Roslyn.Workspaces;
 
 public abstract class DotRushWorkspace : SolutionController {
     private MSBuildWorkspace? workspace;
+    private ShadowCopyAnalyzerLoader? analyzerLoader;
 
     protected abstract ReadOnlyDictionary<string, string> WorkspaceProperties { get; }
     protected abstract bool LoadMetadataForReferencedProjects { get; }
@@ -27,26 +29,23 @@ public abstract class DotRushWorkspace : SolutionController {
         return registrationResult;
     }
 
-    public Task LoadSolutionAsync(string[] solutionFiles, CancellationToken cancellationToken) {
-        ArgumentNullException.ThrowIfNull(workspace);
-        return LoadSolutionAsync(workspace, solutionFiles, cancellationToken);
-    }
-    public Task LoadProjectsAsync(string[] projectFiles, CancellationToken cancellationToken) {
-        ArgumentNullException.ThrowIfNull(workspace);
-        return LoadProjectsAsync(workspace, projectFiles, cancellationToken);
-    }
     public async Task LoadAsync(IEnumerable<string> targets, CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(workspace);
         await OnLoadingStartedAsync(cancellationToken);
+
+        analyzerLoader?.Dispose();
+        analyzerLoader = new ShadowCopyAnalyzerLoader();
 
         var solutionFiles = targets.Where(it => WorkspaceExtensions.IsSolutionFile(it)).Select(Path.GetFullPath).ToArray();
         if (solutionFiles.Length != 0)
-            await LoadSolutionAsync(solutionFiles, cancellationToken).ConfigureAwait(false);
+            await LoadSolutionAsync(workspace, solutionFiles, analyzerLoader, cancellationToken);
 
         var projectFiles = targets.Where(it => WorkspaceExtensions.IsProjectFile(it)).Select(Path.GetFullPath).ToArray();
         if (projectFiles.Length != 0)
-            await LoadProjectsAsync(projectFiles, cancellationToken).ConfigureAwait(false);
+            await LoadProjectsAsync(workspace, projectFiles, analyzerLoader, cancellationToken);
 
         await OnLoadingCompletedAsync(cancellationToken);
+        analyzerLoader?.Dispose();
     }
 
     private bool TryRegisterDotNetEnvironment() {
