@@ -1,12 +1,18 @@
 namespace DotRush.Roslyn.Workspaces.FileSystem;
 
 public sealed class WorkspaceFilesWatcher : IDisposable {
+    private const int CreatedBatchDelay = 200;
+
     private readonly IWorkspaceChangeListener listener;
     private readonly Dictionary<string, FileSystemWatcher> fileWatchers;
+    private readonly HashSet<string> createdPaths;
+    private readonly Timer createdBatchTimer;
 
     public WorkspaceFilesWatcher(IWorkspaceChangeListener listener) {
         this.listener = listener;
         this.fileWatchers = new Dictionary<string, FileSystemWatcher>();
+        this.createdPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        this.createdBatchTimer = new Timer(FlushCreatedPaths, null, Timeout.Infinite, Timeout.Infinite);
     }
 
     public void AddDirectoryWatcher(string directoryPath) {
@@ -28,12 +34,15 @@ public sealed class WorkspaceFilesWatcher : IDisposable {
     }
 
     private void OnCreated(object source, FileSystemEventArgs e) {
-        if (Directory.Exists(e.FullPath)) {
-            foreach (var filePath in Directory.EnumerateFiles(e.FullPath, "*.*", SearchOption.AllDirectories))
-                listener.OnDocumentCreated(filePath);
-            return;
+        lock (createdPaths) {
+            if (Directory.Exists(e.FullPath)) {
+                foreach (var filePath in Directory.EnumerateFiles(e.FullPath, "*.*", SearchOption.AllDirectories))
+                    createdPaths.Add(filePath);
+            } else {
+                createdPaths.Add(e.FullPath);
+            }
         }
-        listener.OnDocumentCreated(e.FullPath);
+        createdBatchTimer.Change(CreatedBatchDelay, Timeout.Infinite);
     }
     private void OnChanged(object source, FileSystemEventArgs e) {
         if (Directory.Exists(e.FullPath)) {
@@ -50,8 +59,18 @@ public sealed class WorkspaceFilesWatcher : IDisposable {
         listener.OnDocumentDeleted(e.OldFullPath);
         OnCreated(sender, e);
     }
+    private void FlushCreatedPaths(object? state) {
+        string[] batch;
+        lock (createdPaths) {
+            batch = createdPaths.ToArray();
+            createdPaths.Clear();
+        }
+        if (batch.Length != 0)
+            listener.OnDocumentsCreated(batch);
+    }
 
     public void Dispose() {
+        createdBatchTimer.Dispose();
         foreach (var watcher in fileWatchers.Values) {
             watcher.Created -= OnCreated;
             watcher.Changed -= OnChanged;

@@ -1,4 +1,3 @@
-using System.Xml;
 using DotRush.Common;
 using DotRush.Common.Interop;
 using Microsoft.CodeAnalysis;
@@ -70,7 +69,7 @@ public class SimpleProjectsLoadTests : SimpleWorkspaceFixture {
     public void ErrorOnRestoreTest() {
         var projectPath = CreateProject("MyProject", "MyError>/<", "Exe");
 
-        Assert.ThrowsAsync<XmlException>(async () => await Workspace.LoadAsync(new[] { projectPath }, CancellationToken.None).ConfigureAwait(false));
+        Assert.ThrowsAsync(Is.InstanceOf<Exception>().And.Message.Contains("MyProject.csproj"), async () => await Workspace.LoadAsync(new[] { projectPath }, CancellationToken.None).ConfigureAwait(false));
     }
 
     [Test]

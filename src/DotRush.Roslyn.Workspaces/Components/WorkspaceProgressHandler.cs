@@ -6,21 +6,23 @@ public class WorkspaceProgressHandler {
     private int progress;
 
     public int GetProgress() {
-        if (totalOperations == 0)
+        var total = Volatile.Read(ref totalOperations);
+        if (total == 0)
             return 0;
 
-        progress = Math.Clamp(completedOperations * 100 / totalOperations, progress, 100);
+        progress = Math.Clamp(Volatile.Read(ref completedOperations) * 100 / total, progress, 100);
         return progress;
     }
 
     public void ScheduleOperations(int operationsCount) {
-        totalOperations += operationsCount;
+        Interlocked.Add(ref totalOperations, operationsCount);
     }
     public void CompleteOperation() {
-        completedOperations++;
+        Interlocked.Increment(ref completedOperations);
     }
     public void Reset() {
         totalOperations = 0;
         completedOperations = 0;
+        progress = 0;
     }
 }

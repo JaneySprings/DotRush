@@ -31,15 +31,17 @@ public class WorkspaceExtensionsTests : MultitargetProjectFixture {
     }
 
     [Test]
-    public void ConditionalDocumentIncludeTest() {
+    public void DocumentsInIntermediateDirectoriesAreNotAddedTest() {
         Assert.That(Workspace.Solution!.Projects.Count(), Is.EqualTo(2), "Expected two projects in the solution, one for each target framework.");
-        var expectedProject = Workspace.Solution.Projects.First();
-        var intermediatePath = expectedProject.GetIntermediateOutputPath(); // obj/Debug/netX.0
-        var documentPath = Path.Combine(intermediatePath, $"{nameof(WorkspaceExtensionsTests)}.cs");
-        var projectIds = Workspace.Solution.GetProjectIdsMayContainsFilePath(documentPath);
+        foreach (var project in Workspace.Solution.Projects) {
+            // Build outputs are excluded from the project items by the SDK (DefaultItemExcludes)
+            var documentPath = Path.Combine(project.GetIntermediateOutputPath(), $"{nameof(WorkspaceExtensionsTests)}.cs");
+            Directory.CreateDirectory(Path.GetDirectoryName(documentPath)!);
+            File.WriteAllText(documentPath, "public class TestFile1 {}");
+            Workspace.CreateDocument(documentPath);
 
-        Assert.That(projectIds.Count(), Is.EqualTo(1));
-        Assert.That(projectIds.First(), Is.EqualTo(expectedProject.Id), $"ProjectId is not {expectedProject.Name}");
+            Assert.That(Workspace.Solution!.GetDocumentIdsWithFilePathV2(documentPath), Is.Empty);
+        }
     }
 
     [TestCase("test.cs", true, false, false)]

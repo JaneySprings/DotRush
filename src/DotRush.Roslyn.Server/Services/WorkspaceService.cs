@@ -14,7 +14,7 @@ using EmmyLua.LanguageServer.Framework.Server;
 
 namespace DotRush.Roslyn.Server.Services;
 
-public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDisposable {
+public class WorkspaceService : WorkspaceHost, IWorkspaceChangeListener, IDisposable {
     private readonly ConfigurationService configurationService;
     private readonly LanguageServer? serverFacade;
     private WorkspaceFilesWatcher? fileWatcher;
@@ -24,7 +24,7 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDis
     protected override bool SkipUnrecognizedProjects => configurationService.SkipUnrecognizedProjects;
     protected override bool RestoreProjectsBeforeLoading => configurationService.RestoreProjectsBeforeLoading;
     protected override bool CompileProjectsAfterLoading => configurationService.CompileProjectsAfterLoading;
-    protected override bool ApplyWorkspaceChanges => configurationService.ApplyWorkspaceChanges;
+    private bool ApplyWorkspaceChanges => configurationService.ApplyWorkspaceChanges;
     protected override string DotNetSdkDirectory => configurationService.DotNetSdkDirectory;
 
     public WorkspaceService(ConfigurationService configurationService, LanguageServer? serverFacade) {
@@ -111,9 +111,11 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDis
         }
     }
 
-    void IWorkspaceChangeListener.OnDocumentCreated(string documentPath) {
-        CreateDocument(documentPath);
-        if (ApplyWorkspaceChanges && WorkspaceExtensions.IsSourceCodeDocument(documentPath))
+    void IWorkspaceChangeListener.OnDocumentsCreated(IReadOnlyList<string> documentPaths) {
+        CreateDocuments(documentPaths);
+        if (!ApplyWorkspaceChanges)
+            return;
+        foreach (var documentPath in documentPaths.Where(WorkspaceExtensions.IsSourceCodeDocument))
             DefaultItemsRewriter.AddCompilerItem(documentPath);
     }
     void IWorkspaceChangeListener.OnDocumentDeleted(string documentPath) {

@@ -1,4 +1,3 @@
-using System.Xml;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
@@ -125,7 +124,7 @@ public class SimpleSolutionsLoadTests : SimpleWorkspaceFixture {
         var projectPath = CreateProject("MyProject", "MyError>/<", "Exe");
         var solutionPath = CreateSolution("MySolution", projectPath);
 
-        Assert.ThrowsAsync<XmlException>(async () => await Workspace.LoadAsync(new[] { projectPath }, CancellationToken.None).ConfigureAwait(false));
+        Assert.ThrowsAsync(Is.InstanceOf<Exception>().And.Message.Contains("MyProject.csproj"), async () => await Workspace.LoadAsync(new[] { projectPath }, CancellationToken.None).ConfigureAwait(false));
     }
     // [Test] // https://github.com/dotnet/msbuild/issues/10266
     // public void CheckMSBuildWorkspaceSlnxSupportTest() {
