@@ -16,7 +16,7 @@
     <PackageVersion Include="Microsoft.TestPlatform.TestHost" Version="$(TestPlatformVersion)" />
     <PackageVersion Include="Microsoft.TestPlatform.TranslationLayer" Version="$(TestPlatformVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(CodeAnalysisVersion)" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(CodeAnalysisVersion)" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(CodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.TemplateEngine.IDE" Version="10.0.400" />

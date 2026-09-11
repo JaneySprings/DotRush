@@ -12,7 +12,7 @@ public static class ProjectExtensions {
         return project.Name.Substring(frameworkStartIndex + 1, project.Name.Length - frameworkStartIndex - 2);
     }
     public static string GetOutputPath(this Project project) {
-        var fallbackPath = Path.Combine(Path.GetDirectoryName(project.FilePath)!, "bin");
+        var fallbackPath = Path.Combine(project.GetProjectDirectory(), "bin");
         if (string.IsNullOrEmpty(project.OutputFilePath))
             return fallbackPath;
 
@@ -23,7 +23,7 @@ public static class ProjectExtensions {
         return directory.FullName;
     }
     public static string GetIntermediateOutputPath(this Project project) {
-        var fallbackPath = Path.Combine(Path.GetDirectoryName(project.FilePath)!, "obj");
+        var fallbackPath = Path.Combine(project.GetProjectDirectory(), "obj");
         if (string.IsNullOrEmpty(project.OutputRefFilePath))
             return fallbackPath;
 
@@ -45,45 +45,29 @@ public static class ProjectExtensions {
         return Path.Combine(documentFilePath, document.Name);
     }
 
-    public static IEnumerable<Document> GetDocumentsWithFilePath(this Project project, string? filePath) {
-        return project.Documents.Where(it => PathExtensions.Equals(it.FilePath, filePath));
-    }
-    public static IEnumerable<TextDocument> GetAdditionalDocumentsWithFilePath(this Project project, string? filePath) {
-        return project.AdditionalDocuments.Where(it => PathExtensions.Equals(it.FilePath, filePath));
-    }
     public static IEnumerable<DocumentId> GetDocumentIdsWithFilePath(this Project project, string? filePath) {
-        return project.GetDocumentsWithFilePath(filePath).Select(it => it.Id);
+        return project.Documents.Where(it => PathExtensions.Equals(it.FilePath, filePath)).Select(it => it.Id);
     }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePath(this Project project, string? filePath) {
-        return project.GetAdditionalDocumentsWithFilePath(filePath).Select(it => it.Id);
+        return project.AdditionalDocuments.Where(it => PathExtensions.Equals(it.FilePath, filePath)).Select(it => it.Id);
     }
     public static IEnumerable<Document> GetDocumentsWithDirectoryPath(this Project project, string? dirPath) {
         return project.Documents.Where(it => PathExtensions.StartsWith(it.FilePath, dirPath));
     }
     public static IEnumerable<TextDocument> GetAdditionalDocumentsWithDirectoryPath(this Project project, string? dirPath) {
-        return project.AdditionalDocuments.Where(it => PathExtensions.Equals(it.FilePath, dirPath));
+        return project.AdditionalDocuments.Where(it => PathExtensions.StartsWith(it.FilePath, dirPath));
     }
 
-    public static IEnumerable<string> GetFolders(this Project project, string documentPath) {
-        var rootDirectory = Path.GetDirectoryName(project.FilePath);
+    /// <summary>Folders of a document relative to the project directory, empty for documents outside of it.</summary>
+    public static IEnumerable<string> GetFolders(string? projectDirectory, string documentPath) {
         var documentDirectory = Path.GetDirectoryName(documentPath);
-        if (string.IsNullOrEmpty(documentDirectory) || string.IsNullOrEmpty(rootDirectory))
+        if (string.IsNullOrEmpty(documentDirectory) || string.IsNullOrEmpty(projectDirectory))
             return Enumerable.Empty<string>();
 
-        var relativePath = documentDirectory.Replace(rootDirectory, string.Empty, StringComparison.OrdinalIgnoreCase);
-        return relativePath.Split(Path.DirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
-    }
-}
+        var relativePath = Path.GetRelativePath(projectDirectory, documentDirectory);
+        if (relativePath == "." || relativePath.StartsWith("..", StringComparison.Ordinal) || Path.IsPathRooted(relativePath))
+            return Enumerable.Empty<string>();
 
-public class ProjectByPathComparer : IEqualityComparer<Project> {
-    public static readonly ProjectByPathComparer Instance = new ProjectByPathComparer();
-
-    private ProjectByPathComparer() { }
-
-    public bool Equals(Project? x, Project? y) {
-        return x?.FilePath == y?.FilePath;
-    }
-    public int GetHashCode(Project obj) {
-        return obj.FilePath?.GetHashCode() ?? obj.GetHashCode();
+        return relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Where(it => !string.IsNullOrEmpty(it));
     }
 }

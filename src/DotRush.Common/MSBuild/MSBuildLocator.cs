@@ -61,7 +61,7 @@ public static class MSBuildLocator {
             .OrderByDescending(d => Path.GetFileName(d))
             .FirstOrDefault() ?? string.Empty;
 
-        if (!string.IsNullOrEmpty(latestVersion))
+        if (string.IsNullOrEmpty(latestVersion))
             throw new DirectoryNotFoundException("Could not find latest dotnet sdk version");
 
         return Path.Combine(sdkPath, latestVersion);

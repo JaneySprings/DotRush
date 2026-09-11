@@ -1,10 +1,5 @@
 using DotRush.Common.Extensions;
-using DotRush.Common.InteropV2;
-using DotRush.Common.Logging;
-using DotRush.Common.MSBuild;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.MSBuild;
 
 namespace DotRush.Roslyn.Workspaces.Extensions;
 
@@ -34,29 +29,16 @@ public static class WorkspaceExtensions {
         return compilerGeneratedExtensions.Any(it => filePath.EndsWith(it, StringComparison.OrdinalIgnoreCase));
     }
 
-    public static IEnumerable<ProjectId> GetProjectIdsMayContainsFilePath(this Solution solution, string documentPath) {
-        var projects = solution.Projects.Where(p => PathExtensions.StartsWith(documentPath, Path.GetDirectoryName(p.FilePath) + Path.DirectorySeparatorChar)).ToList();
-        if (projects.Count == 0 || string.IsNullOrEmpty(documentPath))
-            return Enumerable.Empty<ProjectId>();
-        if (projects.Count == 1)
-            return projects.Select(p => p.Id);
-
-        var directoryInfo = new DirectoryInfo(Path.GetDirectoryName(documentPath)!);
-        while (directoryInfo != null) {
-            var filteredProjects = projects.Where(p => p.Documents.Any(d => PathExtensions.StartsWith(d.FilePath, directoryInfo.FullName))).ToList();
-            if (filteredProjects.Count != 0)
-                return filteredProjects.Select(p => p.Id);
-
-            directoryInfo = directoryInfo.Parent;
-        }
-
-        return Enumerable.Empty<ProjectId>();
-    }
-
     public static IEnumerable<DocumentId> GetDocumentIdsWithFilePathV2(this Solution solution, string? filePath) {
+        var documentIds = solution.GetIndexedDocumentIds(filePath).Where(id => solution.GetDocument(id) != null).ToArray();
+        if (documentIds.Length != 0)
+            return documentIds;
         return solution.Projects.SelectMany(it => it.GetDocumentIdsWithFilePath(filePath));
     }
     public static IEnumerable<DocumentId> GetAdditionalDocumentIdsWithFilePathV2(this Solution solution, string? filePath) {
+        var documentIds = solution.GetIndexedDocumentIds(filePath).Where(id => solution.GetAdditionalDocument(id) != null).ToArray();
+        if (documentIds.Length != 0)
+            return documentIds;
         return solution.Projects.SelectMany(it => it.GetAdditionalDocumentIdsWithFilePath(filePath));
     }
     public static IEnumerable<Document> GetDocumentsWithDirectoryPath(this Solution solution, string? filePath) {
@@ -71,44 +53,32 @@ public static class WorkspaceExtensions {
 
         return documentIds.Select(documentId => solution.GetDocument(documentId)).OfType<Document>().ToArray();
     }
-    public static AdditionalDocument[] GetAdditionalDocuments(this Solution solution, IEnumerable<DocumentId>? documentIds) {
-        if (documentIds == null || !documentIds.Any())
-            return Array.Empty<AdditionalDocument>();
+    internal static string? GetFullPath(string baseDirectory, string path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return null;
 
-        return documentIds.Select(documentId => solution.GetAdditionalDocument(documentId)).OfType<AdditionalDocument>().ToArray();
+        path = path.ToPlatformPath();
+        return Path.GetFullPath(Path.IsPathRooted(path) ? path : Path.Combine(baseDirectory, path));
     }
 
-    public static async Task<ProcessResult> RestoreProjectAsync(this MSBuildWorkspace workspace, string projectPath, CancellationToken cancellationToken) {
-        var processInfo = ProcessRunner.CreateProcess(MSBuildLocator.GetMuxerPath(), $"restore \"{projectPath}\" -nodeReuse:false", captureOutput: true, displayWindow: false, cancellationToken: cancellationToken);
-        var restoreResult = await processInfo.Task;
+    // Documents are registered with their full path, so the solution's own index can be used before falling back to a scan.
+    // Results keep the project order (same as a scan would), handlers rely on it when merging per-project results.
+    private static IEnumerable<DocumentId> GetIndexedDocumentIds(this Solution solution, string? filePath) {
+        if (string.IsNullOrEmpty(filePath))
+            return Enumerable.Empty<DocumentId>();
 
-        if (restoreResult.ExitCode != 0) {
-            foreach (var line in restoreResult.OutputLines)
-                CurrentSessionLogger.Error(line);
-            foreach (var line in restoreResult.ErrorLines)
-                CurrentSessionLogger.Error(line);
+        string fullPath;
+        try {
+            fullPath = Path.GetFullPath(filePath.ToPlatformPath());
+        } catch {
+            return Enumerable.Empty<DocumentId>();
         }
 
-        return restoreResult;
-    }
-    public static Solution WithShadowCopiedAnalyzerReferences(this Solution solution, IAnalyzerAssemblyLoader analyzerLoader) {
-        var updatedSolution = solution;
-        foreach (var project in solution.Projects) {
-            var fileReferences = project.AnalyzerReferences.OfType<AnalyzerFileReference>().ToArray();
-            if (fileReferences.Length == 0)
-                continue;
+        var documentIds = solution.GetDocumentIdsWithFilePath(fullPath);
+        if (documentIds.Length <= 1)
+            return documentIds;
 
-            foreach (var fileReference in fileReferences)
-                analyzerLoader.AddDependencyLocation(fileReference.FullPath);
-
-            var updatedReferences = project.AnalyzerReferences
-                .Select(reference => reference is AnalyzerFileReference fileReference
-                    ? new AnalyzerFileReference(fileReference.FullPath, analyzerLoader)
-                    : reference)
-                .ToArray();
-
-            updatedSolution = project.WithAnalyzerReferences(updatedReferences).Solution;
-        }
-        return updatedSolution;
+        var projectOrder = solution.ProjectIds.Select((id, index) => (id, index)).ToDictionary(it => it.id, it => it.index);
+        return documentIds.OrderBy(id => projectOrder.GetValueOrDefault(id.ProjectId, int.MaxValue));
     }
 }
