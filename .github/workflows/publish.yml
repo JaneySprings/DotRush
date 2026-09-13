@@ -47,15 +47,15 @@ jobs:
       - name: Build VSIX
         run: dotnet cake --target=vsix --configuration=release
 
+      - name: Generate bundle archives
+        run: dotnet cake --target=pack
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: vsix-build
           path: artifacts/
           retention-days: 3
-
-      - name: Generate server archives
-        run: dotnet cake --target=repack
 
       - name: Create GitHub Release
         env:
@@ -70,7 +70,7 @@ jobs:
             --notes "$COMMITS" \
             --latest
           
-          for file in artifacts/DotRush.Bundle.*; do
+          for file in artifacts/DotRush.*; do
             if [ -f "$file" ]; then
               echo "Uploading $file"
               gh release upload "$TAG_NAME" "$file"
