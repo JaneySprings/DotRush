@@ -60,28 +60,15 @@ Task("test")
 			ResultsDirectory = ArtifactsDirectory,
 			Loggers = new[] { "trx" }
 		}
-	))
-	.Does(() => {
-		var debuggerDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "Debugger");
-		EnsureDirectoryDeleted(debuggerDirectory);
-		ExecuteCommand("dotnet", $"{_Path.Combine(VSCodeExtensionDirectory, "bin", "DevHost", "devhost.dll")} -clrdbg");
-	});
+	));
 
-Task("repack").DoesForEach(GetFiles(_Path.Combine(ArtifactsDirectory, "**", "*.vsix")), file => {
-	var tempDirectory = _Path.Combine(ArtifactsDirectory, "repack");
-	var outputFileName = "DotRush.Bundle.Server.zip";
-	EnsureDirectoryDeleted(tempDirectory);
-	Unzip(file, tempDirectory);
-	System.IO.File.WriteAllText(_Path.Combine(tempDirectory, "extension", "extension", "bin", "LanguageServer", "_dotrush.config.json"), """
-{
-    "dotrush": {
-        "roslyn": { }
-    }
-}
-""");
-	ZipFile.CreateFromDirectory(_Path.Combine(tempDirectory, "extension", "extension", "bin", "LanguageServer"), _Path.Combine(ArtifactsDirectory, outputFileName), CompressionLevel.Fastest, false);
-	EnsureDirectoryDeleted(tempDirectory);
-});
+Task("pack")
+	.Does(() => {
+		var outputFilePrefix = "DotRush.Bundle";
+		var modules = new[] { "LanguageServer", "Diagnostics", "DebuggerMono" };
+		foreach (var module in modules)
+			ZipFile.CreateFromDirectory(_Path.Combine(VSCodeExtensionDirectory, "bin", module), _Path.Combine(ArtifactsDirectory, $"{outputFilePrefix}.{module}.zip"), CompressionLevel.Fastest, false);
+	});
 
 Task("vsix")
 	.IsDependentOn("clean")
@@ -102,11 +89,6 @@ void ExecuteCommand(string command, string arguments) {
 	}
 	if (StartProcess(command, arguments) != 0)
 		throw new Exception("Command exited with non-zero exit code.");
-}
-
-void EnsureDirectoryDeleted(string path) {
-	if (DirectoryExists(path)) 
-		DeleteDirectory(path, new DeleteDirectorySettings { Recursive = true, Force = true });
 }
 
 RunTarget(target);

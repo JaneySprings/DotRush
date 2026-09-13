@@ -73,6 +73,7 @@
         "panelTitle.activeBorder": "#4e5b92",
         "panelSectionHeader.background": "#f7f9fe",
         "panel.background": "#f7f9fe",
+        "debugConsole.infoForeground": "#272727"
     },
     "semanticHighlighting": true,
     "semanticTokenColors": {
