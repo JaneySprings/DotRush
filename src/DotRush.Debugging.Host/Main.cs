@@ -5,7 +5,6 @@ using DotRush.Common.Extensions;
 using DotRush.Common.MSBuild;
 using DotRush.Debugging.Host.Extensions;
 using DotRush.Debugging.Host.Installers;
-using DotRush.Debugging.Host.Performance;
 using DotRush.Debugging.Host.TemplateEngine;
 using DotRush.Debugging.Host.TestPlatform;
 
@@ -26,8 +25,7 @@ public class Program {
             },
             Subcommands = {
                 CreateTestCommand(),
-                CreateNewCommand(),
-                CreateSampleCommand()
+                CreateNewCommand()
             }
         };
         rootCommand.SetAction(result => {
@@ -121,20 +119,6 @@ public class Program {
                 Console.WriteLine(JsonSerializer.Serialize(status));
         });
         return newCommand;
-    }
-
-    private static Command CreateSampleCommand() {
-        var processIdOption = new Option<int>("--process", "-p");
-        var sampleCommand = new Command("sample") {
-            Options = {
-                processIdOption
-            }
-        };
-        sampleCommand.SetAction(result => {
-            var sampler = new ProcessUsageSampler();
-            return sampler.StartSession(result.GetValue(processIdOption));
-        });
-        return sampleCommand;
     }
 
     private static void InstallDebugger(IDebuggerInstaller installer) {
