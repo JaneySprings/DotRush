@@ -49,6 +49,10 @@ Task("diagnostics")
 		MSBuildSettings = new DotNetMSBuildSettings { ArgumentCustomization = args => args.Append("-p:SatelliteResourceLanguages=en") },
 		OutputDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "Diagnostics"),
 		Configuration = configuration,
+	})).Does(() => DotNetPublish(_Path.Combine(RootDirectory, "src", "DotRush.Debugging.Diagnostics", "src", "Tools", "dotnet-counters", "dotnet-counters.csproj"), new DotNetPublishSettings {
+		MSBuildSettings = new DotNetMSBuildSettings { ArgumentCustomization = args => args.Append("-p:SatelliteResourceLanguages=en") },
+		OutputDirectory = _Path.Combine(VSCodeExtensionDirectory, "bin", "Diagnostics"),
+		Configuration = configuration,
 	}));
 
 Task("test")

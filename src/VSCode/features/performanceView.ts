@@ -1,29 +1,30 @@
 import { DebugAdapterController } from '../controllers/debugAdapterController';
 import { initializeComponents } from './performanceView.html';
+import { ProcessArgumentBuilder } from '../interop/processArgumentBuilder';
+import { ProcessRunner } from '../interop/processRunner';
 import { Interop } from '../interop/interop';
+import { ChildProcess } from 'child_process';
 import * as vscode from 'vscode';
-import * as rpc from 'vscode-jsonrpc/node';
+import * as path from 'path';
 
 export class PerformanceView implements vscode.WebviewViewProvider {
     public static feature: PerformanceView = new PerformanceView();
 
     private samples: UsageSample[] = [];
     private webviewView: vscode.WebviewView | undefined;
-    private samplerConnection: rpc.MessageConnection | undefined;
-    private processId: number | undefined;
+    private countersProcess: ChildProcess | undefined;
     private readonly viewDurationSeconds = 60;
 
     public activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.window.registerWebviewViewProvider('dotrush.performanceView', this));
         context.subscriptions.push(DebugAdapterController.tracker.onProcessStarted((pid: number) => {
             this.samples = [];
-            this.processId = pid;
             this.startSampler(pid);
             this.postState();
         }));
         context.subscriptions.push(DebugAdapterController.tracker.onSessionExited(() => {
-            this.processId = undefined;
-            this.stopSampler();
+            this.countersProcess?.kill();
+            this.countersProcess = undefined;
             this.postState();
         }));
     }
@@ -32,45 +33,45 @@ export class PerformanceView implements vscode.WebviewViewProvider {
         this.webviewView = webviewView;
         webviewView.webview.options = { enableScripts: true };
         webviewView.webview.html = initializeComponents(this.viewDurationSeconds);
+        webviewView.onDidChangeVisibility(() => this.postState());
         webviewView.onDidDispose(() => {
             if (this.webviewView === webviewView)
                 this.webviewView = undefined;
-        });
-        webviewView.onDidChangeVisibility(() => {
-            if (webviewView.visible)
-                this.postState();
         });
         this.postState();
     }
 
     private startSampler(processId: number) {
-        if (this.samplerConnection !== undefined)
+        if (this.countersProcess !== undefined)
             return;
-        const connection = Interop.createDevHostRpc('sample', builder => builder.append('-p', processId.toString()));
-        this.samplerConnection = connection;
-        connection.onNotification('handleUsageSample', (sample: any) => {
-            this.samples.push({ timestamp: Date.now(), workingSet: sample.workingSet, cpuUsage: sample.cpuUsage });
-            const cutoff = Date.now() - (this.viewDurationSeconds + 5) * 1000;
-            while (this.samples.length > 0 && this.samples[0].timestamp < cutoff)
-                this.samples.shift();
+
+        const builder = new ProcessArgumentBuilder(Interop.dotnetPath)
+            .append(path.join(Interop.binariesPath, 'Diagnostics', 'dotnet-counters.dll'))
+            .append('collect', '-p', processId.toString(), '--format', 'jsonl')
+            .append('--counters', 'EventCounters\\System.Runtime[cpu-usage,working-set,gc-heap-size,time-in-gc]');
+        this.countersProcess = ProcessRunner.runStream<{ name: string, value: number }>(builder, counter => {
+            // The counters of one interval arrive together and form a single sample
+            let sample = this.samples[this.samples.length - 1];
+            if (sample === undefined || Date.now() - sample.timestamp > 500)
+                this.samples.push(sample = { timestamp: Date.now() });
+
+            if (counter.name === 'cpu-usage')
+                sample.cpuUsage = counter.value;
+            if (counter.name === 'working-set')
+                sample.workingSet = counter.value * 1_000_000; // Reported in MB
+            if (counter.name === 'gc-heap-size')
+                sample.gcHeapSize = counter.value * 1_000_000; // Reported in MB
+            if (counter.name === 'time-in-gc')
+                sample.timeInGC = counter.value;
+
+            this.samples = this.samples.filter(it => it.timestamp >= Date.now() - (this.viewDurationSeconds + 5) * 1000);
             this.postState();
         });
     }
-    private stopSampler() {
-        const connection = this.samplerConnection;
-        if (connection === undefined)
-            return;
-        this.samplerConnection = undefined;
-        connection.sendNotification('handleSamplingStop').then(() => connection.dispose(), () => connection.dispose());
-    }
     private postState() {
-        if (this.webviewView !== undefined && this.webviewView.visible)
-            this.webviewView.webview.postMessage({ samples: this.samples, frozen: this.processId === undefined });
+        if (this.webviewView?.visible)
+            this.webviewView.webview.postMessage({ samples: this.samples, frozen: this.countersProcess === undefined });
     }
 }
 
-interface UsageSample {
-    timestamp: number;
-    workingSet: number;
-    cpuUsage?: number;
-}
+type UsageSample = { timestamp: number } & Partial<Record<'cpuUsage' | 'workingSet' | 'gcHeapSize' | 'timeInGC', number>>;

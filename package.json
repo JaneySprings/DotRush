@@ -172,6 +172,9 @@
         "displayName": "%title.traceView%",
         "selector": [
           {
+            "filenamePattern": "*.nettrace.json"
+          },
+          {
             "filenamePattern": "*.speedscope.json"
           }
         ],

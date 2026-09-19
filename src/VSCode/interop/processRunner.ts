@@ -1,6 +1,7 @@
-import { spawnSync, spawn } from 'child_process';
+import { spawnSync, spawn, ChildProcess } from 'child_process';
 import { ProcessArgumentBuilder } from './processArgumentBuilder';
 import { Extensions } from '../extensions';
+import * as readline from 'readline';
 
 export class ProcessRunner {
     public static runSync(builder: ProcessArgumentBuilder): string | undefined {
@@ -43,5 +44,23 @@ export class ProcessRunner {
             });
             child.unref();
         });
+    }
+    public static runStream<TModel>(builder: ProcessArgumentBuilder, handler: (model: TModel) => void): ChildProcess {
+        const child = spawn(builder.getCommand(), builder.getArguments(), {
+            stdio: ['ignore', 'pipe', 'pipe'],
+        });
+
+        child.on('error', (error) => {
+            console.error(error);
+        });
+        child.stderr.on('data', (data) => {
+            console.error(data.toString());
+        });
+        readline.createInterface(child.stdout).on('line', (line) => {
+            const model = Extensions.deserialize<TModel>(line);
+            if (model !== undefined && !child.killed)
+                handler(model);
+        });
+        return child;
     }
 }
