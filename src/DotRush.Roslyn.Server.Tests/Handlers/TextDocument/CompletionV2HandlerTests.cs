@@ -1,11 +1,13 @@
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Server.Tests.Extensions;
+using DotRush.Roslyn.Workspaces.Extensions;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Completion;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.Kind;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
 using NUnit.Framework;
 using CompletionExtensions = DotRush.Roslyn.Server.Extensions.CompletionExtensions;
+using RoslynCompletionService = Microsoft.CodeAnalysis.Completion.CompletionService;
 
 namespace DotRush.Roslyn.Server.Tests;
 
@@ -63,7 +65,7 @@ class MyClass1 {
         Assert.That(preselect.SortText, Is.EqualTo("0_MyClass1"));
         Assert.That(preselect.FilterText, Is.EqualTo("MyClass1"));
         Assert.That(preselect.InsertTextFormat, Is.EqualTo(InsertTextFormat.PlainText));
-        Assert.That(preselect.TextEditText, Is.Null.Or.Empty);
+        Assert.That(preselect.TextEditText, Is.EqualTo("MyClass1"));
         Assert.That(preselect.Data, Is.Not.Null);
 
         var resolve = await handler.Resolve(preselect, CancellationToken.None);
@@ -117,7 +119,7 @@ class MyClass1 {
         Assert.That(autoUsingItem.SortText, Is.EqualTo("~JsonSerializer  System.Text.Json"));
         Assert.That(autoUsingItem.FilterText, Is.EqualTo("JsonSerializer"));
         Assert.That(autoUsingItem.InsertTextFormat, Is.EqualTo(InsertTextFormat.PlainText));
-        Assert.That(autoUsingItem.TextEditText, Is.Null.Or.Empty);
+        Assert.That(autoUsingItem.TextEditText, Is.EqualTo("JsonSerializer"));
         Assert.That(autoUsingItem.Data, Is.Not.Null);
 
         autoUsingItem = await handler.Resolve(autoUsingItem, CancellationToken.None);
@@ -447,7 +449,7 @@ class MyClass1 {
 
         var varItem = result.List.Items.FirstOrDefault(it => it.Label == "JsonSerializer");
         Assert.That(varItem, Is.Not.Null);
-        Assert.That(varItem.TextEditText, Is.Null.Or.Empty);
+        Assert.That(varItem.TextEditText, Is.EqualTo("JsonSerializer"));
 
         varItem = await handler.Resolve(varItem, CancellationToken.None);
         Assert.That(varItem.TextEdit, Is.Null); // vscode provide calculated textEdit here by itemsDefault
@@ -549,5 +551,190 @@ class MyClass1 {
         Assert.That(argument1.Range, Is.EqualTo(PositionExtensions.CreateRange(6, 8, 6, 13)));
         Assert.That(argument2!.Value, Is.True);
         Assert.That(argument3!.Value, Is.EqualTo(OnPlatform(153, 161)));
+    }
+    [Test]
+    public async Task HandleGenericMethodTest() {
+        var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
+namespace Tests;
+
+class MyClass1 {
+    private void Method1() {
+        List<string> xs = [""aaa"", ""bbb""];
+        string x = xs.Fir
+    }
+}
+");
+        var result = await handler.Handle(new CompletionParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(6, 25),
+        }, CancellationToken.None);
+
+        Assert.That(result?.List, Is.Not.Null);
+
+        var firstItem = result.List.Items.FirstOrDefault(it => it.Label == "First<>");
+        Assert.That(firstItem, Is.Not.Null);
+        Assert.That(firstItem.TextEditText, Is.EqualTo("First")); // `<>` is a display suffix only and must not be inserted
+
+        var firstOrDefaultItem = result.List.Items.FirstOrDefault(it => it.Label == "FirstOrDefault<>");
+        Assert.That(firstOrDefaultItem, Is.Not.Null);
+        Assert.That(firstOrDefaultItem.TextEditText, Is.EqualTo("FirstOrDefault"));
+    }
+    [Test]
+    public async Task HandleGenericTypeTest() {
+        var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
+namespace Tests;
+
+class MyClass1 {
+    private void Method1() {
+        var t = new Li
+    }
+}
+");
+        var result = await handler.Handle(new CompletionParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(5, 22),
+        }, CancellationToken.None);
+
+        Assert.That(result?.List, Is.Not.Null);
+        // Target type is unknown, so there is nothing to preselect
+        Assert.That(result.List.Items.Where(it => it.Preselect == true), Is.Empty);
+
+        var listItem = result.List.Items.FirstOrDefault(it => it.Label == "List<>");
+        Assert.That(listItem, Is.Not.Null);
+        Assert.That(listItem.TextEditText, Is.EqualTo("List")); // `<>` is a display suffix only and must not be inserted
+    }
+    [Test]
+    public async Task HandleTargetTypedGenericTypeTest() {
+        var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
+namespace Tests;
+
+class MyClass1 {
+    private void Method1() {
+        List<string> t = new Li
+    }
+}
+");
+        var result = await handler.Handle(new CompletionParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(5, 31),
+        }, CancellationToken.None);
+
+        Assert.That(result?.List, Is.Not.Null);
+
+        // Type arguments are known from the target type - they are a part of the inserted text
+        var preselect = result.List.Items.Where(it => it.Preselect == true).FirstOrDefault();
+        Assert.That(preselect, Is.Not.Null);
+        Assert.That(preselect.Label, Is.EqualTo("List<string>"));
+        Assert.That(preselect.TextEditText, Is.EqualTo("List<string>"));
+
+        // Unbound generic type is still offered and inserted without brackets
+        var listItem = result.List.Items.FirstOrDefault(it => it.Label == "List<>");
+        Assert.That(listItem, Is.Not.Null);
+        Assert.That(listItem.Preselect, Is.False);
+        Assert.That(listItem.TextEditText, Is.EqualTo("List"));
+    }
+    [Test]
+    public async Task HandleGenericTypeWithAutoImportTest() {
+        var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
+namespace Tests;
+
+class MyClass1 {
+    private void Method1() {
+        var a = new ConcurrentDic
+    }
+}
+");
+        configurationService.ChangeConfiguration(new ConfigurationSection {
+            DotRush = new DotRushSection {
+                Roslyn = new RoslynSection {
+                    ShowItemsFromUnimportedNamespaces = true
+                }
+            }
+        });
+        var result = await handler.Handle(new CompletionParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(5, 33),
+        }, CancellationToken.None);
+
+        Assert.That(result?.List, Is.Not.Null);
+
+        var autoUsingItem = result.List.Items.FirstOrDefault(it => it.Label == "ConcurrentDictionary<>");
+        Assert.That(autoUsingItem, Is.Not.Null);
+        Assert.That(autoUsingItem.Detail, Is.EqualTo("System.Collections.Concurrent"));
+        Assert.That(autoUsingItem.TextEditText, Is.EqualTo("ConcurrentDictionary")); // `<>` is a display suffix only and must not be inserted
+
+        // The type name is inserted by TextEditText, resolve only adds the using directive
+        autoUsingItem = await handler.Resolve(autoUsingItem, CancellationToken.None);
+        Assert.That(autoUsingItem.TextEditText, Is.EqualTo("ConcurrentDictionary"));
+        Assert.That(autoUsingItem.AdditionalTextEdits, Has.Count.EqualTo(1));
+        Assert.That(autoUsingItem.Command, Is.Null);
+    }
+    [Test]
+    public async Task HandleNamedArgumentTest() {
+        var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), @"
+namespace Tests;
+
+class MyClass1 {
+    private void Method1(int myArg) {
+        Method1(myA
+    }
+}
+");
+        var result = await handler.Handle(new CompletionParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(5, 19),
+        }, CancellationToken.None);
+
+        Assert.That(result?.List, Is.Not.Null);
+
+        var parameterItem = result.List.Items.FirstOrDefault(it => it.Label == "myArg");
+        Assert.That(parameterItem, Is.Not.Null);
+        Assert.That(parameterItem.TextEditText, Is.EqualTo("myArg"));
+
+        // Same as Roslyn: `:` is a display suffix only, the colon is typed by the user as a commit character
+        var namedArgumentItem = result.List.Items.FirstOrDefault(it => it.Label == "myArg:");
+        Assert.That(namedArgumentItem, Is.Not.Null);
+        Assert.That(namedArgumentItem.TextEditText, Is.EqualTo("myArg"));
+    }
+    [TestCase("var t = new Li")]
+    [TestCase("List<string> t = new Li")]
+    [TestCase("string x = xs.Fir")]
+    [TestCase("Method1(xs, myA")]
+    public async Task HandleTextEditTextMatchesRoslynChangeTest(string statement) {
+        var documentPath = CreateDocument(nameof(CompletionV2HandlerTests), $@"
+namespace Tests;
+
+class MyClass1 {{
+    private void Method1(List<string> xs, int myArg) {{
+        {statement}
+    }}
+}}
+");
+        var result = await handler.Handle(new CompletionParams() {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(5, 8 + statement.Length),
+        }, CancellationToken.None);
+
+        Assert.That(result?.List, Is.Not.Null);
+
+        var document = Workspace.Solution!.GetDocument(Workspace.Solution.GetDocumentIdsWithFilePathV2(documentPath).First());
+        var completionService = RoslynCompletionService.GetService(document);
+        Assert.That(document, Is.Not.Null);
+        Assert.That(completionService, Is.Not.Null);
+
+        var sourceText = await document.GetTextAsync(CancellationToken.None);
+        var cursorOffset = sourceText.Lines[5].Start + 8 + statement.Length;
+        var completions = await CompletionExtensions.GetCompletionsAsync(completionService, document, cursorOffset, configurationService);
+        Assert.That(result.List.Items, Has.Count.EqualTo(completions.ItemsList.Count));
+
+        // Default edit range + TextEditText of a simple item must produce the same change as Roslyn does
+        for (int i = 0; i < completions.ItemsList.Count; i++) {
+            if (completions.ItemsList[i].IsComplexTextEdit)
+                continue;
+
+            var completionChange = await completionService.GetChangeAsync(document, completions.ItemsList[i], cancellationToken: CancellationToken.None);
+            Assert.That(completionChange.TextChange.Span, Is.EqualTo(completions.Span), result.List.Items[i].Label);
+            Assert.That(result.List.Items[i].TextEditText, Is.EqualTo(completionChange.TextChange.NewText), result.List.Items[i].Label);
+        }
     }
 }
