@@ -67,6 +67,7 @@ public class CompletionV2Handler : CompletionHandlerBase {
                 var id = item.GetHashCode();
                 var completionItem = new CompletionItem() {
                     Data = id,
+                    TextEditText = item.DisplayText,
                     Label = item.DisplayTextPrefix + item.DisplayText + item.DisplayTextSuffix,
                     Kind = item.ToCompletionItemKind(),
                     SortText = item.HasPriority() ? $"0_{item.SortText}" : item.SortText,
