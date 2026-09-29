@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.CodeAnalysis.Embedded.Analyzers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -85,7 +86,11 @@ public class DiagnosticAnalyzersLoader : IComponentLoader<DiagnosticAnalyzer> {
         return result;
     }
     public List<DiagnosticAnalyzer> LoadFromDotRush() {
-        return new List<DiagnosticAnalyzer>();
+        return new List<DiagnosticAnalyzer> {
+            // new UseIsNullCheckDiagnosticAnalyzer(),
+            // new AsyncVoidDiagnosticAnalyzer(),
+            // new EmptyCatchDiagnosticAnalyzer(),
+        };
     }
 
     public void ClearCache() {

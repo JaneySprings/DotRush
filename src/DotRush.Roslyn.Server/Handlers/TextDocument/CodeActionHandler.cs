@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using DotRush.Common.Extensions;
-using DotRush.Common.Logging;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
@@ -11,15 +10,13 @@ using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.Union;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeRefactorings;
-using Microsoft.CodeAnalysis.Text;
+using ApplyChangesOperation = Microsoft.CodeAnalysis.CodeActions.ApplyChangesOperation;
 using CodeAnalysisCodeAction = Microsoft.CodeAnalysis.CodeActions.CodeAction;
-using CodeAnalysisOperation = Microsoft.CodeAnalysis.CodeActions.ApplyChangesOperation;
-using FileSystemExtensions = DotRush.Common.Extensions.FileSystemExtensions;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -27,11 +24,9 @@ public class CodeActionHandler : CodeActionHandlerBase {
     private readonly WorkspaceService workspaceService;
     private readonly CodeAnalysisService codeAnalysisService;
     private readonly Dictionary<int, CodeAnalysisCodeAction> codeActionsCache;
-    private readonly CurrentClassLogger currentClassLogger;
 
     public CodeActionHandler(WorkspaceService workspaceService, CodeAnalysisService codeAnalysisService) {
         codeActionsCache = new Dictionary<int, CodeAnalysisCodeAction>();
-        currentClassLogger = new CurrentClassLogger(nameof(CodeActionHandler));
         this.workspaceService = workspaceService;
         this.codeAnalysisService = codeAnalysisService;
     }
@@ -50,9 +45,9 @@ public class CodeActionHandler : CodeActionHandlerBase {
             var filePath = request.TextDocument.Uri.FileSystemPath;
 
             if (codeAnalysisService.CompilerDiagnosticsScope != AnalysisScope.None)
-                result.AddRange(await GetQuickFixesAsync(filePath, request.Range, token).ConfigureAwait(false));
+                result.AddRange(await GetQuickFixesAsync(filePath, request.Range, token));
             if (codeAnalysisService.AnalyzerDiagnosticsScope != AnalysisScope.None)
-                result.AddRange(await GetRefactoringsAsync(filePath, request.Range, token).ConfigureAwait(false));
+                result.AddRange(await GetRefactoringsAsync(filePath, request.Range, token));
 
             if (request.Context?.Only != null && request.Context.Only.Count > 0)
                 return new CodeActionResponse(result.Where(it => it.CodeAction?.Kind != null && request.Context.Only.Contains(it.CodeAction.Kind.Value)).ToList());
@@ -62,24 +57,15 @@ public class CodeActionHandler : CodeActionHandlerBase {
     }
     protected override Task<CodeAction?> Resolve(CodeAction? request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(request, async () => {
-            if (request?.Data?.Value == null || workspaceService.Solution == null) {
-                currentClassLogger.Error($"CodeAction '{request?.Title}' data is null or solution is null");
+            if (request?.Data?.Value == null || workspaceService.Solution == null)
                 return request;
-            }
 
             var codeActionId = (int)request.Data.Value;
-            if (!codeActionsCache.TryGetValue(codeActionId, out var codeAction)) {
-                currentClassLogger.Error($"CodeAction '{request.Title}' with id '{codeActionId}' not found");
+            if (!codeActionsCache.TryGetValue(codeActionId, out var codeAction))
                 return request;
-            }
 
-            var documentEdits = await ResolveCodeActionAsync(codeAction, workspaceService.Solution, token).ConfigureAwait(false);
-            if (documentEdits.Count == 0) {
-                currentClassLogger.Error($"CodeAction '{request.Title}' with id '{codeActionId}' has no text edits");
-                return request;
-            }
-
-            request.Edit = new WorkspaceEdit() { Changes = documentEdits };
+            var documentChanges = await ResolveCodeActionAsync(codeAction, workspaceService.Solution, token);
+            request.Edit = new WorkspaceEdit() { DocumentChanges = new WorkspaceEditDocumentChanges(documentChanges.ToList()) };
             return request;
         });
     }
@@ -97,52 +83,46 @@ public class CodeActionHandler : CodeActionHandlerBase {
         var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
         var textSpan = range.ToTextSpan(sourceText);
         var diagnosticContexts = codeAnalysisService.GetDiagnosticsByDocumentSpan(document, textSpan);
-        var diagnosticByIdGroups = diagnosticContexts.GroupBy(it => it.Diagnostic.Id).ToList();
-        if (diagnosticByIdGroups.Count == 0) {
-            currentClassLogger.Debug($"No diagnostics found for document '{document.Name}' in range '{range}'");
-            return result;
-        }
-
-        foreach (var byIdGroup in diagnosticByIdGroups) {
+        var contextByDocument = diagnosticContexts.GroupBy(it => it.Document).ToArray();
+        foreach (var byDocumentGroup in contextByDocument) {
             // Original document with diagnostic was created. We need to use it to avoid:
             // System.ArgumentException: Syntax node is not within syntax tree
-            document = byIdGroup.FirstOrDefault()?.Document;
-            if (document == null) {
-                currentClassLogger.Debug($"Document not found for diagnostic id '{byIdGroup.Key}'");
+            document = byDocumentGroup.Key;
+            if (document == null)
                 continue;
-            }
 
-            var codeFixProviders = codeAnalysisService.GetCodeFixProvidersForDiagnosticId(byIdGroup.Key, document.Project);
-            if (codeFixProviders == null) {
-                currentClassLogger.Debug($"CodeFixProviders not found for diagnostic id '{byIdGroup.Key}'");
-                continue;
-            }
+            var contextByDiagnosticId = byDocumentGroup.GroupBy(it => it.Id).ToArray();
+            foreach (var byIdGroup in contextByDiagnosticId) {
+                var codeFixProviders = codeAnalysisService.GetCodeFixProvidersForDiagnosticId(byIdGroup.Key, document.Project);
+                if (codeFixProviders == null)
+                    continue;
 
-            foreach (var codeFixProvider in codeFixProviders) {
-                var diagnosticByRangeGroups = byIdGroup.GroupBy(it => it.Diagnostic.Location.SourceSpan).ToList();
+                foreach (var codeFixProvider in codeFixProviders) {
+                    var contextBySpan = byIdGroup.GroupBy(it => it.Diagnostic.Location.SourceSpan).ToArray();
 
-                foreach (var byRangeGroup in diagnosticByRangeGroups) {
-                    var diagnostics = byRangeGroup.Select(it => it!.Diagnostic).ToImmutableArray();
-                    // Regular QuickFix
-                    await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, byRangeGroup.Key, diagnostics, (action, _) => {
-                        if (cancellationToken.IsCancellationRequested)
-                            return;
+                    foreach (var bySpanGroup in contextBySpan) {
+                        var diagnostics = bySpanGroup.Select(it => it!.Diagnostic).ToImmutableArray();
+                        // Regular QuickFix
+                        await codeFixProvider.RegisterCodeFixesAsync(new CodeFixContext(document, bySpanGroup.Key, diagnostics, (action, _) => {
+                            if (cancellationToken.IsCancellationRequested)
+                                return;
 
-                        action.ToFlattenCodeActions((codeAction, title) => {
-                            if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
-                                result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(CodeActionKind.QuickFix, title)));
-                        });
-                    }, cancellationToken)).ConfigureAwait(false);
-                    // FixAll QuickFix
-                    await codeFixProvider.RegisterFixAllCodeFixesAsync(document, byIdGroup.FirstOrDefault(), codeAnalysisService.DiagnosticProvider, action => {
-                        if (cancellationToken.IsCancellationRequested)
-                            return;
+                            action.ToFlattenCodeActions((codeAction, title) => {
+                                if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
+                                    result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(CodeActionKind.QuickFix, title)));
+                            });
+                        }, cancellationToken)).ConfigureAwait(false);
+                        // FixAll QuickFix
+                        await codeFixProvider.RegisterFixAllCodeFixesAsync(document, byIdGroup.FirstOrDefault(), codeAnalysisService.DiagnosticProvider, action => {
+                            if (cancellationToken.IsCancellationRequested)
+                                return;
 
-                        action.ToFlattenCodeActions((codeAction, title) => {
-                            if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
-                                result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(CodeActionKind.QuickFix, title)));
-                        });
-                    }, cancellationToken).ConfigureAwait(false);
+                            action.ToFlattenCodeActions((codeAction, title) => {
+                                if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
+                                    result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(CodeActionKind.QuickFix, title)));
+                            });
+                        }, cancellationToken).ConfigureAwait(false);
+                    }
                 }
             }
         }
@@ -159,7 +139,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
             if (document == null)
                 continue;
 
-            var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
+            var sourceText = await document.GetTextAsync(cancellationToken);
             var textSpan = range.ToTextSpan(sourceText);
 
             var result = new List<CommandOrCodeAction>();
@@ -176,7 +156,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
                         if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
                             result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(CodeActionKind.Refactor, title)));
                     });
-                }, cancellationToken)).ConfigureAwait(false);
+                }, cancellationToken));
             }
 
             if (result.Count != 0)
@@ -185,81 +165,17 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
         return Enumerable.Empty<CommandOrCodeAction>();
     }
-    private async Task<Dictionary<DocumentUri, List<TextEdit>>> ResolveCodeActionAsync(CodeAnalysisCodeAction codeAction, Solution solution, CancellationToken cancellationToken) {
-        var documentEdits = new Dictionary<DocumentUri, List<TextEdit>>();
-        var operations = await codeAction.GetOperationsAsync(cancellationToken).ConfigureAwait(false);
+    private async Task<IEnumerable<IDocumentChange>> ResolveCodeActionAsync(CodeAnalysisCodeAction codeAction, Solution solution, CancellationToken cancellationToken) {
+        var documentChanges = new HashSet<IDocumentChange>(DocumentChangeEqualityComparer.Default);
+        var operations = await codeAction.GetOperationsAsync(cancellationToken);
         foreach (var operation in operations) {
-            if (operation is not CodeAnalysisOperation applyChangesOperation)
+            if (operation is not ApplyChangesOperation applyChangesOperation)
                 continue;
 
             var solutionChanges = applyChangesOperation.ChangedSolution.GetChanges(solution);
-            foreach (var projectChanges in solutionChanges.GetProjectChanges()) {
-                foreach (var documentId in projectChanges.GetChangedDocuments()) {
-                    var newDocument = projectChanges.NewProject.GetDocument(documentId);
-                    var oldDocument = solution.GetDocument(newDocument?.Id);
-                    if (oldDocument?.FilePath == null || newDocument?.FilePath == null)
-                        continue;
-
-                    if (newDocument.Name != oldDocument.Name) {
-                        ProcessDocumentRename(oldDocument, newDocument.Name);
-                        continue;
-                    }
-
-                    var sourceText = await oldDocument.GetTextAsync(cancellationToken).ConfigureAwait(false);
-                    var textEdits = new List<TextEdit>();
-                    var textChanges = await newDocument.GetTextChangesAsync(oldDocument, cancellationToken).ConfigureAwait(false);
-                    textEdits.AddRange(textChanges.Select(x => new TextEdit() {
-                        NewText = x.NewText ?? string.Empty,
-                        Range = x.Span.ToRange(sourceText),
-                    }));
-
-                    if (textEdits.Count != 0)
-                        documentEdits.TryAdd(newDocument.FilePath, textEdits);
-                }
-                foreach (var documentId in projectChanges.GetAddedDocuments()) {
-                    var newDocument = projectChanges.NewProject.GetDocument(documentId)!;
-                    var sourceText = await newDocument.GetTextAsync(cancellationToken).ConfigureAwait(false);
-                    ProcessDocumentCreate(newDocument, sourceText);
-                }
-                foreach (var documentId in projectChanges.GetRemovedDocuments()) {
-                    var oldDocument = projectChanges.OldProject.GetDocument(documentId)!;
-                    ProcessDocumentRemove(oldDocument);
-                }
-            }
+            documentChanges.AddRange(await solutionChanges.ToDocumentChangesAsync(cancellationToken));
         }
 
-        return documentEdits;
-    }
-
-    private void ProcessDocumentCreate(Document document, SourceText sourceText) {
-        if (document == null)
-            return;
-        var documentFilePath = document.FilePath;
-        if (string.IsNullOrEmpty(documentFilePath)) {
-            documentFilePath = document.Project.GetProjectDirectory();
-            document.Folders.ForEach(folder => documentFilePath = Path.Combine(documentFilePath, folder));
-            documentFilePath = Path.Combine(documentFilePath, document.Name);
-        }
-
-        FileSystemExtensions.WriteAllText(documentFilePath, sourceText.ToString());
-        workspaceService.CreateDocument(documentFilePath);
-        currentClassLogger.Debug($"File created via CodeAction: {documentFilePath}");
-    }
-    private void ProcessDocumentRemove(Document document) {
-        if (document?.FilePath == null)
-            return;
-
-        workspaceService.DeleteDocument(document.FilePath);
-        FileSystemExtensions.TryDeleteFile(document.FilePath);
-        currentClassLogger.Debug($"File removed via CodeAction: {document.FilePath}");
-    }
-    private void ProcessDocumentRename(Document document, string newName) {
-        if (document.FilePath == null || string.IsNullOrEmpty(newName))
-            return;
-
-        var newFilePath = FileSystemExtensions.RenameFile(document.FilePath, newName);
-        workspaceService.DeleteDocument(document.FilePath);
-        workspaceService.CreateDocument(newFilePath);
-        currentClassLogger.Debug($"File renamed via CodeAction: {document.FilePath} -> {newFilePath}");
+        return documentChanges;
     }
 }

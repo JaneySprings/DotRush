@@ -3,6 +3,7 @@ using System.Reflection;
 using DotRush.Common;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
+using DotRush.Roslyn.CodeAnalysis.Embedded.CodeFixes;
 using DotRush.Roslyn.Workspaces.Components;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
@@ -95,7 +96,10 @@ public class CodeFixProvidersLoader : IComponentLoader<CodeFixProvider> {
         return result;
     }
     public List<CodeFixProvider> LoadFromDotRush() {
-        return new List<CodeFixProvider>();
+        return new List<CodeFixProvider> {
+            // new UseIsNullCheckCodeFixProvider(),
+            // new AsyncVoidCodeFixProvider(),
+        };
     }
 
     public void ClearCache() {

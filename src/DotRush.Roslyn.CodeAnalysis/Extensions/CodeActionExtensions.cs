@@ -33,15 +33,20 @@ public static class CodeActionExtensions {
     }
     public static async Task RegisterFixAllCodeFixesAsync(this CodeFixProvider provider, Document document, DiagnosticContext? diagnosticContext, FixAllContext.DiagnosticProvider host, Action<CodeAction> registerCodeFix, CancellationToken cancellationToken) {
         var fixAllProvider = provider.GetFixAllProvider();
-        if (fixAllProvider == null || diagnosticContext is not CompilerDiagnosticContext) //TODO: analyzer fixAllProvider codefix has no textEdits
+        if (fixAllProvider == null || diagnosticContext == null)
+            return;
+
+        // FixAllProvider applies only the code actions with the same equivalence key
+        CodeAction? codeFix = null;
+        await provider.RegisterCodeFixesAsync(new CodeFixContext(document, diagnosticContext.Diagnostic, (action, _) => codeFix ??= action, cancellationToken));
+        if (codeFix == null)
             return;
 
         foreach (var scope in fixAllProvider.GetSupportedFixAllScopes()) {
             if (!diagnosticContext.IsSupportedScope(scope))
                 continue;
 
-            var equivalenceKey = $"{diagnosticContext.Id}_{scope}";
-            var codeAction = await fixAllProvider.TryGetFixAsync(new FixAllContext(document, provider, scope, equivalenceKey, new[] { diagnosticContext.Id }, host, cancellationToken));
+            var codeAction = await fixAllProvider.TryGetFixAsync(new FixAllContext(document, provider, scope, codeFix.EquivalenceKey, new[] { diagnosticContext.Id }, host, cancellationToken));
             if (codeAction == null)
                 return;
 

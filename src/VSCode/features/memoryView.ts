@@ -32,7 +32,7 @@ export class MemoryView implements vscode.CustomReadonlyEditorProvider<MemoryDoc
         return new MemoryDocument(uri);
     }
     resolveCustomEditor(document: MemoryDocument, webviewPanel: vscode.WebviewPanel): void {
-        const memoryViewerRoot = vscode.Uri.parse(path.join(Interop.webviewsPath, 'memoryview'));
+        const memoryViewerRoot = vscode.Uri.file(path.join(Interop.webviewsPath, 'memoryview'));
         const resourceRoots = [memoryViewerRoot, vscode.Uri.joinPath(document.uri, '..')];
         webviewPanel.webview.options = { enableScripts: true, localResourceRoots: resourceRoots };
         webviewPanel.webview.onDidReceiveMessage(async (message: { type: string, message?: string, requestId?: number }) => {

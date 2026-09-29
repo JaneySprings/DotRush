@@ -3,6 +3,7 @@
 
     <PropertyGroup>
         <OutputType>Library</OutputType>
+        <NoWarn>$(NoWarn);RS1036;RS1038;RS1041;RS2008</NoWarn>
     </PropertyGroup>
     
     <ItemGroup>
