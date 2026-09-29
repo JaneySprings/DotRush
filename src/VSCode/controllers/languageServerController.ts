@@ -44,7 +44,7 @@ export class LanguageServerController {
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdReloadWorkspace, () => LanguageServerController.reload()));
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdPickTargets, () => LanguageServerController.showQuickPickTargets()))
         context.subscriptions.push(vscode.commands.registerCommand(res.commandIdCompletionHandler, async (documentPath: string, textEdit, isSnippet: boolean, cursorOffset: number) => {
-            const uri = vscode.Uri.parse(documentPath);
+            const uri = vscode.Uri.file(documentPath);
             const editor = vscode.window.activeTextEditor;
             const range = Extensions.toRange(textEdit.range);
 

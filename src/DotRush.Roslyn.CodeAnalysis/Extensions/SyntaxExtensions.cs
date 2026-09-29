@@ -47,6 +47,11 @@ public static class SyntaxExtensions {
                node is VariableDeclaratorSyntax;
     }
 
+    public static SyntaxTrivia GetEndOfLine(this SyntaxNode node) {
+        var endOfLine = node.DescendantTrivia().FirstOrDefault(it => it.IsKind(SyntaxKind.EndOfLineTrivia));
+        return endOfLine.IsKind(SyntaxKind.None) ? SyntaxFactory.EndOfLine(Environment.NewLine) : SyntaxFactory.EndOfLine(endOfLine.ToString());
+    }
+
     public static SyntaxNode? TryFindNode(this SyntaxNode node, TextSpan span) {
         try {
             return node.FindNode(span);

@@ -32,7 +32,7 @@ export class TraceView implements vscode.CustomReadonlyEditorProvider<TraceDocum
         return new TraceDocument(uri);
     }
     resolveCustomEditor(document: TraceDocument, webviewPanel: vscode.WebviewPanel): void {
-        const speedscopeRoot = vscode.Uri.parse(path.join(Interop.webviewsPath, 'speedscope'));
+        const speedscopeRoot = vscode.Uri.file(path.join(Interop.webviewsPath, 'speedscope'));
         webviewPanel.webview.options = {
             enableScripts: true,
             localResourceRoots: [speedscopeRoot, vscode.Uri.joinPath(document.uri, '..')]

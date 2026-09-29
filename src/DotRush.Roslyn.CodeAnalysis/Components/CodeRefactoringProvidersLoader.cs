@@ -86,6 +86,12 @@ public class CodeRefactoringProvidersLoader : IComponentLoader<CodeRefactoringPr
         return new List<CodeRefactoringProvider> {
             // new OrganizeImportsRefactoringProvider(),
             new GenerateDescriptionRefactoringProvider(),
+            new InlineUsingAliasRefactoringProvider(),
+            new ExtractInterfaceRefactoringProvider(),
+            new GenerateToStringRefactoringProvider(),
+            new InitializeMembersRefactoringProvider(),
+            new RemoveBracesRefactoringProvider(),
+            new WrapInTryCatchRefactoringProvider(),
         };
     }
 
