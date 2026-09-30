@@ -1,5 +1,4 @@
 export const extensionId = "dotrush";
-export const vscodeAppName = "Visual Studio Code";
 export const debuggerNetCoreId = "coreclr";
 export const debuggerUnityId = "unity";
 

@@ -28,9 +28,6 @@ export class Extensions {
     public static putSetting<TValue>(id: string, value: TValue, target: vscode.ConfigurationTarget): Thenable<void> {
         return vscode.workspace.getConfiguration(res.extensionId).update(id, value, target);
     }
-    public static onVSCode<TValue>(official: TValue, fork: TValue): TValue {
-        return vscode.env.appName.includes(res.vscodeAppName) ? official : fork;
-    }
 
     public static async getProjectFiles(csharpOnly: boolean = false): Promise<string[]> {
         const filter = csharpOnly ? Extensions.csProjectFilter : Extensions.projectFilter;

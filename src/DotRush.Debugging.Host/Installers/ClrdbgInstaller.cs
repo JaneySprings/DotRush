@@ -6,11 +6,11 @@ using DotRush.Common.Logging;
 
 namespace DotRush.Debugging.Host.Installers;
 
-public class UniversalInstaller : IDebuggerInstaller {
+public class ClrdbgInstaller : IDebuggerInstaller {
     private const string LatestReleaseVersion = "18.0.0";
     private readonly string debuggerDirectory;
 
-    public UniversalInstaller(string workingDirectory) {
+    public ClrdbgInstaller(string workingDirectory) {
         debuggerDirectory = Path.Combine(workingDirectory, "Debugger");
     }
 

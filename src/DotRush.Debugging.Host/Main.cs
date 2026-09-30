@@ -12,13 +12,11 @@ namespace DotRush.Debugging.Host;
 
 public class Program {
     public static int Main(string[] args) {
-        var installVsdbgOption = new Option<bool>("--install-vsdbg", "-vsdbg");
-        var installDebuggerOption = new Option<bool>("--install-clrdbg", "-clrdbg");
+        var installDebuggerOption = new Option<bool>("--install-debugger", "-dbg");
         var evaluateProjectOption = new Option<string>("--project", "-p");
         var processListOption = new Option<bool>("--processes", "-ps");
         var rootCommand = new RootCommand("DotRush Test Host") {
             Options = {
-                installVsdbgOption,
                 installDebuggerOption,
                 evaluateProjectOption,
                 processListOption
@@ -29,14 +27,9 @@ public class Program {
             }
         };
         rootCommand.SetAction(result => {
-            if (result.GetValue(installVsdbgOption)) {
-                var workingDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
-                InstallDebugger(new VsdbgInstaller(workingDirectory));
-                return;
-            }
             if (result.GetValue(installDebuggerOption)) {
                 var workingDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
-                InstallDebugger(new UniversalInstaller(workingDirectory));
+                InstallDebugger(new ClrdbgInstaller(workingDirectory));
                 return;
             }
             if (result.GetValue(processListOption)) {
