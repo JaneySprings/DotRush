@@ -124,15 +124,8 @@ class DebugAdapterTracker implements vscode.DebugAdapterTrackerFactory {
                     tracker.onModuleLoadedEmitter.fire(message.body.module);
                     return;
                 }
-                // TODO: add custom same event for attach
                 if (message.type === 'event' && message.event === 'process') {
                     tracker.onProcessStartedEmitter.fire(message.body.systemProcessId)
-                    return;
-                }
-            },
-            onWillReceiveMessage(message: any) {
-                if (message.type === 'request' && message.command === 'attach') {
-                    tracker.onProcessStartedEmitter.fire(message.arguments.processId);
                     return;
                 }
             },

@@ -37,7 +37,7 @@ export class Interop {
 
         const dotnetDebuggerPath = path.join(Interop.binariesPath, "Debugger", "clrdbg" + Interop.execExtension);
         if (!fs.existsSync(dotnetDebuggerPath)) {
-            Interop.installDebugger(Extensions.onVSCode('vsdbg', 'clrdbg')).then(result => {
+            Interop.installDebugger().then(result => {
                 if (result !== undefined && !result.isSuccess) // Not a blocker, run intellisense only
                     vscode.window.showErrorMessage(`${res.messageInstallingComponentFailed}: ${result.message}`);
             });
@@ -97,23 +97,16 @@ export class Interop {
         return connection;
     }
 
-    private static installDebugger(id: string): Thenable<Status | undefined> {
-        const getNameByDebuggerId = (id: string) => {
-            switch (id) {
-                case 'vsdbg': return 'Microsoft .NET Core Debugger (vsdbg)';
-                case 'clrdbg': return '.NET Core Debugger';
-                default: return id;
-            }
-        };
+    private static installDebugger(): Thenable<Status | undefined> {
         const options: vscode.ProgressOptions = {
-            title: res.messageInstallingComponentTitle + getNameByDebuggerId(id),
+            title: res.messageInstallingComponentTitle + '.NET Core Debugger',
             location: vscode.ProgressLocation.Notification,
             cancellable: false
         };
         return vscode.window.withProgress(options, (_p, _ct) => {
             return ProcessRunner.runAsync<Status>(new ProcessArgumentBuilder(Interop.dotnetPath)
                 .append(Interop.devHostPath)
-                .append(`-${id}`));
+                .append('-dbg'));
         });
     }
 }
