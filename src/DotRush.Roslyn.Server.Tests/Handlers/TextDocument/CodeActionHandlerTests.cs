@@ -1,3 +1,4 @@
+using DotRush.Protocol;
 using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
@@ -26,6 +27,12 @@ public class CodeActionHandlerTests : MultitargetProjectFixture {
     public void SetUp() {
         codeAnalysisService = new CodeAnalysisService(new ConfigurationService(null), null);
         handler = new CodeActionHandlerMock(Workspace, codeAnalysisService);
+    }
+
+    [Test]
+    public void ResolveOutdatedCodeActionTest() {
+        var exception = Assert.ThrowsAsync<ProtocolException>(() => handler.Resolve(new CodeAction { Title = "Outdated", Data = -1 }, CancellationToken.None));
+        Assert.That(exception.Message, Is.EqualTo(Resources.CodeActionOutdated));
     }
 
     [Test]

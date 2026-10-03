@@ -104,6 +104,29 @@ public class ReflectionApiTests {
         Assert.That(targetTypeMatchField, Is.Not.Null);
         Assert.That(targetTypeMatchField!.GetValue(null), Is.EqualTo(InternalWellKnownTags.TargetTypeMatch));
     }
+    [Test]
+    public void TextTagsTest() {
+        var codeBlockStartField = typeof(TextTags).GetField("CodeBlockStart", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.That(codeBlockStartField, Is.Not.Null);
+        Assert.That(codeBlockStartField!.GetValue(null), Is.EqualTo(InternalTextTags.CodeBlockStart));
+
+        var codeBlockEndField = typeof(TextTags).GetField("CodeBlockEnd", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.That(codeBlockEndField, Is.Not.Null);
+        Assert.That(codeBlockEndField!.GetValue(null), Is.EqualTo(InternalTextTags.CodeBlockEnd));
+    }
+    [Test]
+    public void TaggedTextTest() {
+        Assert.That(InternalTaggedText.styleProperty, Is.Not.Null);
+        Assert.That(InternalTaggedText.navigationTargetProperty, Is.Not.Null);
+        Assert.That(InternalTaggedText.navigationHintProperty, Is.Not.Null);
+
+        var styleType = InternalTaggedText.styleProperty!.PropertyType;
+        Assert.That(Convert.ToInt32(Enum.Parse(styleType, "Strong")), Is.EqualTo(InternalTaggedText.StyleStrong));
+        Assert.That(Convert.ToInt32(Enum.Parse(styleType, "Emphasis")), Is.EqualTo(InternalTaggedText.StyleEmphasis));
+        Assert.That(Convert.ToInt32(Enum.Parse(styleType, "Underline")), Is.EqualTo(InternalTaggedText.StyleUnderline));
+        Assert.That(Convert.ToInt32(Enum.Parse(styleType, "Code")), Is.EqualTo(InternalTaggedText.StyleCode));
+        Assert.That(Convert.ToInt32(Enum.Parse(styleType, "PreserveWhitespace")), Is.EqualTo(InternalTaggedText.StylePreserveWhitespace));
+    }
 
     [Test]
     public void BlockStructureOptionsTest() {

@@ -1,15 +1,10 @@
-using System.Text;
-using DotRush.Common.Extensions;
 using DotRush.Protocol.Handlers;
 using DotRush.Protocol.Models;
-using DotRush.Roslyn.CodeAnalysis;
-using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.FindSymbols;
-using SymbolKind = Microsoft.CodeAnalysis.SymbolKind;
+using Microsoft.CodeAnalysis.QuickInfo;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -31,53 +26,38 @@ public class HoverHandler : HoverHandlerBase {
             return null;
 
         var displayDictionary = new Dictionary<string, List<string>>();
-        var documentation = string.Empty;
+        var result = new Hover();
         foreach (var documentId in documentIds) {
             var document = solution?.GetDocument(documentId);
-            if (document == null)
+            var quickInfoService = QuickInfoService.GetService(document);
+            if (document == null || quickInfoService == null)
                 continue;
 
             var sourceText = await document.GetTextAsync(token);
             var offset = request.Position.ToOffset(sourceText);
-            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset);
-            if (symbol == null)
+            var quickInfo = await quickInfoService.GetQuickInfoAsync(document, offset, token);
+            if (quickInfo == null)
                 continue;
 
-            if (symbol is IAliasSymbol aliasSymbol)
-                symbol = aliasSymbol.Target;
-
-            var format = symbol.Kind == SymbolKind.NamedType || symbol.Kind == SymbolKind.Namespace ? DisplayFormat.Default : DisplayFormat.Minimal;
-            var displayString = symbol.ToDisplayString(format);
+            var displayString = MarkdownExtensions.CreateDocumentation(quickInfo.Sections.SelectMany(x => x.TaggedParts.Add(new TaggedText(TextTags.LineBreak, Environment.NewLine))));
             if (!displayDictionary.ContainsKey(displayString))
                 displayDictionary[displayString] = new List<string>();
 
             displayDictionary[displayString].Add(document.Project.GetTargetFramework());
-
-            if (string.IsNullOrEmpty(documentation))
-                documentation = symbol.GetInheritedDocumentationCommentXml();
+            result.Range ??= quickInfo.Span.ToRange(sourceText);
         }
 
+        if (displayDictionary.Count == 0)
+            return null;
         if (displayDictionary.Count == 1) {
-            return new Hover {
-                Contents = new MarkupContent {
-                    Kind = MarkupKind.Markdown,
-                    Value = MarkdownExtensions.CreateDocumentation(displayDictionary.Keys.First(), documentation, "csharp")
-                }
-            };
+            result.Contents = new MarkupContent { Kind = MarkupKind.Markdown, Value = displayDictionary.Keys.First() };
+            return result;
         }
 
-        if (displayDictionary.Count > 1) {
-            var builder = new StringBuilder();
-            displayDictionary.ForEach(kv => builder.AppendLine($"{kv.Key}  ({string.Join(", ", kv.Value)})"));
-
-            return new Hover {
-                Contents = new MarkupContent {
-                    Kind = MarkupKind.Markdown,
-                    Value = MarkdownExtensions.CreateDocumentation(builder.ToString(), "csharp")
-                }
-            };
-        }
-
-        return null;
+        result.Contents = new MarkupContent {
+            Kind = MarkupKind.Markdown,
+            Value = string.Concat(displayDictionary.Select(kv => MarkdownExtensions.InjectText($"({string.Join(", ", kv.Value)}): ", kv.Key)))
+        };
+        return result;
     }
 }

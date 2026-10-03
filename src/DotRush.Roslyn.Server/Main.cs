@@ -33,6 +33,7 @@ public class Program {
         ConfigureHandlers();
 
         languageServer.OnInitialized(OnInitializedAsync);
+        languageServer.OnUnhandledException(CurrentSessionLogger.Error);
         languageServer.OnShutdown(OnShutdownAsync);
         return languageServer.RunAsync();
     }

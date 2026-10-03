@@ -75,10 +75,6 @@ public class TestClass {
         Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
         Assert.That(result.Contents.Value, Does.Contain("int TestClass.Add(int a, int b)"));
         Assert.That(result.Contents.Value, Does.Contain("Calculates the sum of two numbers"));
-        Assert.That(result.Contents.Value, Does.Contain("firstParamA"));
-        Assert.That(result.Contents.Value, Does.Contain("secondParamB"));
-        Assert.That(result.Contents.Value, Does.Contain("First number"));
-        Assert.That(result.Contents.Value, Does.Contain("Second number"));
         Assert.That(result.Contents.Value, Does.Contain("The sum of a and b"));
     }
 
@@ -169,7 +165,7 @@ public class TestClass {
         Assert.That(result.Contents, Is.Not.Null);
         Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
         Assert.That(result.Contents.Value, Does.Contain("System.String"));
-        Assert.That(result.Contents.Value, Does.Contain("Represents text as a sequence of UTF-16 code units."));
+        Assert.That(result.Contents.Value, Does.Contain(@"Represents text as a sequence of UTF\-16 code units\."));
     }
 
     [Test]
@@ -192,7 +188,7 @@ public class TestClass {
         Assert.That(result.Contents, Is.Not.Null);
         Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
         Assert.That(result.Contents.Value, Does.Contain("System.Int32"));
-        Assert.That(result.Contents.Value, Does.Contain("Represents a 32-bit signed integer."));
+        Assert.That(result.Contents.Value, Does.Contain(@"Represents a 32\-bit signed integer\."));
     }
 
     [Test]
@@ -338,7 +334,6 @@ public class GenericClass<T> {
         Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
         Assert.That(result.Contents.Value, Does.Contain("Tests.GenericClass<T>"));
         Assert.That(result.Contents.Value, Does.Contain("Generic test class"));
-        Assert.That(result.Contents.Value, Does.Contain("The type parameter"));
     }
 
     [Test]
@@ -368,7 +363,7 @@ public class TestClass {
         Assert.That(result.Contents, Is.Not.Null);
         Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
         Assert.That(result.Contents.Value, Does.Contain("void TestClass.TestMethod(int value)"));
-        Assert.That(result.Contents.Value, Does.Contain("Overloaded method - version 2"));
+        Assert.That(result.Contents.Value, Does.Contain(@"Overloaded method \- version 2"));
     }
 
     [Test]
@@ -391,10 +386,8 @@ public delegate void EventHandler(object sender, EventArgs args);
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Contents, Is.Not.Null);
         Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
-        Assert.That(result.Contents.Value, Does.Contain("void Tests.EventHandler(System.Object, System.EventArgs)"));
+        Assert.That(result.Contents.Value, Does.Contain("delegate void Tests.EventHandler(object sender, System.EventArgs args)"));
         Assert.That(result.Contents.Value, Does.Contain("A delegate for handling events"));
-        Assert.That(result.Contents.Value, Does.Contain("The event sender"));
-        Assert.That(result.Contents.Value, Does.Contain("The event arguments"));
     }
 
     [Test]
@@ -422,9 +415,7 @@ public class TestClass {
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Contents, Is.Not.Null);
         Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
-        Assert.That(result.Contents.Value, Does.Contain("System.Int32 Tests.TestClass.Calculator(System.Int32, System.Int32)"));
-        Assert.That(result.Contents.Value, Does.Contain("First operand"));
-        Assert.That(result.Contents.Value, Does.Contain("Second operand"));
+        Assert.That(result.Contents.Value, Does.Contain("delegate int Tests.TestClass.Calculator(int x, int y)"));
         Assert.That(result.Contents.Value, Does.Contain("Result of the calculation"));
     }
 
@@ -476,7 +467,8 @@ public class TestClass {
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Contents, Is.Not.Null);
         Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
-        Assert.That(result.Contents.Value, Does.Contain("System.Collections.Generic.List<System.String>").Or.Contain("MyList"));
+        Assert.That(result.Contents.Value, Does.Contain("System.Collections.Generic.List<T>"));
+        Assert.That(result.Contents.Value, Does.Contain("T is string"));
     }
 
     [Test]
@@ -505,8 +497,8 @@ public class TestClass {
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Contents, Is.Not.Null);
         Assert.That(result.Contents.Kind, Is.EqualTo(MarkupKind.Markdown));
-        Assert.That(result.Contents.Value, Does.Contain("System.String  (net8.0)"));
-        Assert.That(result.Contents.Value, Does.Contain("System.Int32  (net10.0)"));
+        Assert.That(result.Contents.Value, Does.Contain("(net8.0): class System.String"));
+        Assert.That(result.Contents.Value, Does.Contain("(net10.0): readonly struct System.Int32"));
     }
 
     [Test]
@@ -526,7 +518,132 @@ class TestClass {
 
         Assert.That(result, Is.Not.Null);
 
-        var returnSection = result.Contents.Value.Split("**Returns:**")[1];
-        Assert.That(returnSection, Does.Contain("`true`if a process resource is started;`false`if no new process resource is started"));
+        var returnSection = result.Contents.Value.Split("Returns:")[1];
+        Assert.That(returnSection, Does.Contain("true if a process resource is started; false if no new process resource is started"));
+    }
+
+    [Test]
+    public async Task HoverWithInlineDocumentationTagsTest() {
+        var documentPath = CreateDocument(nameof(HoverHandlerTests), @"
+namespace Tests;
+
+public class TestClass {
+    /// <summary>
+    /// Returns <c>true</c> when <paramref name=""value""/> is <em>not</em> a <see cref=""TestClass""/>
+    ///     and continues on the next line.
+    /// </summary>
+    public bool TestMethod(object value) => false;
+}
+");
+        var result = await handler.Handle(new HoverParams {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(8, 18)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Contents.Value, Does.Contain("Returns `true` when value is _not_ a TestClass and continues on the next line"));
+    }
+
+    [Test]
+    public async Task HoverWithGenericDocumentationReferencesTest() {
+        var documentPath = CreateDocument(nameof(HoverHandlerTests), @"
+namespace Tests;
+
+public class TestClass {
+    /// <summary>
+    /// Uses <see cref=""Dictionary{TKey, TValue}""/> and <see cref=""Array.Empty{T}""/>
+    /// </summary>
+    public void TestMethod() { }
+}
+");
+        var result = await handler.Handle(new HoverParams {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(7, 18)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Contents.Value, Does.Contain(@"Uses Dictionary\<TKey, TValue\> and Array\.Empty\<T\>\(\)"));
+    }
+
+    [Test]
+    public async Task HoverOnInheritDocTest() {
+        var documentPath = CreateDocument(nameof(HoverHandlerTests), @"
+namespace Tests;
+
+public interface ITestInterface {
+    /// <summary>
+    /// Interface method documentation
+    /// </summary>
+    void TestMethod();
+}
+public class TestClass : ITestInterface {
+    /// <inheritdoc/>
+    public void TestMethod() { }
+}
+");
+        var result = await handler.Handle(new HoverParams {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(11, 18)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Contents.Value, Does.Contain("Interface method documentation"));
+    }
+
+    [Test]
+    public async Task HoverWithRemarksTest() {
+        var documentPath = CreateDocument(nameof(HoverHandlerTests), @"
+namespace Tests;
+
+/// <summary>Summary text</summary>
+/// <remarks>Remarks text</remarks>
+public class TestClass {
+}
+");
+        var result = await handler.Handle(new HoverParams {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(5, 15)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Contents.Value, Does.Contain("Remarks text"));
+    }
+
+    [Test]
+    public async Task HoverOnNullableVariableTest() {
+        var documentPath = CreateDocument(nameof(HoverHandlerTests), @"
+namespace Tests;
+
+public class TestClass {
+    public void TestMethod(string? value) {
+        Console.WriteLine(value);
+    }
+}
+");
+        var result = await handler.Handle(new HoverParams {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(5, 28)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Contents.Value, Does.Contain("'value' may be null here"));
+    }
+
+    [Test]
+    public async Task HoverRangeTest() {
+        var documentPath = CreateDocument(nameof(HoverHandlerTests), @"
+namespace Tests;
+
+public class TestClass {
+    public void TestMethod() { }
+}
+");
+        var result = await handler.Handle(new HoverParams {
+            TextDocument = documentPath.CreateDocumentId(),
+            Position = PositionExtensions.CreatePosition(4, 18)
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Range, Is.EqualTo(PositionExtensions.CreateRange(4, 16, 4, 26)));
     }
 }

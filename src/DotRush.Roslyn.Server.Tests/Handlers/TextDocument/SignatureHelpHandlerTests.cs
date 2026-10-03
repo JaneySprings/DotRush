@@ -9,7 +9,7 @@ namespace DotRush.Roslyn.Server.Tests;
 public class SignatureHelpHandlerMock : SignatureHelpHandler {
     public SignatureHelpHandlerMock(WorkspaceService workspaceService) : base(workspaceService) { }
 
-    public new Task<SignatureHelp> Handle(SignatureHelpParams request, CancellationToken token) {
+    public new Task<SignatureHelp?> Handle(SignatureHelpParams request, CancellationToken token) {
         return base.Handle(request, token);
     }
 }
@@ -274,7 +274,6 @@ class MyClass1 {
             Position = PositionExtensions.CreatePosition(6, 16),
         }, CancellationToken.None);
 
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.Signatures, Is.Null.Or.Empty);
+        Assert.That(result, Is.Null);
     }
 }

@@ -138,20 +138,34 @@ public class LanguageServerTests {
     }
     [Test]
     public async Task HandlerExceptionTest() {
+        var unhandledExceptions = new List<Exception>();
         server.AddRequestHandler<JsonElement, string>("test/failure", (_, _) => throw new InvalidOperationException("Test failure"));
         server.AddRequestHandler<JsonElement, string>("test/protocolFailure", (_, _) => throw new ProtocolException("Symbol not found"));
+        server.AddRequestHandler<JsonElement, string>("test/cancelledFailure", (_, _) => throw new TaskCanceledException());
+        server.AddNotificationHandler<JsonElement>("test/notificationFailure", (_, _) => throw new InvalidOperationException("Notification failure"));
+        server.OnUnhandledException(unhandledExceptions.Add);
         await InitializeAsync().ConfigureAwait(false);
 
-        // Unexpected failures are not shown to the user, the request just has no result
+        // Unexpected failures are reported to the server only, the request just has no result
         await SendAsync(@"{""jsonrpc"":""2.0"",""id"":1,""method"":""test/failure"",""params"":{}}").ConfigureAwait(false);
         var response = await ReceiveAsync().ConfigureAwait(false);
         Assert.That(response.GetRawText(), Is.EqualTo(@"{""jsonrpc"":""2.0"",""id"":1,""result"":null}"));
+        Assert.That(unhandledExceptions.Select(e => e.Message), Is.EqualTo(new List<string> { "Test failure" }));
 
         await SendAsync(@"{""jsonrpc"":""2.0"",""id"":2,""method"":""test/protocolFailure"",""params"":{}}").ConfigureAwait(false);
         response = await ReceiveAsync().ConfigureAwait(false);
         Assert.That(response.GetProperty("error").GetProperty("code").GetInt32(), Is.EqualTo(ErrorCodes.RequestFailed));
         Assert.That(response.GetProperty("error").GetProperty("message").GetString(), Is.EqualTo("Symbol not found"));
         Assert.That(response.TryGetProperty("result", out _), Is.False);
+
+        await SendAsync(@"{""jsonrpc"":""2.0"",""id"":3,""method"":""test/cancelledFailure"",""params"":{}}").ConfigureAwait(false);
+        response = await ReceiveAsync().ConfigureAwait(false);
+        Assert.That(response.GetProperty("error").GetProperty("code").GetInt32(), Is.EqualTo(ErrorCodes.RequestCancelled));
+
+        await SendAsync(@"{""jsonrpc"":""2.0"",""method"":""test/notificationFailure"",""params"":{}}").ConfigureAwait(false);
+        await SendAsync(@"{""jsonrpc"":""2.0"",""id"":4,""method"":""test/protocolFailure"",""params"":{}}").ConfigureAwait(false);
+        await ReceiveAsync().ConfigureAwait(false);
+        Assert.That(unhandledExceptions.Select(e => e.Message), Is.EqualTo(new List<string> { "Test failure", "Notification failure" }));
     }
     [Test]
     public async Task NullResultTest() {

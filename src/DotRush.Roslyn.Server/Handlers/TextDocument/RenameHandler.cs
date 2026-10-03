@@ -34,13 +34,13 @@ public class RenameHandler : RenameHandlerBase {
         if (document == null)
             return null;
 
-        var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
+        var sourceText = await document.GetTextAsync(token);
         var offset = request.Position.ToOffset(sourceText);
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset, token).ConfigureAwait(false);
+        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset, token);
         if (symbol == null || !symbol.Locations.Any(x => x.IsInSource))
             return null;
 
-        var root = await document.GetSyntaxRootAsync(token).ConfigureAwait(false);
+        var root = await document.GetSyntaxRootAsync(token);
         return root?.FindToken(offset).Span.ToRange(sourceText);
     }
     protected override async Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken token) {
@@ -57,12 +57,12 @@ public class RenameHandler : RenameHandlerBase {
             if (document == null)
                 continue;
 
-            var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
-            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), token).ConfigureAwait(false);
+            var sourceText = await document.GetTextAsync(token);
+            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, request.Position.ToOffset(sourceText), token);
             if (symbol == null)
                 continue;
 
-            var updatedSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, symbol, symbolRenameOptions, request.NewName, token).ConfigureAwait(false);
+            var updatedSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, symbol, symbolRenameOptions, request.NewName, token);
             var changes = updatedSolution.GetChanges(document.Project.Solution);
             foreach (var change in changes.GetProjectChanges()) {
                 if (change.NewProject.FilePath == null || change.OldProject.FilePath == null)
@@ -74,8 +74,8 @@ public class RenameHandler : RenameHandlerBase {
                     if (newDocument?.FilePath == null || oldDocument?.FilePath == null)
                         continue;
 
-                    var oldSourceText = await oldDocument.GetTextAsync(token).ConfigureAwait(false);
-                    var textChanges = await newDocument.GetTextChangesAsync(oldDocument, token).ConfigureAwait(false);
+                    var oldSourceText = await oldDocument.GetTextAsync(token);
+                    var textChanges = await newDocument.GetTextChangesAsync(oldDocument, token);
                     var textEdits = textChanges.Select(x => x.ToTextEdit(oldSourceText));
                     if (!textEdits.Any())
                         continue;
