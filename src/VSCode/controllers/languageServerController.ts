@@ -49,7 +49,7 @@ export class LanguageServerController {
             const range = Extensions.toRange(textEdit.range);
 
             if (isSnippet)
-                return await editor?.insertSnippet(new vscode.SnippetString(textEdit.newText), range);
+                return await Extensions.insertSnippet(editor, textEdit.newText, range);
 
             const newEdit = new vscode.WorkspaceEdit();
             newEdit.replace(uri, range, textEdit.newText);
