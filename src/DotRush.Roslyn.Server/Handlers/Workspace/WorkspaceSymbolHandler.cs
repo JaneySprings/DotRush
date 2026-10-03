@@ -18,35 +18,33 @@ public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
     public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.WorkspaceSymbolProvider = true;
     }
-    protected override Task<List<WorkspaceSymbol>> Handle(WorkspaceSymbolParams request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync(new List<WorkspaceSymbol>(), async () => {
-            var workspaceSymbols = new HashSet<WorkspaceSymbol>(WorkspaceSymbolEqualityComparer.Default);
-            if (workspaceService.Solution == null || string.IsNullOrEmpty(request.Query))
-                return new List<WorkspaceSymbol>();
+    protected override async Task<List<WorkspaceSymbol>> Handle(WorkspaceSymbolParams request, CancellationToken token) {
+        var workspaceSymbols = new HashSet<WorkspaceSymbol>(WorkspaceSymbolEqualityComparer.Default);
+        if (workspaceService.Solution == null || string.IsNullOrEmpty(request.Query))
+            return new List<WorkspaceSymbol>();
 
-            foreach (var project in workspaceService.Solution.Projects) {
-                var compilation = await project.GetCompilationAsync(token).ConfigureAwait(false);
-                if (compilation == null)
-                    continue;
+        foreach (var project in workspaceService.Solution.Projects) {
+            var compilation = await project.GetCompilationAsync(token).ConfigureAwait(false);
+            if (compilation == null)
+                continue;
 
-                var symbols = compilation.GetSymbolsWithName((s) => SymbolExtensions.FuzzySearch(s, request.Query), SymbolFilter.TypeAndMember, token);
-                foreach (var symbol in symbols) {
-                    foreach (var location in symbol.Locations) {
-                        if (location.SourceTree == null)
-                            continue;
+            var symbols = compilation.GetSymbolsWithName((s) => SymbolExtensions.FuzzySearch(s, request.Query), SymbolFilter.TypeAndMember, token);
+            foreach (var symbol in symbols) {
+                foreach (var location in symbol.Locations) {
+                    if (location.SourceTree == null)
+                        continue;
 
-                        workspaceSymbols.Add(new WorkspaceSymbol {
-                            Kind = symbol.ToSymbolKind(),
-                            Name = symbol.Name,
-                            Location = location.ToLocation(),
-                            ContainerName = symbol.ContainingType?.Name
-                        });
-                    }
+                    workspaceSymbols.Add(new WorkspaceSymbol {
+                        Kind = symbol.ToSymbolKind(),
+                        Name = symbol.Name,
+                        Location = location.ToLocation(),
+                        ContainerName = symbol.ContainingType?.Name
+                    });
                 }
             }
+        }
 
-            return workspaceSymbols.ToList();
-        });
+        return workspaceSymbols.ToList();
     }
 
     class WorkspaceSymbolEqualityComparer : IEqualityComparer<WorkspaceSymbol> {

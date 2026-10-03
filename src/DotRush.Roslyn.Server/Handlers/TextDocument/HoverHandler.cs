@@ -23,63 +23,61 @@ public class HoverHandler : HoverHandlerBase {
     public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.HoverProvider = true;
     }
-    protected override Task<Hover?> Handle(HoverParams request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync(async () => {
-            var documentPath = request.TextDocument.Uri.FileSystemPath;
-            var solution = navigationService.GetRequiredSolution(documentPath);
-            var documentIds = solution?.GetDocumentIdsWithFilePathV2(documentPath);
-            if (documentIds == null)
-                return null;
-
-            var displayDictionary = new Dictionary<string, List<string>>();
-            var documentation = string.Empty;
-            foreach (var documentId in documentIds) {
-                var document = solution?.GetDocument(documentId);
-                if (document == null)
-                    continue;
-
-                var sourceText = await document.GetTextAsync(token);
-                var offset = request.Position.ToOffset(sourceText);
-                var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset);
-                if (symbol == null)
-                    continue;
-
-                if (symbol is IAliasSymbol aliasSymbol)
-                    symbol = aliasSymbol.Target;
-
-                var format = symbol.Kind == SymbolKind.NamedType || symbol.Kind == SymbolKind.Namespace ? DisplayFormat.Default : DisplayFormat.Minimal;
-                var displayString = symbol.ToDisplayString(format);
-                if (!displayDictionary.ContainsKey(displayString))
-                    displayDictionary[displayString] = new List<string>();
-
-                displayDictionary[displayString].Add(document.Project.GetTargetFramework());
-
-                if (string.IsNullOrEmpty(documentation))
-                    documentation = symbol.GetInheritedDocumentationCommentXml();
-            }
-
-            if (displayDictionary.Count == 1) {
-                return new Hover {
-                    Contents = new MarkupContent {
-                        Kind = MarkupKind.Markdown,
-                        Value = MarkdownExtensions.CreateDocumentation(displayDictionary.Keys.First(), documentation, "csharp")
-                    }
-                };
-            }
-
-            if (displayDictionary.Count > 1) {
-                var builder = new StringBuilder();
-                displayDictionary.ForEach(kv => builder.AppendLine($"{kv.Key}  ({string.Join(", ", kv.Value)})"));
-
-                return new Hover {
-                    Contents = new MarkupContent {
-                        Kind = MarkupKind.Markdown,
-                        Value = MarkdownExtensions.CreateDocumentation(builder.ToString(), "csharp")
-                    }
-                };
-            }
-
+    protected override async Task<Hover?> Handle(HoverParams request, CancellationToken token) {
+        var documentPath = request.TextDocument.Uri.FileSystemPath;
+        var solution = navigationService.GetRequiredSolution(documentPath);
+        var documentIds = solution?.GetDocumentIdsWithFilePathV2(documentPath);
+        if (documentIds == null)
             return null;
-        });
+
+        var displayDictionary = new Dictionary<string, List<string>>();
+        var documentation = string.Empty;
+        foreach (var documentId in documentIds) {
+            var document = solution?.GetDocument(documentId);
+            if (document == null)
+                continue;
+
+            var sourceText = await document.GetTextAsync(token);
+            var offset = request.Position.ToOffset(sourceText);
+            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, offset);
+            if (symbol == null)
+                continue;
+
+            if (symbol is IAliasSymbol aliasSymbol)
+                symbol = aliasSymbol.Target;
+
+            var format = symbol.Kind == SymbolKind.NamedType || symbol.Kind == SymbolKind.Namespace ? DisplayFormat.Default : DisplayFormat.Minimal;
+            var displayString = symbol.ToDisplayString(format);
+            if (!displayDictionary.ContainsKey(displayString))
+                displayDictionary[displayString] = new List<string>();
+
+            displayDictionary[displayString].Add(document.Project.GetTargetFramework());
+
+            if (string.IsNullOrEmpty(documentation))
+                documentation = symbol.GetInheritedDocumentationCommentXml();
+        }
+
+        if (displayDictionary.Count == 1) {
+            return new Hover {
+                Contents = new MarkupContent {
+                    Kind = MarkupKind.Markdown,
+                    Value = MarkdownExtensions.CreateDocumentation(displayDictionary.Keys.First(), documentation, "csharp")
+                }
+            };
+        }
+
+        if (displayDictionary.Count > 1) {
+            var builder = new StringBuilder();
+            displayDictionary.ForEach(kv => builder.AppendLine($"{kv.Key}  ({string.Join(", ", kv.Value)})"));
+
+            return new Hover {
+                Contents = new MarkupContent {
+                    Kind = MarkupKind.Markdown,
+                    Value = MarkdownExtensions.CreateDocumentation(builder.ToString(), "csharp")
+                }
+            };
+        }
+
+        return null;
     }
 }

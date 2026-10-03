@@ -20,40 +20,38 @@ public class TestExplorerHandler : IHandler {
         this.workspaceService = workspaceService;
     }
 
-    protected Task<ICollection<TestItem>> Handle(TestItemParams request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync<ICollection<TestItem>>(Array.Empty<TestItem>(), async () => {
-            var filePath = request.TextDocument?.Uri.FileSystemPath;
-            if (string.IsNullOrEmpty(filePath))
-                return Array.Empty<TestItem>();
+    protected async Task<ICollection<TestItem>> Handle(TestItemParams request, CancellationToken token) {
+        var filePath = request.TextDocument?.Uri.FileSystemPath;
+        if (string.IsNullOrEmpty(filePath))
+            return Array.Empty<TestItem>();
 
-            ICollection<INamedTypeSymbol>? fixtureSymbols = null;
-            if (WorkspaceExtensions.IsProjectFile(filePath)) {
-                var project = workspaceService.Solution?.Projects.FirstOrDefault(p => PathExtensions.Equals(p.FilePath, filePath));
-                if (project != null)
-                    fixtureSymbols = await testExplorerService.GetTestFixturesAsync(project, token);
-            }
-            if (WorkspaceExtensions.IsSourceCodeDocument(filePath)) {
-                var documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
-                var document = workspaceService.Solution?.GetDocument(documentId?.FirstOrDefault());
-                if (document != null)
-                    fixtureSymbols = await testExplorerService.GetTestFixturesAsync(document, token);
-            }
+        ICollection<INamedTypeSymbol>? fixtureSymbols = null;
+        if (WorkspaceExtensions.IsProjectFile(filePath)) {
+            var project = workspaceService.Solution?.Projects.FirstOrDefault(p => PathExtensions.Equals(p.FilePath, filePath));
+            if (project != null)
+                fixtureSymbols = await testExplorerService.GetTestFixturesAsync(project, token);
+        }
+        if (WorkspaceExtensions.IsSourceCodeDocument(filePath)) {
+            var documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
+            var document = workspaceService.Solution?.GetDocument(documentId?.FirstOrDefault());
+            if (document != null)
+                fixtureSymbols = await testExplorerService.GetTestFixturesAsync(document, token);
+        }
 
-            if (fixtureSymbols == null)
-                return Array.Empty<TestItem>();
+        if (fixtureSymbols == null)
+            return Array.Empty<TestItem>();
 
-            var result = new HashSet<TestItem>();
-            foreach (var fixtureSymbol in fixtureSymbols) {
-                var fixture = new TestItem(fixtureSymbol);
-                if (request.IncludeChildren) {
-                    var testCaseSymbols = await testExplorerService.GetTestCasesAsync(fixtureSymbol, token);
-                    if (testCaseSymbols != null)
-                        fixture.Children = testCaseSymbols.Select(x => new TestItem(x)).ToHashSet();
-                }
-                result.Add(fixture);
+        var result = new HashSet<TestItem>();
+        foreach (var fixtureSymbol in fixtureSymbols) {
+            var fixture = new TestItem(fixtureSymbol);
+            if (request.IncludeChildren) {
+                var testCaseSymbols = await testExplorerService.GetTestCasesAsync(fixtureSymbol, token);
+                if (testCaseSymbols != null)
+                    fixture.Children = testCaseSymbols.Select(x => new TestItem(x)).ToHashSet();
             }
-            return result;
-        });
+            result.Add(fixture);
+        }
+        return result;
     }
 
     public void RegisterHandler(LanguageServer server) {

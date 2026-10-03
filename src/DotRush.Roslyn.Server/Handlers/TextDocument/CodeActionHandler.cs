@@ -32,37 +32,33 @@ public class CodeActionHandler : CodeActionHandlerBase {
             ResolveProvider = true
         };
     }
-    protected override Task<List<CodeAction>> Handle(CodeActionParams request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync(new List<CodeAction>(), async () => {
-            codeActionsCache.Clear();
+    protected override async Task<List<CodeAction>> Handle(CodeActionParams request, CancellationToken token) {
+        codeActionsCache.Clear();
 
-            var result = new List<CodeAction>();
-            var filePath = request.TextDocument.Uri.FileSystemPath;
+        var result = new List<CodeAction>();
+        var filePath = request.TextDocument.Uri.FileSystemPath;
 
-            if (codeAnalysisService.CompilerDiagnosticsScope != AnalysisScope.None)
-                result.AddRange(await GetQuickFixesAsync(filePath, request.Range, token));
-            if (codeAnalysisService.AnalyzerDiagnosticsScope != AnalysisScope.None)
-                result.AddRange(await GetRefactoringsAsync(filePath, request.Range, token));
+        if (codeAnalysisService.CompilerDiagnosticsScope != AnalysisScope.None)
+            result.AddRange(await GetQuickFixesAsync(filePath, request.Range, token));
+        if (codeAnalysisService.AnalyzerDiagnosticsScope != AnalysisScope.None)
+            result.AddRange(await GetRefactoringsAsync(filePath, request.Range, token));
 
-            if (request.Context?.Only != null && request.Context.Only.Count > 0)
-                return result.Where(it => it.Kind != null && request.Context.Only.Contains(it.Kind.Value)).ToList();
+        if (request.Context?.Only != null && request.Context.Only.Count > 0)
+            return result.Where(it => it.Kind != null && request.Context.Only.Contains(it.Kind.Value)).ToList();
 
-            return result;
-        });
+        return result;
     }
-    protected override Task<CodeAction?> Resolve(CodeAction? request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync(request, async () => {
-            if (request?.Data?.Value == null || workspaceService.Solution == null)
-                return request;
-
-            var codeActionId = (int)request.Data.Value;
-            if (!codeActionsCache.TryGetValue(codeActionId, out var codeAction))
-                return request;
-
-            var documentChanges = await ResolveCodeActionAsync(codeAction, workspaceService.Solution, token);
-            request.Edit = new WorkspaceEdit() { DocumentChanges = documentChanges.ToList() };
+    protected override async Task<CodeAction?> Resolve(CodeAction? request, CancellationToken token) {
+        if (request?.Data?.Value == null || workspaceService.Solution == null)
             return request;
-        });
+
+        var codeActionId = (int)request.Data.Value;
+        if (!codeActionsCache.TryGetValue(codeActionId, out var codeAction))
+            return request;
+
+        var documentChanges = await ResolveCodeActionAsync(codeAction, workspaceService.Solution, token);
+        request.Edit = new WorkspaceEdit() { DocumentChanges = documentChanges.ToList() };
+        return request;
     }
 
     private async Task<IEnumerable<CodeAction>> GetQuickFixesAsync(string filePath, DocumentRange range, CancellationToken cancellationToken) {

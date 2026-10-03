@@ -13,7 +13,7 @@ public class ServerCapabilities {
     public CodeActionOptions? CodeActionProvider { get; set; }
     public bool? DocumentFormattingProvider { get; set; }
     public bool? DocumentRangeFormattingProvider { get; set; }
-    public bool? RenameProvider { get; set; }
+    public RenameOptions? RenameProvider { get; set; }
     public bool? FoldingRangeProvider { get; set; }
     public SemanticTokensOptions? SemanticTokensProvider { get; set; }
     public bool? TypeHierarchyProvider { get; set; }
@@ -35,6 +35,10 @@ public class CompletionOptions {
 public class SignatureHelpOptions {
     public List<string>? TriggerCharacters { get; set; }
     public List<string>? RetriggerCharacters { get; set; }
+}
+
+public class RenameOptions {
+    public bool PrepareProvider { get; set; }
 }
 
 public class CodeActionOptions {

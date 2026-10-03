@@ -8,9 +8,12 @@ using NUnit.Framework;
 namespace DotRush.Roslyn.Server.Tests;
 
 public class ProtocolSerializerTests {
+    private static readonly string workspaceDirectory = RuntimeInfo.IsWindows ? @"C:\workspace" : "/workspace";
+    private static readonly string workspaceUri = RuntimeInfo.IsWindows ? "file:///C:/workspace" : "file:///workspace";
+
     [Test]
     public void LocationTest() {
-        var location = new Location("/workspace/Test.cs", new DocumentRange(new Position(1, 2), new Position(3, 4)));
+        var location = new Location(FilePath("Test.cs"), new DocumentRange(new Position(1, 2), new Position(3, 4)));
         var json = @"{""uri"":""file:///workspace/Test.cs"",""range"":{""start"":{""line"":1,""character"":2},""end"":{""line"":3,""character"":4}}}";
 
         AssertJson(location, json);
@@ -32,20 +35,20 @@ public class ProtocolSerializerTests {
     [Test]
     public void TextDocumentParamsTest() {
         var didOpenParams = Deserialize<DidOpenTextDocumentParams>(@"{""textDocument"":{""uri"":""file:///workspace/Test.cs"",""languageId"":""csharp"",""version"":1,""text"":""class Test {}""}}");
-        Assert.That(didOpenParams.TextDocument.Uri, Is.EqualTo((DocumentUri)"/workspace/Test.cs"));
+        Assert.That(didOpenParams.TextDocument.Uri, Is.EqualTo((DocumentUri)FilePath("Test.cs")));
         Assert.That(didOpenParams.TextDocument.LanguageId, Is.EqualTo("csharp"));
         Assert.That(didOpenParams.TextDocument.Version, Is.EqualTo(1));
         Assert.That(didOpenParams.TextDocument.Text, Is.EqualTo("class Test {}"));
 
         var didChangeParams = Deserialize<DidChangeTextDocumentParams>(@"{""textDocument"":{""uri"":""file:///workspace/Test.cs"",""version"":2},""contentChanges"":[{""text"":""class Test2 {}""}]}");
-        Assert.That(didChangeParams.TextDocument.Uri, Is.EqualTo((DocumentUri)"/workspace/Test.cs"));
+        Assert.That(didChangeParams.TextDocument.Uri, Is.EqualTo((DocumentUri)FilePath("Test.cs")));
         Assert.That(didChangeParams.TextDocument.Version, Is.EqualTo(2));
         Assert.That(didChangeParams.ContentChanges, Has.Count.EqualTo(1));
         Assert.That(didChangeParams.ContentChanges[0].Text, Is.EqualTo("class Test2 {}"));
         Assert.That(didChangeParams.ContentChanges[0].Range, Is.Null);
 
         var positionParams = Deserialize<ReferenceParams>(@"{""textDocument"":{""uri"":""file:///workspace/Test.cs""},""position"":{""line"":5,""character"":10},""context"":{""includeDeclaration"":true},""workDoneToken"":""token""}");
-        Assert.That(positionParams.TextDocument.Uri, Is.EqualTo((DocumentUri)"/workspace/Test.cs"));
+        Assert.That(positionParams.TextDocument.Uri, Is.EqualTo((DocumentUri)FilePath("Test.cs")));
         Assert.That(positionParams.Position, Is.EqualTo(new Position(5, 10)));
         Assert.That(positionParams.Context?.IncludeDeclaration, Is.True);
     }
@@ -85,7 +88,7 @@ public class ProtocolSerializerTests {
             TextEdit = new TextEditOrInsertReplaceEdit(new TextEdit { NewText = "List", Range = new DocumentRange(new Position(1, 2), new Position(1, 4)) }),
             AdditionalTextEdits = new List<TextEdit> { new TextEdit { NewText = "using System;\n" } },
             CommitCharacters = new List<string> { ";" },
-            Command = new Command { Title = "Handler", Name = "dotrush.completionHandler", Arguments = new List<LSPAny> { "/workspace/Test.cs", true, 42, new LSPAny(new Position(1, 2)) } },
+            Command = new Command { Title = "Handler", Name = "dotrush.completionHandler", Arguments = new List<LSPAny> { "Test.cs", true, 42, new LSPAny(new Position(1, 2)) } },
             Data = 123,
         };
         var json = @"{
@@ -94,7 +97,7 @@ public class ProtocolSerializerTests {
             ""textEdit"":{""range"":{""start"":{""line"":1,""character"":2},""end"":{""line"":1,""character"":4}},""newText"":""List""},
             ""additionalTextEdits"":[{""range"":{""start"":{""line"":0,""character"":0},""end"":{""line"":0,""character"":0}},""newText"":""using System;\n""}],
             ""commitCharacters"":["";""],
-            ""command"":{""title"":""Handler"",""command"":""dotrush.completionHandler"",""arguments"":[""/workspace/Test.cs"",true,42,{""line"":1,""character"":2}]},
+            ""command"":{""title"":""Handler"",""command"":""dotrush.completionHandler"",""arguments"":[""Test.cs"",true,42,{""line"":1,""character"":2}]},
             ""data"":123
         }";
 
@@ -108,7 +111,7 @@ public class ProtocolSerializerTests {
         Assert.That(item.Documentation?.Kind, Is.EqualTo(MarkupKind.Markdown));
         Assert.That(item.TextEdit?.TextEdit?.NewText, Is.EqualTo("List"));
         Assert.That(item.Command?.Name, Is.EqualTo("dotrush.completionHandler"));
-        Assert.That(item.Command?.Arguments?.Select(it => it.Value).Take(3), Is.EqualTo(new object[] { "/workspace/Test.cs", true, 42 }));
+        Assert.That(item.Command?.Arguments?.Select(it => it.Value).Take(3), Is.EqualTo(new object[] { "Test.cs", true, 42 }));
         Assert.That(item.Data?.Value, Is.EqualTo(123));
         AssertJson(item, json);
 
@@ -166,12 +169,12 @@ public class ProtocolSerializerTests {
         var edit = new WorkspaceEdit {
             DocumentChanges = new List<IDocumentChange> {
                 new TextDocumentEdit {
-                    TextDocument = new OptionalVersionedTextDocumentIdentifier("/workspace/Test.cs", null),
+                    TextDocument = new OptionalVersionedTextDocumentIdentifier(FilePath("Test.cs"), null),
                     Edits = new List<TextEdit> { new TextEdit { NewText = "Test", Range = new DocumentRange(new Position(1, 2), new Position(1, 6)) } }
                 },
-                new CreateFile("/workspace/New.cs", new CreateFileOptions(Overwrite: true, IgnoreIfExists: false), null),
-                new RenameFile("/workspace/Old.cs", "/workspace/Renamed.cs", null, null),
-                new DeleteFile("/workspace/Old.cs", new DeleteFileOptions(Recursive: false, IgnoreIfNotExists: true), null),
+                new CreateFile(FilePath("New.cs"), new CreateFileOptions(Overwrite: true, IgnoreIfExists: false), null),
+                new RenameFile(FilePath("Old.cs"), FilePath("Renamed.cs"), null, null),
+                new DeleteFile(FilePath("Old.cs"), new DeleteFileOptions(Recursive: false, IgnoreIfNotExists: true), null),
             }
         };
         var json = @"{""documentChanges"":[
@@ -189,7 +192,7 @@ public class ProtocolSerializerTests {
 
         edit = new WorkspaceEdit {
             Changes = new Dictionary<DocumentUri, List<TextEdit>> {
-                { "/workspace/Test.cs", new List<TextEdit> { new TextEdit { NewText = "Test" } } }
+                { FilePath("Test.cs"), new List<TextEdit> { new TextEdit { NewText = "Test" } } }
             }
         };
         AssertJson(edit, @"{""changes"":{""file:///workspace/Test.cs"":[{""range"":{""start"":{""line"":0,""character"":0},""end"":{""line"":0,""character"":0}},""newText"":""Test""}]}}");
@@ -197,7 +200,7 @@ public class ProtocolSerializerTests {
     [Test]
     public void DiagnosticsTest() {
         var diagnosticsParams = new PublishDiagnosticsParams {
-            Uri = "/workspace/Test.cs",
+            Uri = FilePath("Test.cs"),
             Diagnostics = new List<Diagnostic> {
                 new Diagnostic {
                     Range = new DocumentRange(new Position(1, 2), new Position(1, 6)),
@@ -221,7 +224,7 @@ public class ProtocolSerializerTests {
         AssertJson(new Hover { Contents = new MarkupContent { Kind = MarkupKind.PlainText, Value = "Test" } }, @"{""contents"":{""kind"":""plaintext"",""value"":""Test""}}");
         AssertJson(new DocumentSymbol { Name = "Test", Kind = SymbolKind.Class, Children = new List<DocumentSymbol>() },
             @"{""name"":""Test"",""kind"":5,""range"":{""start"":{""line"":0,""character"":0},""end"":{""line"":0,""character"":0}},""selectionRange"":{""start"":{""line"":0,""character"":0},""end"":{""line"":0,""character"":0}},""children"":[]}");
-        AssertJson(new WorkspaceSymbol { Name = "Test", Kind = SymbolKind.Method, Location = new Location("/workspace/Test.cs", default) },
+        AssertJson(new WorkspaceSymbol { Name = "Test", Kind = SymbolKind.Method, Location = new Location(FilePath("Test.cs"), default) },
             @"{""name"":""Test"",""kind"":6,""location"":{""uri"":""file:///workspace/Test.cs"",""range"":{""start"":{""line"":0,""character"":0},""end"":{""line"":0,""character"":0}}}}");
         AssertJson(new FoldingRange { StartLine = 1, StartCharacter = 2, EndLine = 3, EndCharacter = 4, CollapsedText = "..." }, @"{""startLine"":1,""startCharacter"":2,""endLine"":3,""endCharacter"":4,""collapsedText"":""...""}");
         AssertJson(new InlayHint { Position = new Position(1, 2), Label = "name: ", PaddingRight = false }, @"{""position"":{""line"":1,""character"":2},""label"":""name: "",""paddingRight"":false}");
@@ -245,14 +248,17 @@ public class ProtocolSerializerTests {
         AssertJson(supertypesParams.Item, json);
     }
 
+    private static string FilePath(string name) {
+        return Path.Combine(workspaceDirectory, name);
+    }
     private static string Serialize(object value) {
         return JsonSerializer.Serialize(value, value.GetType(), ProtocolSerializer.Options);
     }
     private static T Deserialize<T>(string json) {
-        return JsonSerializer.Deserialize<T>(json, ProtocolSerializer.Options)!;
+        return JsonSerializer.Deserialize<T>(json.Replace("file:///workspace", workspaceUri), ProtocolSerializer.Options)!;
     }
     private static void AssertJson(object value, string expectedJson) {
         var json = Serialize(value);
-        Assert.That(JsonNode.DeepEquals(JsonNode.Parse(json), JsonNode.Parse(expectedJson)), Is.True, json);
+        Assert.That(JsonNode.DeepEquals(JsonNode.Parse(json), JsonNode.Parse(expectedJson.Replace("file:///workspace", workspaceUri))), Is.True, json);
     }
 }

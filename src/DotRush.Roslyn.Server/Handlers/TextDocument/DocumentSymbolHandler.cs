@@ -1,4 +1,3 @@
-using DotRush.Common.Extensions;
 using DotRush.Protocol.Handlers;
 using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Extensions;
@@ -21,26 +20,24 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
     public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.DocumentSymbolProvider = true;
     }
-    protected override Task<List<DocumentSymbol>> Handle(DocumentSymbolParams request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync(new List<DocumentSymbol>(), async () => {
-            var documentPath = request.TextDocument.Uri.FileSystemPath;
-            var solution = navigationService.GetRequiredSolution(documentPath);
-            var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
-            var document = solution?.GetDocument(documentId);
-            if (documentId == null || document == null)
-                return new List<DocumentSymbol>();
+    protected override async Task<List<DocumentSymbol>> Handle(DocumentSymbolParams request, CancellationToken token) {
+        var documentPath = request.TextDocument.Uri.FileSystemPath;
+        var solution = navigationService.GetRequiredSolution(documentPath);
+        var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
+        var document = solution?.GetDocument(documentId);
+        if (documentId == null || document == null)
+            return new List<DocumentSymbol>();
 
-            var syntaxTree = await document.GetSyntaxTreeAsync(token);
-            if (syntaxTree == null)
-                return new List<DocumentSymbol>();
+        var syntaxTree = await document.GetSyntaxTreeAsync(token);
+        if (syntaxTree == null)
+            return new List<DocumentSymbol>();
 
-            var root = await syntaxTree.GetRootAsync(token);
-            if (root == null)
-                return new List<DocumentSymbol>();
+        var root = await syntaxTree.GetRootAsync(token);
+        if (root == null)
+            return new List<DocumentSymbol>();
 
-            var documentSymbols = TraverseSyntaxTree(root.ChildNodes());
-            return documentSymbols;
-        });
+        var documentSymbols = TraverseSyntaxTree(root.ChildNodes());
+        return documentSymbols;
     }
 
     private static List<DocumentSymbol> TraverseSyntaxTree(IEnumerable<SyntaxNode> nodes) {

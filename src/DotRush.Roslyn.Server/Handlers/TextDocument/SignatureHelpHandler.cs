@@ -22,79 +22,77 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
             TriggerCharacters = new List<string> { "(", "," }
         };
     }
-    protected override Task<SignatureHelp> Handle(SignatureHelpParams request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync(new SignatureHelp(), async () => {
-            var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
-            if (documentIds == null)
-                return new SignatureHelp();
+    protected override async Task<SignatureHelp> Handle(SignatureHelpParams request, CancellationToken token) {
+        var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
+        if (documentIds == null)
+            return new SignatureHelp();
 
-            foreach (var documentId in documentIds) {
-                var document = solutionService.Solution?.GetDocument(documentId);
-                if (document == null)
-                    continue;
+        foreach (var documentId in documentIds) {
+            var document = solutionService.Solution?.GetDocument(documentId);
+            if (document == null)
+                continue;
 
-                var sourceText = await document.GetTextAsync(token);
-                var tree = await document.GetSyntaxTreeAsync(token);
-                var semanticModel = await document.GetSemanticModelAsync(token);
-                if (sourceText == null || tree == null || semanticModel == null)
-                    continue;
+            var sourceText = await document.GetTextAsync(token);
+            var tree = await document.GetSyntaxTreeAsync(token);
+            var semanticModel = await document.GetSemanticModelAsync(token);
+            if (sourceText == null || tree == null || semanticModel == null)
+                continue;
 
-                var position = request.Position.ToOffset(sourceText);
-                var root = await tree.GetRootAsync(token);
-                var node = root.FindToken(position).Parent;
+            var position = request.Position.ToOffset(sourceText);
+            var root = await tree.GetRootAsync(token);
+            var node = root.FindToken(position).Parent;
 
-                var invocationInfo = GetInvocationInfo(node, position);
-                if (invocationInfo == null)
-                    continue;
+            var invocationInfo = GetInvocationInfo(node, position);
+            if (invocationInfo == null)
+                continue;
 
-                var candidates = semanticModel
-                    .GetMemberGroup(invocationInfo.MemberGroupNode, token)
-                    .OfType<IMethodSymbol>()
-                    .Where(x => CanAcceptArguments(x, invocationInfo.Arguments.Count))
-                    .ToList();
-                if (candidates.Count == 0)
-                    continue;
+            var candidates = semanticModel
+                .GetMemberGroup(invocationInfo.MemberGroupNode, token)
+                .OfType<IMethodSymbol>()
+                .Where(x => CanAcceptArguments(x, invocationInfo.Arguments.Count))
+                .ToList();
+            if (candidates.Count == 0)
+                continue;
 
-                // The compiler binds valid invocations to the exact overload - prefer it over the score heuristic
-                var boundSymbol = semanticModel.GetSymbolInfo(invocationInfo.InvocationNode, token).Symbol as IMethodSymbol;
-                var argumentTypes = invocationInfo.Arguments
-                    .Select(x => GetArgumentType(semanticModel, x, token))
-                    .ToList();
+            // The compiler binds valid invocations to the exact overload - prefer it over the score heuristic
+            var boundSymbol = semanticModel.GetSymbolInfo(invocationInfo.InvocationNode, token).Symbol as IMethodSymbol;
+            var argumentTypes = invocationInfo.Arguments
+                .Select(x => GetArgumentType(semanticModel, x, token))
+                .ToList();
 
-                var activeSignature = 0;
-                var bestScore = int.MinValue;
-                var signatures = new List<SignatureInformation>(candidates.Count);
-                for (var i = 0; i < candidates.Count; i++) {
-                    var candidate = candidates[i];
-                    signatures.Add(new SignatureInformation {
-                        Label = candidate.ToDisplayString(DisplayFormat.Minimal),
-                        Parameters = new List<ParameterInformation>(candidate.Parameters.Select(y => new ParameterInformation {
-                            Label = y.ToDisplayString(DisplayFormat.Minimal)
-                        })),
-                        ActiveParameter = GetActiveParameter(candidate, invocationInfo),
-                    });
+            var activeSignature = 0;
+            var bestScore = int.MinValue;
+            var signatures = new List<SignatureInformation>(candidates.Count);
+            for (var i = 0; i < candidates.Count; i++) {
+                var candidate = candidates[i];
+                signatures.Add(new SignatureInformation {
+                    Label = candidate.ToDisplayString(DisplayFormat.Minimal),
+                    Parameters = new List<ParameterInformation>(candidate.Parameters.Select(y => new ParameterInformation {
+                        Label = y.ToDisplayString(DisplayFormat.Minimal)
+                    })),
+                    ActiveParameter = GetActiveParameter(candidate, invocationInfo),
+                });
 
-                    var score = boundSymbol != null && SymbolEqualityComparer.Default.Equals(candidate.OriginalDefinition, boundSymbol.OriginalDefinition)
-                        ? int.MaxValue
-                        : GetSignatureScore(candidate, invocationInfo.Arguments, argumentTypes);
-                    if (score > bestScore) {
-                        bestScore = score;
-                        activeSignature = i;
-                    }
+                var score = boundSymbol != null && SymbolEqualityComparer.Default.Equals(candidate.OriginalDefinition, boundSymbol.OriginalDefinition)
+                    ? int.MaxValue
+                    : GetSignatureScore(candidate, invocationInfo.Arguments, argumentTypes);
+                if (score > bestScore) {
+                    bestScore = score;
+                    activeSignature = i;
                 }
-
-                if (signatures.Count == 1 && signatures[0].Parameters.Count == 0)
-                    continue;
-
-                return new SignatureHelp {
-                    Signatures = signatures,
-                    ActiveSignature = (uint)activeSignature,
-                    ActiveParameter = signatures[activeSignature].ActiveParameter ?? 0,
-                };
             }
 
-            return new SignatureHelp();
-        });
+            if (signatures.Count == 1 && signatures[0].Parameters.Count == 0)
+                continue;
+
+            return new SignatureHelp {
+                Signatures = signatures,
+                ActiveSignature = (uint)activeSignature,
+                ActiveParameter = signatures[activeSignature].ActiveParameter ?? 0,
+            };
+        }
+
+        return new SignatureHelp();
     }
 
     private static InvocationInfo? GetInvocationInfo(SyntaxNode? node, int position) {
