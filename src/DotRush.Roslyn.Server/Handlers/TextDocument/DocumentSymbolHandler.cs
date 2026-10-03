@@ -47,17 +47,25 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
             if (node is BaseNamespaceDeclarationSyntax namespaceDeclaration) {
                 result.Add(CreateSymbol(namespaceDeclaration.Name.ToString(), SymbolKind.Namespace, namespaceDeclaration, true));
             }
-            else if (node is ClassDeclarationSyntax classDeclaration) {
-                result.Add(CreateSymbol(classDeclaration.Identifier.Text, SymbolKind.Class, classDeclaration, true));
+            else if (node is ExtensionBlockDeclarationSyntax extensionDeclaration) {
+                result.Add(CreateSymbol($"extension({extensionDeclaration.ParameterList?.Parameters.FirstOrDefault()?.Type})", SymbolKind.Class, extensionDeclaration, true));
             }
-            else if (node is StructDeclarationSyntax structDeclaration) {
-                result.Add(CreateSymbol(structDeclaration.Identifier.Text, SymbolKind.Struct, structDeclaration, true));
-            }
-            else if (node is EnumDeclarationSyntax enumDeclaration) {
-                result.Add(CreateSymbol(enumDeclaration.Identifier.Text, SymbolKind.Enum, enumDeclaration, true));
-            }
-            else if (node is InterfaceDeclarationSyntax interfaceDeclaration) {
-                result.Add(CreateSymbol(interfaceDeclaration.Identifier.Text, SymbolKind.Interface, interfaceDeclaration, true));
+            else if (node is BaseTypeDeclarationSyntax typeDeclaration) {
+                switch (typeDeclaration.Kind()) {
+                    case SyntaxKind.StructDeclaration:
+                    case SyntaxKind.RecordStructDeclaration:
+                        result.Add(CreateSymbol(typeDeclaration.Identifier.Text, SymbolKind.Struct, typeDeclaration, true));
+                        break;
+                    case SyntaxKind.InterfaceDeclaration:
+                        result.Add(CreateSymbol(typeDeclaration.Identifier.Text, SymbolKind.Interface, typeDeclaration, true));
+                        break;
+                    case SyntaxKind.EnumDeclaration:
+                        result.Add(CreateSymbol(typeDeclaration.Identifier.Text, SymbolKind.Enum, typeDeclaration, true));
+                        break;
+                    default:
+                        result.Add(CreateSymbol(typeDeclaration.Identifier.Text, SymbolKind.Class, typeDeclaration, true));
+                        break;
+                }
             }
             else if (node is DelegateDeclarationSyntax delegateDeclaration) {
                 result.Add(CreateSymbol(delegateDeclaration.Identifier.Text, SymbolKind.Function, delegateDeclaration, true));
@@ -65,8 +73,17 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
             else if (node is ConstructorDeclarationSyntax ctorDeclaration) {
                 result.Add(CreateSymbol(ctorDeclaration.Identifier.Text, SymbolKind.Constructor, ctorDeclaration, true));
             }
+            else if (node is DestructorDeclarationSyntax destructorDeclaration) {
+                result.Add(CreateSymbol($"~{destructorDeclaration.Identifier.Text}", SymbolKind.Method, destructorDeclaration));
+            }
             else if (node is MethodDeclarationSyntax methodDeclaration) {
                 result.Add(CreateSymbol(methodDeclaration.Identifier.Text, SymbolKind.Method, methodDeclaration));
+            }
+            else if (node is OperatorDeclarationSyntax operatorDeclaration) {
+                result.Add(CreateSymbol($"operator {operatorDeclaration.OperatorToken.Text}", SymbolKind.Operator, operatorDeclaration));
+            }
+            else if (node is ConversionOperatorDeclarationSyntax conversionDeclaration) {
+                result.Add(CreateSymbol($"{conversionDeclaration.ImplicitOrExplicitKeyword.Text} operator {conversionDeclaration.Type}", SymbolKind.Operator, conversionDeclaration));
             }
             else if (node is PropertyDeclarationSyntax propDeclaration) {
                 result.Add(CreateSymbol(propDeclaration.Identifier.Text, SymbolKind.Property, propDeclaration));
@@ -80,11 +97,13 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
             else if (node is EnumMemberDeclarationSyntax enumMemberDeclaration) {
                 result.Add(CreateSymbol(enumMemberDeclaration.Identifier.Text, SymbolKind.EnumMember, enumMemberDeclaration));
             }
-            else if (node is FieldDeclarationSyntax fieldDeclaration) {
-                foreach (var variable in fieldDeclaration.Declaration.Variables) {
-                    var kind = fieldDeclaration.Modifiers.Any(SyntaxKind.ConstKeyword) ? SymbolKind.Constant : SymbolKind.Field;
+            else if (node is BaseFieldDeclarationSyntax fieldDeclaration) {
+                var kind = fieldDeclaration.Modifiers.Any(SyntaxKind.ConstKeyword) ? SymbolKind.Constant : SymbolKind.Field;
+                if (fieldDeclaration is EventFieldDeclarationSyntax)
+                    kind = SymbolKind.Event;
+
+                foreach (var variable in fieldDeclaration.Declaration.Variables)
                     result.Add(CreateSymbol(variable.Identifier.Text, kind, fieldDeclaration));
-                }
             }
         }
         return result;
