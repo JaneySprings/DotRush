@@ -22,10 +22,10 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
             TriggerCharacters = new List<string> { "(", "," }
         };
     }
-    protected override async Task<SignatureHelp> Handle(SignatureHelpParams request, CancellationToken token) {
+    protected override async Task<SignatureHelp?> Handle(SignatureHelpParams request, CancellationToken token) {
         var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
         if (documentIds == null)
-            return new SignatureHelp();
+            return null;
 
         foreach (var documentId in documentIds) {
             var document = solutionService.Solution?.GetDocument(documentId);
@@ -92,7 +92,7 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
             };
         }
 
-        return new SignatureHelp();
+        return null;
     }
 
     private static InvocationInfo? GetInvocationInfo(SyntaxNode? node, int position) {

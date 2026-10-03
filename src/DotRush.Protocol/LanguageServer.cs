@@ -21,6 +21,7 @@ public class LanguageServer {
     private readonly Dictionary<string, Func<JsonElement?, CancellationToken, Task>> notificationHandlers;
     private readonly List<Func<InitializeParams, Task>> initializedCallbacks;
     private readonly List<Func<Task>> shutdownCallbacks;
+    private readonly List<Action<Exception>> unhandledExceptionCallbacks;
     private readonly ConcurrentDictionary<RequestId, CancellationTokenSource> incomingRequests;
     private readonly ConcurrentDictionary<long, TaskCompletionSource<JsonElement?>> outgoingRequests;
     private readonly Channel<JsonRpcMessage> messageQueue;
@@ -48,6 +49,7 @@ public class LanguageServer {
         notificationHandlers = new Dictionary<string, Func<JsonElement?, CancellationToken, Task>>();
         initializedCallbacks = new List<Func<InitializeParams, Task>>();
         shutdownCallbacks = new List<Func<Task>>();
+        unhandledExceptionCallbacks = new List<Action<Exception>>();
         incomingRequests = new ConcurrentDictionary<RequestId, CancellationTokenSource>();
         outgoingRequests = new ConcurrentDictionary<long, TaskCompletionSource<JsonElement?>>();
         messageQueue = Channel.CreateUnbounded<JsonRpcMessage>(new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
@@ -80,6 +82,10 @@ public class LanguageServer {
     }
     public void OnShutdown(Func<Task> callback) {
         shutdownCallbacks.Add(callback);
+    }
+    // Raised for any exception that is not a cancellation or a ProtocolException
+    public void OnUnhandledException(Action<Exception> callback) {
+        unhandledExceptionCallbacks.Add(callback);
     }
 
     // Completes when the client sends the 'exit' notification, closes the input stream or terminates.
@@ -140,7 +146,7 @@ public class LanguageServer {
             }
         } catch (OperationCanceledException) {
         } catch (Exception e) {
-            CurrentSessionLogger.Error(e);
+            RaiseUnhandledException(e);
         } finally {
             exitTaskSource.TrySetResult();
         }
@@ -210,7 +216,7 @@ public class LanguageServer {
             }
         } catch (OperationCanceledException) {
         } catch (Exception e) {
-            CurrentSessionLogger.Error(e);
+            RaiseUnhandledException(e);
         }
     }
     private Task HandleMessageAsync(JsonRpcMessage message, MessageDispatcher currentDispatcher) {
@@ -248,8 +254,8 @@ public class LanguageServer {
             CurrentSessionLogger.Error(e.Message);
             connection.SendError(id, e.Code, e.Message);
         } catch (Exception e) {
-            // Only ProtocolException is meant for the user, any other failure is logged and the request has no result
-            CurrentSessionLogger.Error(e);
+            // Only ProtocolException is meant for the user, any other failure leaves the request without a result
+            RaiseUnhandledException(e);
             connection.SendResult(id, null);
         } finally {
             if (incomingRequests.TryRemove(id, out tokenSource))
@@ -266,7 +272,7 @@ public class LanguageServer {
         } catch (ProtocolException e) {
             CurrentSessionLogger.Error(e.Message);
         } catch (Exception e) {
-            CurrentSessionLogger.Error(e);
+            RaiseUnhandledException(e);
         }
     }
 
@@ -307,6 +313,14 @@ public class LanguageServer {
         } catch (Exception e) {
             CurrentSessionLogger.Error($"Failed to observe client process (PID: {processId}): {e.Message}");
         }
+    }
+
+    private void RaiseUnhandledException(Exception exception) {
+        if (unhandledExceptionCallbacks.Count == 0)
+            CurrentSessionLogger.Error(exception);
+
+        foreach (var callback in unhandledExceptionCallbacks)
+            callback.Invoke(exception);
     }
 
     private static TParams DeserializeParams<TParams>(string method, JsonElement? parameters) {

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using DotRush.Common.Extensions;
+using DotRush.Protocol;
 using DotRush.Protocol.Handlers;
 using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
@@ -48,13 +49,9 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
         return result;
     }
-    protected override async Task<CodeAction?> Resolve(CodeAction? request, CancellationToken token) {
-        if (request?.Data?.Value == null || workspaceService.Solution == null)
-            return request;
-
-        var codeActionId = (int)request.Data.Value;
-        if (!codeActionsCache.TryGetValue(codeActionId, out var codeAction))
-            return request;
+    protected override async Task<CodeAction?> Resolve(CodeAction request, CancellationToken token) {
+        if (request.Data?.Value is not int codeActionId || !codeActionsCache.TryGetValue(codeActionId, out var codeAction) || workspaceService.Solution == null)
+            throw new ProtocolException(Resources.CodeActionOutdated);
 
         var documentChanges = await ResolveCodeActionAsync(codeAction, workspaceService.Solution, token);
         request.Edit = new WorkspaceEdit() { DocumentChanges = documentChanges.ToList() };
