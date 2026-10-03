@@ -1,16 +1,13 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using SymbolKind = EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol.SymbolKind;
+using SymbolKind = DotRush.Protocol.Models.SymbolKind;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -21,28 +18,28 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
         this.navigationService = navigationService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.DocumentSymbolProvider = true;
     }
-    protected override Task<DocumentSymbolResponse> Handle(DocumentSymbolParams request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync(new DocumentSymbolResponse(new List<DocumentSymbol>()), async () => {
+    protected override Task<List<DocumentSymbol>> Handle(DocumentSymbolParams request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync(new List<DocumentSymbol>(), async () => {
             var documentPath = request.TextDocument.Uri.FileSystemPath;
             var solution = navigationService.GetRequiredSolution(documentPath);
             var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
             var document = solution?.GetDocument(documentId);
             if (documentId == null || document == null)
-                return new DocumentSymbolResponse(new List<DocumentSymbol>());
+                return new List<DocumentSymbol>();
 
             var syntaxTree = await document.GetSyntaxTreeAsync(token);
             if (syntaxTree == null)
-                return new DocumentSymbolResponse(new List<DocumentSymbol>());
+                return new List<DocumentSymbol>();
 
             var root = await syntaxTree.GetRootAsync(token);
             if (root == null)
-                return new DocumentSymbolResponse(new List<DocumentSymbol>());
+                return new List<DocumentSymbol>();
 
             var documentSymbols = TraverseSyntaxTree(root.ChildNodes());
-            return new DocumentSymbolResponse(documentSymbols);
+            return documentSymbols;
         });
     }
 

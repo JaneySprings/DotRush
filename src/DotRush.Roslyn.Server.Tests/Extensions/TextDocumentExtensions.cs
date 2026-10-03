@@ -1,5 +1,4 @@
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
+using DotRush.Protocol.Models;
 using Microsoft.CodeAnalysis;
 
 namespace DotRush.Roslyn.Server.Tests.Extensions;

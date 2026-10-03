@@ -14,9 +14,4 @@ public static class Resources {
     public static CompositeFormat ProjectRestoreCompositeFormat { get; } = CompositeFormat.Parse("Restoring {0}");
     public static CompositeFormat ProjectIndexCompositeFormat { get; } = CompositeFormat.Parse("Indexing {0}");
     public static CompositeFormat ProjectCompileCompositeFormat { get; } = CompositeFormat.Parse("Compiling {0}");
-    public static string WorkspaceServiceWorkDoneToken { get; private set; }
-
-    static Resources() {
-        WorkspaceServiceWorkDoneToken = Guid.NewGuid().ToString();
-    }
 }

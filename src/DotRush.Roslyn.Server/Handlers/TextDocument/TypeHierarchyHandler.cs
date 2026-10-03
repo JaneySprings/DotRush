@@ -1,15 +1,11 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.TypeHierarchy;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 
@@ -24,10 +20,10 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
         this.typeHierarchyCache = new Dictionary<int, ISymbol>();
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.TypeHierarchyProvider = true;
     }
-    protected override Task<TypeHierarchyResponse?> Handle(TypeHierarchyPrepareParams typeHierarchyPrepareParams, CancellationToken cancellationToken) {
+    protected override Task<List<TypeHierarchyItem>?> Handle(TypeHierarchyPrepareParams typeHierarchyPrepareParams, CancellationToken cancellationToken) {
         typeHierarchyCache.Clear();
 
         return SafeExtensions.InvokeAsync(async () => {
@@ -49,26 +45,26 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
                 return null;
 
             result.Add(CreateTypeHierarchyItem(typeSymbol, typeHierarchyPrepareParams));
-            return new TypeHierarchyResponse(result);
+            return result;
         });
     }
-    protected override Task<TypeHierarchyResponse?> Handle(TypeHierarchySupertypesParams typeHierarchySupertypesParams, CancellationToken cancellationToken) {
+    protected override Task<List<TypeHierarchyItem>?> Handle(TypeHierarchySupertypesParams typeHierarchySupertypesParams, CancellationToken cancellationToken) {
         if (typeHierarchySupertypesParams.Item.Data?.Value == null)
-            return Task.FromResult<TypeHierarchyResponse?>(null);
+            return Task.FromResult<List<TypeHierarchyItem>?>(null);
 
         var result = new List<TypeHierarchyItem>();
         var symbol = typeHierarchyCache.GetValueOrDefault((int)typeHierarchySupertypesParams.Item.Data.Value);
         if (symbol == null || symbol is not ITypeSymbol typeSymbol)
-            return Task.FromResult<TypeHierarchyResponse?>(null);
+            return Task.FromResult<List<TypeHierarchyItem>?>(null);
 
         if (typeSymbol.BaseType != null)
             result.Add(CreateTypeHierarchyItem(typeSymbol.BaseType, typeHierarchySupertypesParams.Item));
         foreach (var iface in typeSymbol.Interfaces)
             result.Add(CreateTypeHierarchyItem(iface, typeHierarchySupertypesParams.Item));
 
-        return Task.FromResult<TypeHierarchyResponse?>(new TypeHierarchyResponse(result));
+        return Task.FromResult<List<TypeHierarchyItem>?>(result);
     }
-    protected override Task<TypeHierarchyResponse?> Handle(TypeHierarchySubtypesParams typeHierarchySubtypesParams, CancellationToken cancellationToken) {
+    protected override Task<List<TypeHierarchyItem>?> Handle(TypeHierarchySubtypesParams typeHierarchySubtypesParams, CancellationToken cancellationToken) {
         return SafeExtensions.InvokeAsync(async () => {
             if (typeHierarchySubtypesParams.Item.Data?.Value == null || navigationService.HostSolution == null)
                 return null;
@@ -90,7 +86,7 @@ public class TypeHierarchyHandler : TypeHierarchyHandlerBase {
             foreach (var subtype in subtypes)
                 result.Add(CreateTypeHierarchyItem(subtype, typeHierarchySubtypesParams.Item));
 
-            return new TypeHierarchyResponse(result);
+            return result;
         });
     }
 

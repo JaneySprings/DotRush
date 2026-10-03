@@ -1,10 +1,8 @@
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Server.Tests.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.File;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.Server.Tests;
@@ -12,7 +10,7 @@ namespace DotRush.Roslyn.Server.Tests;
 public class CodeActionHandlerMock : CodeActionHandler {
     public CodeActionHandlerMock(WorkspaceService workspaceService, CodeAnalysisService codeAnalysisService) : base(workspaceService, codeAnalysisService) { }
 
-    public new Task<CodeActionResponse> Handle(CodeActionParams request, CancellationToken token) {
+    public new Task<List<CodeAction>> Handle(CodeActionParams request, CancellationToken token) {
         return base.Handle(request, token);
     }
     public new Task<CodeAction?> Resolve(CodeAction request, CancellationToken token) {
@@ -46,8 +44,8 @@ class CodeActionTest {
             Range = PositionExtensions.CreateRange(4, 5)
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.And.Not.Empty);
-        Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(15));
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        Assert.That(result, Has.Count.EqualTo(15));
         // QuickFix
         Assert.That(GetCodeAction(result, "using System.Text.Json;"), Is.Not.Null);
         Assert.That(GetCodeAction(result, "Generate property 'JsonSerializer'"), Is.Not.Null);
@@ -73,13 +71,13 @@ class CodeActionTest {
         var resolvedResult = await handler.Resolve(usingAction, CancellationToken.None);
         Assert.That(resolvedResult!.Edit, Is.Not.Null);
         Assert.That(resolvedResult.Edit.Changes, Is.Null);
-        Assert.That(resolvedResult.Edit.DocumentChanges?.EditFileList, Has.Count.EqualTo(1));
-        var documentEdit = resolvedResult.Edit.DocumentChanges.EditFileList[0] as TextDocumentEdit;
+        Assert.That(resolvedResult.Edit.DocumentChanges, Has.Count.EqualTo(1));
+        var documentEdit = resolvedResult.Edit.DocumentChanges[0] as TextDocumentEdit;
         Assert.That(documentEdit, Is.Not.Null);
         Assert.That(documentEdit!.TextDocument.Uri.FileSystemPath, Is.EqualTo(documents.First().FilePath));
-        Assert.That(documentEdit.Edits.TextEditList, Has.Count.EqualTo(1));
-        Assert.That(documentEdit.Edits.TextEditList![0].NewText.ToLF(), Is.EqualTo("using System.Text.Json;\n\n"));
-        Assert.That(documentEdit.Edits.TextEditList[0].Range, Is.EqualTo(PositionExtensions.CreateRange(1, 0, 1, 0)));
+        Assert.That(documentEdit.Edits, Has.Count.EqualTo(1));
+        Assert.That(documentEdit.Edits[0].NewText.ToLF(), Is.EqualTo("using System.Text.Json;\n\n"));
+        Assert.That(documentEdit.Edits[0].Range, Is.EqualTo(PositionExtensions.CreateRange(1, 0, 1, 0)));
     }
     [Test]
     public async Task GeneralHandlerWithEmptyFilterTest() {
@@ -98,7 +96,7 @@ class CodeActionTest {
             Context = new CodeActionContext { Only = new List<CodeActionKind>() }
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(15));
+        Assert.That(result, Has.Count.EqualTo(15));
     }
     [TestCase("quickfix", 10)]
     [TestCase("refactor", 5)]
@@ -119,9 +117,9 @@ class CodeActionTest {
             Context = new CodeActionContext { Only = new List<CodeActionKind> { new CodeActionKind(kind) } }
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null);
-        Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(expectedCount));
-        result.CommandOrCodeActions.ForEach(ca => Assert.That(ca.CodeAction, Is.Not.Null));
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Has.Count.EqualTo(expectedCount));
+        result.ForEach(ca => Assert.That(ca, Is.Not.Null));
     }
 
     [Test]
@@ -137,8 +135,8 @@ class CodeActionTest {
             Context = new CodeActionContext { Only = new List<CodeActionKind> { CodeActionKind.Refactor } }
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.And.Not.Empty);
-        Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(4));
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        Assert.That(result, Has.Count.EqualTo(4));
 
         Assert.That(GetCodeAction(result, "Generate description in XML"), Is.Not.Null);
         Assert.That(GetCodeAction(result, "Rename file to CodeActionTest.cs"), Is.Not.Null);
@@ -148,8 +146,8 @@ class CodeActionTest {
         var renameAction = await handler.Resolve(GetCodeAction(result, "Rename file to CodeActionTest.cs"), CancellationToken.None);
         Assert.That(renameAction!.Edit, Is.Not.Null);
         Assert.That(renameAction.Edit.Changes, Is.Null);
-        Assert.That(renameAction.Edit.DocumentChanges?.EditFileList, Has.Count.EqualTo(1));
-        var renameEdit = renameAction.Edit.DocumentChanges.EditFileList[0] as RenameFile;
+        Assert.That(renameAction.Edit.DocumentChanges, Has.Count.EqualTo(1));
+        var renameEdit = renameAction.Edit.DocumentChanges[0] as RenameFile;
         Assert.That(renameEdit, Is.Not.Null);
         Assert.That(renameEdit!.Options, Is.Null);
         Assert.That(renameEdit.AnnotationId, Is.Null);
@@ -171,8 +169,8 @@ class MyClass {
             Context = new CodeActionContext { Only = new List<CodeActionKind> { CodeActionKind.Refactor } }
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Is.Not.Null.And.Not.Empty);
-        Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(5));
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        Assert.That(result, Has.Count.EqualTo(5));
 
         Assert.That(GetCodeAction(result, "Generate description in XML"), Is.Not.Null);
         Assert.That(GetCodeAction(result, "Move type to MyClass.cs"), Is.Not.Null);
@@ -183,16 +181,16 @@ class MyClass {
         var moveAction = await handler.Resolve(GetCodeAction(result, "Move type to MyClass.cs"), CancellationToken.None);
         Assert.That(moveAction!.Edit, Is.Not.Null);
         Assert.That(moveAction.Edit.Changes, Is.Null);
-        Assert.That(moveAction.Edit.DocumentChanges?.EditFileList, Has.Count.EqualTo(3));
+        Assert.That(moveAction.Edit.DocumentChanges, Has.Count.EqualTo(3));
 
-        var removeOldEdit = moveAction.Edit.DocumentChanges.EditFileList[0] as TextDocumentEdit;
+        var removeOldEdit = moveAction.Edit.DocumentChanges[0] as TextDocumentEdit;
         Assert.That(removeOldEdit, Is.Not.Null);
         Assert.That(removeOldEdit!.TextDocument.Uri.FileSystemPath, Is.EqualTo(document));
-        Assert.That(removeOldEdit.Edits.TextEditList, Has.Count.EqualTo(1));
-        Assert.That(removeOldEdit.Edits.TextEditList![0].NewText, Is.Empty);
-        Assert.That(removeOldEdit.Edits.TextEditList[0].Range, Is.EqualTo(PositionExtensions.CreateRange(4, 0, 6, 0)));
+        Assert.That(removeOldEdit.Edits, Has.Count.EqualTo(1));
+        Assert.That(removeOldEdit.Edits[0].NewText, Is.Empty);
+        Assert.That(removeOldEdit.Edits[0].Range, Is.EqualTo(PositionExtensions.CreateRange(4, 0, 6, 0)));
 
-        var createEdit = moveAction.Edit.DocumentChanges.EditFileList[1] as CreateFile;
+        var createEdit = moveAction.Edit.DocumentChanges[1] as CreateFile;
         Assert.That(createEdit, Is.Not.Null);
         Assert.That(createEdit!.Options, Is.Not.Null);
         Assert.That(createEdit.Options.Value.Overwrite, Is.True);
@@ -200,12 +198,12 @@ class MyClass {
         Assert.That(createEdit.AnnotationId, Is.Null);
         Assert.That(createEdit.Uri.FileSystemPath, Is.EqualTo(Path.Combine(Path.GetDirectoryName(document)!, "MyClass.cs")));
 
-        var addNewEdit = moveAction.Edit.DocumentChanges.EditFileList[2] as TextDocumentEdit;
+        var addNewEdit = moveAction.Edit.DocumentChanges[2] as TextDocumentEdit;
         Assert.That(addNewEdit, Is.Not.Null);
         Assert.That(addNewEdit!.TextDocument.Uri.FileSystemPath, Is.EqualTo(Path.Combine(Path.GetDirectoryName(document)!, "MyClass.cs")));
-        Assert.That(addNewEdit.Edits.TextEditList, Has.Count.EqualTo(1));
-        Assert.That(addNewEdit.Edits.TextEditList![0].NewText.ToLF(), Is.EqualTo("\nnamespace Tests;\n\nclass MyClass {\n}\n"));
-        Assert.That(addNewEdit.Edits.TextEditList[0].Range, Is.EqualTo(PositionExtensions.CreateRange(0, 0, 0, 0)));
+        Assert.That(addNewEdit.Edits, Has.Count.EqualTo(1));
+        Assert.That(addNewEdit.Edits[0].NewText.ToLF(), Is.EqualTo("\nnamespace Tests;\n\nclass MyClass {\n}\n"));
+        Assert.That(addNewEdit.Edits[0].Range, Is.EqualTo(PositionExtensions.CreateRange(0, 0, 0, 0)));
     }
 
     [TestCase(5, 6)]
@@ -232,17 +230,17 @@ sealed class CodeActionTest {
             Context = new CodeActionContext { Only = new List<CodeActionKind> { CodeActionKind.QuickFix } }
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
         var resolvedResult = await handler.Resolve(GetCodeAction(result, "Remove unused variable")!, CancellationToken.None);
         Assert.That(resolvedResult!.Edit, Is.Not.Null);
         Assert.That(resolvedResult.Edit.Changes, Is.Null);
-        Assert.That(resolvedResult.Edit.DocumentChanges?.EditFileList, Has.Count.EqualTo(1));
-        var documentEdit = resolvedResult.Edit.DocumentChanges.EditFileList[0] as TextDocumentEdit;
+        Assert.That(resolvedResult.Edit.DocumentChanges, Has.Count.EqualTo(1));
+        var documentEdit = resolvedResult.Edit.DocumentChanges[0] as TextDocumentEdit;
         Assert.That(documentEdit, Is.Not.Null);
         Assert.That(documentEdit!.TextDocument.Uri.FileSystemPath, Is.EqualTo(documents[0].FilePath));
-        Assert.That(documentEdit.Edits.TextEditList, Has.Count.EqualTo(1));
-        Assert.That(documentEdit.Edits.TextEditList![0].NewText, Is.Empty);
+        Assert.That(documentEdit.Edits, Has.Count.EqualTo(1));
+        Assert.That(documentEdit.Edits[0].NewText, Is.Empty);
     }
 
     [Test]
@@ -262,7 +260,7 @@ sealed class CodeActionTest {
             Context = new CodeActionContext { Only = new List<CodeActionKind> { CodeActionKind.QuickFix } }
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Is.Null.Or.Empty);
+        Assert.That(result, Is.Null.Or.Empty);
     }
     [Test]
     public async Task ApplyFixAllInDocumentScopeTest() {
@@ -285,22 +283,22 @@ sealed class CodeActionTest {
             Context = new CodeActionContext { Only = new List<CodeActionKind> { CodeActionKind.QuickFix } }
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(2));
+        Assert.That(result, Has.Count.EqualTo(2));
         Assert.That(GetCodeAction(result, "Remove unused variable"), Is.Not.Null);
         Assert.That(GetCodeAction(result, caTitle), Is.Not.Null);
 
         var resolvedResult = await handler.Resolve(GetCodeAction(result, caTitle), CancellationToken.None);
         Assert.That(resolvedResult!.Edit, Is.Not.Null);
         Assert.That(resolvedResult.Edit.Changes, Is.Null);
-        Assert.That(resolvedResult.Edit.DocumentChanges?.EditFileList, Has.Count.EqualTo(1));
-        var documentEdit = resolvedResult.Edit.DocumentChanges.EditFileList[0] as TextDocumentEdit;
+        Assert.That(resolvedResult.Edit.DocumentChanges, Has.Count.EqualTo(1));
+        var documentEdit = resolvedResult.Edit.DocumentChanges[0] as TextDocumentEdit;
         Assert.That(documentEdit, Is.Not.Null);
         Assert.That(documentEdit!.TextDocument.Uri.FileSystemPath, Is.EqualTo(documents[0].FilePath));
-        Assert.That(documentEdit.Edits.TextEditList, Has.Count.EqualTo(2));
-        Assert.That(documentEdit.Edits.TextEditList[0].NewText, Is.Empty);
-        Assert.That(documentEdit.Edits.TextEditList[0].Range, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 5, 4)));
-        Assert.That(documentEdit.Edits.TextEditList[1].NewText, Is.Empty);
-        Assert.That(documentEdit.Edits.TextEditList[1].Range, Is.EqualTo(PositionExtensions.CreateRange(7, 4, 8, 4)));
+        Assert.That(documentEdit.Edits, Has.Count.EqualTo(2));
+        Assert.That(documentEdit.Edits[0].NewText, Is.Empty);
+        Assert.That(documentEdit.Edits[0].Range, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 5, 4)));
+        Assert.That(documentEdit.Edits[1].NewText, Is.Empty);
+        Assert.That(documentEdit.Edits[1].Range, Is.EqualTo(PositionExtensions.CreateRange(7, 4, 8, 4)));
     }
     [Test]
     public async Task ApplyFixAllInProjectScopeTest() {
@@ -329,7 +327,7 @@ sealed class CodeActionSecondTest {
             Context = new CodeActionContext { Only = new List<CodeActionKind> { CodeActionKind.QuickFix } }
         }, CancellationToken.None);
 
-        Assert.That(result.CommandOrCodeActions, Has.Count.EqualTo(4));
+        Assert.That(result, Has.Count.EqualTo(4));
         Assert.That(GetCodeAction(result, "Remove unused variable"), Is.Not.Null);
         Assert.That(GetCodeAction(result, "Fix all 'CS0219' in 'CodeActionHandlerTests.cs'"), Is.Not.Null);
         Assert.That(GetCodeAction(result, caProjectTitle), Is.Not.Null);
@@ -338,21 +336,21 @@ sealed class CodeActionSecondTest {
         var resolvedResult = await handler.Resolve(GetCodeAction(result, caProjectTitle), CancellationToken.None);
         Assert.That(resolvedResult!.Edit, Is.Not.Null);
         Assert.That(resolvedResult.Edit.Changes, Is.Null);
-        Assert.That(resolvedResult.Edit.DocumentChanges?.EditFileList, Has.Count.EqualTo(2));
+        Assert.That(resolvedResult.Edit.DocumentChanges, Has.Count.EqualTo(2));
 
-        var documentEdit = resolvedResult.Edit.DocumentChanges.EditFileList[0] as TextDocumentEdit;
+        var documentEdit = resolvedResult.Edit.DocumentChanges[0] as TextDocumentEdit;
         Assert.That(documentEdit, Is.Not.Null);
         Assert.That(documentEdit!.TextDocument.Uri.FileSystemPath, Is.EqualTo(documents[0].FilePath));
-        Assert.That(documentEdit.Edits.TextEditList, Has.Count.EqualTo(1));
-        Assert.That(documentEdit.Edits.TextEditList![0].NewText, Is.Empty);
-        Assert.That(documentEdit.Edits.TextEditList[0].Range, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 5, 4)));
+        Assert.That(documentEdit.Edits, Has.Count.EqualTo(1));
+        Assert.That(documentEdit.Edits[0].NewText, Is.Empty);
+        Assert.That(documentEdit.Edits[0].Range, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 5, 4)));
 
-        var documentEdit2 = resolvedResult.Edit.DocumentChanges.EditFileList[1] as TextDocumentEdit;
+        var documentEdit2 = resolvedResult.Edit.DocumentChanges[1] as TextDocumentEdit;
         Assert.That(documentEdit2, Is.Not.Null);
         Assert.That(documentEdit2!.TextDocument.Uri.FileSystemPath, Is.EqualTo(documents2[0].FilePath));
-        Assert.That(documentEdit2.Edits.TextEditList, Has.Count.EqualTo(1));
-        Assert.That(documentEdit2.Edits.TextEditList![0].NewText, Is.Empty);
-        Assert.That(documentEdit2.Edits.TextEditList[0].Range, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 5, 4)));
+        Assert.That(documentEdit2.Edits, Has.Count.EqualTo(1));
+        Assert.That(documentEdit2.Edits[0].NewText, Is.Empty);
+        Assert.That(documentEdit2.Edits[0].Range, Is.EqualTo(PositionExtensions.CreateRange(4, 4, 5, 4)));
     }
     [Test]
     public async Task ApplyFixAllForAnalyzerDiagnosticTest() {
@@ -373,12 +371,12 @@ sealed class CodeActionTest {
 
         var resolvedResult = await handler.Resolve(GetCodeAction(result, caTitle)!, CancellationToken.None);
         Assert.That(resolvedResult!.Edit, Is.Not.Null);
-        Assert.That(resolvedResult.Edit.DocumentChanges?.EditFileList, Has.Count.EqualTo(1));
-        var documentEdit = resolvedResult.Edit.DocumentChanges.EditFileList[0] as TextDocumentEdit;
-        Assert.That(documentEdit!.Edits.TextEditList, Has.Count.EqualTo(2));
+        Assert.That(resolvedResult.Edit.DocumentChanges, Has.Count.EqualTo(1));
+        var documentEdit = resolvedResult.Edit.DocumentChanges[0] as TextDocumentEdit;
+        Assert.That(documentEdit!.Edits, Has.Count.EqualTo(2));
     }
 
-    private static CodeAction? GetCodeAction(CodeActionResponse response, string title) {
-        return response.CommandOrCodeActions.SingleOrDefault(ca => ca.CodeAction?.Title == title)?.CodeAction;
+    private static CodeAction? GetCodeAction(List<CodeAction> response, string title) {
+        return response.SingleOrDefault(ca => ca.Title == title);
     }
 }

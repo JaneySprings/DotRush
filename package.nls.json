@@ -17,7 +17,7 @@
 	"title.traceView": "Trace Viewer",
 	"title.memoryView": "Memory Viewer",
 	
-	"description.workspaceProperties": "Additional MSBuild properties to pass to the workspace (e.g. Configuration=Debug).",
+	"description.workspaceProperties": "Additional MSBuild properties to pass to the workspace (e.g. { \"Configuration\": \"Debug\" }).",
 	"description.skipUnrecognizedProjects": "Determines if unrecognized projects are skipped when projects are opened.",
 	"description.loadMetadataForReferencedProjects": "Determines if metadata from existing output assemblies is loaded instead of opening referenced projects.",
 	"description.showItemsFromUnimportedNamespaces": "Determines if items from unimported namespaces are shown in completion lists.",

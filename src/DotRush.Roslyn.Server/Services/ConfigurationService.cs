@@ -4,12 +4,9 @@ using System.Text.Json.Serialization;
 using DotRush.Common;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
+using DotRush.Protocol;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.Server.Dispatchers;
-using DotRush.Roslyn.Server.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Server;
-using EmmyLua.LanguageServer.Framework.Server.Scheduler;
 
 namespace DotRush.Roslyn.Server.Services;
 
@@ -32,7 +29,7 @@ public class ConfigurationService {
     public AnalysisScope AnalyzerDiagnosticsScope => configuration.AnalyzerDiagnosticsScope;
     public DiagnosticsFormat DiagnosticsFormat => configuration.DiagnosticsFormat;
     public string DotNetSdkDirectory => configuration.DotNetSdkDirectory ?? Environment.GetEnvironmentVariable("DOTNET_SDK_PATH") ?? string.Empty;
-    public ReadOnlyDictionary<string, string> WorkspaceProperties => (configuration.WorkspaceProperties ?? new List<string>()).ToPropertiesDictionary();
+    public ReadOnlyDictionary<string, string> WorkspaceProperties => (configuration.WorkspaceProperties ?? new Dictionary<string, string>()).AsReadOnly();
     public ReadOnlyCollection<string> ProjectOrSolutionFiles => (configuration.ProjectOrSolutionFiles ?? new List<string>()).AsReadOnly();
     public ReadOnlyCollection<string> AnalyzerAssemblies => (configuration.AnalyzerAssemblies ?? new List<string>()).AsReadOnly();
 
@@ -55,13 +52,13 @@ public class ConfigurationService {
         }
     }
 
-    public void ChangeConfiguration(LSPAny? sectionJson) {
-        if (sectionJson?.Value is not JsonDocument jsonDocument) {
+    public void ChangeConfiguration(JsonElement sectionJson) {
+        if (sectionJson.ValueKind != JsonValueKind.Object) {
             currentClassLogger.Error("Configuration section is not a valid JSON document.");
             return;
         }
 
-        var sections = SafeExtensions.Invoke(() => JsonSerializer.Deserialize<ConfigurationSection>(jsonDocument, JsonSerializerConfig.Options));
+        var sections = SafeExtensions.Invoke(() => JsonSerializer.Deserialize<ConfigurationSection>(sectionJson, JsonSerializerConfig.Options));
         ChangeConfiguration(sections);
     }
     internal void ChangeConfiguration(ConfigurationSection? section) {
@@ -82,13 +79,13 @@ public class ConfigurationService {
         currentClassLogger.Debug($"Setting server dispatcher type: {dispatcherType}");
         switch (dispatcherType) {
             case DispatcherType.SingleThread:
-                languageServer.SetScheduler(new SingleThreadScheduler());
+                languageServer.Dispatcher = new MessageDispatcher();
                 break;
             case DispatcherType.MultiThread:
-                languageServer.SetScheduler(new MultiThreadDispatcher());
+                languageServer.Dispatcher = new MultiThreadDispatcher();
                 break;
             case DispatcherType.PerformanceCounter:
-                languageServer.SetScheduler(new PerformanceCounterDispatcher());
+                languageServer.Dispatcher = new PerformanceCounterDispatcher();
                 break;
             default:
                 currentClassLogger.Error($"Unknown dispatcher type: {dispatcherType}");
@@ -148,7 +145,7 @@ internal sealed class RoslynSection {
     public string? DotNetSdkDirectory { get; set; }
 
     [JsonPropertyName("workspaceProperties")]
-    public List<string>? WorkspaceProperties { get; set; }
+    public Dictionary<string, string>? WorkspaceProperties { get; set; }
 
     [JsonPropertyName("projectOrSolutionFiles")]
     public List<string>? ProjectOrSolutionFiles { get; set; }

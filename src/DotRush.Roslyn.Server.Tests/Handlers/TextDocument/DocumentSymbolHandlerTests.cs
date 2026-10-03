@@ -1,7 +1,7 @@
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Server.Tests.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.Server.Tests;
@@ -9,7 +9,7 @@ namespace DotRush.Roslyn.Server.Tests;
 public class DocumentSymbolHandlerMock : DocumentSymbolHandler {
     public DocumentSymbolHandlerMock(NavigationService navigationService) : base(navigationService) { }
 
-    public new Task<DocumentSymbolResponse> Handle(DocumentSymbolParams request, CancellationToken token) {
+    public new Task<List<DocumentSymbol>> Handle(DocumentSymbolParams request, CancellationToken token) {
         return base.Handle(request, token);
     }
 }
@@ -43,13 +43,13 @@ class Class1 {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Result1, Has.Count.EqualTo(1));
-        Assert.That(result.Result1[0].Name, Is.EqualTo("Tests"));
-        Assert.That(result.Result1[0].Kind, Is.EqualTo(SymbolKind.Namespace));
-        Assert.That(result.Result1[0].Range, Is.EqualTo(PositionExtensions.CreateRange(1, 0, 10, 1)));
-        Assert.That(result.Result1[0].Children, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0].Name, Is.EqualTo("Tests"));
+        Assert.That(result[0].Kind, Is.EqualTo(SymbolKind.Namespace));
+        Assert.That(result[0].Range, Is.EqualTo(PositionExtensions.CreateRange(1, 0, 10, 1)));
+        Assert.That(result[0].Children, Has.Count.EqualTo(1));
 
-        var class1 = result.Result1[0].Children.FirstOrDefault(x => x.Name == "Class1");
+        var class1 = result[0].Children.FirstOrDefault(x => x.Name == "Class1");
         Assert.That(class1, Is.Not.Null);
         Assert.That(class1.Kind, Is.EqualTo(SymbolKind.Class));
         Assert.That(class1.Range, Is.EqualTo(PositionExtensions.CreateRange(3, 0, 10, 1)));
@@ -98,10 +98,10 @@ class Class1 {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Result1, Has.Count.EqualTo(1));
-        Assert.That(result.Result1[0].Children, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0].Children, Has.Count.EqualTo(1));
 
-        var class1 = result.Result1[0].Children.FirstOrDefault(x => x.Name == "Class1");
+        var class1 = result[0].Children.FirstOrDefault(x => x.Name == "Class1");
         Assert.That(class1, Is.Not.Null);
         Assert.That(class1.Kind, Is.EqualTo(SymbolKind.Class));
         Assert.That(class1.Range, Is.EqualTo(PositionExtensions.CreateRange(4, 0, 9, 1)));

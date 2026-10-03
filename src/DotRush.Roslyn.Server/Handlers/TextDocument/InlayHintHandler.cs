@@ -1,13 +1,10 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Reflection;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.InlayHint;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -19,12 +16,12 @@ public class InlayHintHandler : InlayHintHandlerBase {
         this.workspaceService = workspaceService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.InlayHintProvider = true;
     }
 
-    protected override Task<InlayHintResponse?> Handle(InlayHintParams request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync<InlayHintResponse?>(async () => {
+    protected override Task<List<InlayHint>?> Handle(InlayHintParams request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<List<InlayHint>?>(async () => {
             var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
             if (documentIds == null)
                 return null;
@@ -55,17 +52,14 @@ public class InlayHintHandler : InlayHintHandlerBase {
                         inlineHint.TextEdits = new List<TextEdit> { textChange };
                     if (displayParts.Length == 0)
                         inlineHint.Label = "?";
-                    inlineHint.PaddingRight = inlineHint.Label.String?.Last() != ' ';
+                    inlineHint.PaddingRight = !inlineHint.Label.EndsWith(' ');
 
                     hints.Add(inlineHint);
                 }
             }
 
-            return new InlayHintResponse(hints.ToList());
+            return hints.ToList();
         });
-    }
-    protected override Task<InlayHint> Resolve(InlayHint request, CancellationToken cancellationToken) {
-        return Task.FromResult(request);
     }
 
     class InlayHintEqualityComparer : IEqualityComparer<InlayHint> {
@@ -80,7 +74,7 @@ public class InlayHintHandler : InlayHintHandlerBase {
             return GetHashCode(x) == GetHashCode(y);
         }
         public int GetHashCode(InlayHint obj) {
-            return HashCode.Combine(obj.Position, obj.Label.String);
+            return HashCode.Combine(obj.Position, obj.Label);
         }
     }
 }

@@ -1,18 +1,18 @@
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using DotRush.Common.Extensions;
+using DotRush.Protocol;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis;
 using DotRush.Roslyn.CodeAnalysis.Components;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
-using EmmyLua.LanguageServer.Framework.Server;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.Text;
-using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
+using ProtocolModels = DotRush.Protocol.Models;
 
 namespace DotRush.Roslyn.Server.Services;
 
@@ -66,14 +66,14 @@ public class CodeAnalysisService : IAdditionalComponentsProvider, IClearable {
                 return;
 
             await compilationHost.AnalyzeAsync(documents, CompilerDiagnosticsScope, AnalyzerDiagnosticsScope, cancellationToken);
-            await PublishDiagnosticsAsync();
+            PublishDiagnostics();
         });
         analysisCancellation.Cancel();
     }
     public void RequestDiagnosticsPublishing(Solution solution) {
         workerTasks.Add(async cancellationToken => {
             await compilationHost.AnalyzeAsync(solution, cancellationToken);
-            await PublishDiagnosticsAsync();
+            PublishDiagnostics();
         });
         analysisCancellation.Cancel();
     }
@@ -96,13 +96,13 @@ public class CodeAnalysisService : IAdditionalComponentsProvider, IClearable {
         return compilationHost.AnalyzeAsync(documents, compilerScope, analyzerScope, cancellationToken);
     }
 
-    private async Task PublishDiagnosticsAsync() {
+    private void PublishDiagnostics() {
         if (serverFacade == null)
             return;
 
         var diagnostics = compilationHost.GetDiagnostics();
         foreach (var pair in diagnostics) {
-            await serverFacade.Client.PublishDiagnostics(new PublishDiagnosticsParams {
+            serverFacade.Client.PublishDiagnostics(new PublishDiagnosticsParams {
                 Uri = pair.Key,
                 Diagnostics = FilterDiagnostics(pair.Value, configurationService.DiagnosticsFormat),
             });

@@ -1,13 +1,10 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.SignatureHelp;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -20,7 +17,7 @@ public class SignatureHelpHandler : SignatureHelpHandlerBase {
         this.solutionService = solutionService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.SignatureHelpProvider = new SignatureHelpOptions {
             TriggerCharacters = new List<string> { "(", "," }
         };

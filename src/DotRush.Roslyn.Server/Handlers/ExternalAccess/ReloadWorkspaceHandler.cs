@@ -1,18 +1,12 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
-using DotRush.Common;
+using DotRush.Protocol;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Services;
-using EmmyLua.LanguageServer.Framework;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Server;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 
 namespace DotRush.Roslyn.Server.Handlers.ExternalAccess;
 
-public class ReloadWorkspaceHandler : IJsonHandler {
+public class ReloadWorkspaceHandler : IHandler {
     private readonly WorkspaceService workspaceService;
     private readonly NavigationService navigationService;
     private readonly CodeAnalysisService codeAnalysisService;
@@ -33,15 +27,8 @@ public class ReloadWorkspaceHandler : IJsonHandler {
         return Task.CompletedTask;
     }
 
-    public void RegisterHandler(LSPCommunicationBase lspCommunication) {
-        lspCommunication.AddNotificationHandler("dotrush/reloadWorkspace", delegate (NotificationMessage message, CancellationToken token) {
-            ReloadWorkspaceParams? request = message.Params?.Deserialize<ReloadWorkspaceParams>(JsonSerializerConfig.Options);
-            return Handle(request ?? new ReloadWorkspaceParams(), token);
-        });
-    }
-    public void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
-    }
-    public void RegisterDynamicCapability(LanguageServer server, ClientCapabilities clientCapabilities) {
+    public void RegisterHandler(LanguageServer server) {
+        server.AddNotificationHandler<ReloadWorkspaceParams>("dotrush/reloadWorkspace", Handle);
     }
 }
 

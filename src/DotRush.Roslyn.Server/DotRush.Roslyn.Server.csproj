@@ -11,9 +11,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- <PackageReference Include="EmmyLua.LanguageServer.Framework" /> -->
-		<ProjectReference Include="..\DotRush.LanguageServer.Framework\LanguageServer.Framework.csproj" />
-
+		<ProjectReference Include="..\DotRush.Protocol\DotRush.Protocol.csproj" />
 		<ProjectReference Include="..\DotRush.Roslyn.Workspaces\DotRush.Roslyn.Workspaces.csproj" />
 		<ProjectReference Include="..\DotRush.Roslyn.CodeAnalysis\DotRush.Roslyn.CodeAnalysis.csproj" />
 		<ProjectReference Include="..\DotRush.Roslyn.Navigation\DotRush.Roslyn.Navigation.csproj" />

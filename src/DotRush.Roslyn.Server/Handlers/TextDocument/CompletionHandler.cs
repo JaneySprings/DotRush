@@ -2,19 +2,12 @@ using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Reflection;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Completion;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Kind;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Markup;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Union;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Tags;
 using Microsoft.CodeAnalysis.Text;
@@ -40,13 +33,13 @@ public class CompletionHandler : CompletionHandlerBase {
         this.completionItemsCache = new ConcurrentDictionary<int, RoslynCompletionItem>();
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.CompletionProvider = new CompletionOptions {
             TriggerCharacters = new List<string> { " ", ".", "#", ">", ":" },
             ResolveProvider = true,
         };
     }
-    protected override Task<CompletionResponse?> Handle(CompletionParams request, CancellationToken token) {
+    protected override Task<CompletionList?> Handle(CompletionParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(async () => {
             documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath).FirstOrDefault();
             var document = workspaceService.Solution?.GetDocument(documentId);
@@ -83,7 +76,7 @@ public class CompletionHandler : CompletionHandlerBase {
                 return completionItem;
             }));
 
-            return new CompletionResponse(completionItems.ToList());
+            return new CompletionList { Items = completionItems.ToList() };
         });
     }
     protected override Task<CompletionItem> Resolve(CompletionItem item, CancellationToken token) {
@@ -125,7 +118,7 @@ public class CompletionHandler : CompletionHandlerBase {
             return item;
 
         item.InsertTextFormat = InsertTextFormat.PlainText;
-        var additionalTextEdits = new List<AnnotatedTextEdit>();
+        var additionalTextEdits = new List<TextEdit>();
         var typedSpan = completionService.GetDefaultCompletionListSpan(sourceText, offset);
         var changeSpan = typedSpan;
 
@@ -233,8 +226,8 @@ public class CompletionHandler : CompletionHandlerBase {
         var afterText = Escape(change.NewText.Substring(midpoint));
         return ($"{beforeText}$0{afterText}", InsertTextFormat.Snippet);
     }
-    private static void HandleNonInsertsectingEdit(SourceText sourceText, List<AnnotatedTextEdit> additionalTextEdits, ref int? adjustedNewPosition, TextChange textChange) {
-        additionalTextEdits.Add(textChange.ToAnnotatedTextEdit(sourceText));
+    private static void HandleNonInsertsectingEdit(SourceText sourceText, List<TextEdit> additionalTextEdits, ref int? adjustedNewPosition, TextChange textChange) {
+        additionalTextEdits.Add(textChange.ToTextEdit(sourceText));
 
         if (adjustedNewPosition is not int newPosition)
             return;

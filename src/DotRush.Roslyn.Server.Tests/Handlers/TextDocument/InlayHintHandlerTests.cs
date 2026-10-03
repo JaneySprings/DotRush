@@ -1,7 +1,7 @@
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Server.Tests.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.InlayHint;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.Server.Tests;
@@ -9,7 +9,7 @@ namespace DotRush.Roslyn.Server.Tests;
 public class InlayHintHandlerMock : InlayHintHandler {
     public InlayHintHandlerMock(WorkspaceService workspaceService) : base(workspaceService) { }
 
-    public new Task<InlayHintResponse?> Handle(InlayHintParams request, CancellationToken token) {
+    public new Task<List<InlayHint>?> Handle(InlayHintParams request, CancellationToken token) {
         return base.Handle(request, token);
     }
 }
@@ -41,8 +41,8 @@ public class TestClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.InlayHints, Has.Count.EqualTo(3));
-        var firstNameHint = result.InlayHints.FirstOrDefault(h => h.Label.String == ("firstName: "));
+        Assert.That(result, Has.Count.EqualTo(3));
+        var firstNameHint = result.FirstOrDefault(h => h.Label == ("firstName: "));
         Assert.That(firstNameHint, Is.Not.Null);
         Assert.That(firstNameHint.Position.Line, Is.EqualTo(7));
         Assert.That(firstNameHint.Position.Character, Is.GreaterThanOrEqualTo(16));
@@ -57,7 +57,7 @@ public class TestClass {
         Assert.That(firstNameHint.TextEdits[0].Range.End.Line, Is.EqualTo(7));
         Assert.That(firstNameHint.TextEdits[0].Range.End.Character, Is.EqualTo(19));
 
-        var ageHint = result.InlayHints.FirstOrDefault(h => h.Label.String == ("age: "));
+        var ageHint = result.FirstOrDefault(h => h.Label == ("age: "));
         Assert.That(ageHint, Is.Not.Null);
         Assert.That(ageHint.Position.Line, Is.EqualTo(7));
         Assert.That(ageHint.Position.Character, Is.EqualTo(27));
@@ -72,7 +72,7 @@ public class TestClass {
         Assert.That(ageHint.TextEdits[0].Range.End.Line, Is.EqualTo(7));
         Assert.That(ageHint.TextEdits[0].Range.End.Character, Is.EqualTo(27));
 
-        var isActiveHint = result.InlayHints.FirstOrDefault(h => h.Label.String == ("isActive: "));
+        var isActiveHint = result.FirstOrDefault(h => h.Label == ("isActive: "));
         Assert.That(isActiveHint, Is.Not.Null);
         Assert.That(isActiveHint.Position.Line, Is.EqualTo(7));
         Assert.That(isActiveHint.Position.Character, Is.EqualTo(31));
@@ -108,11 +108,11 @@ public class TestClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.InlayHints, Has.Count.EqualTo(3));
-        Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == "name: "));
-        Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == "age: "));
+        Assert.That(result, Has.Count.EqualTo(3));
+        Assert.That(result, Has.One.Matches<InlayHint>(h => h.Label == "name: "));
+        Assert.That(result, Has.One.Matches<InlayHint>(h => h.Label == "age: "));
 
-        var personHint = result.InlayHints.FirstOrDefault(h => h.Label.String == "Person?");
+        var personHint = result.FirstOrDefault(h => h.Label == "Person?");
         Assert.That(personHint, Is.Not.Null);
         Assert.That(personHint.Position.Line, Is.EqualTo(9));
         Assert.That(personHint.Position.Character, Is.EqualTo(8));
@@ -148,12 +148,12 @@ public class TestClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.InlayHints, Has.Count.EqualTo(5));
-        Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == ("IEnumerable<int>?")));
-        Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == ("predicate: ")));
-        Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == ("selector: ")));
+        Assert.That(result, Has.Count.EqualTo(5));
+        Assert.That(result, Has.One.Matches<InlayHint>(h => h.Label == ("IEnumerable<int>?")));
+        Assert.That(result, Has.One.Matches<InlayHint>(h => h.Label == ("predicate: ")));
+        Assert.That(result, Has.One.Matches<InlayHint>(h => h.Label == ("selector: ")));
 
-        var intHint = result.InlayHints.FirstOrDefault(h => h.Label.String == ("int "));
+        var intHint = result.FirstOrDefault(h => h.Label == ("int "));
         Assert.That(intHint, Is.Not.Null);
         Assert.That(intHint.PaddingRight, Is.False);
         Assert.That(intHint.PaddingLeft, Is.Null.Or.False);
@@ -174,9 +174,9 @@ public class TestClass {
             Range = PositionExtensions.CreateRange(4, 0, 5, 0)
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result?.InlayHints, Is.Null.Or.Empty);
+        Assert.That(result, Is.Null.Or.Empty);
         // Old Roslyn versions:
-        // Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == ("UnknownType?")));
+        // Assert.That(result, Has.One.Matches<InlayHint>(h => h.Label == ("UnknownType?")));
     }
     [Test]
     public async Task InlayHintOnInvalidSyntaxTest() {
@@ -193,7 +193,7 @@ public class TestClass {
             Range = PositionExtensions.CreateRange(4, 0, 5, 0)
         }, CancellationToken.None).ConfigureAwait(false);
 
-        Assert.That(result?.InlayHints, Is.Null.Or.Empty);
+        Assert.That(result, Is.Null.Or.Empty);
     }
     [Test]
     public async Task MultitargetInlayHintTest() {
@@ -217,8 +217,8 @@ class MyClass2 {}
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.InlayHints, Has.Count.EqualTo(2));
-        Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == ("MyClass?")));
-        Assert.That(result.InlayHints, Has.One.Matches<InlayHint>(h => h.Label.String == ("MyClass2?")));
+        Assert.That(result, Has.Count.EqualTo(2));
+        Assert.That(result, Has.One.Matches<InlayHint>(h => h.Label == ("MyClass?")));
+        Assert.That(result, Has.One.Matches<InlayHint>(h => h.Label == ("MyClass2?")));
     }
 }

@@ -1,14 +1,13 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Implementation;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
-using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model;
+using Location = Microsoft.CodeAnalysis.Location;
+using ProtocolModels = DotRush.Protocol.Models;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -19,11 +18,11 @@ public class ImplementationHandler : ImplementationHandlerBase {
         this.navigationService = navigationService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.ImplementationProvider = true;
     }
-    protected override Task<ImplementationResponse?> Handle(ImplementationParams request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync<ImplementationResponse?>(async () => {
+    protected override Task<List<ProtocolModels.Location>?> Handle(ImplementationParams request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<List<ProtocolModels.Location>?>(async () => {
             var documentPath = request.TextDocument.Uri.FileSystemPath;
             var solution = navigationService.GetRequiredSolution(documentPath);
             var documentIds = solution?.GetDocumentIdsWithFilePathV2(documentPath);
@@ -73,7 +72,7 @@ public class ImplementationHandler : ImplementationHandlerBase {
                     result.Add(location.ToLocation());
                 }
             }
-            return new ImplementationResponse(result.ToList());
+            return result.ToList();
         });
     }
 }

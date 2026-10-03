@@ -1,6 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model;
+using ProtocolModels = DotRush.Protocol.Models;
 
 namespace DotRush.Roslyn.Server.Extensions;
 

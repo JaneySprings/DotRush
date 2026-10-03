@@ -1,12 +1,8 @@
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Rename;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Rename;
@@ -26,11 +22,8 @@ public class RenameHandler : RenameHandlerBase {
         this.workspaceService = workspaceService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.RenameProvider = true;
-    }
-    protected override Task<PrepareRenameResponse> Handle(PrepareRenameParams request, CancellationToken token) {
-        return Task.FromResult(new PrepareRenameResponse(false));
     }
     protected override async Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken token) {
         var workspaceEdits = new Dictionary<DocumentUri, List<TextEdit>>();

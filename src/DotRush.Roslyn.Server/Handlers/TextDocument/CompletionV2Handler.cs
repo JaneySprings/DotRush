@@ -1,16 +1,10 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Reflection;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Completion;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Kind;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Markup;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using RoslynCompletionItem = Microsoft.CodeAnalysis.Completion.CompletionItem;
@@ -32,13 +26,13 @@ public class CompletionV2Handler : CompletionHandlerBase {
         this.completionItemsCache = new Dictionary<int, RoslynCompletionItem>();
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.CompletionProvider = new CompletionOptions {
             TriggerCharacters = new List<string> { " ", ".", "#", ">", ":", "(", "[", "\"", "<", "~" },
             ResolveProvider = true,
         };
     }
-    protected override Task<CompletionResponse?> Handle(CompletionParams request, CancellationToken token) {
+    protected override Task<CompletionList?> Handle(CompletionParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(async () => {
             documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath).FirstOrDefault();
             var document = workspaceService.Solution?.GetDocument(documentId);
@@ -86,18 +80,18 @@ public class CompletionV2Handler : CompletionHandlerBase {
                 return completionItem;
             }).ToList();
 
-            return new CompletionResponse(new CompletionList {
+            return new CompletionList {
                 IsIncomplete = isPunctuationOnly || (typedText.Length == 0 && !isSuggestionMode),
                 Items = completionItems,
-                ItemDefaults = new CompletionListItemDefault {
+                ItemDefaults = new CompletionItemDefaults {
                     CommitCharacters = isSoftSelection ? null : CompletionExtensions.DefaultCommitCharacters,
                     InsertTextMode = InsertTextMode.AsIs,
-                    EditRange = new CompletionListItemDefaultEditRange(new InsertAndReplaceRange {
+                    EditRange = new EditRangeWithInsertReplace {
                         Insert = typedSpan.ToRange(sourceText),
                         Replace = completions.Span.ToRange(sourceText),
-                    })
+                    }
                 },
-            });
+            };
         });
     }
     protected override Task<CompletionItem> Resolve(CompletionItem item, CancellationToken token) {

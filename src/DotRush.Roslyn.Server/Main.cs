@@ -1,14 +1,13 @@
-﻿using System.Diagnostics;
 using System.Reflection;
 using DotRush.Common;
+using DotRush.Common.Extensions;
 using DotRush.Common.Logging;
-using DotRush.Roslyn.Server.Extensions;
+using DotRush.Protocol;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Handlers.ExternalAccess;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Handlers.Workspace;
 using DotRush.Roslyn.Server.Services;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Initialize;
-using EmmyLua.LanguageServer.Framework.Server;
 
 namespace DotRush.Roslyn.Server;
 
@@ -20,72 +19,54 @@ public class Program {
     private static NavigationService navigationService = null!;
     private static TestExplorerService testExplorerService = null!;
 
-    public static Task Main(string[] args) {
+    public static Task<int> Main(string[] args) {
+        var input = Console.OpenStandardInput();
+        var output = Console.OpenStandardOutput();
         Console.SetError(TextWriter.Null);
         Console.SetOut(TextWriter.Null);
         Console.SetIn(TextReader.Null);
         Localizer.Init();
 
-        languageServer = LanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
+        languageServer = new LanguageServer(input, output);
+        ConfigureServerInfo();
         ConfigureServices();
+        ConfigureHandlers();
 
-        languageServer.AddHandler(new TextDocumentHandler(workspaceService, codeAnalysisService))
-              .AddHandler(new DocumentFormattingHandler(workspaceService))
-              .AddHandler(new RenameHandler(workspaceService))
-              .AddHandler(new SignatureHelpHandler(workspaceService))
-              .AddHandler(new DocumentSymbolHandler(navigationService))
-              .AddHandler(new HoverHandler(navigationService))
-              .AddHandler(new FoldingRangeHandler(navigationService))
-              .AddHandler(new SemanticTokensHandler(navigationService))
-              .AddHandler(new ImplementationHandler(navigationService))
-              .AddHandler(new InlayHintHandler(workspaceService))
-              .AddHandler(new ReferenceHandler(navigationService))
-              .AddHandler(new DefinitionHandler(navigationService))
-              .AddHandler(new TypeDefinitionHandler(navigationService))
-              .AddHandler(new TypeHierarchyHandler(navigationService))
-              .AddHandler(new CodeActionHandler(workspaceService, codeAnalysisService))
-              .AddHandler(new CompletionV2Handler(workspaceService, configurationService), new CompletionHandler(workspaceService, configurationService))
-        // Workspace handlers
-              .AddHandler(new DidChangeConfigurationHandler(configurationService))
-              .AddHandler(new WorkspaceSymbolHandler(workspaceService))
-        // Framework handlers
-              .AddHandler(new WorkspaceDiagnosticsHandler(workspaceService, codeAnalysisService))
-              .AddHandler(new ReloadWorkspaceHandler(workspaceService, navigationService, codeAnalysisService))
-              .AddHandler(new TestExplorerHandler(testExplorerService, workspaceService));
-
-        languageServer.OnInitialize(OnInitializeAsync);
-        return languageServer.Run();
+        languageServer.OnInitialized(OnInitializedAsync);
+        languageServer.OnShutdown(OnShutdownAsync);
+        return languageServer.RunAsync();
     }
-    private static async Task OnInitializeAsync(InitializeParams parameters, ServerInfo serverInfo) {
-        ConfigureProcessObserver(parameters.ProcessId);
-        ConfigureServerInfo(serverInfo);
+    private static Task OnInitializedAsync(InitializeParams parameters) {
+        _ = SafeExtensions.InvokeAsync(async () => {
+            await configurationService.InitializeTask;
+            if (!workspaceService.InitializeWorkspace()) {
+                CurrentSessionLogger.Error(Resources.DotNetRegistrationFailed);
+                languageServer.Client.ShowMessage(MessageType.Error, Resources.DotNetRegistrationFailed);
+            }
 
-        await configurationService.InitializeTask.ConfigureAwait(false);
-        if (!workspaceService.InitializeWorkspace())
-            languageServer.ShowError(Resources.DotNetRegistrationFailed);
+            try {
+                await workspaceService.LoadAsync(parameters.WorkspaceFolders, CancellationToken.None);
+            }
+            finally {
+                codeAnalysisService.StartWorkerThread();
+            }
 
-        await workspaceService.LoadAsync(parameters.WorkspaceFolders, CancellationToken.None).ConfigureAwait(false);
-        codeAnalysisService.StartWorkerThread();
-
-        _ = languageServer.SendNotification(Resources.LoadCompletedNotification, null);
-        _ = languageServer.Client.RefreshWorkspaceTokens();
+            languageServer.Client.SendNotification(Resources.LoadCompletedNotification);
+            await languageServer.Client.RefreshSemanticTokensAsync(CancellationToken.None);
+        });
+        return Task.CompletedTask;
+    }
+    private static Task OnShutdownAsync() {
+        workspaceService.Dispose();
+        return Task.CompletedTask;
     }
 
-    private static void ConfigureProcessObserver(int? pid) {
-        if (pid == null || pid <= 0)
-            return;
-
-        var ideProcess = Process.GetProcessById(pid.Value);
-        ideProcess.EnableRaisingEvents = true;
-        ideProcess.Exited += (_, _) => {
-            CurrentSessionLogger.Debug($"Shutting down server because client process has exited");
-            Environment.Exit(0);
+    private static void ConfigureServerInfo() {
+        var assemblyName = Assembly.GetExecutingAssembly().GetName();
+        languageServer.ServerInfo = new ServerInfo {
+            Name = assemblyName.Name ?? string.Empty,
+            Version = assemblyName.Version?.ToString()
         };
-        CurrentSessionLogger.Debug($"Server is observing client process {ideProcess.ProcessName} (PID: {pid})");
-    }
-    private static void ConfigureServerInfo(ServerInfo serverInfo) {
-        serverInfo.Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
-        serverInfo.Name = Assembly.GetExecutingAssembly().GetName().Name ?? string.Empty;
     }
     private static void ConfigureServices() {
         configurationService = new ConfigurationService(languageServer);
@@ -93,5 +74,32 @@ public class Program {
         workspaceService = new WorkspaceService(configurationService, languageServer);
         navigationService = new NavigationService(workspaceService);
         codeAnalysisService = new CodeAnalysisService(configurationService, languageServer);
+    }
+    private static void ConfigureHandlers() {
+        languageServer.AddHandler(new TextDocumentHandler(workspaceService, codeAnalysisService))
+            .AddHandler(new DocumentFormattingHandler(workspaceService))
+            .AddHandler(new RenameHandler(workspaceService))
+            .AddHandler(new SignatureHelpHandler(workspaceService))
+            .AddHandler(new DocumentSymbolHandler(navigationService))
+            .AddHandler(new HoverHandler(navigationService))
+            .AddHandler(new FoldingRangeHandler(navigationService))
+            .AddHandler(new SemanticTokensHandler(navigationService))
+            .AddHandler(new ImplementationHandler(navigationService))
+            .AddHandler(new InlayHintHandler(workspaceService))
+            .AddHandler(new ReferenceHandler(navigationService))
+            .AddHandler(new DefinitionHandler(navigationService))
+            .AddHandler(new TypeDefinitionHandler(navigationService))
+            .AddHandler(new TypeHierarchyHandler(navigationService))
+            .AddHandler(new CodeActionHandler(workspaceService, codeAnalysisService))
+            .AddHandler(RuntimeInfo.IsRunningOnVSCode
+                ? new CompletionV2Handler(workspaceService, configurationService)
+                : new CompletionHandler(workspaceService, configurationService))
+        // Workspace handlers
+            .AddHandler(new DidChangeConfigurationHandler(configurationService))
+            .AddHandler(new WorkspaceSymbolHandler(workspaceService))
+        // Framework handlers
+            .AddHandler(new WorkspaceDiagnosticsHandler(workspaceService, codeAnalysisService))
+            .AddHandler(new ReloadWorkspaceHandler(workspaceService, navigationService, codeAnalysisService))
+            .AddHandler(new TestExplorerHandler(testExplorerService, workspaceService));
     }
 }

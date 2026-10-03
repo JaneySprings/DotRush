@@ -1,24 +1,17 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
-using DotRush.Common;
 using DotRush.Common.Extensions;
+using DotRush.Protocol;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
-using EmmyLua.LanguageServer.Framework.Server;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 
 namespace DotRush.Roslyn.Server.Handlers.ExternalAccess;
 
-public class TestExplorerHandler : IJsonHandler {
+public class TestExplorerHandler : IHandler {
     private readonly TestExplorerService testExplorerService;
     private readonly WorkspaceService workspaceService;
 
@@ -63,15 +56,8 @@ public class TestExplorerHandler : IJsonHandler {
         });
     }
 
-    public void RegisterHandler(LSPCommunicationBase lspCommunication) {
-        lspCommunication.AddRequestHandler("dotrush/testExplorer/tests", async delegate (RequestMessage message, CancellationToken token) {
-            var request = message.Params?.Deserialize<TestItemParams>(JsonSerializerConfig.Options) ?? new TestItemParams();
-            return JsonSerializer.SerializeToDocument(await Handle(request, token));
-        });
-    }
-    public void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
-    }
-    public void RegisterDynamicCapability(LanguageServer server, ClientCapabilities clientCapabilities) {
+    public void RegisterHandler(LanguageServer server) {
+        server.AddRequestHandler<TestItemParams, ICollection<TestItem>>("dotrush/testExplorer/tests", Handle);
     }
 }
 

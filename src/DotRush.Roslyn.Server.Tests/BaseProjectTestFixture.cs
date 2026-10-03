@@ -1,8 +1,8 @@
 using DotRush.Common;
 using DotRush.Common.Extensions;
 using DotRush.Common.InteropV2;
+using DotRush.Protocol;
 using DotRush.Roslyn.Server.Services;
-using EmmyLua.LanguageServer.Framework.Server;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 using FSExtensions = DotRush.Common.Extensions.FileSystemExtensions;

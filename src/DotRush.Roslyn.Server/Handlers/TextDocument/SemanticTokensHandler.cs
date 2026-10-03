@@ -1,14 +1,10 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Common;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -22,7 +18,7 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
         this.navigationService = navigationService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.SemanticTokensProvider = new SemanticTokensOptions {
             Full = true,
             Range = true,
@@ -78,9 +74,6 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
 
             return await TraverseSyntaxTree(nodes, document, token);
         });
-    }
-    protected override Task<SemanticTokensDeltaResponse?> Handle(SemanticTokensDeltaParams semanticTokensDeltaParams, CancellationToken cancellationToken) {
-        return Task.FromResult<SemanticTokensDeltaResponse?>(null);
     }
 
     private async Task<SemanticTokens?> TraverseSyntaxTree(IEnumerable<SyntaxToken> tokens, Document document, CancellationToken cancellationToken) {
