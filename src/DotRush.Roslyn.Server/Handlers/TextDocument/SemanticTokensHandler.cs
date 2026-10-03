@@ -29,51 +29,47 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
         };
     }
 
-    protected override Task<SemanticTokens?> Handle(SemanticTokensParams request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync(async () => {
-            var documentPath = request.TextDocument.Uri.FileSystemPath;
-            var solution = navigationService.GetRequiredSolution(documentPath);
-            var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
-            var document = solution?.GetDocument(documentId);
-            if (documentId == null || document == null)
-                return null;
+    protected override async Task<SemanticTokens?> Handle(SemanticTokensParams request, CancellationToken token) {
+        var documentPath = request.TextDocument.Uri.FileSystemPath;
+        var solution = navigationService.GetRequiredSolution(documentPath);
+        var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
+        var document = solution?.GetDocument(documentId);
+        if (documentId == null || document == null)
+            return null;
 
-            var syntaxTree = await document.GetSyntaxTreeAsync(token);
-            if (syntaxTree == null)
-                return null;
+        var syntaxTree = await document.GetSyntaxTreeAsync(token);
+        if (syntaxTree == null)
+            return null;
 
-            var root = await syntaxTree.GetRootAsync(token);
-            if (root == null)
-                return null;
+        var root = await syntaxTree.GetRootAsync(token);
+        if (root == null)
+            return null;
 
-            return await TraverseSyntaxTree(root.DescendantTokens(), document, token);
-        });
+        return await TraverseSyntaxTree(root.DescendantTokens(), document, token);
     }
-    protected override Task<SemanticTokens?> Handle(SemanticTokensRangeParams request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync(async () => {
-            var documentPath = request.TextDocument.Uri.FileSystemPath;
-            var solution = navigationService.GetRequiredSolution(documentPath);
-            var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
-            var document = solution?.GetDocument(documentId);
-            if (documentId == null || document == null)
-                return null;
+    protected override async Task<SemanticTokens?> Handle(SemanticTokensRangeParams request, CancellationToken token) {
+        var documentPath = request.TextDocument.Uri.FileSystemPath;
+        var solution = navigationService.GetRequiredSolution(documentPath);
+        var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
+        var document = solution?.GetDocument(documentId);
+        if (documentId == null || document == null)
+            return null;
 
-            var syntaxTree = await document.GetSyntaxTreeAsync(token);
-            if (syntaxTree == null)
-                return null;
+        var syntaxTree = await document.GetSyntaxTreeAsync(token);
+        if (syntaxTree == null)
+            return null;
 
-            var sourceText = await document.GetTextAsync(token);
-            var range = request.Range.ToTextSpan(sourceText);
-            var root = await syntaxTree.GetRootAsync(token);
-            if (root == null)
-                return null;
+        var sourceText = await document.GetTextAsync(token);
+        var range = request.Range.ToTextSpan(sourceText);
+        var root = await syntaxTree.GetRootAsync(token);
+        if (root == null)
+            return null;
 
-            var nodes = root.DescendantTokens()
-                .Where(node => node.FullSpan.IntersectsWith(range))
-                .ToList();
+        var nodes = root.DescendantTokens()
+            .Where(node => node.FullSpan.IntersectsWith(range))
+            .ToList();
 
-            return await TraverseSyntaxTree(nodes, document, token);
-        });
+        return await TraverseSyntaxTree(nodes, document, token);
     }
 
     private async Task<SemanticTokens?> TraverseSyntaxTree(IEnumerable<SyntaxToken> tokens, Document document, CancellationToken cancellationToken) {

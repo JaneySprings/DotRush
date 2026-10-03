@@ -6,10 +6,11 @@ namespace DotRush.Roslyn.Server.Extensions;
 
 public static class PositionExtensions {
     public static int ToOffset(this ProtocolModels.Position position, SourceText sourceText) {
-        if (sourceText.Lines.Count < position.Line)
-            return 0;
+        if (position.Line >= sourceText.Lines.Count)
+            return sourceText.Length;
 
-        return sourceText.Lines.GetPosition(new LinePosition(position.Line, position.Character));
+        var line = sourceText.Lines[position.Line];
+        return Math.Min(line.Start + position.Character, line.End);
     }
 
     public static ProtocolModels.Position ToPosition(this int offset, SourceText sourceText) {

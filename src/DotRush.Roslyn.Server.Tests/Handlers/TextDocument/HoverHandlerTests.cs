@@ -416,7 +416,7 @@ public class TestClass {
 ");
         var result = await handler.Handle(new HoverParams {
             TextDocument = documentPath.CreateDocumentId(),
-            Position = PositionExtensions.CreatePosition(11, 22)
+            Position = PositionExtensions.CreatePosition(12, 15)
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);

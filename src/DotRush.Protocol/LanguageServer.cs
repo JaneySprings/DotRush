@@ -179,7 +179,7 @@ public class LanguageServer {
             return;
 
         if (message.Error != null)
-            resultSource.TrySetException(new JsonRpcException(message.Error.Code, message.Error.Message));
+            resultSource.TrySetException(new ProtocolException(message.Error.Code, message.Error.Message));
         else
             resultSource.TrySetResult(message.Result);
     }
@@ -244,12 +244,13 @@ public class LanguageServer {
                 connection.SendResult(id, result);
         } catch (OperationCanceledException) {
             connection.SendError(id, ErrorCodes.RequestCancelled, "Request cancelled");
-        } catch (JsonRpcException e) {
+        } catch (ProtocolException e) {
             CurrentSessionLogger.Error(e.Message);
             connection.SendError(id, e.Code, e.Message);
         } catch (Exception e) {
+            // Only ProtocolException is meant for the user, any other failure is logged and the request has no result
             CurrentSessionLogger.Error(e);
-            connection.SendError(id, ErrorCodes.InternalError, e.Message);
+            connection.SendResult(id, null);
         } finally {
             if (incomingRequests.TryRemove(id, out tokenSource))
                 tokenSource.Dispose();
@@ -262,7 +263,7 @@ public class LanguageServer {
 
             await currentDispatcher.InvokeAsync(method, () => handler.Invoke(parameters, lifetimeTokenSource.Token)).ConfigureAwait(false);
         } catch (OperationCanceledException) {
-        } catch (JsonRpcException e) {
+        } catch (ProtocolException e) {
             CurrentSessionLogger.Error(e.Message);
         } catch (Exception e) {
             CurrentSessionLogger.Error(e);
@@ -310,12 +311,12 @@ public class LanguageServer {
 
     private static TParams DeserializeParams<TParams>(string method, JsonElement? parameters) {
         if (parameters == null || parameters.Value.ValueKind == JsonValueKind.Null || parameters.Value.ValueKind == JsonValueKind.Undefined)
-            throw new JsonRpcException(ErrorCodes.InvalidParams, $"Parameters of '{method}' are missing");
+            throw new ProtocolException(ErrorCodes.InvalidParams, $"Parameters of '{method}' are missing");
 
         try {
             return parameters.Value.Deserialize<TParams>(ProtocolSerializer.Options)!;
         } catch (JsonException e) {
-            throw new JsonRpcException(ErrorCodes.InvalidParams, $"Parameters of '{method}' are invalid: {e.Message}");
+            throw new ProtocolException(ErrorCodes.InvalidParams, $"Parameters of '{method}' are invalid: {e.Message}");
         }
     }
     private static void Cancel(CancellationTokenSource tokenSource) {

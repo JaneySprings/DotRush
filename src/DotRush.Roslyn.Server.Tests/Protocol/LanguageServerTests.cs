@@ -138,14 +138,20 @@ public class LanguageServerTests {
     }
     [Test]
     public async Task HandlerExceptionTest() {
-        server.AddRequestHandler<JsonElement, string>("test/request", (_, _) => throw new InvalidOperationException("Test failure"));
+        server.AddRequestHandler<JsonElement, string>("test/failure", (_, _) => throw new InvalidOperationException("Test failure"));
+        server.AddRequestHandler<JsonElement, string>("test/protocolFailure", (_, _) => throw new ProtocolException("Symbol not found"));
         await InitializeAsync().ConfigureAwait(false);
 
-        await SendAsync(@"{""jsonrpc"":""2.0"",""id"":1,""method"":""test/request"",""params"":{}}").ConfigureAwait(false);
+        // Unexpected failures are not shown to the user, the request just has no result
+        await SendAsync(@"{""jsonrpc"":""2.0"",""id"":1,""method"":""test/failure"",""params"":{}}").ConfigureAwait(false);
         var response = await ReceiveAsync().ConfigureAwait(false);
+        Assert.That(response.GetRawText(), Is.EqualTo(@"{""jsonrpc"":""2.0"",""id"":1,""result"":null}"));
 
-        Assert.That(response.GetProperty("error").GetProperty("code").GetInt32(), Is.EqualTo(ErrorCodes.InternalError));
-        Assert.That(response.GetProperty("error").GetProperty("message").GetString(), Is.EqualTo("Test failure"));
+        await SendAsync(@"{""jsonrpc"":""2.0"",""id"":2,""method"":""test/protocolFailure"",""params"":{}}").ConfigureAwait(false);
+        response = await ReceiveAsync().ConfigureAwait(false);
+        Assert.That(response.GetProperty("error").GetProperty("code").GetInt32(), Is.EqualTo(ErrorCodes.RequestFailed));
+        Assert.That(response.GetProperty("error").GetProperty("message").GetString(), Is.EqualTo("Symbol not found"));
+        Assert.That(response.TryGetProperty("result", out _), Is.False);
     }
     [Test]
     public async Task NullResultTest() {
@@ -303,7 +309,7 @@ public class LanguageServerTests {
         Assert.That(request.TryGetProperty("params", out _), Is.False);
 
         await SendAsync($@"{{""jsonrpc"":""2.0"",""id"":{request.GetProperty("id").GetRawText()},""error"":{{""code"":-32601,""message"":""Unhandled method""}}}}").ConfigureAwait(false);
-        var exception = Assert.ThrowsAsync<JsonRpcException>(() => failedTask.WaitAsync(timeout));
+        var exception = Assert.ThrowsAsync<ProtocolException>(() => failedTask.WaitAsync(timeout));
         Assert.That(exception.Code, Is.EqualTo(ErrorCodes.MethodNotFound));
         Assert.That(exception.Message, Is.EqualTo("Unhandled method"));
     }
