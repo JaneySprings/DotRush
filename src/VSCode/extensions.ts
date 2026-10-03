@@ -141,6 +141,16 @@ export class Extensions {
         const tasks = await vscode.tasks.fetchTasks();
         return tasks.find(task => task.name === taskName);
     }
+    public static async insertSnippet(editor: vscode.TextEditor | undefined, snippet: string, range: vscode.Range): Promise<boolean> {
+        if (editor === undefined)
+            return false;
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (await editor.insertSnippet(new vscode.SnippetString(snippet), range))
+                return true;
+        }
+        return false;
+    }
     public static getCurrentWorkingDirectory(): string | undefined {
         if (vscode.workspace.workspaceFile !== undefined)
             return path.dirname(vscode.workspace.workspaceFile.fsPath);
