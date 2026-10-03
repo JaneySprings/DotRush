@@ -1,11 +1,8 @@
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentFormatting;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Formatting;
 
@@ -18,11 +15,11 @@ public class DocumentFormattingHandler : DocumentFormattingHandlerBase {
         this.solutionService = solutionService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.DocumentFormattingProvider = true;
         serverCapabilities.DocumentRangeFormattingProvider = true;
     }
-    protected override async Task<DocumentFormattingResponse?> Handle(DocumentFormattingParams request, CancellationToken token) {
+    protected override async Task<List<TextEdit>?> Handle(DocumentFormattingParams request, CancellationToken token) {
         var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
         if (documentIds == null)
             return null;
@@ -45,9 +42,9 @@ public class DocumentFormattingHandler : DocumentFormattingHandlerBase {
             }
         }
 
-        return new DocumentFormattingResponse(edits.ToList());
+        return edits.ToList();
     }
-    protected override async Task<DocumentFormattingResponse?> Handle(DocumentRangesFormattingParams request, CancellationToken token) {
+    protected override async Task<List<TextEdit>?> Handle(DocumentRangesFormattingParams request, CancellationToken token) {
         var documentIds = solutionService.Solution?.GetDocumentIdsWithFilePathV2(request.TextDocument.Uri.FileSystemPath);
         if (documentIds == null)
             return null;
@@ -69,12 +66,13 @@ public class DocumentFormattingHandler : DocumentFormattingHandlerBase {
             }
         }
 
-        return new DocumentFormattingResponse(edits.ToList());
+        return edits.ToList();
     }
-    protected override Task<DocumentFormattingResponse?> Handle(DocumentRangeFormattingParams request, CancellationToken token) {
-        return Handle(request.ToRangesParameters(), token);
-    }
-    protected override Task<DocumentFormattingResponse?> Handle(DocumentOnTypeFormattingParams request, CancellationToken token) {
-        return Task.FromResult<DocumentFormattingResponse?>(null);
+    protected override Task<List<TextEdit>?> Handle(DocumentRangeFormattingParams request, CancellationToken token) {
+        return Handle(new DocumentRangesFormattingParams() {
+            TextDocument = request.TextDocument,
+            Ranges = new List<DocumentRange> { request.Range },
+            Options = request.Options,
+        }, token);
     }
 }

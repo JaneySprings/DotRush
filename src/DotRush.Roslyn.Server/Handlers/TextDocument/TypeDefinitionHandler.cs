@@ -1,14 +1,12 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.TypeDefinition;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis.FindSymbols;
-using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Model;
+using ProtocolModels = DotRush.Protocol.Models;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -19,11 +17,11 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
         this.navigationService = navigationService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.TypeDefinitionProvider = true;
     }
-    protected override Task<TypeDefinitionResponse?> Handle(TypeDefinitionParams request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync<TypeDefinitionResponse?>(async () => {
+    protected override Task<List<ProtocolModels.Location>?> Handle(TypeDefinitionParams request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<List<ProtocolModels.Location>?>(async () => {
             var documentPath = request.TextDocument.Uri.FileSystemPath;
             var solution = navigationService.GetRequiredSolution(documentPath);
             var documentIds = solution?.GetDocumentIdsWithFilePathV2(documentPath);
@@ -49,7 +47,7 @@ public class TypeDefinitionHandler : TypeDefinitionHandlerBase {
                 result.AddRange(definitionSpans.Select(x => x.ToLocation()));
             }
 
-            return new TypeDefinitionResponse(result.ToList());
+            return result.ToList();
         });
     }
 }

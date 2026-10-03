@@ -1,4 +1,4 @@
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using DotRush.Protocol.Models;
 
 namespace DotRush.Roslyn.Server.Tests.Extensions;
 

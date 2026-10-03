@@ -1,8 +1,7 @@
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Server.Tests.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Hover;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Markup;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.Server.Tests;
@@ -10,7 +9,7 @@ namespace DotRush.Roslyn.Server.Tests;
 public class HoverHandlerMock : HoverHandler {
     public HoverHandlerMock(NavigationService navigationService) : base(navigationService) { }
 
-    public new Task<HoverResponse?> Handle(HoverParams request, CancellationToken token) {
+    public new Task<Hover?> Handle(HoverParams request, CancellationToken token) {
         return base.Handle(request, token);
     }
 }

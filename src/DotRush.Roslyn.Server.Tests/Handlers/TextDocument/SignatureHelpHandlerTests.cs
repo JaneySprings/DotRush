@@ -1,7 +1,7 @@
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Server.Tests.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.SignatureHelp;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.Server.Tests;
@@ -55,7 +55,7 @@ class MyClass1 {
         Assert.That(result.ActiveParameter, Is.EqualTo(0));
 
         var signature = result.Signatures.First(it => it.Label == "void MyClass1.Method1(string value, int count)");
-        Assert.That(signature.Parameters.Select(it => it.Label.Result1).ToList(), Is.EqualTo(new List<string> { "string value", "int count" }));
+        Assert.That(signature.Parameters.Select(it => it.Label).ToList(), Is.EqualTo(new List<string> { "string value", "int count" }));
     }
 
     [Test]

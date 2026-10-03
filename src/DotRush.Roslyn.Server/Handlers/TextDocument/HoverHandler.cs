@@ -1,17 +1,15 @@
 using System.Text;
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Hover;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Markup;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
+using SymbolKind = Microsoft.CodeAnalysis.SymbolKind;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -22,10 +20,10 @@ public class HoverHandler : HoverHandlerBase {
         this.navigationService = navigationService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.HoverProvider = true;
     }
-    protected override Task<HoverResponse?> Handle(HoverParams request, CancellationToken token) {
+    protected override Task<Hover?> Handle(HoverParams request, CancellationToken token) {
         return SafeExtensions.InvokeAsync(async () => {
             var documentPath = request.TextDocument.Uri.FileSystemPath;
             var solution = navigationService.GetRequiredSolution(documentPath);
@@ -61,7 +59,7 @@ public class HoverHandler : HoverHandlerBase {
             }
 
             if (displayDictionary.Count == 1) {
-                return new HoverResponse {
+                return new Hover {
                     Contents = new MarkupContent {
                         Kind = MarkupKind.Markdown,
                         Value = MarkdownExtensions.CreateDocumentation(displayDictionary.Keys.First(), documentation, "csharp")
@@ -73,7 +71,7 @@ public class HoverHandler : HoverHandlerBase {
                 var builder = new StringBuilder();
                 displayDictionary.ForEach(kv => builder.AppendLine($"{kv.Key}  ({string.Join(", ", kv.Value)})"));
 
-                return new HoverResponse {
+                return new Hover {
                     Contents = new MarkupContent {
                         Kind = MarkupKind.Markdown,
                         Value = MarkdownExtensions.CreateDocumentation(builder.ToString(), "csharp")

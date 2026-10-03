@@ -1,18 +1,12 @@
-using System.Text.Json;
-using DotRush.Common;
+using DotRush.Protocol;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.Server.Services;
-using EmmyLua.LanguageServer.Framework;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.TextDocument;
-using EmmyLua.LanguageServer.Framework.Server;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 
 namespace DotRush.Roslyn.Server.Handlers.ExternalAccess;
 
-public class WorkspaceDiagnosticsHandler : IJsonHandler {
+public class WorkspaceDiagnosticsHandler : IHandler {
     private readonly WorkspaceService workspaceService;
     private readonly CodeAnalysisService codeAnalysisService;
 
@@ -34,17 +28,8 @@ public class WorkspaceDiagnosticsHandler : IJsonHandler {
         return Task.CompletedTask;
     }
 
-    public void RegisterHandler(LSPCommunicationBase lspCommunication) {
-        lspCommunication.AddNotificationHandler("dotrush/solutionDiagnostics", delegate (NotificationMessage message, CancellationToken token) {
-            return Handle(token);
-        });
-        lspCommunication.AddNotificationHandler("dotrush/documentDiagnostics", delegate (NotificationMessage message, CancellationToken token) {
-            var request = message.Params?.Deserialize<DidOpenTextDocumentParams>(JsonSerializerConfig.Options);
-            return Handle(request, token);
-        });
-    }
-    public void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
-    }
-    public void RegisterDynamicCapability(LanguageServer server, ClientCapabilities clientCapabilities) {
+    public void RegisterHandler(LanguageServer server) {
+        server.AddNotificationHandler("dotrush/solutionDiagnostics", Handle);
+        server.AddNotificationHandler<DidOpenTextDocumentParams>("dotrush/documentDiagnostics", Handle);
     }
 }

@@ -1,16 +1,12 @@
 using System.Collections.ObjectModel;
-using System.Text.Json;
 using DotRush.Common.Extensions;
 using DotRush.Common.InteropV2;
 using DotRush.Common.MSBuild;
-using DotRush.Roslyn.Server.Extensions;
+using DotRush.Protocol;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Workspaces;
 using DotRush.Roslyn.Workspaces.Extensions;
 using DotRush.Roslyn.Workspaces.FileSystem;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
-using EmmyLua.LanguageServer.Framework.Server;
 
 namespace DotRush.Roslyn.Server.Services;
 
@@ -18,6 +14,7 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDis
     private readonly ConfigurationService configurationService;
     private readonly LanguageServer? serverFacade;
     private WorkspaceFilesWatcher? fileWatcher;
+    private ProgressReporter? progressReporter;
 
     protected override ReadOnlyDictionary<string, string> WorkspaceProperties => configurationService.WorkspaceProperties;
     protected override bool LoadMetadataForReferencedProjects => configurationService.LoadMetadataForReferencedProjects;
@@ -38,19 +35,22 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDis
         if (targets == null)
             return; //serverFacade?.ShowError(Resources.ProjectOrSolutionFileSpecificationRequired);
 
-        await LoadAsync(targets, cancellationToken).ConfigureAwait(false);
+        await LoadAsync(targets, cancellationToken);
         StartObserving();
     }
 
     public override async Task OnLoadingStartedAsync(CancellationToken cancellationToken) {
-        await serverFacade.CreateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken).ConfigureAwait(false);
+        if (serverFacade != null)
+            progressReporter = await SafeExtensions.InvokeAsync(() => serverFacade.Client.CreateProgressAsync(string.Empty, cancellationToken));
     }
-    public override async Task OnLoadingCompletedAsync(CancellationToken cancellationToken) {
-        await serverFacade.EndWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken).ConfigureAwait(false);
+    public override Task OnLoadingCompletedAsync(CancellationToken cancellationToken) {
+        progressReporter?.End();
+        progressReporter = null;
+        return Task.CompletedTask;
     }
     public override void OnProjectRestoreStarted(string documentPath, int progress) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectRestoreCompositeFormat, projectName), progress);
+        progressReporter?.Report(string.Format(null, Resources.ProjectRestoreCompositeFormat, projectName), progress);
     }
     public override void OnProjectRestoreCompleted(string documentPath, ProcessResult result) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
@@ -65,22 +65,23 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDis
                 Code = "NU0000",
             });
         }
-        _ = serverFacade?.Client.PublishDiagnostics(new PublishDiagnosticsParams() {
+        serverFacade?.Client.PublishDiagnostics(new PublishDiagnosticsParams() {
             Uri = documentPath,
             Diagnostics = diagnostics,
         });
     }
     public override void OnProjectLoadStarted(string documentPath, int progress) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectIndexCompositeFormat, projectName), progress);
+        progressReporter?.Report(string.Format(null, Resources.ProjectIndexCompositeFormat, projectName), progress);
     }
     public override void OnProjectLoadCompleted(Microsoft.CodeAnalysis.Project project) {
         var projectModel = MSBuildProjectsLoader.LoadProject(project.FilePath, true);
-        _ = serverFacade?.SendNotification(Resources.ProjectLoadedNotification, JsonSerializer.SerializeToDocument(projectModel));
+        if (projectModel != null)
+            serverFacade?.Client.SendNotification(Resources.ProjectLoadedNotification, projectModel);
     }
     public override void OnProjectCompilationStarted(string documentPath, int progress) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
-        _ = serverFacade?.UpdateWorkDoneProgress(Resources.WorkspaceServiceWorkDoneToken, string.Format(null, Resources.ProjectCompileCompositeFormat, projectName), progress);
+        progressReporter?.Report(string.Format(null, Resources.ProjectCompileCompositeFormat, projectName), progress);
     }
 
     internal IEnumerable<string>? GetProjectOrSolutionFiles(IEnumerable<string>? workspaceFolders) {

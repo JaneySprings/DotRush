@@ -1,5 +1,5 @@
 using Microsoft.CodeAnalysis;
-using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
+using ProtocolModels = DotRush.Protocol.Models;
 
 namespace DotRush.Roslyn.Server.Extensions;
 

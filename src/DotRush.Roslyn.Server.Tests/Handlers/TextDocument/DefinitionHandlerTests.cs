@@ -1,9 +1,8 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Server.Tests.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Definition;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using Microsoft.CodeAnalysis.Text;
 using NUnit.Framework;
 
@@ -12,7 +11,7 @@ namespace DotRush.Roslyn.Server.Tests;
 public class DefinitionHandlerMock : DefinitionHandler {
     public DefinitionHandlerMock(NavigationService navigationService) : base(navigationService) { }
 
-    public new Task<DefinitionResponse?> Handle(DefinitionParams request, CancellationToken token) {
+    public new Task<List<Location>?> Handle(DefinitionParams request, CancellationToken token) {
         return base.Handle(request, token);
     }
 }
@@ -44,10 +43,10 @@ class MyClass {
             Position = PositionExtensions.CreatePosition(5, 10)
         }, CancellationToken.None);
 
-        Assert.That(result?.Result2, Is.Not.Null);
-        Assert.That(result.Result2, Has.Count.EqualTo(1));
-        Assert.That(PathExtensions.Equals(result.Result2[0].Uri.FileSystemPath, documentPath), Is.True);
-        Assert.That(result.Result2[0].Range, Is.EqualTo(PositionExtensions.CreateRange(3, 6, 3, 13)));
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(PathExtensions.Equals(result[0].Uri.FileSystemPath, documentPath), Is.True);
+        Assert.That(result[0].Range, Is.EqualTo(PositionExtensions.CreateRange(3, 6, 3, 13)));
     }
 
     [Test]
@@ -67,8 +66,8 @@ class MyClass {
             Position = PositionExtensions.CreatePosition(5, 10)
         }, CancellationToken.None);
 
-        Assert.That(result?.Result2, Is.Not.Null.And.Not.Empty);
-        foreach (var location in result!.Result2!)
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        foreach (var location in result!)
             AssertDecompiledLocation(location, "class Console");
     }
     [Test]
@@ -88,8 +87,8 @@ class MyClass {
             Position = PositionExtensions.CreatePosition(5, 18)
         }, CancellationToken.None);
 
-        Assert.That(result?.Result2, Is.Not.Null.And.Not.Empty);
-        foreach (var location in result!.Result2!)
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        foreach (var location in result!)
             AssertDecompiledLocation(location, "WriteLine(string");
     }
     [Test]
@@ -109,8 +108,8 @@ class MyClass {
             Position = PositionExtensions.CreatePosition(5, 36)
         }, CancellationToken.None);
 
-        Assert.That(result?.Result2, Is.Not.Null.And.Not.Empty);
-        foreach (var location in result!.Result2!)
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        foreach (var location in result!)
             AssertDecompiledLocation(location, "enum SpecialFolder");
     }
     [Test]
@@ -132,9 +131,9 @@ class MyClass {
         var firstResult = await handler.Handle(request, CancellationToken.None);
         var secondResult = await handler.Handle(request, CancellationToken.None);
 
-        Assert.That(firstResult?.Result2, Is.Not.Null.And.Not.Empty);
-        Assert.That(secondResult?.Result2, Is.Not.Null.And.Not.Empty);
-        Assert.That(secondResult!.Result2, Is.EquivalentTo(firstResult!.Result2!));
+        Assert.That(firstResult, Is.Not.Null.And.Not.Empty);
+        Assert.That(secondResult, Is.Not.Null.And.Not.Empty);
+        Assert.That(secondResult!, Is.EquivalentTo(firstResult!));
     }
 
     [Test]
@@ -174,8 +173,8 @@ public partial class MyClass {
                 Position = PositionExtensions.CreatePosition(5, 10)
             }, CancellationToken.None);
 
-            Assert.That(result?.Result2, Is.Not.Null.And.Not.Empty);
-            foreach (var location in result!.Result2!) {
+            Assert.That(result, Is.Not.Null.And.Not.Empty);
+            foreach (var location in result!) {
                 var filePath = location.Uri.FileSystemPath;
                 Assert.That(filePath, Does.Contain("_generated_"));
                 Assert.That(File.Exists(filePath), Is.True, $"Emitted file '{filePath}' does not exist");
@@ -209,10 +208,10 @@ class Usage {
             Position = PositionExtensions.CreatePosition(9, 30)
         }, CancellationToken.None);
 
-        Assert.That(result?.Result2, Is.Not.Null);
-        Assert.That(result.Result2, Has.Count.EqualTo(1));
-        Assert.That(PathExtensions.Equals(result.Result2[0].Uri.FileSystemPath, documentPath), Is.True);
-        Assert.That(result.Result2[0].Range, Is.EqualTo(PositionExtensions.CreateRange(3, 6, 3, 15)));
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(PathExtensions.Equals(result[0].Uri.FileSystemPath, documentPath), Is.True);
+        Assert.That(result[0].Range, Is.EqualTo(PositionExtensions.CreateRange(3, 6, 3, 15)));
     }
     [Test]
     public async Task SourceGenericMethodDefinitionTest() {
@@ -236,10 +235,10 @@ class Usage {
             Position = PositionExtensions.CreatePosition(10, 19)
         }, CancellationToken.None);
 
-        Assert.That(result?.Result2, Is.Not.Null);
-        Assert.That(result.Result2, Has.Count.EqualTo(1));
-        Assert.That(PathExtensions.Equals(result.Result2[0].Uri.FileSystemPath, documentPath), Is.True);
-        Assert.That(result.Result2[0].Range, Is.EqualTo(PositionExtensions.CreateRange(4, 16, 4, 22)));
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(PathExtensions.Equals(result[0].Uri.FileSystemPath, documentPath), Is.True);
+        Assert.That(result[0].Range, Is.EqualTo(PositionExtensions.CreateRange(4, 16, 4, 22)));
     }
 
     [Test]
@@ -259,8 +258,8 @@ class MyClass {
             Position = PositionExtensions.CreatePosition(5, 9)
         }, CancellationToken.None);
 
-        Assert.That(result?.Result2, Is.Not.Null.And.Not.Empty);
-        foreach (var location in result!.Result2!) {
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        foreach (var location in result!) {
             Assert.That(location.Uri.FileSystemPath, Does.Contain("List`1"));
             AssertDecompiledLocation(location, "class List<T>");
         }
@@ -282,8 +281,8 @@ class MyClass {
             Position = PositionExtensions.CreatePosition(5, 24)
         }, CancellationToken.None);
 
-        Assert.That(result?.Result2, Is.Not.Null.And.Not.Empty);
-        foreach (var location in result!.Result2!) {
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        foreach (var location in result!) {
             Assert.That(location.Uri.FileSystemPath, Does.Contain("List`1"));
             AssertDecompiledLocation(location, "public List()");
         }
@@ -306,8 +305,8 @@ class MyClass {
             Position = PositionExtensions.CreatePosition(6, 14)
         }, CancellationToken.None);
 
-        Assert.That(result?.Result2, Is.Not.Null.And.Not.Empty);
-        foreach (var location in result!.Result2!) {
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        foreach (var location in result!) {
             Assert.That(location.Uri.FileSystemPath, Does.Contain("List`1"));
             AssertDecompiledLocation(location, "Add(T item)");
         }
@@ -329,8 +328,8 @@ class MyClass {
             Position = PositionExtensions.CreatePosition(5, 10)
         }, CancellationToken.None);
 
-        Assert.That(result?.Result2, Is.Not.Null.And.Not.Empty);
-        foreach (var location in result!.Result2!) {
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        foreach (var location in result!) {
             Assert.That(location.Uri.FileSystemPath, Does.Contain("Dictionary`2"));
             AssertDecompiledLocation(location, "class Dictionary<TKey, TValue>");
         }
@@ -352,8 +351,8 @@ class MyClass {
             Position = PositionExtensions.CreatePosition(5, 20)
         }, CancellationToken.None);
 
-        Assert.That(result?.Result2, Is.Not.Null.And.Not.Empty);
-        foreach (var location in result!.Result2!) {
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        foreach (var location in result!) {
             Assert.That(location.Uri.FileSystemPath, Does.Contain("List`1"));
             AssertDecompiledLocation(location, "struct Enumerator");
         }
@@ -375,8 +374,8 @@ class MyClass {
             Position = PositionExtensions.CreatePosition(5, 28)
         }, CancellationToken.None);
 
-        Assert.That(result?.Result2, Is.Not.Null.And.Not.Empty);
-        foreach (var location in result!.Result2!)
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        foreach (var location in result!)
             AssertDecompiledLocation(location, "Create<T1>(");
     }
 

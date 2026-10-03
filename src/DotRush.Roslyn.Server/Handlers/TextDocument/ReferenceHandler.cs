@@ -1,12 +1,9 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Reference;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
@@ -18,11 +15,11 @@ public class ReferenceHandler : ReferenceHandlerBase {
         this.navigationService = navigationService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.ReferencesProvider = true;
     }
-    protected override Task<ReferenceResponse?> Handle(ReferenceParams request, CancellationToken cancellationToken) {
-        return SafeExtensions.InvokeAsync<ReferenceResponse?>(async () => {
+    protected override Task<List<Location>?> Handle(ReferenceParams request, CancellationToken cancellationToken) {
+        return SafeExtensions.InvokeAsync<List<Location>?>(async () => {
             var documentPath = request.TextDocument.Uri.FileSystemPath;
             var solution = navigationService.GetRequiredSolution(documentPath);
             var documentIds = solution?.GetDocumentIdsWithFilePathV2(documentPath);
@@ -44,7 +41,7 @@ public class ReferenceHandler : ReferenceHandlerBase {
                 result.AddRange(referenceSpans.Select(x => x.ToLocation()));
             }
 
-            return new ReferenceResponse(result.ToList());
+            return result.ToList();
         });
     }
 }

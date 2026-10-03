@@ -1,4 +1,4 @@
-using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentFormatting;
+using DotRush.Protocol.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Options;
 using RoslynFormattingOptions = Microsoft.CodeAnalysis.Formatting.FormattingOptions;
@@ -13,7 +13,7 @@ public static class FormattingExtensions {
 
         return optionSet
             .WithChangedOption(RoslynFormattingOptions.UseTabs, document.Project.Language, !options.InsertSpaces)
-            .WithChangedOption(RoslynFormattingOptions.TabSize, document.Project.Language, (int)options.TabSize)
-            .WithChangedOption(RoslynFormattingOptions.IndentationSize, document.Project.Language, (int)options.TabSize);
+            .WithChangedOption(RoslynFormattingOptions.TabSize, document.Project.Language, options.TabSize)
+            .WithChangedOption(RoslynFormattingOptions.IndentationSize, document.Project.Language, options.TabSize);
     }
 }

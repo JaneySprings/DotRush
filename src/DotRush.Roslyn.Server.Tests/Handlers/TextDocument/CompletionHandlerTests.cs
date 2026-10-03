@@ -1,8 +1,7 @@
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Server.Tests.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Completion;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Kind;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.Server.Tests;
@@ -10,7 +9,7 @@ namespace DotRush.Roslyn.Server.Tests;
 public class CompletionHandlerMock : CompletionHandler {
     public CompletionHandlerMock(WorkspaceService workspaceService, ConfigurationService configurationService) : base(workspaceService, configurationService) { }
 
-    public new Task<CompletionResponse?> Handle(CompletionParams request, CancellationToken token) {
+    public new Task<CompletionList?> Handle(CompletionParams request, CancellationToken token) {
         return base.Handle(request, token);
     }
     public new Task<CompletionItem> Resolve(CompletionItem item, CancellationToken token) {
@@ -45,7 +44,6 @@ class MyClass1 {
         }, CancellationToken.None);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.List, Is.Null.Or.Empty);
         Assert.That(result.Items, Has.Count.EqualTo(483));
 
         var preselect = result.Items.Where(it => it.Preselect == true).ToArray();
@@ -96,7 +94,6 @@ class MyClass1 {
         }, CancellationToken.None);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.List, Is.Null.Or.Empty);
         Assert.That(result.Items, Is.Not.Empty);
 
         var autoUsingItem = result.Items.FirstOrDefault(it => it.Label == "JsonSerializer");
@@ -139,7 +136,6 @@ class MyClass1 {
         }, CancellationToken.None);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.List, Is.Null.Or.Empty);
         Assert.That(result.Items, Has.Count.EqualTo(3));
 
         var equalsOvrItem = result.Items.FirstOrDefault(it => it.Label == "Equals(object? obj)");
@@ -184,7 +180,6 @@ class MyClass1 {
         }, CancellationToken.None);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.List, Is.Null.Or.Empty);
         Assert.That(result.Items, Has.Count.EqualTo(127));
 
         var forSnippetItem = result.Items.FirstOrDefault(it => it.Label == "for");

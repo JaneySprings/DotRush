@@ -1,17 +1,12 @@
 using System.Collections.Immutable;
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Diagnostics;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Union;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeRefactorings;
@@ -31,17 +26,17 @@ public class CodeActionHandler : CodeActionHandlerBase {
         this.codeAnalysisService = codeAnalysisService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.CodeActionProvider = new CodeActionOptions {
             CodeActionKinds = new List<CodeActionKind> { CodeActionKind.QuickFix, CodeActionKind.Refactor },
             ResolveProvider = true
         };
     }
-    protected override Task<CodeActionResponse> Handle(CodeActionParams request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync(new CodeActionResponse(new List<CommandOrCodeAction>()), async () => {
+    protected override Task<List<CodeAction>> Handle(CodeActionParams request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync(new List<CodeAction>(), async () => {
             codeActionsCache.Clear();
 
-            var result = new List<CommandOrCodeAction>();
+            var result = new List<CodeAction>();
             var filePath = request.TextDocument.Uri.FileSystemPath;
 
             if (codeAnalysisService.CompilerDiagnosticsScope != AnalysisScope.None)
@@ -50,9 +45,9 @@ public class CodeActionHandler : CodeActionHandlerBase {
                 result.AddRange(await GetRefactoringsAsync(filePath, request.Range, token));
 
             if (request.Context?.Only != null && request.Context.Only.Count > 0)
-                return new CodeActionResponse(result.Where(it => it.CodeAction?.Kind != null && request.Context.Only.Contains(it.CodeAction.Kind.Value)).ToList());
+                return result.Where(it => it.Kind != null && request.Context.Only.Contains(it.Kind.Value)).ToList();
 
-            return new CodeActionResponse(result);
+            return result;
         });
     }
     protected override Task<CodeAction?> Resolve(CodeAction? request, CancellationToken token) {
@@ -65,17 +60,17 @@ public class CodeActionHandler : CodeActionHandlerBase {
                 return request;
 
             var documentChanges = await ResolveCodeActionAsync(codeAction, workspaceService.Solution, token);
-            request.Edit = new WorkspaceEdit() { DocumentChanges = new WorkspaceEditDocumentChanges(documentChanges.ToList()) };
+            request.Edit = new WorkspaceEdit() { DocumentChanges = documentChanges.ToList() };
             return request;
         });
     }
 
-    private async Task<IEnumerable<CommandOrCodeAction>> GetQuickFixesAsync(string filePath, DocumentRange range, CancellationToken cancellationToken) {
+    private async Task<IEnumerable<CodeAction>> GetQuickFixesAsync(string filePath, DocumentRange range, CancellationToken cancellationToken) {
         var documentId = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath).FirstOrDefault();
         if (documentId == null)
-            return Enumerable.Empty<CommandOrCodeAction>();
+            return Enumerable.Empty<CodeAction>();
 
-        var result = new List<CommandOrCodeAction>();
+        var result = new List<CodeAction>();
         var document = workspaceService.Solution?.GetDocument(documentId);
         if (document == null)
             return result;
@@ -109,7 +104,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
                             action.ToFlattenCodeActions((codeAction, title) => {
                                 if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
-                                    result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(CodeActionKind.QuickFix, title)));
+                                    result.Add(codeAction.ToCodeAction(CodeActionKind.QuickFix, title));
                             });
                         }, cancellationToken)).ConfigureAwait(false);
                         // FixAll QuickFix
@@ -119,7 +114,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
                             action.ToFlattenCodeActions((codeAction, title) => {
                                 if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
-                                    result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(CodeActionKind.QuickFix, title)));
+                                    result.Add(codeAction.ToCodeAction(CodeActionKind.QuickFix, title));
                             });
                         }, cancellationToken).ConfigureAwait(false);
                     }
@@ -129,10 +124,10 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
         return result;
     }
-    private async Task<IEnumerable<CommandOrCodeAction>> GetRefactoringsAsync(string filePath, DocumentRange range, CancellationToken cancellationToken) {
+    private async Task<IEnumerable<CodeAction>> GetRefactoringsAsync(string filePath, DocumentRange range, CancellationToken cancellationToken) {
         var documentIds = workspaceService.Solution?.GetDocumentIdsWithFilePathV2(filePath);
         if (documentIds == null)
-            return Enumerable.Empty<CommandOrCodeAction>();
+            return Enumerable.Empty<CodeAction>();
 
         foreach (var documentId in documentIds) {
             var document = workspaceService.Solution?.GetDocument(documentId);
@@ -142,7 +137,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
             var sourceText = await document.GetTextAsync(cancellationToken);
             var textSpan = range.ToTextSpan(sourceText);
 
-            var result = new List<CommandOrCodeAction>();
+            var result = new List<CodeAction>();
             var codeRefactoringProviders = codeAnalysisService.GetCodeRefactoringProvidersForProject(document.Project);
             if (codeRefactoringProviders == null)
                 continue;
@@ -154,7 +149,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
 
                     action.ToFlattenCodeActions((codeAction, title) => {
                         if (codeActionsCache.TryAdd(codeAction.GetUniqueId(), codeAction))
-                            result.Add(new CommandOrCodeAction(codeAction.ToCodeAction(CodeActionKind.Refactor, title)));
+                            result.Add(codeAction.ToCodeAction(CodeActionKind.Refactor, title));
                     });
                 }, cancellationToken));
             }
@@ -163,7 +158,7 @@ public class CodeActionHandler : CodeActionHandlerBase {
                 return result;
         }
 
-        return Enumerable.Empty<CommandOrCodeAction>();
+        return Enumerable.Empty<CodeAction>();
     }
     private async Task<IEnumerable<IDocumentChange>> ResolveCodeActionAsync(CodeAnalysisCodeAction codeAction, Solution solution, CancellationToken cancellationToken) {
         var documentChanges = new HashSet<IDocumentChange>(DocumentChangeEqualityComparer.Default);

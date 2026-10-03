@@ -1,12 +1,10 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Reflection;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
 
@@ -18,11 +16,11 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
         this.navigationService = navigationService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.FoldingRangeProvider = true;
     }
-    protected override Task<FoldingRangeResponse> Handle(FoldingRangeParams request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync(new FoldingRangeResponse(new List<FoldingRange>()), async () => {
+    protected override Task<List<FoldingRange>> Handle(FoldingRangeParams request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync(new List<FoldingRange>(), async () => {
             var result = new List<FoldingRange>();
 
             var documentPath = request.TextDocument.Uri.FileSystemPath;
@@ -31,7 +29,7 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
             var documentId = documentIds?.FirstOrDefault();
             var document = solution?.GetDocument(documentId);
             if (document == null)
-                return new FoldingRangeResponse(result);
+                return result;
 
             if (blockStructureService == null)
                 blockStructureService = InternalCSharpBlockStructureService.CreateNew(document.Project.Solution.Services);
@@ -39,7 +37,7 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
             var blockStructure = await InternalCSharpBlockStructureService.GetBlockStructureAsync(blockStructureService, document, InternalBlockStructureOptions.Default, token).ConfigureAwait(false);
             var spans = InternalBlockStructure.GetSpans(blockStructure);
             if (spans == null)
-                return new FoldingRangeResponse(result);
+                return result;
 
             var sourceText = await document.GetTextAsync(token).ConfigureAwait(false);
             foreach (var span in spans) {
@@ -54,7 +52,7 @@ public class FoldingRangeHandler : FoldingRangeHandlerBase {
                 });
             }
 
-            return new FoldingRangeResponse(result);
+            return result;
         });
     }
 }

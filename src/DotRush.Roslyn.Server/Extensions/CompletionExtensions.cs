@@ -1,11 +1,10 @@
 using DotRush.Roslyn.CodeAnalysis.Reflection;
 using DotRush.Roslyn.Server.Services;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Tags;
 using Microsoft.CodeAnalysis.Text;
-using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.Completion;
+using ProtocolModels = DotRush.Protocol.Models;
 
 namespace DotRush.Roslyn.Server.Extensions;
 
@@ -117,20 +116,14 @@ public static class CompletionExtensions {
         }
     }
 
-    public static TextEdit ToTextEdit(this TextChange change, SourceText sourceText) {
-        return new TextEdit() {
+    public static ProtocolModels.TextEdit ToTextEdit(this TextChange change, SourceText sourceText) {
+        return new ProtocolModels.TextEdit() {
             NewText = change.NewText ?? string.Empty,
             Range = change.Span.ToRange(sourceText)
         };
     }
-    public static AnnotatedTextEdit ToAnnotatedTextEdit(this TextChange change, SourceText sourceText) {
-        return new AnnotatedTextEdit() {
-            NewText = change.NewText ?? string.Empty,
-            Range = change.Span.ToRange(sourceText)
-        };
-    }
-    public static (TextEdit?, List<AnnotatedTextEdit>) ToTextChanges(this CompletionChange completionChange, SourceText sourceText, int cursorOffset) {
-        var additionalTextEdits = completionChange.TextChanges.Where(x => !x.Span.IntersectsWith(cursorOffset)).Select(x => x.ToAnnotatedTextEdit(sourceText)).ToList();
+    public static (ProtocolModels.TextEdit?, List<ProtocolModels.TextEdit>) ToTextChanges(this CompletionChange completionChange, SourceText sourceText, int cursorOffset) {
+        var additionalTextEdits = completionChange.TextChanges.Where(x => !x.Span.IntersectsWith(cursorOffset)).Select(x => x.ToTextEdit(sourceText)).ToList();
         var currentLineTextChanges = completionChange.TextChanges.Where(x => x.Span.IntersectsWith(cursorOffset)).ToList();
         if (currentLineTextChanges.Count == 0)
             return (null, additionalTextEdits);
@@ -142,7 +135,7 @@ public static class CompletionExtensions {
         var newLineCount = additionalTextEdits.SelectMany(x => x.NewText.Split('\n')).Count();
 
         // var changeSpan = TextSpan.FromBounds(currentLineTextChange.Span.Start, Math.Clamp(cursorOffset, currentLineTextChange.Span.Start, currentLineTextChange.Span.End));
-        var textEdit = new TextEdit() {
+        var textEdit = new ProtocolModels.TextEdit() {
             NewText = newText,
             Range = currentLineTextChange.Span.ToRange(sourceText).Offset(newLineCount - oldLineCount)
         };
@@ -194,10 +187,10 @@ public static class CompletionExtensions {
     }
 }
 
-class TextEditEqualityComparer : IEqualityComparer<TextEdit> {
+class TextEditEqualityComparer : IEqualityComparer<ProtocolModels.TextEdit> {
     public static TextEditEqualityComparer Default { get; } = new TextEditEqualityComparer();
 
-    public bool Equals(TextEdit? x, TextEdit? y) {
+    public bool Equals(ProtocolModels.TextEdit? x, ProtocolModels.TextEdit? y) {
         if (x == null && y == null)
             return true;
         if (x == null || y == null)
@@ -205,7 +198,7 @@ class TextEditEqualityComparer : IEqualityComparer<TextEdit> {
 
         return GetHashCode(x) == GetHashCode(y);
     }
-    public int GetHashCode(TextEdit obj) {
+    public int GetHashCode(ProtocolModels.TextEdit obj) {
         return HashCode.Combine(obj.NewText, obj.Range);
     }
 }

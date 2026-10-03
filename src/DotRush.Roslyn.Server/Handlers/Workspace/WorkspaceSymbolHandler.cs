@@ -1,10 +1,8 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Handlers;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.WorkspaceSymbol;
-using EmmyLua.LanguageServer.Framework.Server.Handler;
 using Microsoft.CodeAnalysis;
 using SymbolExtensions = DotRush.Roslyn.CodeAnalysis.Extensions.SymbolExtensions;
 
@@ -17,14 +15,14 @@ public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
         this.workspaceService = workspaceService;
     }
 
-    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities clientCapabilities) {
+    public override void RegisterCapability(ServerCapabilities serverCapabilities) {
         serverCapabilities.WorkspaceSymbolProvider = true;
     }
-    protected override Task<WorkspaceSymbolResponse> Handle(WorkspaceSymbolParams request, CancellationToken token) {
-        return SafeExtensions.InvokeAsync(new WorkspaceSymbolResponse(new List<WorkspaceSymbol>()), async () => {
+    protected override Task<List<WorkspaceSymbol>> Handle(WorkspaceSymbolParams request, CancellationToken token) {
+        return SafeExtensions.InvokeAsync(new List<WorkspaceSymbol>(), async () => {
             var workspaceSymbols = new HashSet<WorkspaceSymbol>(WorkspaceSymbolEqualityComparer.Default);
             if (workspaceService.Solution == null || string.IsNullOrEmpty(request.Query))
-                return new WorkspaceSymbolResponse(new List<WorkspaceSymbol>());
+                return new List<WorkspaceSymbol>();
 
             foreach (var project in workspaceService.Solution.Projects) {
                 var compilation = await project.GetCompilationAsync(token).ConfigureAwait(false);
@@ -47,11 +45,8 @@ public class WorkspaceSymbolHandler : WorkspaceSymbolHandlerBase {
                 }
             }
 
-            return new WorkspaceSymbolResponse(workspaceSymbols.ToList());
+            return workspaceSymbols.ToList();
         });
-    }
-    protected override Task<WorkspaceSymbol> Resolve(WorkspaceSymbol request, CancellationToken token) {
-        return Task.FromResult(request);
     }
 
     class WorkspaceSymbolEqualityComparer : IEqualityComparer<WorkspaceSymbol> {

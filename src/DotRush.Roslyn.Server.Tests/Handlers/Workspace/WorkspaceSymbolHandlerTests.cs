@@ -1,8 +1,7 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Handlers.Workspace;
 using DotRush.Roslyn.Server.Services;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.WorkspaceSymbol;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.Server.Tests;
@@ -10,7 +9,7 @@ namespace DotRush.Roslyn.Server.Tests;
 public class WorkspaceSymbolHandlerMock : WorkspaceSymbolHandler {
     public WorkspaceSymbolHandlerMock(WorkspaceService workspaceService) : base(workspaceService) { }
 
-    public new Task<WorkspaceSymbolResponse> Handle(WorkspaceSymbolParams request, CancellationToken token) {
+    public new Task<List<WorkspaceSymbol>> Handle(WorkspaceSymbolParams request, CancellationToken token) {
         return base.Handle(request, token);
     }
 }
@@ -56,9 +55,9 @@ public class AnotherClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
-        var testClassSymbol = result.Symbols.First();
+        var testClassSymbol = result.First();
         Assert.That(testClassSymbol.Name, Is.EqualTo("TestClass"));
         Assert.That(testClassSymbol.Kind, Is.EqualTo(SymbolKind.Class));
         Assert.That(testClassSymbol.Location, Is.Not.Null);
@@ -86,9 +85,9 @@ public class TestClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
-        var addMethodSymbol = result.Symbols.FirstOrDefault(s => s.Name == "Add");
+        var addMethodSymbol = result.FirstOrDefault(s => s.Name == "Add");
         Assert.That(addMethodSymbol, Is.Not.Null);
         Assert.That(addMethodSymbol.Kind, Is.EqualTo(SymbolKind.Method));
         Assert.That(addMethodSymbol.ContainerName, Is.EqualTo("TestClass"));
@@ -111,9 +110,9 @@ public class TestClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
-        var namePropertySymbol = result.Symbols.FirstOrDefault(s => s.Name == "Name");
+        var namePropertySymbol = result.FirstOrDefault(s => s.Name == "Name");
         Assert.That(namePropertySymbol, Is.Not.Null);
         Assert.That(namePropertySymbol.Kind, Is.EqualTo(SymbolKind.Property));
         Assert.That(namePropertySymbol.ContainerName, Is.EqualTo("TestClass"));
@@ -135,9 +134,9 @@ public class TestClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
-        var fieldSymbol = result.Symbols.FirstOrDefault(s => s.Name == "_testField");
+        var fieldSymbol = result.FirstOrDefault(s => s.Name == "_testField");
         Assert.That(fieldSymbol, Is.Not.Null);
         Assert.That(fieldSymbol.Kind, Is.EqualTo(SymbolKind.Field));
         Assert.That(fieldSymbol.ContainerName, Is.EqualTo("TestClass"));
@@ -162,9 +161,9 @@ public interface IAnotherInterface {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
-        var interfaceSymbol = result.Symbols.FirstOrDefault(s => s.Name == "ITestInterface");
+        var interfaceSymbol = result.FirstOrDefault(s => s.Name == "ITestInterface");
         Assert.That(interfaceSymbol, Is.Not.Null);
         Assert.That(interfaceSymbol.Kind, Is.EqualTo(SymbolKind.Interface));
     }
@@ -186,9 +185,9 @@ public enum TestEnum {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
-        var enumMemberSymbol = result.Symbols.FirstOrDefault(s => s.Name == "SpecialValue");
+        var enumMemberSymbol = result.FirstOrDefault(s => s.Name == "SpecialValue");
         Assert.That(enumMemberSymbol, Is.Not.Null);
         Assert.That(enumMemberSymbol.Kind, Is.EqualTo(SymbolKind.EnumMember));
         Assert.That(enumMemberSymbol.ContainerName, Is.EqualTo("TestEnum"));
@@ -210,9 +209,9 @@ public struct TestStruct {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
-        var structSymbol = result.Symbols.FirstOrDefault(s => s.Name == "TestStruct");
+        var structSymbol = result.FirstOrDefault(s => s.Name == "TestStruct");
         Assert.That(structSymbol, Is.Not.Null);
         Assert.That(structSymbol.Kind, Is.EqualTo(SymbolKind.Struct));
     }
@@ -232,9 +231,9 @@ public class TestClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
-        var methodSymbol = result.Symbols.FirstOrDefault(s => s.Name == "MyMethod");
+        var methodSymbol = result.FirstOrDefault(s => s.Name == "MyMethod");
         Assert.That(methodSymbol, Is.Not.Null);
         Assert.That(methodSymbol.Kind, Is.EqualTo(SymbolKind.Method));
     }
@@ -255,9 +254,9 @@ public class TestClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(2));
-        Assert.That(result.Symbols.Any(s => s.Name == "SomeMethodWithLongName"), Is.True);
-        Assert.That(result.Symbols.Any(s => s.Name == "AnotherMethod"), Is.True);
+        Assert.That(result, Has.Count.EqualTo(2));
+        Assert.That(result.Any(s => s.Name == "SomeMethodWithLongName"), Is.True);
+        Assert.That(result.Any(s => s.Name == "AnotherMethod"), Is.True);
     }
 
     [Test]
@@ -277,9 +276,9 @@ public class GenericClass<T> {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
-        var genericClassSymbol = result.Symbols.FirstOrDefault(s => s.Name == "GenericClass");
+        var genericClassSymbol = result.FirstOrDefault(s => s.Name == "GenericClass");
         Assert.That(genericClassSymbol, Is.Not.Null);
         Assert.That(genericClassSymbol.Kind, Is.EqualTo(SymbolKind.Class));
     }
@@ -307,9 +306,9 @@ public class ClassInFile2 {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Is.Not.Empty);
+        Assert.That(result, Is.Not.Empty);
 
-        var classes = result.Symbols.Where(s => s.Name.Contains("Class")).ToList();
+        var classes = result.Where(s => s.Name.Contains("Class")).ToList();
         Assert.That(classes, Has.Count.EqualTo(2));
         Assert.That(classes.Any(s => s.Name == "ClassInFile1"), Is.True);
         Assert.That(classes.Any(s => s.Name == "ClassInFile2"), Is.True);
@@ -330,7 +329,7 @@ public class TestClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Is.Empty);
+        Assert.That(result, Is.Empty);
     }
 
     [Test]
@@ -348,7 +347,7 @@ public class TestClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Is.Empty);
+        Assert.That(result, Is.Empty);
     }
 
     [Test]
@@ -370,9 +369,9 @@ public class OuterClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
-        var nestedClassSymbol = result.Symbols.FirstOrDefault(s => s.Name == "NestedClass");
+        var nestedClassSymbol = result.FirstOrDefault(s => s.Name == "NestedClass");
         Assert.That(nestedClassSymbol, Is.Not.Null);
         Assert.That(nestedClassSymbol.Kind, Is.EqualTo(SymbolKind.Class));
         Assert.That(nestedClassSymbol.ContainerName, Is.EqualTo("OuterClass"));
@@ -393,9 +392,9 @@ public interface ITestInterface {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
-        var nestedClassSymbol = result.Symbols.FirstOrDefault(s => s.Name == "ITestInterface");
+        var nestedClassSymbol = result.FirstOrDefault(s => s.Name == "ITestInterface");
         Assert.That(nestedClassSymbol, Is.Not.Null);
         Assert.That(nestedClassSymbol.Kind, Is.EqualTo(SymbolKind.Interface));
     }
@@ -414,9 +413,9 @@ public class TestClass {
         }, CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Symbols, Has.Count.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(1));
 
-        var addMethodSymbol = result.Symbols.FirstOrDefault(s => s.Name == "Do1_Something");
+        var addMethodSymbol = result.FirstOrDefault(s => s.Name == "Do1_Something");
         Assert.That(addMethodSymbol, Is.Not.Null);
         Assert.That(addMethodSymbol.Kind, Is.EqualTo(SymbolKind.Method));
         Assert.That(addMethodSymbol.ContainerName, Is.EqualTo("TestClass"));

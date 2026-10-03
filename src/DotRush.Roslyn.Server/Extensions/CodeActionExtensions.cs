@@ -1,13 +1,11 @@
 using DotRush.Common.Extensions;
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.CodeAnalysis.Extensions;
 using DotRush.Roslyn.Workspaces.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.File;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
-using ProtocolModels = EmmyLua.LanguageServer.Framework.Protocol.Message.CodeAction;
+using CodeAction = Microsoft.CodeAnalysis.CodeActions.CodeAction;
+using ProtocolModels = DotRush.Protocol.Models;
 
 namespace DotRush.Roslyn.Server.Extensions;
 

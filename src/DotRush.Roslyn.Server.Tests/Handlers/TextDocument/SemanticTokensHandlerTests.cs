@@ -1,8 +1,8 @@
+using DotRush.Protocol.Models;
 using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Handlers.TextDocument;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Server.Tests.Extensions;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
 using NUnit.Framework;
 
 namespace DotRush.Roslyn.Server.Tests;
