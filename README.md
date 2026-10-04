@@ -129,6 +129,7 @@ Real-time linting and error detection to catch issues early in all target framew
             "type": "coreclr",
             "request": "launch",
             "program": "C:\\Programs\\Godot\\Godot_v4.4.1-stable_mono_win64.exe",
+            "cwd": "${workspaceFolder}",
             "preLaunchTask": "dotrush: Build"
         }
     ]
