@@ -46,6 +46,45 @@ public static class SyntaxExtensions {
                node is ParameterSyntax ||
                node is VariableDeclaratorSyntax;
     }
+    public static string ToDisplayString(this SyntaxNode node) {
+        var name = node switch {
+            BaseNamespaceDeclarationSyntax namespaceDeclaration => namespaceDeclaration.Name.ToString(),
+            ExtensionBlockDeclarationSyntax => "extension",
+            BaseTypeDeclarationSyntax typeDeclaration => typeDeclaration.Identifier.Text,
+            DelegateDeclarationSyntax delegateDeclaration => delegateDeclaration.Identifier.Text,
+            ConstructorDeclarationSyntax constructorDeclaration => constructorDeclaration.Identifier.Text,
+            DestructorDeclarationSyntax destructorDeclaration => $"~{destructorDeclaration.Identifier.Text}",
+            MethodDeclarationSyntax methodDeclaration => methodDeclaration.Identifier.Text,
+            OperatorDeclarationSyntax operatorDeclaration => $"operator {operatorDeclaration.OperatorToken.Text}",
+            ConversionOperatorDeclarationSyntax conversionDeclaration => $"{conversionDeclaration.ImplicitOrExplicitKeyword.Text} operator {conversionDeclaration.Type}",
+            PropertyDeclarationSyntax propertyDeclaration => propertyDeclaration.Identifier.Text,
+            IndexerDeclarationSyntax => "this[]",
+            EventDeclarationSyntax eventDeclaration => eventDeclaration.Identifier.Text,
+            EnumMemberDeclarationSyntax enumMemberDeclaration => enumMemberDeclaration.Identifier.Text,
+            VariableDeclaratorSyntax variableDeclarator => variableDeclarator.Identifier.Text,
+            _ => null
+        };
+        var typeParameterList = node switch {
+            TypeDeclarationSyntax typeDeclaration => typeDeclaration.TypeParameterList,
+            DelegateDeclarationSyntax delegateDeclaration => delegateDeclaration.TypeParameterList,
+            MethodDeclarationSyntax methodDeclaration => methodDeclaration.TypeParameterList,
+            _ => null
+        };
+        var parameterList = node switch {
+            BaseMethodDeclarationSyntax methodDeclaration => methodDeclaration.ParameterList,
+            ExtensionBlockDeclarationSyntax extensionDeclaration => extensionDeclaration.ParameterList,
+            _ => null
+        };
+
+        if (string.IsNullOrEmpty(name))
+            name = "?";
+        if (typeParameterList != null)
+            name += $"<{string.Join(", ", typeParameterList.Parameters.Select(p => p.Identifier.Text))}>";
+        if (parameterList != null)
+            name += $"({string.Join(", ", parameterList.Parameters.Select(p => p.Type?.ToString() ?? "?"))})";
+
+        return name;
+    }
 
     public static SyntaxTrivia GetEndOfLine(this SyntaxNode node) {
         var endOfLine = node.DescendantTrivia().FirstOrDefault(it => it.IsKind(SyntaxKind.EndOfLineTrivia));

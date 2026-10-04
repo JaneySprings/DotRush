@@ -200,4 +200,31 @@ class Class1 {
         Assert.That(destructor, Is.Not.Null);
         Assert.That(destructor.Kind, Is.EqualTo(SymbolKind.Method));
     }
+
+    [Test]
+    public async Task GenericDeclarationsTest() {
+        var documentPath = CreateDocument(nameof(DocumentSymbolHandlerTests), @"
+namespace Tests;
+
+record Result(bool Ok);
+record Result<T>(T Value) : Result(true);
+delegate TResult Converter<in TInput, out TResult>(TInput input);
+static class Seq {
+    public static List<T> First<T>(IEnumerable<T> items) => null;
+}
+");
+        var result = await handler.Handle(new DocumentSymbolParams() {
+            TextDocument = documentPath.CreateDocumentId()
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result[0].Children, Has.Count.EqualTo(4));
+        Assert.That(result[0].Children.FirstOrDefault(x => x.Name == "Result"), Is.Not.Null);
+        Assert.That(result[0].Children.FirstOrDefault(x => x.Name == "Result<T>"), Is.Not.Null);
+        Assert.That(result[0].Children.FirstOrDefault(x => x.Name == "Converter<TInput, TResult>"), Is.Not.Null);
+
+        var seq = result[0].Children.FirstOrDefault(x => x.Name == "Seq");
+        Assert.That(seq, Is.Not.Null);
+        Assert.That(seq.Children, Has.Count.EqualTo(1));
+        Assert.That(seq.Children[0].Name, Is.EqualTo("First<T>(IEnumerable<T>)"));
+    }
 }

@@ -1,4 +1,6 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using ProtocolModels = DotRush.Protocol.Models;
 
 namespace DotRush.Roslyn.Server.Extensions;
@@ -57,6 +59,30 @@ public static class SymbolExtensions {
         }
 
         return ProtocolModels.SymbolKind.String;
+    }
+    public static ProtocolModels.SymbolKind ToSymbolKind(this SyntaxNode node) {
+        switch (node) {
+            case BaseNamespaceDeclarationSyntax: return ProtocolModels.SymbolKind.Namespace;
+            case StructDeclarationSyntax: return ProtocolModels.SymbolKind.Struct;
+            case RecordDeclarationSyntax when node.IsKind(SyntaxKind.RecordStructDeclaration): return ProtocolModels.SymbolKind.Struct;
+            case InterfaceDeclarationSyntax: return ProtocolModels.SymbolKind.Interface;
+            case EnumDeclarationSyntax: return ProtocolModels.SymbolKind.Enum;
+            case BaseTypeDeclarationSyntax: return ProtocolModels.SymbolKind.Class;
+            case DelegateDeclarationSyntax: return ProtocolModels.SymbolKind.Function;
+            case ConstructorDeclarationSyntax: return ProtocolModels.SymbolKind.Constructor;
+            case DestructorDeclarationSyntax: return ProtocolModels.SymbolKind.Method;
+            case MethodDeclarationSyntax: return ProtocolModels.SymbolKind.Method;
+            case OperatorDeclarationSyntax: return ProtocolModels.SymbolKind.Operator;
+            case ConversionOperatorDeclarationSyntax: return ProtocolModels.SymbolKind.Operator;
+            case PropertyDeclarationSyntax: return ProtocolModels.SymbolKind.Property;
+            case IndexerDeclarationSyntax: return ProtocolModels.SymbolKind.Property;
+            case EventDeclarationSyntax: return ProtocolModels.SymbolKind.Event;
+            case EventFieldDeclarationSyntax: return ProtocolModels.SymbolKind.Event;
+            case EnumMemberDeclarationSyntax: return ProtocolModels.SymbolKind.EnumMember;
+            case BaseFieldDeclarationSyntax fieldDeclaration: return fieldDeclaration.Modifiers.Any(SyntaxKind.ConstKeyword) ? ProtocolModels.SymbolKind.Constant : ProtocolModels.SymbolKind.Field;
+        }
+
+        return ProtocolModels.SymbolKind.Null;
     }
     public static SemanticTokenType ToSemanticTokenType(this ISymbol symbol) {
         switch (symbol.ToSymbolKind()) {
