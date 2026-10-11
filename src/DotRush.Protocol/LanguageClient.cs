@@ -28,6 +28,12 @@ public class LanguageClient {
     public Task RefreshSemanticTokensAsync(CancellationToken cancellationToken) {
         return SendRequestAsync("workspace/semanticTokens/refresh", null, cancellationToken);
     }
+    public Task RefreshInlayHintsAsync(CancellationToken cancellationToken) {
+        return SendRequestAsync("workspace/inlayHint/refresh", null, cancellationToken);
+    }
+    public Task RefreshFoldingRangesAsync(CancellationToken cancellationToken) {
+        return SendRequestAsync("workspace/foldingRange/refresh", null, cancellationToken);
+    }
     public async Task<ProgressReporter> CreateProgressAsync(string title, CancellationToken cancellationToken) {
         var token = Guid.NewGuid().ToString();
         await SendRequestAsync("window/workDoneProgress/create", new WorkDoneProgressCreateParams { Token = token }, cancellationToken).ConfigureAwait(false);

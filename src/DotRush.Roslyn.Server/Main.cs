@@ -51,9 +51,6 @@ public class Program {
             finally {
                 codeAnalysisService.StartWorkerThread();
             }
-
-            languageServer.Client.SendNotification(Resources.LoadCompletedNotification);
-            await languageServer.Client.RefreshSemanticTokensAsync(CancellationToken.None);
         });
         return Task.CompletedTask;
     }

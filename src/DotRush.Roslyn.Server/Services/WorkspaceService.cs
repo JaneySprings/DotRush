@@ -46,7 +46,15 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDis
     public override Task OnLoadingCompletedAsync(CancellationToken cancellationToken) {
         progressReporter?.End();
         progressReporter = null;
-        return Task.CompletedTask;
+        if (serverFacade == null)
+            return Task.CompletedTask;
+
+        serverFacade.Client.SendNotification(Resources.LoadCompletedNotification);
+        return SafeExtensions.InvokeAsync(async () => {
+            await serverFacade.Client.RefreshSemanticTokensAsync(cancellationToken);
+            await serverFacade.Client.RefreshInlayHintsAsync(cancellationToken);
+            await serverFacade.Client.RefreshFoldingRangesAsync(cancellationToken);
+        });
     }
     public override void OnProjectRestoreStarted(string documentPath, int progress) {
         var projectName = Path.GetFileNameWithoutExtension(documentPath);
