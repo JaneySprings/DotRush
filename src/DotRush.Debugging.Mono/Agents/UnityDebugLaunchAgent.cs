@@ -47,7 +47,7 @@ public class UnityDebugLaunchAgent : BaseLaunchAgent {
 
         var projectFilePaths = Directory.GetFiles(Configuration.CurrentDirectory, "*.csproj", SearchOption.TopDirectoryOnly);
         if (projectFilePaths.Length == 1) {
-            var project = MSBuildProjectsLoader.LoadProject(projectFilePaths[0]);
+            var project = MSBuildProjectLoader.LoadProject(projectFilePaths[0]);
             var assemblyName = project?.GetAssemblyName();
             projectAssemblies = Directory.GetFiles(Path.Combine(Configuration.CurrentDirectory, "Library", "ScriptAssemblies"), $"{assemblyName}*.dll", SearchOption.TopDirectoryOnly);
             if (projectAssemblies.Length > 0)
