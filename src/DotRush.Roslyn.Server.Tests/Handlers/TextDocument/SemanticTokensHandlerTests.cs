@@ -176,6 +176,64 @@ var included = 24;
         AssertToken(result, 4, 0, 11, SemanticTokenType.Number, 2); // 24
     }
 
+    [Test]
+    public async Task SyntaxOnlyDocumentTest() {
+        var documentPath = Path.Combine(SandboxDirectory, "SyntaxOnlyDocument.cs");
+        File.WriteAllText(documentPath, @"
+namespace Tests.Standalone;
+
+public class Standalone<T> {
+    private const int Constant = 1;
+    public event Action Event;
+    public string Property { get; set; }
+
+    public Standalone(int parameter) {
+        var local = parameter;
+    }
+}
+");
+        var result = await handler.Handle(new SemanticTokensParams() {
+            TextDocument = documentPath.CreateDocumentId()
+        }, CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(result?.Data, Is.Not.Null.And.Not.Empty);
+        Assert.That(result.Data.Count % 5, Is.EqualTo(0));
+        Assert.That(result.Data.Count / 5, Is.EqualTo(26));
+
+        AssertToken(result, 0, 1, 0, SemanticTokenType.Keyword, 9); // \nnamespace
+        AssertToken(result, 1, 0, 10, SemanticTokenType.Namespace, 5); // Tests
+        AssertToken(result, 2, 0, 6, SemanticTokenType.Namespace, 10); // Standalone
+
+        AssertToken(result, 3, 2, 0, SemanticTokenType.Keyword, 6); // public
+        AssertToken(result, 4, 0, 7, SemanticTokenType.Keyword, 5); // class
+        AssertToken(result, 5, 0, 6, SemanticTokenType.Class, 10); // Standalone
+        AssertToken(result, 6, 0, 11, SemanticTokenType.TypeParameter, 1); // T
+
+        AssertToken(result, 7, 1, 4, SemanticTokenType.Keyword, 7); // private
+        AssertToken(result, 8, 0, 8, SemanticTokenType.Keyword, 5); // const
+        AssertToken(result, 9, 0, 6, SemanticTokenType.Keyword, 3); // int
+        AssertToken(result, 10, 0, 4, SemanticTokenType.Variable, 8); // Constant
+        AssertToken(result, 11, 0, 11, SemanticTokenType.Number, 1); // 1
+
+        AssertToken(result, 12, 1, 4, SemanticTokenType.Keyword, 6); // public
+        AssertToken(result, 13, 0, 7, SemanticTokenType.Keyword, 5); // event
+        AssertToken(result, 14, 0, 13, SemanticTokenType.Event, 5); // Event (Action is skipped)
+
+        AssertToken(result, 15, 1, 4, SemanticTokenType.Keyword, 6); // public
+        AssertToken(result, 16, 0, 7, SemanticTokenType.Keyword, 6); // string
+        AssertToken(result, 17, 0, 7, SemanticTokenType.Property, 8); // Property
+        AssertToken(result, 18, 0, 11, SemanticTokenType.Keyword, 3); // get
+        AssertToken(result, 19, 0, 5, SemanticTokenType.Keyword, 3); // set
+
+        AssertToken(result, 20, 2, 4, SemanticTokenType.Keyword, 6); // public
+        AssertToken(result, 21, 0, 7, SemanticTokenType.Class, 10); // Standalone
+        AssertToken(result, 22, 0, 11, SemanticTokenType.Keyword, 3); // int
+        AssertToken(result, 23, 0, 4, SemanticTokenType.Parameter, 9); // parameter
+
+        AssertToken(result, 24, 1, 8, SemanticTokenType.Keyword, 3); // var
+        AssertToken(result, 25, 0, 4, SemanticTokenType.Variable, 5); // local (parameter reference is skipped)
+    }
+
     private void AssertToken(SemanticTokens tokens, int index, uint deltaLine, uint deltaColumn, SemanticTokenType type, uint length) {
         Assert.That(tokens.Data[index * 5], Is.EqualTo(deltaLine));
         Assert.That(tokens.Data[index * 5 + 1], Is.EqualTo(deltaColumn));

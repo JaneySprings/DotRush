@@ -50,6 +50,8 @@ export class DotNetDebugConfigurationProvider implements vscode.DebugConfigurati
             config.justMyCode = Extensions.getSetting(res.configIdDebuggerProjectAssembliesOnly, false);
         if (config.enableStepFiltering === undefined)
             config.enableStepFiltering = Extensions.getSetting(res.configIdDebuggerStepOverPropertiesAndOperators, false);
+        if (config.requireExactSource === undefined)
+            config.requireExactSource = Extensions.getSetting(res.configIdDebuggerRequireExactSource, true);
         if (config.console === undefined)
             config.console = Extensions.getSetting(res.configIdDebuggerConsole);
         if (config.symbolOptions === undefined)

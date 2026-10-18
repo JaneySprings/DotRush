@@ -1,3 +1,5 @@
+using DotRush.Common.Extensions;
+using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -94,8 +96,19 @@ public static class SyntaxExtensions {
     public static SyntaxNode? TryFindNode(this SyntaxNode node, TextSpan span) {
         try {
             return node.FindNode(span);
-        } catch {
+        }
+        catch {
             return null;
         }
+    }
+
+    public static Task<SyntaxTree?> GetSyntaxTreeAsync(this Document? document, string documentPath, CancellationToken token) {
+        if (document != null)
+            return document.GetSyntaxTreeAsync(token);
+
+        if (WorkspaceExtensions.IsSourceCodeDocument(documentPath))
+            return Task.FromResult(SafeExtensions.Invoke(() => CSharpSyntaxTree.ParseText(File.ReadAllText(documentPath), cancellationToken: token)));
+
+        return Task.FromResult<SyntaxTree?>(null);
     }
 }

@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.MSBuild;
 namespace DotRush.Roslyn.Workspaces.Extensions;
 
 public static class WorkspaceExtensions {
-    private static readonly string[] sourceCodeExtensions = { ".cs", /* .fs .vb */};
+    private static readonly string[] sourceCodeExtensions = { ".cs", ".cake" /* .fs .vb */};
     private static readonly string[] additionalDocumentExtensions = { ".xaml", /* maybe '.razor' ? */};
     private static readonly string[] compilerGeneratedExtensions = { ".g.cs", ".sg.cs" };
     private static readonly string[] projectFileExtensions = { ".csproj", /* fsproj vbproj */};

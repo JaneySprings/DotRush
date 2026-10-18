@@ -35,6 +35,7 @@
 	"description.dispatcherType": "Determines the type of dispatcher used by the server.",
 	"description.projectAssembliesOnly": "Use only project assemblies for debugging.",
 	"description.stepOverPropertiesAndOperators": "Step over properties and operators.",
+	"description.requireExactSource": "Require the source files to exactly match the PDB.",
 	"description.searchMicrosoftSymbolServer": "Search Microsoft Symbol Server for missing PDBs.",
 	"description.searchNugetSymbolServer": "Search Nuget.Org Symbol Server for missing PDBs.",
 	"description.automaticSourcelinkDownload": "Automatically download source files from SourceLink.",

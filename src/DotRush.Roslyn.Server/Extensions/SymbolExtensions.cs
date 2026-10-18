@@ -84,6 +84,7 @@ public static class SymbolExtensions {
 
         return ProtocolModels.SymbolKind.Null;
     }
+
     public static SemanticTokenType ToSemanticTokenType(this ISymbol symbol) {
         switch (symbol.ToSymbolKind()) {
             case ProtocolModels.SymbolKind.Class:
@@ -124,6 +125,40 @@ public static class SymbolExtensions {
                 return SemanticTokenType.Operator;
             case ProtocolModels.SymbolKind.Function:
                 return SemanticTokenType.Delegate;
+        }
+
+        return SemanticTokenType.Unknown;
+    }
+    public static SemanticTokenType ToSemanticTokenType(this SyntaxNode node) {
+        switch (node) {
+            case StructDeclarationSyntax: return SemanticTokenType.Struct;
+            case RecordDeclarationSyntax when node.IsKind(SyntaxKind.RecordStructDeclaration): return SemanticTokenType.Struct;
+            case InterfaceDeclarationSyntax: return SemanticTokenType.Interface;
+            case EnumDeclarationSyntax: return SemanticTokenType.Enum;
+            case BaseTypeDeclarationSyntax: return SemanticTokenType.Class;
+            case DelegateDeclarationSyntax: return SemanticTokenType.Delegate;
+            case TypeParameterSyntax: return SemanticTokenType.TypeParameter;
+            case ConstructorDeclarationSyntax constructorDeclaration: return constructorDeclaration.Parent?.ToSemanticTokenType() ?? SemanticTokenType.Class;
+            case BaseMethodDeclarationSyntax or LocalFunctionStatementSyntax: return SemanticTokenType.Method;
+            case PropertyDeclarationSyntax: return SemanticTokenType.Property;
+            case EventDeclarationSyntax: return SemanticTokenType.Event;
+            case EnumMemberDeclarationSyntax: return SemanticTokenType.EnumMember;
+            case ParameterSyntax: return SemanticTokenType.Parameter;
+            case LabeledStatementSyntax: return SemanticTokenType.Label;
+            case SingleVariableDesignationSyntax or ForEachStatementSyntax or CatchDeclarationSyntax: return SemanticTokenType.Variable;
+            case VariableDeclaratorSyntax variableDeclarator:
+                return variableDeclarator.Parent?.Parent switch {
+                    FieldDeclarationSyntax fieldDeclaration => fieldDeclaration.Modifiers.Any(SyntaxKind.ConstKeyword) ? SemanticTokenType.Variable : SemanticTokenType.Field,
+                    EventFieldDeclarationSyntax => SemanticTokenType.Event,
+                    _ => SemanticTokenType.Variable
+                };
+            case IdentifierNameSyntax identifierName:
+                var parent = identifierName.Parent;
+                while (parent is QualifiedNameSyntax)
+                    parent = parent.Parent;
+                if (parent is BaseNamespaceDeclarationSyntax || parent is UsingDirectiveSyntax usingDirective && usingDirective.Alias == null && usingDirective.StaticKeyword.IsKind(SyntaxKind.None))
+                    return SemanticTokenType.Namespace;
+                break;
         }
 
         return SemanticTokenType.Unknown;

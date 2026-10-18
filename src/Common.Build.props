@@ -4,16 +4,19 @@
         <TargetFramework>net10.0</TargetFramework>
         <RollForward>LatestMajor</RollForward>
         <ImplicitUsings>enable</ImplicitUsings>
-        <UseAppHost>false</UseAppHost>
         <Nullable>enable</Nullable>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-        <SelfContained>false</SelfContained>
-        <PublishTrimmed>false</PublishTrimmed>
+        
         <NoWarn>$(NoWarn);NUnit2045</NoWarn>
         <AssetsPath>$(MSBuildThisFileDirectory)..\extension\bin\</AssetsPath>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
         <WarningsAsErrors>$(WarningsAsErrors);NU1903;NU1904</WarningsAsErrors>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <UseAppHost>false</UseAppHost>
+        <SelfContained>false</SelfContained>
+        <PublishTrimmed>false</PublishTrimmed>
     </PropertyGroup>
 
     <ItemGroup>

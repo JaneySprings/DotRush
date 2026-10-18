@@ -51,6 +51,7 @@ export const configIdRoslynDotnetSdkDirectory = "roslyn.dotnetSdkDirectory";
 export const configIdRoslynProjectOrSolutionFiles = "roslyn.projectOrSolutionFiles";
 export const configIdDebuggerProjectAssembliesOnly = "debugger.projectAssembliesOnly";
 export const configIdDebuggerStepOverPropertiesAndOperators = "debugger.stepOverPropertiesAndOperators";
+export const configIdDebuggerRequireExactSource = "debugger.requireExactSource";
 export const configIdDebuggerConsole = "debugger.console";
 export const configIdDebuggerSymbolSearchPaths = "debugger.symbolSearchPaths";
 export const configIdDebuggerSearchMicrosoftSymbolServer = "debugger.searchMicrosoftSymbolServer";

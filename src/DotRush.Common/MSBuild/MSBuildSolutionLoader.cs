@@ -9,7 +9,7 @@ public static class MSBuildSolutionLoader {
     public static IEnumerable<MSBuildProject> LoadProjects(string solutionFile) {
         var projectFiles = GetProjectFiles(solutionFile);
         foreach (var projectFile in projectFiles) {
-            var project = MSBuildProjectsLoader.LoadProject(projectFile);
+            var project = MSBuildProjectLoader.LoadProject(projectFile);
             if (project == null) {
                 CurrentSessionLogger.Error($"Failed to load project: {projectFile}");
                 continue;

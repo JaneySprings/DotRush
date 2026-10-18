@@ -8,7 +8,7 @@ public class MSBuildProjectLoaderTests : SimpleWorkspaceFixture {
     [TestCase("net10.0;net8.0")]
     public void AnalyzeSimpleProject(string frameworkProperty) {
         var projectPath = CreateProject("TestProject1", frameworkProperty);
-        var project = MSBuildProjectsLoader.LoadProject(projectPath, resolveAdditionalProperties: true);
+        var project = MSBuildProjectLoader.LoadProject(projectPath, resolveAdditionalProperties: true);
         var frameworks = frameworkProperty.Split(';');
 
         Assert.That(project, Is.Not.Null);

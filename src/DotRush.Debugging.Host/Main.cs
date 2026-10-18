@@ -38,7 +38,7 @@ public class Program {
                 return;
             }
             if (result.GetValue(evaluateProjectOption) is string projectPath) {
-                var project = MSBuildProjectsLoader.LoadProject(args[1]);
+                var project = MSBuildProjectLoader.LoadProject(args[1]);
                 Console.WriteLine(JsonSerializer.Serialize(project));
                 return;
             }

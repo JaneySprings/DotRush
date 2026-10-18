@@ -628,6 +628,11 @@
             "default": false,
             "description": "%description.stepOverPropertiesAndOperators%"
           },
+          "dotrush.debugger.requireExactSource": {
+            "type": "boolean",
+            "default": true,
+            "description": "%description.requireExactSource%"
+          },
           "dotrush.debugger.searchMicrosoftSymbolServer": {
             "type": "boolean",
             "default": false,

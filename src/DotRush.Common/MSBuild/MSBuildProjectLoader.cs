@@ -2,7 +2,7 @@ using System.Xml.Linq;
 
 namespace DotRush.Common.MSBuild;
 
-public static class MSBuildProjectsLoader {
+public static class MSBuildProjectLoader {
     public static MSBuildProject? LoadProject(string? projectFile, bool resolveAdditionalProperties = false) {
         if (!File.Exists(projectFile))
             return null;
@@ -42,6 +42,7 @@ public static class MSBuildProjectsLoader {
             || project.HasPackage("NUnit")
             || project.HasPackage("NUnitLite")
             || project.HasPackage("xunit")
+            || project.HasPackage("xunit.v3")
             || project.HasPackage("MSTest")
             || project.HasPackage("TUnit")
             || project.HasPackage("gdUnit4.api");

@@ -83,7 +83,7 @@ public class WorkspaceService : DotRushWorkspace, IWorkspaceChangeListener, IDis
         progressReporter?.Report(string.Format(null, Resources.ProjectIndexCompositeFormat, projectName), progress);
     }
     public override void OnProjectLoadCompleted(Microsoft.CodeAnalysis.Project project) {
-        var projectModel = MSBuildProjectsLoader.LoadProject(project.FilePath, true);
+        var projectModel = MSBuildProjectLoader.LoadProject(project.FilePath, true);
         if (projectModel != null)
             serverFacade?.Client.SendNotification(Resources.ProjectLoadedNotification, projectModel);
     }

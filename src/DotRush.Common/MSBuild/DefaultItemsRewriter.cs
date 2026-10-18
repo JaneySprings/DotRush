@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using DotRush.Common.Extensions;
 
 namespace DotRush.Common.MSBuild;
 
@@ -6,54 +7,59 @@ public static class DefaultItemsRewriter {
     private static char pathSeparator = '\\';
 
     public static void AddCompilerItem(string itemPath) {
-        if (IsBlacklisted(itemPath))
-            return;
+        SafeExtensions.Invoke(() => {
+            if (IsBlacklisted(itemPath))
+                return;
 
-        foreach (var xmlPath in GetProjectFiles(itemPath)) {
-            var document = LoadXmlDocument(xmlPath);
-            if (document?.Root == null)
-                continue;
+            foreach (var xmlPath in GetProjectFiles(itemPath)) {
+                var document = LoadXmlDocument(xmlPath);
+                if (document?.Root == null)
+                    continue;
 
-            var itemGroup = FindOrCreateCompileItemGroup(document);
-            var relativePath = GetItemPath(itemPath, xmlPath);
+                var itemGroup = FindOrCreateCompileItemGroup(document);
+                var relativePath = GetItemPath(itemPath, xmlPath);
 
-            if (CompileItemExists(itemGroup, relativePath))
-                continue;
+                if (CompileItemExists(itemGroup, relativePath))
+                    continue;
 
-            InsertCompileItemAlphabetically(itemGroup, relativePath);
-            SaveWithCRLF(document, xmlPath);
-        }
+                InsertCompileItemAlphabetically(itemGroup, relativePath);
+                SaveWithCRLF(document, xmlPath);
+            }
+        });
     }
     public static void RemoveCompilerItem(string itemPath) {
-        foreach (var xmlPath in GetProjectFiles(itemPath)) {
-            var document = LoadXmlDocument(xmlPath);
-            if (document?.Root == null)
-                continue;
+        SafeExtensions.Invoke(() => {
+            foreach (var xmlPath in GetProjectFiles(itemPath)) {
+                var document = LoadXmlDocument(xmlPath);
+                if (document?.Root == null)
+                    continue;
 
-            var relativePath = GetItemPath(itemPath, xmlPath);
-            var itemGroups = GetItemGroups(document);
+                var relativePath = GetItemPath(itemPath, xmlPath);
+                var itemGroups = GetItemGroups(document);
 
-            bool documentModified = false;
-            foreach (var itemGroup in itemGroups) {
-                var compileItems = GetCompileItems(itemGroup)
-                    .Where(c => c.Attribute("Include")?.Value?.StartsWith(relativePath, StringComparison.OrdinalIgnoreCase) == true)
-                    .ToList();
+                bool documentModified = false;
+                foreach (var itemGroup in itemGroups) {
+                    var compileItems = GetCompileItems(itemGroup)
+                        .Where(c => c.Attribute("Include")?.Value?.StartsWith(relativePath, StringComparison.OrdinalIgnoreCase) == true)
+                        .ToList();
 
-                foreach (var compileItem in compileItems) {
-                    compileItem.Remove();
-                    documentModified = true;
+                    foreach (var compileItem in compileItems) {
+                        compileItem.Remove();
+                        documentModified = true;
+                    }
                 }
-            }
 
-            if (documentModified)
-                SaveWithCRLF(document, xmlPath);
-        }
+                if (documentModified)
+                    SaveWithCRLF(document, xmlPath);
+            }
+        });
     }
 
     private static XDocument? LoadXmlDocument(string xmlPath) {
         try {
             return XDocument.Load(xmlPath);
-        } catch {
+        }
+        catch {
             return null;
         }
     }

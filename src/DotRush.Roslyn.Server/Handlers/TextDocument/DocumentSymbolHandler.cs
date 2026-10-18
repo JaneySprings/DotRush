@@ -5,7 +5,9 @@ using DotRush.Roslyn.Server.Extensions;
 using DotRush.Roslyn.Server.Services;
 using DotRush.Roslyn.Workspaces.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 using SymbolKind = DotRush.Protocol.Models.SymbolKind;
 
 namespace DotRush.Roslyn.Server.Handlers.TextDocument;
@@ -25,10 +27,8 @@ public class DocumentSymbolHandler : DocumentSymbolHandlerBase {
         var solution = navigationService.GetRequiredSolution(documentPath);
         var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
         var document = solution?.GetDocument(documentId);
-        if (documentId == null || document == null)
-            return new List<DocumentSymbol>();
 
-        var syntaxTree = await document.GetSyntaxTreeAsync(token);
+        var syntaxTree = await document.GetSyntaxTreeAsync(documentPath, token);
         if (syntaxTree == null)
             return new List<DocumentSymbol>();
 

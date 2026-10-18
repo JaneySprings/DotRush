@@ -28,51 +28,49 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
             }
         };
     }
-
     protected override async Task<SemanticTokens?> Handle(SemanticTokensParams request, CancellationToken token) {
         var documentPath = request.TextDocument.Uri.FileSystemPath;
         var solution = navigationService.GetRequiredSolution(documentPath);
         var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
         var document = solution?.GetDocument(documentId);
-        if (documentId == null || document == null)
-            return null;
 
-        var syntaxTree = await document.GetSyntaxTreeAsync(token);
+        var syntaxTree = await document.GetSyntaxTreeAsync(documentPath, token);
         if (syntaxTree == null)
             return null;
 
         var root = await syntaxTree.GetRootAsync(token);
-        if (root == null)
-            return null;
+        var sourceText = await syntaxTree.GetTextAsync(token);
+        if (solution == null || document == null)
+            return await TraverseSyntaxTree(root.DescendantTokens(), sourceText, null, token);
 
-        return await TraverseSyntaxTree(root.DescendantTokens(), document, token);
+        var semanticModel = await document.GetSemanticModelAsync(token);
+        return await TraverseSyntaxTree(root.DescendantTokens(), sourceText, semanticModel, token);
     }
     protected override async Task<SemanticTokens?> Handle(SemanticTokensRangeParams request, CancellationToken token) {
         var documentPath = request.TextDocument.Uri.FileSystemPath;
         var solution = navigationService.GetRequiredSolution(documentPath);
         var documentId = solution?.GetDocumentIdsWithFilePathV2(documentPath).FirstOrDefault();
         var document = solution?.GetDocument(documentId);
-        if (documentId == null || document == null)
-            return null;
 
-        var syntaxTree = await document.GetSyntaxTreeAsync(token);
+        var syntaxTree = await document.GetSyntaxTreeAsync(documentPath, token);
         if (syntaxTree == null)
             return null;
 
-        var sourceText = await document.GetTextAsync(token);
+        var sourceText = await syntaxTree.GetTextAsync(token);
         var range = request.Range.ToTextSpan(sourceText);
         var root = await syntaxTree.GetRootAsync(token);
-        if (root == null)
-            return null;
-
         var nodes = root.DescendantTokens()
             .Where(node => node.FullSpan.IntersectsWith(range))
             .ToList();
 
-        return await TraverseSyntaxTree(nodes, document, token);
+        if (solution == null || document == null)
+            return await TraverseSyntaxTree(nodes, sourceText, null, token);
+
+        var semanticModel = await document.GetSemanticModelAsync(token);
+        return await TraverseSyntaxTree(nodes, sourceText, semanticModel, token);
     }
 
-    private async Task<SemanticTokens?> TraverseSyntaxTree(IEnumerable<SyntaxToken> tokens, Document document, CancellationToken cancellationToken) {
+    private async Task<SemanticTokens?> TraverseSyntaxTree(IEnumerable<SyntaxToken> tokens, SourceText sourceText, SemanticModel? semanticModel, CancellationToken cancellationToken) {
         if (tokens == null || !tokens.Any())
             return null;
 
@@ -92,8 +90,6 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
             data.Add(0);
         }
 
-        var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-        var sourceText = await document.GetTextAsync(cancellationToken);
         foreach (var token in tokens) {
             foreach (var trivia in token.LeadingTrivia)
                 ProcessToken(trivia, sourceText, AddToken);
@@ -128,7 +124,6 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
                 handler.Invoke(lineNumber, startColumn, endColumn - startColumn, SemanticTokenType.ExcludedCode);
         }
     }
-
     private SemanticTokenType GetTokenType(SyntaxToken token, SemanticModel? semanticModel) {
         if (token.IsKind(SyntaxKind.NumericLiteralToken))
             return SemanticTokenType.Number;
@@ -140,6 +135,8 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase {
             return SemanticTokenType.Keyword;
         // if (SyntaxFacts.IsPreprocessorKeyword(token.Kind()))
         //     return (uint)TokenTypes.IndexOf("macro");
+        if (token.IsKind(SyntaxKind.IdentifierToken) && token.Parent != null && semanticModel == null)
+            return token.Parent.ToSemanticTokenType();
         if (token.IsKind(SyntaxKind.IdentifierToken) && token.Parent.IsDeclaration() && semanticModel != null) {
             var symbol = semanticModel.GetDeclaredSymbol(token.Parent!);
             if (symbol != null)
