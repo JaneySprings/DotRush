@@ -11,7 +11,8 @@
         <NoWarn>$(NoWarn);NUnit2045</NoWarn>
         <AssetsPath>$(MSBuildThisFileDirectory)..\extension\bin\</AssetsPath>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-        <WarningsAsErrors>$(WarningsAsErrors);NU1903;NU1904</WarningsAsErrors>
+        <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
+        <!-- <TreatWarningsAsErrors>true</TreatWarningsAsErrors> -->
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <UseAppHost>false</UseAppHost>

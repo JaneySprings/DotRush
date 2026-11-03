@@ -7,7 +7,7 @@
   <ItemGroup>
     <PackageVersion Include="NLog" Version="6.2.0" />
     <PackageVersion Include="ICSharpCode.Decompiler" Version="11.0.0.9375" />
-    <PackageVersion Include="StreamJsonRpc" Version="2.25.29" />
+    <PackageVersion Include="StreamJsonRpc" Version="2.26.150" />
     <PackageVersion Include="NUnit" Version="4.6.1" />
     <PackageVersion Include="NUnit.Analyzers" Version="4.14.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />

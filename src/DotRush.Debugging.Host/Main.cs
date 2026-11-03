@@ -115,26 +115,14 @@ public class Program {
     }
 
     private static void InstallDebugger(IDebuggerInstaller installer) {
-        void SetResult(Status status, int exitCode = 0) {
-            Console.WriteLine(JsonSerializer.Serialize(status));
-            Environment.Exit(exitCode);
-        }
-
         try {
             installer.BeginInstallation();
-            var url = installer.GetDownloadLink();
-            if (string.IsNullOrEmpty(url))
-                SetResult(Status.Fail("Cannot optain debugger download link"), 404);
-
-            var executable = installer.Install(url!);
-            if (string.IsNullOrEmpty(executable))
-                SetResult(Status.Fail("Cannot locate debugger executable"), 500);
-
-            installer.EndInstallation(executable!);
-            SetResult(Status.Success());
+            var executable = installer.Install(installer.GetDownloadLink());
+            installer.EndInstallation(executable);
+            Console.WriteLine(JsonSerializer.Serialize(Status.Success()));
         }
         catch (Exception ex) {
-            SetResult((Status.Fail(ex.Message)));
+            Console.WriteLine(JsonSerializer.Serialize(Status.Fail(ex.Message)));
         }
     }
 }
