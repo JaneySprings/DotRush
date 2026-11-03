@@ -49,6 +49,7 @@
   "devDependencies": {
     "@types/node": "22.x",
     "@types/vscode": "^1.83.0",
+    "@vscode/vsce": "^4.1.0",
     "memoryviewer": "^1.2.0",
     "speedscope": "^1.25.0",
     "ts-loader": "^9.6.2",

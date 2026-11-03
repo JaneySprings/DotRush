@@ -22,8 +22,8 @@ export class LanguageServerController {
         };
         LanguageServerController.clientOptions = {
             documentSelector: [
-                { pattern: '**/*.cs' },
-                { pattern: '**/*.xaml' }
+                { scheme: 'file', pattern: '**/*.cs' },
+                { scheme: 'file', pattern: '**/*.xaml' }
             ],
             diagnosticCollectionName: res.extensionId,
             progressOnInitialization: true,
@@ -74,7 +74,7 @@ export class LanguageServerController {
         //         LanguageServerController.client.sendNotification('dotrush/solutionDiagnostics', {});
         // }));
         context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(e => {
-            if (e != undefined && path.extname(e.document.fileName) == '.cs')
+            if (e != undefined && e.document.uri.scheme == 'file' && path.extname(e.document.fileName) == '.cs')
                 LanguageServerController.client.sendNotification('dotrush/documentDiagnostics', { textDocument: { uri: e.document.uri.toString() } });
         }));
     }

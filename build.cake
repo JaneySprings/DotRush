@@ -81,8 +81,8 @@ Task("vsix")
 	.IsDependentOn("diagnostics")
 	.Does(() => {
 		var output = _Path.Combine(ArtifactsDirectory, $"DotRush.v{version}.vsix");
-		ExecuteCommand("npm", "install");
-		ExecuteCommand("vsce", $"package --out {output} --no-git-tag-version {version}");
+		ExecuteCommand("npm", "ci");
+		ExecuteCommand("npx", $"--yes=false vsce package --out {output} --no-update-package-json {version}");
 	});
 
 
