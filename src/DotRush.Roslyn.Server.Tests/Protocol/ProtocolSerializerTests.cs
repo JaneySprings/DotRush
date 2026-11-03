@@ -87,7 +87,7 @@ public class ProtocolSerializerTests {
             Documentation = new MarkupContent { Kind = MarkupKind.Markdown, Value = "**List**" },
             TextEdit = new TextEditOrInsertReplaceEdit(new TextEdit { NewText = "List", Range = new DocumentRange(new Position(1, 2), new Position(1, 4)) }),
             AdditionalTextEdits = new List<TextEdit> { new TextEdit { NewText = "using System;\n" } },
-            CommitCharacters = new List<string> { ";" },
+            // CommitCharacters = new List<string> { ";" },
             Command = new Command { Title = "Handler", Name = "dotrush.completionHandler", Arguments = new List<LSPAny> { "Test.cs", true, 42, new LSPAny(new Position(1, 2)) } },
             Data = 123,
         };
@@ -96,7 +96,6 @@ public class ProtocolSerializerTests {
             ""insertTextFormat"":2,""insertTextMode"":1,
             ""textEdit"":{""range"":{""start"":{""line"":1,""character"":2},""end"":{""line"":1,""character"":4}},""newText"":""List""},
             ""additionalTextEdits"":[{""range"":{""start"":{""line"":0,""character"":0},""end"":{""line"":0,""character"":0}},""newText"":""using System;\n""}],
-            ""commitCharacters"":["";""],
             ""command"":{""title"":""Handler"",""command"":""dotrush.completionHandler"",""arguments"":[""Test.cs"",true,42,{""line"":1,""character"":2}]},
             ""data"":123
         }";

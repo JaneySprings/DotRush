@@ -28,7 +28,6 @@ public class TextDocumentSyncOptions {
 
 public class CompletionOptions {
     public List<string>? TriggerCharacters { get; set; }
-    public List<string>? AllCommitCharacters { get; set; }
     public bool ResolveProvider { get; set; }
 }
 

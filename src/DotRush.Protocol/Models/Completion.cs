@@ -18,7 +18,6 @@ public class CompletionList {
 }
 
 public class CompletionItemDefaults {
-    public List<string>? CommitCharacters { get; set; }
     public EditRangeWithInsertReplace? EditRange { get; set; }
     public InsertTextFormat? InsertTextFormat { get; set; }
     public InsertTextMode? InsertTextMode { get; set; }
@@ -47,7 +46,6 @@ public class CompletionItem {
     public TextEditOrInsertReplaceEdit? TextEdit { get; set; }
     public string? TextEditText { get; set; }
     public List<TextEdit>? AdditionalTextEdits { get; set; }
-    public List<string>? CommitCharacters { get; set; }
     public Command? Command { get; set; }
     public LSPAny? Data { get; set; }
 }

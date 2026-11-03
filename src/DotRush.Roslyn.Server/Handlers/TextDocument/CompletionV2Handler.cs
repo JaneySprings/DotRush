@@ -53,9 +53,6 @@ public class CompletionV2Handler : CompletionHandlerBase {
         // and may be replaced on commit; the rest must survive an insert-mode commit
         var typedSpan = TextSpan.FromBounds(completions.Span.Start, Math.Clamp(cursorOffset, completions.Span.Start, completions.Span.End));
         var typedText = sourceText.GetSubText(typedSpan).ToString();
-        var isPunctuationOnly = typedText.Length != 0 && typedText.All(char.IsPunctuation);
-        var isSuggestionMode = completions.SuggestionModeItem != null || isPunctuationOnly;
-        var isSoftSelection = isSuggestionMode || typedText.Length == 0;
         var completionItems = completions.ItemsList.Select(item => {
             var id = item.GetHashCode();
             var completionItem = new CompletionItem() {
@@ -69,7 +66,6 @@ public class CompletionV2Handler : CompletionHandlerBase {
                 Detail = item.InlineDescription,
                 Preselect = item.Rules.MatchPriority == Microsoft.CodeAnalysis.Completion.MatchPriority.Preselect,
                 Deprecated = item.Tags.Contains(InternalWellKnownTags.Deprecated),
-                CommitCharacters = item.GetCommitCharacters(isSoftSelection, isSuggestionMode),
             };
 
             if (item.IsComplexTextEdit && !item.IsAutoUsing())
@@ -80,10 +76,8 @@ public class CompletionV2Handler : CompletionHandlerBase {
         }).ToList();
 
         return new CompletionList {
-            IsIncomplete = isPunctuationOnly || (typedText.Length == 0 && !isSuggestionMode),
             Items = completionItems,
             ItemDefaults = new CompletionItemDefaults {
-                CommitCharacters = isSoftSelection ? null : CompletionExtensions.DefaultCommitCharacters,
                 InsertTextMode = InsertTextMode.AsIs,
                 EditRange = new EditRangeWithInsertReplace {
                     Insert = typedSpan.ToRange(sourceText),
