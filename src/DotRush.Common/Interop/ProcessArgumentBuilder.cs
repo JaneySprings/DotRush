@@ -7,12 +7,15 @@ public class ProcessArgumentBuilder {
         this.args.Add(arg);
         return this;
     }
-
     public ProcessArgumentBuilder Append(params string[] args) {
         this.args.AddRange(args);
         return this;
     }
-
+    public ProcessArgumentBuilder Append<TValue>(ICollection<TValue> collection, Func<TValue, string> keyBuilder) {
+        foreach (var value in collection)
+            this.args.Add(keyBuilder.Invoke(value));
+        return this;
+    }
     public ProcessArgumentBuilder AppendQuoted(string arg) {
         this.args.Add($"\"{arg}\"");
         return this;

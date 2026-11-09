@@ -79,9 +79,14 @@ public static class WorkspaceExtensions {
     }
 
     public static async Task<ProcessResult> RestoreProjectAsync(this MSBuildWorkspace workspace, string projectPath, CancellationToken cancellationToken) {
-        var processInfo = ProcessRunner.CreateProcess(MSBuildLocator.GetMuxerPath(), $"restore \"{projectPath}\" -nodeReuse:false", captureOutput: true, displayWindow: false, cancellationToken: cancellationToken);
-        var restoreResult = await processInfo.Task;
+        var processInfo = ProcessRunner.CreateProcess(MSBuildLocator.GetMuxerPath(), new Common.Interop.ProcessArgumentBuilder()
+            .Append("restore").AppendQuoted(projectPath)
+            .Append(workspace.Properties, kvp => $"-p:{kvp.Key}={kvp.Value}")
+            .Append("-nodeReuse:false")
+            .ToString(), captureOutput: true, displayWindow: false, cancellationToken: cancellationToken
+        );
 
+        var restoreResult = await processInfo.Task;
         if (restoreResult.ExitCode != 0) {
             foreach (var line in restoreResult.OutputLines)
                 CurrentSessionLogger.Error(line);
